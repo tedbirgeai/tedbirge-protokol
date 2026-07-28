@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
+import { PLANS } from "@/lib/paddle-catalog";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/fiyatlandirma")({
@@ -55,9 +56,9 @@ function Pricing() {
   const [cycle, setCycle] = useState<"month" | "year">("month");
   const [nodes, setNodes] = useState(25);
 
-  const priceId =
-    cycle === "month" ? "tedbirge_enterprise_monthly" : "tedbirge_enterprise_yearly";
-  const unitPrice = cycle === "month" ? 49 : 500;
+  const plan = PLANS.enterprise;
+  const priceId = plan.prices[cycle];
+  const unitPrice = plan.unitPrice[cycle];
   const total = unitPrice * nodes;
 
   async function startCheckout() {
