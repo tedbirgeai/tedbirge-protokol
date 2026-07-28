@@ -19,7 +19,7 @@ export const Route = createFileRoute("/gizlilik")({
   component: Privacy,
 });
 
-const SELLER = "Tedbirge AI";
+const SELLER = "Mehmet DİNÇ (Tedbirge)";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
