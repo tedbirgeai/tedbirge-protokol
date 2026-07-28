@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/urun")({
   head: () => ({
     meta: [
-      { title: "Ürün ve Mimari — Aetheris Protocol" },
+      { title: "Ürün ve Mimari — Tedbirge Protokol" },
       {
         name: "description",
         content:
-          "Aetheris mimarisi: mesh router, zero-knowledge tünel, Ed25519 güvenlik kalkanı, off-grid defter, WAL ve gömülü yönetim paneli.",
+          "Tedbirge mimarisi: mesh router, zero-knowledge tünel, Ed25519 güvenlik kalkanı, off-grid defter, WAL ve gömülü yönetim paneli.",
       },
-      { property: "og:title", content: "Aetheris Ürün ve Mimari" },
+      { property: "og:title", content: "Tedbirge Ürün ve Mimari" },
       {
         property: "og:description",
         content: "Tek statik binary içinde tünel, mesh, güvenlik, defter ve panel katmanları.",
@@ -43,7 +43,7 @@ const threats = [
 
 const wan = [
   ["WAN: Direct Internet", "Düğümün kendi doğrudan WAN bağlantısı var"],
-  ["WAN: Relayed via Peer", "Başka bir Aetheris exit düğümü üzerinden bağlı"],
+  ["WAN: Relayed via Peer", "Başka bir Tedbirge exit düğümü üzerinden bağlı"],
   ["WAN: Off-Grid Mesh Only", "Dış internet yok; yalnızca yerel mesh aktif"],
 ];
 
@@ -57,7 +57,7 @@ function Product() {
             Sekiz katman, tek çalıştırılabilir dosya
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-            Aetheris düğümü kurulum sihirbazı, konteyner orkestrasyonu veya dış servis
+            Tedbirge düğümü kurulum sihirbazı, konteyner orkestrasyonu veya dış servis
             gerektirmez. Binary'yi kopyalayın, çevre değişkenlerini verin, düğüm ağa katılır.
           </p>
         </div>

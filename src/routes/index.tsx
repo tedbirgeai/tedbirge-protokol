@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aetheris Protocol — Off-Grid Mesh ve Sıfır-Bilgi Ağ Geçidi" },
+      { title: "Tedbirge Protokol — Off-Grid Mesh ve Sıfır-Bilgi Ağ Geçidi" },
       {
         name: "description",
         content:
           "Taşıyıcı-bağımsız mesh SDK ve sıfır-bilgi tünel geçidi. Tek statik binary, LoRa/Wi-Fi/Ethernet, Ed25519 güvenlik ve kullanım bazlı faturalama.",
       },
-      { property: "og:title", content: "Aetheris Protocol — Off-Grid Mesh Ağ Geçidi" },
+      { property: "og:title", content: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
       {
         property: "og:description",
         content:
@@ -104,7 +104,7 @@ function Index() {
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Aetheris; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
+            Tedbirge; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
             SDK'sıdır. Çöldeki off-grid saha cihazından kurumsal veri merkezine kadar tek
             statik binary ile çalışır.
           </p>
@@ -155,6 +155,40 @@ function Index() {
         </div>
       </section>
 
+      {/* MODULES */}
+      <section className="border-y border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <SectionLabel>Ürün ailesi</SectionLabel>
+          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            Tedbirge Protokol&apos;ün üç modülü
+          </h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                name: "Tedbirge Gateway",
+                body: "Tünel proxy motoru ve exit node: AES-256-GCM chunk şifreleme, zero-knowledge ölçüm ve WAN köprüsü. Tek statik binary olarak çalışır.",
+              },
+              {
+                name: "Tedbirge Loop",
+                body: "Mesh yönlendirme ve gossip halkası: Dijkstra çok-sıçramalı yol seçimi, komşu keşfi, TTL ve loop-prevention.",
+              },
+              {
+                name: "Tedbirge Off-Grid",
+                body: "İnternetsiz muhasebe katmanı: Ed25519 imzalı fiş, relay credit, çift harcama koruması ve sonradan mahsuplaşma.",
+              },
+            ].map((m) => (
+              <div key={m.name} className="rounded-sm border border-border bg-card/50 p-7">
+                <h3 className="font-mono text-sm uppercase tracking-[0.15em] text-primary">
+                  {m.name}
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       {/* ARCHITECTURE */}
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 lg:grid-cols-2 lg:items-center">
@@ -192,18 +226,18 @@ function Index() {
             </div>
             <pre className="mt-5 overflow-x-auto font-mono text-[13px] leading-relaxed text-muted-foreground">
               <code>{`# Düğüm A — sahra röle noktası
-AETHERIS_MESH=true \\
-AETHERIS_MESH_NODE_ID=saha-A \\
-AETHERIS_MESH_ADDR=:7946 aetheris-gateway
+TEDBIRGE_MESH=true \\
+TEDBIRGE_MESH_NODE_ID=saha-A \\
+TEDBIRGE_MESH_ADDR=:7946 tedbirge-gateway
 
 # Düğüm B — A'yı tohum komşu alır
-AETHERIS_MESH_SEEDS=10.0.0.1:7946 \\
-aetheris-gateway
+TEDBIRGE_MESH_SEEDS=10.0.0.1:7946 \\
+tedbirge-gateway
 
 # Doğrulama
-aetheris-cli mesh-demo   # 3 düğüm, kayıpsız
-aetheris-cli p2p-demo    # 0-WAN takas
-aetheris-cli exit-demo   # WAN köprüsü`}</code>
+tedbirge-cli mesh-demo   # 3 düğüm, kayıpsız
+tedbirge-cli p2p-demo    # 0-WAN takas
+tedbirge-cli exit-demo   # WAN köprüsü`}</code>
             </pre>
           </div>
         </div>

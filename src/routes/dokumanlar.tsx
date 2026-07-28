@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/dokumanlar")({
   head: () => ({
     meta: [
-      { title: "Dokümanlar — Aetheris Protocol Kurulum ve CLI" },
+      { title: "Dokümanlar — Tedbirge Protokol Kurulum ve CLI" },
       {
         name: "description",
         content:
-          "Aetheris kurulum, off-grid ve kurumsal çalıştırma kılavuzu, CLI komutları, çevre değişkenleri ve doğrulama adımları.",
+          "Tedbirge kurulum, off-grid ve kurumsal çalıştırma kılavuzu, CLI komutları, çevre değişkenleri ve doğrulama adımları.",
       },
-      { property: "og:title", content: "Aetheris Dokümanlar" },
+      { property: "og:title", content: "Tedbirge Dokümanlar" },
       {
         property: "og:description",
         content: "Kurulum, CLI komutları, çevre değişkenleri ve üretim dağıtım rehberi.",
@@ -23,23 +23,23 @@ export const Route = createFileRoute("/dokumanlar")({
 });
 
 const envs = [
-  ["AETHERIS_MESH", "Mesh katmanını etkinleştirir (true/false)"],
-  ["AETHERIS_MESH_NODE_ID", "Düğümün ağdaki benzersiz kimliği"],
-  ["AETHERIS_MESH_ADDR", "Mesh dinleme adresi, örn. :7946"],
-  ["AETHERIS_MESH_SEEDS", "Tohum komşu adres listesi (virgülle)"],
-  ["AETHERIS_STORE", "memory | postgres"],
-  ["AETHERIS_DATABASE_DSN", "Postgres bağlantı dizesi"],
-  ["AETHERIS_WAL_ENABLED", "Write-ahead log dayanıklılığı"],
-  ["AETHERIS_ADMIN / _TOKEN", "Gömülü panel ve erişim jetonu"],
-  ["AETHERIS_METRICS / _TOKEN", "Prometheus /metrics ucu"],
+  ["TEDBIRGE_MESH", "Mesh katmanını etkinleştirir (true/false)"],
+  ["TEDBIRGE_MESH_NODE_ID", "Düğümün ağdaki benzersiz kimliği"],
+  ["TEDBIRGE_MESH_ADDR", "Mesh dinleme adresi, örn. :7946"],
+  ["TEDBIRGE_MESH_SEEDS", "Tohum komşu adres listesi (virgülle)"],
+  ["TEDBIRGE_STORE", "memory | postgres"],
+  ["TEDBIRGE_DATABASE_DSN", "Postgres bağlantı dizesi"],
+  ["TEDBIRGE_WAL_ENABLED", "Write-ahead log dayanıklılığı"],
+  ["TEDBIRGE_ADMIN / _TOKEN", "Gömülü panel ve erişim jetonu"],
+  ["TEDBIRGE_METRICS / _TOKEN", "Prometheus /metrics ucu"],
 ];
 
 const cli = [
-  ["aetheris-cli keygen", "Ed25519 düğüm kimliği üretir"],
-  ["aetheris-cli mesh-demo", "3 düğümlü kayıpsız çok-sıçramalı teslim"],
-  ["aetheris-cli p2p-demo", "0-WAN mesaj ve dosya takası"],
-  ["aetheris-cli exit-demo", "Exit node üzerinden WAN köprüsü"],
-  ["aetheris-cli route -links ...", "Dijkstra yol hesabını gösterir"],
+  ["tedbirge-cli keygen", "Ed25519 düğüm kimliği üretir"],
+  ["tedbirge-cli mesh-demo", "3 düğümlü kayıpsız çok-sıçramalı teslim"],
+  ["tedbirge-cli p2p-demo", "0-WAN mesaj ve dosya takası"],
+  ["tedbirge-cli exit-demo", "Exit node üzerinden WAN köprüsü"],
+  ["tedbirge-cli route -links ...", "Dijkstra yol hesabını gösterir"],
 ];
 
 const checks = [
@@ -86,35 +86,35 @@ function Docs() {
 
       <section className="mx-auto max-w-4xl space-y-14 px-6 py-16">
         <Block title="1. Derleme">
-          <Code>{`make build      # bin/aetheris (gateway)
-make cli        # bin/aetheris-cli
+          <Code>{`make build      # bin/tedbirge (gateway)
+make cli        # bin/tedbirge-cli
 make release    # dist/ — 2 uygulama × 5 platform
 make test-race  # hermetik Docker, -race, canlı Postgres/Redis`}</Code>
         </Block>
 
         <Block title="2. Off-grid saha kurulumu">
           <Code>{`# Düğüm A (röle noktası)
-AETHERIS_MESH=true AETHERIS_MESH_NODE_ID=saha-A \\
-AETHERIS_MESH_ADDR=:7946 aetheris-gateway
+TEDBIRGE_MESH=true TEDBIRGE_MESH_NODE_ID=saha-A \\
+TEDBIRGE_MESH_ADDR=:7946 tedbirge-gateway
 
 # Düğüm B (ara röle, A tohum komşu)
-AETHERIS_MESH=true AETHERIS_MESH_NODE_ID=saha-B \\
-AETHERIS_MESH_ADDR=:7946 \\
-AETHERIS_MESH_SEEDS=10.0.0.1:7946 aetheris-gateway`}</Code>
+TEDBIRGE_MESH=true TEDBIRGE_MESH_NODE_ID=saha-B \\
+TEDBIRGE_MESH_ADDR=:7946 \\
+TEDBIRGE_MESH_SEEDS=10.0.0.1:7946 tedbirge-gateway`}</Code>
         </Block>
 
         <Block title="3. Kurumsal üretim kurulumu">
-          <Code>{`AETHERIS_STORE=postgres \\
-AETHERIS_DATABASE_DSN="postgres://...:5432/aetheris" \\
-AETHERIS_WAL_ENABLED=true \\
-AETHERIS_METRICS=true AETHERIS_METRICS_TOKEN=<gizli> \\
-AETHERIS_ADMIN=true AETHERIS_ADMIN_TOKEN=<gizli> \\
-AETHERIS_MESH=true AETHERIS_MESH_ADDR=:7946 \\
-aetheris-gateway`}</Code>
+          <Code>{`TEDBIRGE_STORE=postgres \\
+TEDBIRGE_DATABASE_DSN="postgres://...:5432/tedbirge" \\
+TEDBIRGE_WAL_ENABLED=true \\
+TEDBIRGE_METRICS=true TEDBIRGE_METRICS_TOKEN=<gizli> \\
+TEDBIRGE_ADMIN=true TEDBIRGE_ADMIN_TOKEN=<gizli> \\
+TEDBIRGE_MESH=true TEDBIRGE_MESH_ADDR=:7946 \\
+tedbirge-gateway`}</Code>
           <p className="mt-4 text-sm text-muted-foreground">
             Panel: <code className="text-primary">https://&lt;host&gt;/admin?token=…</code> ·
             Metrikler: <code className="text-primary">/metrics</code> · Dağıtım dosyaları:{" "}
-            <code className="text-primary">deploy/aetheris.service</code>,{" "}
+            <code className="text-primary">deploy/tedbirge.service</code>,{" "}
             <code className="text-primary">deploy/docker-compose.prod.yml</code>
           </p>
         </Block>
