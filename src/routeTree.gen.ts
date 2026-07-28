@@ -9,16 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
 import { Route as IletisimRouteImport } from './routes/iletisim'
+import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
+import { Route as GuvenlikRouteImport } from './routes/guvenlik'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
+import { Route as EnRouteImport } from './routes/en'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
@@ -30,6 +34,11 @@ import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
+const UyumlulukRoute = UyumlulukRouteImport.update({
+  id: '/uyumluluk',
+  path: '/uyumluluk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UrunRoute = UrunRouteImport.update({
   id: '/urun',
   path: '/urun',
@@ -55,6 +64,11 @@ const IletisimRoute = IletisimRouteImport.update({
   path: '/iletisim',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IhracatUyumRoute = IhracatUyumRouteImport.update({
+  id: '/ihracat-uyum',
+  path: '/ihracat-uyum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IadeRoute = IadeRouteImport.update({
   id: '/iade',
   path: '/iade',
@@ -63,6 +77,11 @@ const IadeRoute = IadeRouteImport.update({
 const HakkimizdaRoute = HakkimizdaRouteImport.update({
   id: '/hakkimizda',
   path: '/hakkimizda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuvenlikRoute = GuvenlikRouteImport.update({
+  id: '/guvenlik',
+  path: '/guvenlik',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GizlilikRoute = GizlilikRouteImport.update({
@@ -78,6 +97,11 @@ const GirisRoute = GirisRouteImport.update({
 const FiyatlandirmaRoute = FiyatlandirmaRouteImport.update({
   id: '/fiyatlandirma',
   path: '/fiyatlandirma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnRoute = EnRouteImport.update({
+  id: '/en',
+  path: '/en',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DokumanlarRoute = DokumanlarRouteImport.update({
@@ -136,16 +160,20 @@ export interface FileRoutesByFullPath {
   '/afet-kamu': typeof AfetKamuRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
+  '/en': typeof EnRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
+  '/guvenlik': typeof GuvenlikRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
+  '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
+  '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -157,16 +185,20 @@ export interface FileRoutesByTo {
   '/afet-kamu': typeof AfetKamuRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
+  '/en': typeof EnRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
+  '/guvenlik': typeof GuvenlikRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
+  '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
+  '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -180,16 +212,20 @@ export interface FileRoutesById {
   '/afet-kamu': typeof AfetKamuRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
+  '/en': typeof EnRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
+  '/guvenlik': typeof GuvenlikRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
+  '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
+  '/uyumluluk': typeof UyumlulukRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -203,16 +239,20 @@ export interface FileRouteTypes {
     | '/afet-kamu'
     | '/demo'
     | '/dokumanlar'
+    | '/en'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
+    | '/guvenlik'
     | '/hakkimizda'
     | '/iade'
+    | '/ihracat-uyum'
     | '/iletisim'
     | '/karsilastirma'
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
+    | '/uyumluluk'
     | '/panel'
     | '/yonetim'
     | '/rehber/$slug'
@@ -224,16 +264,20 @@ export interface FileRouteTypes {
     | '/afet-kamu'
     | '/demo'
     | '/dokumanlar'
+    | '/en'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
+    | '/guvenlik'
     | '/hakkimizda'
     | '/iade'
+    | '/ihracat-uyum'
     | '/iletisim'
     | '/karsilastirma'
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
+    | '/uyumluluk'
     | '/panel'
     | '/yonetim'
     | '/rehber/$slug'
@@ -246,16 +290,20 @@ export interface FileRouteTypes {
     | '/afet-kamu'
     | '/demo'
     | '/dokumanlar'
+    | '/en'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
+    | '/guvenlik'
     | '/hakkimizda'
     | '/iade'
+    | '/ihracat-uyum'
     | '/iletisim'
     | '/karsilastirma'
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
+    | '/uyumluluk'
     | '/_authenticated/panel'
     | '/_authenticated/yonetim'
     | '/rehber/$slug'
@@ -269,16 +317,20 @@ export interface RootRouteChildren {
   AfetKamuRoute: typeof AfetKamuRoute
   DemoRoute: typeof DemoRoute
   DokumanlarRoute: typeof DokumanlarRoute
+  EnRoute: typeof EnRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   GirisRoute: typeof GirisRoute
   GizlilikRoute: typeof GizlilikRoute
+  GuvenlikRoute: typeof GuvenlikRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
   IadeRoute: typeof IadeRoute
+  IhracatUyumRoute: typeof IhracatUyumRoute
   IletisimRoute: typeof IletisimRoute
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KosullarRoute: typeof KosullarRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   UrunRoute: typeof UrunRoute
+  UyumlulukRoute: typeof UyumlulukRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -286,6 +338,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/uyumluluk': {
+      id: '/uyumluluk'
+      path: '/uyumluluk'
+      fullPath: '/uyumluluk'
+      preLoaderRoute: typeof UyumlulukRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/urun': {
       id: '/urun'
       path: '/urun'
@@ -321,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IletisimRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ihracat-uyum': {
+      id: '/ihracat-uyum'
+      path: '/ihracat-uyum'
+      fullPath: '/ihracat-uyum'
+      preLoaderRoute: typeof IhracatUyumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/iade': {
       id: '/iade'
       path: '/iade'
@@ -333,6 +399,13 @@ declare module '@tanstack/react-router' {
       path: '/hakkimizda'
       fullPath: '/hakkimizda'
       preLoaderRoute: typeof HakkimizdaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guvenlik': {
+      id: '/guvenlik'
+      path: '/guvenlik'
+      fullPath: '/guvenlik'
+      preLoaderRoute: typeof GuvenlikRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gizlilik': {
@@ -354,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/fiyatlandirma'
       fullPath: '/fiyatlandirma'
       preLoaderRoute: typeof FiyatlandirmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en': {
+      id: '/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof EnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dokumanlar': {
@@ -448,16 +528,20 @@ const rootRouteChildren: RootRouteChildren = {
   AfetKamuRoute: AfetKamuRoute,
   DemoRoute: DemoRoute,
   DokumanlarRoute: DokumanlarRoute,
+  EnRoute: EnRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   GirisRoute: GirisRoute,
   GizlilikRoute: GizlilikRoute,
+  GuvenlikRoute: GuvenlikRoute,
   HakkimizdaRoute: HakkimizdaRoute,
   IadeRoute: IadeRoute,
+  IhracatUyumRoute: IhracatUyumRoute,
   IletisimRoute: IletisimRoute,
   KarsilastirmaRoute: KarsilastirmaRoute,
   KosullarRoute: KosullarRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   UrunRoute: UrunRoute,
+  UyumlulukRoute: UyumlulukRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,

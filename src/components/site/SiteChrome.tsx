@@ -10,12 +10,14 @@ const nav = [
   { to: "/urun", label: "Ürün" },
   { to: "/tasiyicilar", label: "Taşıyıcılar" },
   { to: "/afet-kamu", label: "Afet & Kamu" },
-  { to: "/karsilastirma", label: "Karşılaştırma" },
+  { to: "/uyumluluk", label: "Uyum" },
+  { to: "/guvenlik", label: "Güvenlik" },
   { to: "/demo", label: "Demo" },
   { to: "/fiyatlandirma", label: "Fiyatlandırma" },
   { to: "/dokumanlar", label: "Dokümanlar" },
   { to: "/rehber", label: "Rehber" },
 ];
+
 
 
 function AuthAffordance() {
@@ -89,7 +91,14 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link
+            to="/en"
+            className="hidden font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground sm:block"
+          >
+            EN
+          </Link>
           <AuthAffordance />
+
           <Link
             to="/iletisim"
             className="rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
@@ -128,9 +137,14 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket & uyum</p>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/hakkimizda" className="text-muted-foreground hover:text-foreground">Hakkımızda</Link></li>
+            <li><Link to="/uyumluluk" className="text-muted-foreground hover:text-foreground">Spektrum & uyum</Link></li>
+            <li><Link to="/ihracat-uyum" className="text-muted-foreground hover:text-foreground">İhracat kontrolü</Link></li>
+            <li><Link to="/guvenlik" className="text-muted-foreground hover:text-foreground">Güvenlik & tehdit modeli</Link></li>
+            <li><Link to="/en" className="text-muted-foreground hover:text-foreground">English overview</Link></li>
+
             <li><Link to="/iletisim" className="text-muted-foreground hover:text-foreground">İletişim</Link></li>
             <li><Link to="/panel" className="text-muted-foreground hover:text-foreground">Müşteri paneli</Link></li>
 
