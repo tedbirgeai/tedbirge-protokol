@@ -3,7 +3,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 const TITLE = "Hakkımızda — Tedbirge Protokol'ü Kim Geliştiriyor";
 const DESC =
-  "Tedbirge Protokol'ün arkasındaki ekip, mühendislik ilkeleri, açık kaynak yaklaşımı ve kurumsal iletişim bilgileri. Satıcı ünvanı: Mehmet DİNÇ (Tedbirge), Türkiye.";
+  "Tedbirge Protokol'ün arkasındaki ekip, mühendislik ilkeleri, açık kaynak yaklaşımı ve kurumsal iletişim bilgileri. Satıcı ünvanı: Mehmet DİNÇ (Tedbirge Gateway), Türkiye.";
 const URL = "https://artisan-project-studio.lovable.app/hakkimizda";
 
 export const Route = createFileRoute("/hakkimizda")({
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/hakkimizda")({
           "@context": "https://schema.org",
           "@type": "Organization",
           name: "Tedbirge",
-          legalName: "Mehmet DİNÇ (Tedbirge)",
+          legalName: "Mehmet DİNÇ (Tedbirge Gateway)",
           url: "https://artisan-project-studio.lovable.app",
           email: "tedbirge34@gmail.com",
           address: { "@type": "PostalAddress", addressCountry: "TR" },
@@ -69,7 +69,7 @@ const timeline = [
 ];
 
 const facts = [
-  ["Satıcı ünvanı", "Mehmet DİNÇ (Tedbirge)"],
+  ["Satıcı ünvanı", "Mehmet DİNÇ (Tedbirge Gateway)"],
   ["İşletme türü", "Şahıs şirketi"],
   ["Ülke", "Türkiye"],
   ["E-posta", "tedbirge34@gmail.com"],

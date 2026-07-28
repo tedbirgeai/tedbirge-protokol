@@ -19,7 +19,7 @@ export const Route = createFileRoute("/kosullar")({
   component: Terms,
 });
 
-const SELLER = "Mehmet DİNÇ (Tedbirge)";
+const SELLER = "Mehmet DİNÇ (Tedbirge Gateway)";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
