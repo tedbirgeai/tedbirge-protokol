@@ -137,9 +137,14 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket & uyum</p>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/hakkimizda" className="text-muted-foreground hover:text-foreground">Hakkımızda</Link></li>
+            <li><Link to="/uyumluluk" className="text-muted-foreground hover:text-foreground">Spektrum & uyum</Link></li>
+            <li><Link to="/ihracat-uyum" className="text-muted-foreground hover:text-foreground">İhracat kontrolü</Link></li>
+            <li><Link to="/guvenlik" className="text-muted-foreground hover:text-foreground">Güvenlik & tehdit modeli</Link></li>
+            <li><Link to="/en" className="text-muted-foreground hover:text-foreground">English overview</Link></li>
+
             <li><Link to="/iletisim" className="text-muted-foreground hover:text-foreground">İletişim</Link></li>
             <li><Link to="/panel" className="text-muted-foreground hover:text-foreground">Müşteri paneli</Link></li>
 
