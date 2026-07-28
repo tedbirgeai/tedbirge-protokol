@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aetheris Protocol — Off-Grid Mesh ve Sıfır-Bilgi Ağ Geçidi" },
+      { title: "Tedbirge Protokol — Off-Grid Mesh ve Sıfır-Bilgi Ağ Geçidi" },
       {
         name: "description",
         content:
           "Taşıyıcı-bağımsız mesh SDK ve sıfır-bilgi tünel geçidi. Tek statik binary, LoRa/Wi-Fi/Ethernet, Ed25519 güvenlik ve kullanım bazlı faturalama.",
       },
-      { property: "og:title", content: "Aetheris Protocol — Off-Grid Mesh Ağ Geçidi" },
+      { property: "og:title", content: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
       {
         property: "og:description",
         content:
@@ -104,7 +104,7 @@ function Index() {
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Aetheris; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
+            Tedbirge; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
             SDK'sıdır. Çöldeki off-grid saha cihazından kurumsal veri merkezine kadar tek
             statik binary ile çalışır.
           </p>
@@ -192,18 +192,18 @@ function Index() {
             </div>
             <pre className="mt-5 overflow-x-auto font-mono text-[13px] leading-relaxed text-muted-foreground">
               <code>{`# Düğüm A — sahra röle noktası
-AETHERIS_MESH=true \\
-AETHERIS_MESH_NODE_ID=saha-A \\
-AETHERIS_MESH_ADDR=:7946 aetheris-gateway
+TEDBIRGE_MESH=true \\
+TEDBIRGE_MESH_NODE_ID=saha-A \\
+TEDBIRGE_MESH_ADDR=:7946 tedbirge-gateway
 
 # Düğüm B — A'yı tohum komşu alır
-AETHERIS_MESH_SEEDS=10.0.0.1:7946 \\
-aetheris-gateway
+TEDBIRGE_MESH_SEEDS=10.0.0.1:7946 \\
+tedbirge-gateway
 
 # Doğrulama
-aetheris-cli mesh-demo   # 3 düğüm, kayıpsız
-aetheris-cli p2p-demo    # 0-WAN takas
-aetheris-cli exit-demo   # WAN köprüsü`}</code>
+tedbirge-cli mesh-demo   # 3 düğüm, kayıpsız
+tedbirge-cli p2p-demo    # 0-WAN takas
+tedbirge-cli exit-demo   # WAN köprüsü`}</code>
             </pre>
           </div>
         </div>

@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/fiyatlandirma")({
   head: () => ({
     meta: [
-      { title: "Fiyatlandırma — Aetheris Protocol" },
+      { title: "Fiyatlandırma — Tedbirge Protokol" },
       {
         name: "description",
         content:
-          "Aetheris lisans paketleri: açık kaynak Community, düğüm başına Enterprise ve kullanım bazlı Operator modeli. Şeffaf fiyat, sahada pilot.",
+          "Tedbirge lisans paketleri: açık kaynak Community, düğüm başına Enterprise ve kullanım bazlı Operator modeli. Şeffaf fiyat, sahada pilot.",
       },
-      { property: "og:title", content: "Aetheris Fiyatlandırma" },
+      { property: "og:title", content: "Tedbirge Fiyatlandırma" },
       {
         property: "og:description",
         content: "Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı ücretlendirme.",

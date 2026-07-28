@@ -77,10 +77,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Aetheris Protocol — Off-Grid Mesh Ağ Geçidi" },
+      { title: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
       { name: "description", content: "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı." },
-      { name: "author", content: "Aetheris Protocol" },
-      { property: "og:title", content: "Aetheris Protocol" },
+      { name: "author", content: "Tedbirge Protokol" },
+      { property: "og:title", content: "Tedbirge Protokol" },
       { property: "og:description", content: "İnternet olmadan çalışan kurumsal mesh altyapısı." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

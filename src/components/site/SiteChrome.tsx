@@ -17,7 +17,7 @@ export function SiteHeader() {
             <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_2px_var(--color-primary)]" />
           </span>
           <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
-            AETHERIS
+            TEDBIRGE
           </span>
         </Link>
 
@@ -61,7 +61,7 @@ export function SiteFooter() {
     <footer className="border-t border-border/60 bg-card/30">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
-          <p className="font-mono text-sm font-semibold tracking-[0.2em]">AETHERIS PROTOCOL</p>
+          <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBIRGE PROTOKOL</p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
             Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Tek statik binary,
             dış bağımlılık yok, off-grid çalışır.
@@ -89,7 +89,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-5 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Aetheris Protocol</span>
+          <span>© {new Date().getFullYear()} Tedbirge Protokol</span>
           <span>v0.6a-turnkey · Ed25519 · AES-256-GCM</span>
         </div>
       </div>

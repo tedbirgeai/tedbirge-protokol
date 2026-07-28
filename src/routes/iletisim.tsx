@@ -5,13 +5,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/iletisim")({
   head: () => ({
     meta: [
-      { title: "Pilot ve İletişim — Aetheris Protocol" },
+      { title: "Pilot ve İletişim — Tedbirge Protokol" },
       {
         name: "description",
         content:
-          "Aetheris ile 30 günlük saha pilotu başlatın. Mühendislik ekibimizle mesh kurulumu ve faturalama entegrasyonu için görüşme planlayın.",
+          "Tedbirge ile 30 günlük saha pilotu başlatın. Mühendislik ekibimizle mesh kurulumu ve faturalama entegrasyonu için görüşme planlayın.",
       },
-      { property: "og:title", content: "Aetheris — Pilot Başvurusu" },
+      { property: "og:title", content: "Tedbirge — Pilot Başvurusu" },
       {
         property: "og:description",
         content: "Üç düğümlük mesh pilotu ve kullanım bazlı faturalama entegrasyonu için iletişime geçin.",
