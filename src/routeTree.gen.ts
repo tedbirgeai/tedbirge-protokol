@@ -11,9 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as IletisimRouteImport } from './routes/iletisim'
+import { Route as GirisRouteImport } from './routes/giris'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
+import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const UrunRoute = UrunRouteImport.update({
@@ -26,6 +30,11 @@ const IletisimRoute = IletisimRouteImport.update({
   path: '/iletisim',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GirisRoute = GirisRouteImport.update({
+  id: '/giris',
+  path: '/giris',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FiyatlandirmaRoute = FiyatlandirmaRouteImport.update({
   id: '/fiyatlandirma',
   path: '/fiyatlandirma',
@@ -36,10 +45,24 @@ const DokumanlarRoute = DokumanlarRouteImport.update({
   path: '/dokumanlar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
+  id: '/yonetim',
+  path: '/yonetim',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
@@ -52,25 +75,35 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
+  '/giris': typeof GirisRoute
   '/iletisim': typeof IletisimRoute
   '/urun': typeof UrunRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
+  '/giris': typeof GirisRoute
   '/iletisim': typeof IletisimRoute
   '/urun': typeof UrunRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
+  '/giris': typeof GirisRoute
   '/iletisim': typeof IletisimRoute
   '/urun': typeof UrunRoute
+  '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -79,31 +112,43 @@ export interface FileRouteTypes {
     | '/'
     | '/dokumanlar'
     | '/fiyatlandirma'
+    | '/giris'
     | '/iletisim'
     | '/urun'
+    | '/panel'
+    | '/yonetim'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dokumanlar'
     | '/fiyatlandirma'
+    | '/giris'
     | '/iletisim'
     | '/urun'
+    | '/panel'
+    | '/yonetim'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/dokumanlar'
     | '/fiyatlandirma'
+    | '/giris'
     | '/iletisim'
     | '/urun'
+    | '/_authenticated/panel'
+    | '/_authenticated/yonetim'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   DokumanlarRoute: typeof DokumanlarRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
+  GirisRoute: typeof GirisRoute
   IletisimRoute: typeof IletisimRoute
   UrunRoute: typeof UrunRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -125,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IletisimRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/giris': {
+      id: '/giris'
+      path: '/giris'
+      fullPath: '/giris'
+      preLoaderRoute: typeof GirisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fiyatlandirma': {
       id: '/fiyatlandirma'
       path: '/fiyatlandirma'
@@ -139,12 +191,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DokumanlarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/yonetim': {
+      id: '/_authenticated/yonetim'
+      path: '/yonetim'
+      fullPath: '/yonetim'
+      preLoaderRoute: typeof AuthenticatedYonetimRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/panel': {
+      id: '/_authenticated/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof AuthenticatedPanelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -156,10 +229,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedYonetimRoute: typeof AuthenticatedYonetimRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedYonetimRoute: AuthenticatedYonetimRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   DokumanlarRoute: DokumanlarRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
+  GirisRoute: GirisRoute,
   IletisimRoute: IletisimRoute,
   UrunRoute: UrunRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
