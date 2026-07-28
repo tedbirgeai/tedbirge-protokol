@@ -68,7 +68,7 @@ export function SiteHeader() {
             <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_2px_var(--color-primary)]" />
           </span>
           <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
-            TEDBIRGE
+            TEDBİRGE GATEWAY
           </span>
         </Link>
 
