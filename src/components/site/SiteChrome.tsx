@@ -91,7 +91,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="ml-4 flex items-center gap-3 pl-4 lg:border-l lg:border-border/60">
           <AuthAffordance />
           <span aria-hidden className="hidden h-5 w-px bg-border/70 sm:block" />
           <LanguageSwitcher />
