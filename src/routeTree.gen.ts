@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as KosullarRouteImport } from './routes/kosullar'
@@ -30,6 +31,11 @@ import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
+const UyumlulukRoute = UyumlulukRouteImport.update({
+  id: '/uyumluluk',
+  path: '/uyumluluk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UrunRoute = UrunRouteImport.update({
   id: '/urun',
   path: '/urun',
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
+  '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
+  '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
+  '/uyumluluk': typeof UyumlulukRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
+    | '/uyumluluk'
     | '/panel'
     | '/yonetim'
     | '/rehber/$slug'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
+    | '/uyumluluk'
     | '/panel'
     | '/yonetim'
     | '/rehber/$slug'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
+    | '/uyumluluk'
     | '/_authenticated/panel'
     | '/_authenticated/yonetim'
     | '/rehber/$slug'
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   KosullarRoute: typeof KosullarRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   UrunRoute: typeof UrunRoute
+  UyumlulukRoute: typeof UyumlulukRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -286,6 +299,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/uyumluluk': {
+      id: '/uyumluluk'
+      path: '/uyumluluk'
+      fullPath: '/uyumluluk'
+      preLoaderRoute: typeof UyumlulukRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/urun': {
       id: '/urun'
       path: '/urun'
@@ -458,6 +478,7 @@ const rootRouteChildren: RootRouteChildren = {
   KosullarRoute: KosullarRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   UrunRoute: UrunRoute,
+  UyumlulukRoute: UyumlulukRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
