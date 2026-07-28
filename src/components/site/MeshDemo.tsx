@@ -53,6 +53,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 export function MeshDemo() {
+  const [mounted, setMounted] = useState(false);
   const [relayUp, setRelayUp] = useState(true);
   const [directLink, setDirectLink] = useState(false);
   const [running, setRunning] = useState(true);
@@ -63,6 +64,11 @@ export function MeshDemo() {
   const [dropped, setDropped] = useState(0);
   const raf = useRef<number | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+
   const path: NodeId[] | null = useMemo(() => {
     if (relayUp) return ["A", "B", "C"];
     if (directLink) return ["A", "C"];
@@ -70,7 +76,7 @@ export function MeshDemo() {
   }, [relayUp, directLink]);
 
   useEffect(() => {
-    if (!running || !path) return;
+    if (!mounted || !running || !path) return;
     let last = performance.now();
     const tick = (now: number) => {
       const dt = (now - last) / 1000;
@@ -82,7 +88,7 @@ export function MeshDemo() {
     return () => {
       if (raf.current) cancelAnimationFrame(raf.current);
     };
-  }, [running, path]);
+  }, [mounted, running, path]);
 
   useEffect(() => {
     if (progress < 1) return;
@@ -103,7 +109,7 @@ export function MeshDemo() {
   }, [progress, path]);
 
   useEffect(() => {
-    if (path) return;
+    if (!mounted || path) return;
     const t = setInterval(() => {
       setDropped((d) => d + 1);
       setLog((l) =>
@@ -114,10 +120,10 @@ export function MeshDemo() {
       );
     }, 1600);
     return () => clearInterval(t);
-  }, [path]);
+  }, [mounted, path]);
 
   const packet = useMemo(() => {
-    if (!path) return null;
+    if (!mounted || !path) return null;
     const segments = path.length - 1;
     const t = Math.min(progress, 0.999) * segments;
     const i = Math.floor(t);
@@ -125,7 +131,7 @@ export function MeshDemo() {
     const a = pos(path[i]);
     const b = pos(path[i + 1]);
     return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
-  }, [progress, path]);
+  }, [mounted, progress, path]);
 
   function reset() {
     setRelayUp(true);

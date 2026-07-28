@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 
 const nav = [
   { to: "/", label: "Genel Bakış" },
@@ -90,14 +91,10 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <Link
-            to="/en"
-            className="hidden font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            EN
-          </Link>
+        <div className="ml-4 flex items-center gap-3 pl-4 lg:border-l lg:border-border/60">
           <AuthAffordance />
+          <span aria-hidden className="hidden h-5 w-px bg-border/70 sm:block" />
+          <LanguageSwitcher />
 
           <Link
             to="/iletisim"

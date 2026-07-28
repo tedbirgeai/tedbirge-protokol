@@ -165,6 +165,12 @@ function Compliance() {
           Ethernet, Wi-Fi (2.4/5 GHz), hücresel ve uydu taşıyıcıları her bölgede operatörün
           mevcut aboneliği/donanımı üzerinden çalışır; ek spektrum izni gerektirmez.
         </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Kaynaklar: ETSI EN 300 220 / EN 302 567, FCC Part 15.247 &amp; 15.255, Ofcom IR 2030,
+          BTK KEGY, ACMA/ARIB/IMDA sub-GHz düzenlemeleri, IEC 60825-1 lazer sınıflandırması.
+          Matris bilgilendirme amaçlıdır; konuşlanmadan önce ilgili ulusal düzenleyicinin
+          yürürlükteki metni esas alınmalıdır.
+        </p>
       </section>
 
       <section className="border-y border-border/60 bg-card/30">
