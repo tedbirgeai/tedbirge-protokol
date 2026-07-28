@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
+import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as IndexRouteImport } from './routes/index'
 
 const UrunRoute = UrunRouteImport.update({
@@ -23,6 +24,11 @@ const FiyatlandirmaRoute = FiyatlandirmaRouteImport.update({
   path: '/fiyatlandirma',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DokumanlarRoute = DokumanlarRouteImport.update({
+  id: '/dokumanlar',
+  path: '/dokumanlar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/urun': typeof UrunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/urun': typeof UrunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/urun': typeof UrunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/fiyatlandirma' | '/urun'
+  fullPaths: '/' | '/dokumanlar' | '/fiyatlandirma' | '/urun'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/fiyatlandirma' | '/urun'
-  id: '__root__' | '/' | '/fiyatlandirma' | '/urun'
+  to: '/' | '/dokumanlar' | '/fiyatlandirma' | '/urun'
+  id: '__root__' | '/' | '/dokumanlar' | '/fiyatlandirma' | '/urun'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DokumanlarRoute: typeof DokumanlarRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   UrunRoute: typeof UrunRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FiyatlandirmaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dokumanlar': {
+      id: '/dokumanlar'
+      path: '/dokumanlar'
+      fullPath: '/dokumanlar'
+      preLoaderRoute: typeof DokumanlarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DokumanlarRoute: DokumanlarRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   UrunRoute: UrunRoute,
 }
