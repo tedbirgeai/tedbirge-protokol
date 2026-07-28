@@ -1,9 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
-import { getGuide, guides } from "@/lib/guides";
+import { getGuide, guides, type Guide } from "@/lib/guides";
 
 export const Route = createFileRoute("/rehber/$slug")({
-  loader: ({ params }) => {
+  loader: ({ params }): Guide => {
     const guide = getGuide(params.slug);
     if (!guide) throw notFound();
     return guide;
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/rehber/$slug")({
 });
 
 function GuideDetail() {
-  const guide = Route.useLoaderData();
+  const guide = Route.useLoaderData() as Guide;
   const others = guides.filter((g) => g.slug !== guide.slug);
 
   return (

@@ -24,6 +24,7 @@ import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RehberIndexRouteImport } from './routes/rehber.index'
+import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -102,6 +103,11 @@ const RehberIndexRoute = RehberIndexRouteImport.update({
   path: '/rehber/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RehberSlugRoute = RehberSlugRouteImport.update({
+  id: '/rehber/$slug',
+  path: '/rehber/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
   id: '/yonetim',
   path: '/yonetim',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/urun': typeof UrunRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
+  '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/urun': typeof UrunRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
+  '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/urun': typeof UrunRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
+  '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/urun'
     | '/panel'
     | '/yonetim'
+    | '/rehber/$slug'
     | '/rehber/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/urun'
     | '/panel'
     | '/yonetim'
+    | '/rehber/$slug'
     | '/rehber'
     | '/api/public/payments/webhook'
   id:
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/urun'
     | '/_authenticated/panel'
     | '/_authenticated/yonetim'
+    | '/rehber/$slug'
     | '/rehber/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -254,6 +266,7 @@ export interface RootRouteChildren {
   KosullarRoute: typeof KosullarRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   UrunRoute: typeof UrunRoute
+  RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -365,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RehberIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rehber/$slug': {
+      id: '/rehber/$slug'
+      path: '/rehber/$slug'
+      fullPath: '/rehber/$slug'
+      preLoaderRoute: typeof RehberSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/yonetim': {
       id: '/_authenticated/yonetim'
       path: '/yonetim'
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   KosullarRoute: KosullarRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   UrunRoute: UrunRoute,
+  RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
