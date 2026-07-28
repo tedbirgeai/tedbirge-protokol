@@ -147,7 +147,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-5 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Tedbirge Protokol</span>
+          <span>© {new Date().getFullYear()} Tedbirge Protokol · Mehmet DİNÇ (Tedbirge)</span>
           <span>v0.6a-turnkey · Ed25519 · AES-256-GCM</span>
         </div>
       </div>
