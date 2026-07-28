@@ -20,9 +20,12 @@ import { Route as GizlilikRouteImport } from './routes/gizlilik'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RehberIndexRouteImport } from './routes/rehber.index'
+import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -82,6 +85,11 @@ const DokumanlarRoute = DokumanlarRouteImport.update({
   path: '/dokumanlar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AfetKamuRoute = AfetKamuRouteImport.update({
   id: '/afet-kamu',
   path: '/afet-kamu',
@@ -94,6 +102,16 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RehberIndexRoute = RehberIndexRouteImport.update({
+  id: '/rehber/',
+  path: '/rehber/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RehberSlugRoute = RehberSlugRouteImport.update({
+  id: '/rehber/$slug',
+  path: '/rehber/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
@@ -116,6 +134,7 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/afet-kamu': typeof AfetKamuRoute
+  '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
@@ -129,11 +148,14 @@ export interface FileRoutesByFullPath {
   '/urun': typeof UrunRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
+  '/rehber/$slug': typeof RehberSlugRoute
+  '/rehber/': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/afet-kamu': typeof AfetKamuRoute
+  '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
@@ -147,6 +169,8 @@ export interface FileRoutesByTo {
   '/urun': typeof UrunRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
+  '/rehber/$slug': typeof RehberSlugRoute
+  '/rehber': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -154,6 +178,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/afet-kamu': typeof AfetKamuRoute
+  '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
@@ -167,6 +192,8 @@ export interface FileRoutesById {
   '/urun': typeof UrunRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
+  '/rehber/$slug': typeof RehberSlugRoute
+  '/rehber/': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -174,6 +201,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/afet-kamu'
+    | '/demo'
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
@@ -187,11 +215,14 @@ export interface FileRouteTypes {
     | '/urun'
     | '/panel'
     | '/yonetim'
+    | '/rehber/$slug'
+    | '/rehber/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/afet-kamu'
+    | '/demo'
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
@@ -205,12 +236,15 @@ export interface FileRouteTypes {
     | '/urun'
     | '/panel'
     | '/yonetim'
+    | '/rehber/$slug'
+    | '/rehber'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/afet-kamu'
+    | '/demo'
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
@@ -224,6 +258,8 @@ export interface FileRouteTypes {
     | '/urun'
     | '/_authenticated/panel'
     | '/_authenticated/yonetim'
+    | '/rehber/$slug'
+    | '/rehber/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -231,6 +267,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AfetKamuRoute: typeof AfetKamuRoute
+  DemoRoute: typeof DemoRoute
   DokumanlarRoute: typeof DokumanlarRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   GirisRoute: typeof GirisRoute
@@ -242,6 +279,8 @@ export interface RootRouteChildren {
   KosullarRoute: typeof KosullarRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   UrunRoute: typeof UrunRoute
+  RehberSlugRoute: typeof RehberSlugRoute
+  RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -324,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DokumanlarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/afet-kamu': {
       id: '/afet-kamu'
       path: '/afet-kamu'
@@ -343,6 +389,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rehber/': {
+      id: '/rehber/'
+      path: '/rehber'
+      fullPath: '/rehber/'
+      preLoaderRoute: typeof RehberIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rehber/$slug': {
+      id: '/rehber/$slug'
+      path: '/rehber/$slug'
+      fullPath: '/rehber/$slug'
+      preLoaderRoute: typeof RehberSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/yonetim': {
@@ -386,6 +446,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AfetKamuRoute: AfetKamuRoute,
+  DemoRoute: DemoRoute,
   DokumanlarRoute: DokumanlarRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   GirisRoute: GirisRoute,
@@ -397,6 +458,8 @@ const rootRouteChildren: RootRouteChildren = {
   KosullarRoute: KosullarRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   UrunRoute: UrunRoute,
+  RehberSlugRoute: RehberSlugRoute,
+  RehberIndexRoute: RehberIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport

@@ -274,6 +274,66 @@ tedbirge-cli exit-demo   # WAN köprüsü`}</code>
       </section>
 
 
+      {/* PROOF */}
+      <section className="border-y border-border/60 bg-card/30">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <SectionLabel>Doğrulanmış davranış</SectionLabel>
+          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            Referans yerine tekrarlanabilir test
+          </h2>
+          <p className="mt-5 max-w-2xl text-muted-foreground">
+            Henüz müşteri logosu göstermiyoruz. Onun yerine, iddialarımızı kendi cihazınızda
+            tekrar edebileceğiniz komutlarla kanıtlıyoruz — çıktılar sahada bizde de aynı.
+          </p>
+          <div className="mt-12 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-3">
+            {[
+              {
+                cmd: "tedbirge-cli mesh-demo",
+                result: "3 düğüm · kayıpsız aktarım",
+                note: "Çok-sıçramalı yol A → B → C üzerinden kurulur, bütünlük SHA-256 ile doğrulanır.",
+              },
+              {
+                cmd: "tedbirge-cli p2p-demo",
+                result: "0-WAN dosya takası",
+                note: "İnternet tamamen kapalıyken iki düğüm arasında imzalı fişli aktarım.",
+              },
+              {
+                cmd: "tedbirge-cli exit-demo",
+                result: "WAN köprüsü",
+                note: "WAN'ı olmayan düğüm, komşu exit düğüm üzerinden şifreli olarak çıkar.",
+              },
+            ].map((t) => (
+              <div key={t.cmd} className="bg-background/70 p-7">
+                <p className="font-mono text-[12px] text-primary">{t.cmd}</p>
+                <p className="mt-3 text-sm font-medium">{t.result}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t.note}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/demo"
+              className="rounded-sm bg-primary px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+            >
+              Tarayıcıda dene
+            </Link>
+            <a
+              href="/tedbirge-teknik-ozet.md"
+              download
+              className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-colors hover:bg-secondary"
+            >
+              Teknik özeti indir
+            </a>
+            <Link
+              to="/rehber"
+              className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-colors hover:bg-secondary"
+            >
+              Mühendislik rehberleri
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="border-t border-border/60 bg-card/30">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-6 py-20 md:flex-row md:items-center">

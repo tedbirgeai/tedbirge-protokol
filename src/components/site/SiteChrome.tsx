@@ -11,8 +11,10 @@ const nav = [
   { to: "/tasiyicilar", label: "Taşıyıcılar" },
   { to: "/afet-kamu", label: "Afet & Kamu" },
   { to: "/karsilastirma", label: "Karşılaştırma" },
+  { to: "/demo", label: "Demo" },
   { to: "/fiyatlandirma", label: "Fiyatlandırma" },
   { to: "/dokumanlar", label: "Dokümanlar" },
+  { to: "/rehber", label: "Rehber" },
 ];
 
 
@@ -68,17 +70,17 @@ export function SiteHeader() {
             <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_2px_var(--color-primary)]" />
           </span>
           <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
-            TEDBIRGE
+            TEDBİRGE GATEWAY
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex">
+        <nav className="hidden items-center gap-5 lg:flex">
           {nav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-sm text-foreground" }}
+              className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+              activeProps={{ className: "text-[13px] text-foreground" }}
               activeOptions={{ exact: item.to === "/" }}
             >
               {item.label}
@@ -105,7 +107,7 @@ export function SiteFooter() {
     <footer className="border-t border-border/60 bg-card/30">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-4">
         <div>
-          <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBIRGE PROTOKOL</p>
+          <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBİRGE GATEWAY</p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
             Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Tek statik binary,
             dış bağımlılık yok, off-grid çalışır.
@@ -120,6 +122,9 @@ export function SiteFooter() {
             <li><Link to="/karsilastirma" className="text-muted-foreground hover:text-foreground">Karşılaştırma</Link></li>
             <li><Link to="/fiyatlandirma" className="text-muted-foreground hover:text-foreground">Fiyatlandırma</Link></li>
             <li><Link to="/dokumanlar" className="text-muted-foreground hover:text-foreground">Dokümanlar</Link></li>
+            <li><Link to="/demo" className="text-muted-foreground hover:text-foreground">Canlı demo</Link></li>
+            <li><Link to="/rehber" className="text-muted-foreground hover:text-foreground">Rehber</Link></li>
+            <li><a href="/tedbirge-teknik-ozet.md" download className="text-muted-foreground hover:text-foreground">Teknik özet (.md)</a></li>
           </ul>
         </div>
         <div>
