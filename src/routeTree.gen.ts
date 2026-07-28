@@ -9,8 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UrunRouteImport } from './routes/urun'
 import { Route as IndexRouteImport } from './routes/index'
 
+const UrunRoute = UrunRouteImport.update({
+  id: '/urun',
+  path: '/urun',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +25,39 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/urun': typeof UrunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/urun': typeof UrunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/urun': typeof UrunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/urun'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/urun'
+  id: '__root__' | '/' | '/urun'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  UrunRoute: typeof UrunRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/urun': {
+      id: '/urun'
+      path: '/urun'
+      fullPath: '/urun'
+      preLoaderRoute: typeof UrunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  UrunRoute: UrunRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
