@@ -121,8 +121,15 @@ function Privacy() {
         </Section>
 
         <Section title="10. İletişim">
-          <p>Veri sahibi başvuruları için iletişim formunu kullanabilirsiniz.</p>
+          <p>
+            Veri sahibi başvuruları için iletişim formunu kullanabilir veya{" "}
+            <a className="text-primary underline" href="mailto:tedbirge34@gmail.com">
+              tedbirge34@gmail.com
+            </a>{" "}
+            adresine yazabilirsiniz.
+          </p>
         </Section>
+
       </section>
     </SitePage>
   );
