@@ -10,7 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UrunRouteImport } from './routes/urun'
+import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
+import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as IletisimRouteImport } from './routes/iletisim'
+import { Route as IadeRouteImport } from './routes/iade'
+import { Route as GizlilikRouteImport } from './routes/gizlilik'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
@@ -25,9 +29,29 @@ const UrunRoute = UrunRouteImport.update({
   path: '/urun',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TasiyicilarRoute = TasiyicilarRouteImport.update({
+  id: '/tasiyicilar',
+  path: '/tasiyicilar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KosullarRoute = KosullarRouteImport.update({
+  id: '/kosullar',
+  path: '/kosullar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IletisimRoute = IletisimRouteImport.update({
   id: '/iletisim',
   path: '/iletisim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IadeRoute = IadeRouteImport.update({
+  id: '/iade',
+  path: '/iade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GizlilikRoute = GizlilikRouteImport.update({
+  id: '/gizlilik',
+  path: '/gizlilik',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GirisRoute = GirisRouteImport.update({
@@ -76,7 +100,11 @@ export interface FileRoutesByFullPath {
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
+  '/gizlilik': typeof GizlilikRoute
+  '/iade': typeof IadeRoute
   '/iletisim': typeof IletisimRoute
+  '/kosullar': typeof KosullarRoute
+  '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
@@ -87,7 +115,11 @@ export interface FileRoutesByTo {
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
+  '/gizlilik': typeof GizlilikRoute
+  '/iade': typeof IadeRoute
   '/iletisim': typeof IletisimRoute
+  '/kosullar': typeof KosullarRoute
+  '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
@@ -100,7 +132,11 @@ export interface FileRoutesById {
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
+  '/gizlilik': typeof GizlilikRoute
+  '/iade': typeof IadeRoute
   '/iletisim': typeof IletisimRoute
+  '/kosullar': typeof KosullarRoute
+  '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
@@ -113,7 +149,11 @@ export interface FileRouteTypes {
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
+    | '/gizlilik'
+    | '/iade'
     | '/iletisim'
+    | '/kosullar'
+    | '/tasiyicilar'
     | '/urun'
     | '/panel'
     | '/yonetim'
@@ -124,7 +164,11 @@ export interface FileRouteTypes {
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
+    | '/gizlilik'
+    | '/iade'
     | '/iletisim'
+    | '/kosullar'
+    | '/tasiyicilar'
     | '/urun'
     | '/panel'
     | '/yonetim'
@@ -136,7 +180,11 @@ export interface FileRouteTypes {
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
+    | '/gizlilik'
+    | '/iade'
     | '/iletisim'
+    | '/kosullar'
+    | '/tasiyicilar'
     | '/urun'
     | '/_authenticated/panel'
     | '/_authenticated/yonetim'
@@ -149,7 +197,11 @@ export interface RootRouteChildren {
   DokumanlarRoute: typeof DokumanlarRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   GirisRoute: typeof GirisRoute
+  GizlilikRoute: typeof GizlilikRoute
+  IadeRoute: typeof IadeRoute
   IletisimRoute: typeof IletisimRoute
+  KosullarRoute: typeof KosullarRoute
+  TasiyicilarRoute: typeof TasiyicilarRoute
   UrunRoute: typeof UrunRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -163,11 +215,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UrunRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tasiyicilar': {
+      id: '/tasiyicilar'
+      path: '/tasiyicilar'
+      fullPath: '/tasiyicilar'
+      preLoaderRoute: typeof TasiyicilarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kosullar': {
+      id: '/kosullar'
+      path: '/kosullar'
+      fullPath: '/kosullar'
+      preLoaderRoute: typeof KosullarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/iletisim': {
       id: '/iletisim'
       path: '/iletisim'
       fullPath: '/iletisim'
       preLoaderRoute: typeof IletisimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iade': {
+      id: '/iade'
+      path: '/iade'
+      fullPath: '/iade'
+      preLoaderRoute: typeof IadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gizlilik': {
+      id: '/gizlilik'
+      path: '/gizlilik'
+      fullPath: '/gizlilik'
+      preLoaderRoute: typeof GizlilikRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/giris': {
@@ -248,7 +328,11 @@ const rootRouteChildren: RootRouteChildren = {
   DokumanlarRoute: DokumanlarRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   GirisRoute: GirisRoute,
+  GizlilikRoute: GizlilikRoute,
+  IadeRoute: IadeRoute,
   IletisimRoute: IletisimRoute,
+  KosullarRoute: KosullarRoute,
+  TasiyicilarRoute: TasiyicilarRoute,
   UrunRoute: UrunRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
