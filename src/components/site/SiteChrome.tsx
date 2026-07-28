@@ -91,13 +91,9 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link
-            to="/en"
-            className="hidden font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            EN
-          </Link>
           <AuthAffordance />
+          <span aria-hidden className="hidden h-5 w-px bg-border/70 sm:block" />
+          <LanguageSwitcher />
 
           <Link
             to="/iletisim"
