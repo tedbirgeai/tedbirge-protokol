@@ -53,6 +53,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 export function MeshDemo() {
+  const [mounted, setMounted] = useState(false);
   const [relayUp, setRelayUp] = useState(true);
   const [directLink, setDirectLink] = useState(false);
   const [running, setRunning] = useState(true);
@@ -62,6 +63,11 @@ export function MeshDemo() {
   const [delivered, setDelivered] = useState(0);
   const [dropped, setDropped] = useState(0);
   const raf = useRef<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
 
   const path: NodeId[] | null = useMemo(() => {
     if (relayUp) return ["A", "B", "C"];
