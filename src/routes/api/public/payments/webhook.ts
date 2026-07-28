@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { verifyWebhook, EventName, type PaddleEnv } from "@/lib/paddle.server";
 
-let _supabase: ReturnType<typeof createClient> | null = null;
-function getSupabase() {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+let _supabase: any = null;
+function getSupabase(): any {
   if (!_supabase) {
     _supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   }
@@ -49,22 +50,29 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
       { onConflict: "paddle_subscription_id" },
     );
 
-  await getSupabase()
+  const { data: existing } = await getSupabase()
     .from("licenses")
-    .upsert(
-      {
-        user_id: userId,
-        email: customData?.email ?? "",
-        plan: productId,
-        status: "active",
-        node_limit: item.quantity ?? 25,
-        provider: "paddle",
-        provider_subscription_id: id,
-        current_period_end: currentBillingPeriod?.endsAt,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "provider_subscription_id" },
-    );
+    .select("id")
+    .eq("provider_subscription_id", id)
+    .maybeSingle();
+
+  const licenseRow = {
+    user_id: userId,
+    email: customData?.email ?? "",
+    plan: productId,
+    status: "active",
+    node_limit: item.quantity ?? 25,
+    provider: "paddle",
+    provider_subscription_id: id,
+    current_period_end: currentBillingPeriod?.endsAt,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing) {
+    await getSupabase().from("licenses").update(licenseRow).eq("id", existing.id);
+  } else {
+    await getSupabase().from("licenses").insert(licenseRow);
+  }
 }
 
 async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {

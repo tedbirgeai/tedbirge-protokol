@@ -14,6 +14,7 @@ import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const UrunRoute = UrunRouteImport.update({
   id: '/urun',
@@ -40,6 +41,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +54,7 @@ export interface FileRoutesByFullPath {
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/iletisim': typeof IletisimRoute
   '/urun': typeof UrunRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +62,7 @@ export interface FileRoutesByTo {
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/iletisim': typeof IletisimRoute
   '/urun': typeof UrunRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,12 +71,25 @@ export interface FileRoutesById {
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/iletisim': typeof IletisimRoute
   '/urun': typeof UrunRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dokumanlar' | '/fiyatlandirma' | '/iletisim' | '/urun'
+  fullPaths:
+    | '/'
+    | '/dokumanlar'
+    | '/fiyatlandirma'
+    | '/iletisim'
+    | '/urun'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dokumanlar' | '/fiyatlandirma' | '/iletisim' | '/urun'
+  to:
+    | '/'
+    | '/dokumanlar'
+    | '/fiyatlandirma'
+    | '/iletisim'
+    | '/urun'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -75,6 +97,7 @@ export interface FileRouteTypes {
     | '/fiyatlandirma'
     | '/iletisim'
     | '/urun'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -83,6 +106,7 @@ export interface RootRouteChildren {
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   IletisimRoute: typeof IletisimRoute
   UrunRoute: typeof UrunRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -122,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -131,6 +162,7 @@ const rootRouteChildren: RootRouteChildren = {
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   IletisimRoute: IletisimRoute,
   UrunRoute: UrunRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
