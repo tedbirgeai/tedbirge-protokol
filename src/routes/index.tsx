@@ -257,7 +257,22 @@ tedbirge-cli exit-demo   # WAN köprüsü`}</code>
             </div>
           ))}
         </div>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            to="/afet-kamu"
+            className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary"
+          >
+            Afet & kamu senaryosu
+          </Link>
+          <Link
+            to="/karsilastirma"
+            className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary"
+          >
+            Alternatiflerle karşılaştır
+          </Link>
+        </div>
       </section>
+
 
       {/* CTA */}
       <section className="border-t border-border/60 bg-card/30">

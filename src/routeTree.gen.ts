@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as KosullarRouteImport } from './routes/kosullar'
+import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IadeRouteImport } from './routes/iade'
+import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
+import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
@@ -39,6 +42,11 @@ const KosullarRoute = KosullarRouteImport.update({
   path: '/kosullar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
+  id: '/karsilastirma',
+  path: '/karsilastirma',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IletisimRoute = IletisimRouteImport.update({
   id: '/iletisim',
   path: '/iletisim',
@@ -47,6 +55,11 @@ const IletisimRoute = IletisimRouteImport.update({
 const IadeRoute = IadeRouteImport.update({
   id: '/iade',
   path: '/iade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HakkimizdaRoute = HakkimizdaRouteImport.update({
+  id: '/hakkimizda',
+  path: '/hakkimizda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GizlilikRoute = GizlilikRouteImport.update({
@@ -67,6 +80,11 @@ const FiyatlandirmaRoute = FiyatlandirmaRouteImport.update({
 const DokumanlarRoute = DokumanlarRouteImport.update({
   id: '/dokumanlar',
   path: '/dokumanlar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AfetKamuRoute = AfetKamuRouteImport.update({
+  id: '/afet-kamu',
+  path: '/afet-kamu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -97,12 +115,15 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/afet-kamu': typeof AfetKamuRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
+  '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
   '/iletisim': typeof IletisimRoute
+  '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
@@ -112,12 +133,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/afet-kamu': typeof AfetKamuRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
+  '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
   '/iletisim': typeof IletisimRoute
+  '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
@@ -129,12 +153,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/afet-kamu': typeof AfetKamuRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
+  '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
   '/iletisim': typeof IletisimRoute
+  '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/urun': typeof UrunRoute
@@ -146,12 +173,15 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/afet-kamu'
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
+    | '/hakkimizda'
     | '/iade'
     | '/iletisim'
+    | '/karsilastirma'
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
@@ -161,12 +191,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/afet-kamu'
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
+    | '/hakkimizda'
     | '/iade'
     | '/iletisim'
+    | '/karsilastirma'
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
@@ -177,12 +210,15 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/afet-kamu'
     | '/dokumanlar'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
+    | '/hakkimizda'
     | '/iade'
     | '/iletisim'
+    | '/karsilastirma'
     | '/kosullar'
     | '/tasiyicilar'
     | '/urun'
@@ -194,12 +230,15 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AfetKamuRoute: typeof AfetKamuRoute
   DokumanlarRoute: typeof DokumanlarRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   GirisRoute: typeof GirisRoute
   GizlilikRoute: typeof GizlilikRoute
+  HakkimizdaRoute: typeof HakkimizdaRoute
   IadeRoute: typeof IadeRoute
   IletisimRoute: typeof IletisimRoute
+  KarsilastirmaRoute: typeof KarsilastirmaRoute
   KosullarRoute: typeof KosullarRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   UrunRoute: typeof UrunRoute
@@ -229,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KosullarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/karsilastirma': {
+      id: '/karsilastirma'
+      path: '/karsilastirma'
+      fullPath: '/karsilastirma'
+      preLoaderRoute: typeof KarsilastirmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/iletisim': {
       id: '/iletisim'
       path: '/iletisim'
@@ -241,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/iade'
       fullPath: '/iade'
       preLoaderRoute: typeof IadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hakkimizda': {
+      id: '/hakkimizda'
+      path: '/hakkimizda'
+      fullPath: '/hakkimizda'
+      preLoaderRoute: typeof HakkimizdaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gizlilik': {
@@ -269,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/dokumanlar'
       fullPath: '/dokumanlar'
       preLoaderRoute: typeof DokumanlarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/afet-kamu': {
+      id: '/afet-kamu'
+      path: '/afet-kamu'
+      fullPath: '/afet-kamu'
+      preLoaderRoute: typeof AfetKamuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -325,12 +385,15 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AfetKamuRoute: AfetKamuRoute,
   DokumanlarRoute: DokumanlarRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   GirisRoute: GirisRoute,
   GizlilikRoute: GizlilikRoute,
+  HakkimizdaRoute: HakkimizdaRoute,
   IadeRoute: IadeRoute,
   IletisimRoute: IletisimRoute,
+  KarsilastirmaRoute: KarsilastirmaRoute,
   KosullarRoute: KosullarRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   UrunRoute: UrunRoute,
