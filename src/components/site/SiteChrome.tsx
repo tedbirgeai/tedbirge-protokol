@@ -1,12 +1,60 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 const nav = [
   { to: "/", label: "Genel Bakış" },
   { to: "/urun", label: "Ürün" },
+  { to: "/tasiyicilar", label: "Taşıyıcılar" },
   { to: "/fiyatlandirma", label: "Fiyatlandırma" },
   { to: "/dokumanlar", label: "Dokümanlar" },
 ];
+
+function AuthAffordance() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  if (loading) return null;
+
+  if (!user) {
+    return (
+      <Link
+        to="/giris"
+        className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+      >
+        Giriş
+      </Link>
+    );
+  }
+
+  async function handleSignOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/giris", replace: true });
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <Link
+        to="/panel"
+        className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+      >
+        Panel
+      </Link>
+      <button
+        onClick={handleSignOut}
+        className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+      >
+        Çıkış
+      </button>
+    </div>
+  );
+}
 
 export function SiteHeader() {
   return (
@@ -21,7 +69,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {nav.map((item) => (
             <Link
               key={item.to}
@@ -36,19 +84,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a
-            href="https://github.com/tedbirgeai/aetheris"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
-          >
-            GitHub
-          </a>
+          <AuthAffordance />
           <Link
             to="/iletisim"
             className="rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
           >
-            Demo Talep Et
+            Pilot Başlat
           </Link>
         </div>
       </div>
@@ -60,7 +101,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 bg-card/30">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-4">
-        <div className="md:col-span-2">
+        <div>
           <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBIRGE PROTOKOL</p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
             Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Tek statik binary,
@@ -71,6 +112,7 @@ export function SiteFooter() {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Ürün</p>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/urun" className="text-muted-foreground hover:text-foreground">Yetenekler</Link></li>
+            <li><Link to="/tasiyicilar" className="text-muted-foreground hover:text-foreground">Taşıyıcılar</Link></li>
             <li><Link to="/fiyatlandirma" className="text-muted-foreground hover:text-foreground">Fiyatlandırma</Link></li>
             <li><Link to="/dokumanlar" className="text-muted-foreground hover:text-foreground">Dokümanlar</Link></li>
           </ul>
@@ -79,11 +121,20 @@ export function SiteFooter() {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket</p>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/iletisim" className="text-muted-foreground hover:text-foreground">İletişim</Link></li>
+            <li><Link to="/panel" className="text-muted-foreground hover:text-foreground">Müşteri paneli</Link></li>
             <li>
               <a href="https://github.com/tedbirgeai/aetheris" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
                 Kaynak kod
               </a>
             </li>
+          </ul>
+        </div>
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Yasal</p>
+          <ul className="mt-4 space-y-2 text-sm">
+            <li><Link to="/kosullar" className="text-muted-foreground hover:text-foreground">Kullanım Koşulları</Link></li>
+            <li><Link to="/gizlilik" className="text-muted-foreground hover:text-foreground">Gizlilik Bildirimi</Link></li>
+            <li><Link to="/iade" className="text-muted-foreground hover:text-foreground">İade Politikası</Link></li>
           </ul>
         </div>
       </div>
@@ -100,6 +151,7 @@ export function SiteFooter() {
 export function SitePage({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <PaymentTestModeBanner />
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />
