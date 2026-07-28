@@ -77,11 +77,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tedbirge Saha Ağı — Delil Zinciri Altyapısı" },
-      { name: "description", content: "Kaza yerinden hukuk bürosuna KVKK uyumlu, imzalı delil zinciri." },
-      { name: "author", content: "Tedbirge" },
-      { property: "og:title", content: "Tedbirge Saha Ağı" },
-      { property: "og:description", content: "İnternetsiz çalışan, sıfır-bilgi delil taşıma altyapısı." },
+      { title: "Aetheris Protocol — Off-Grid Mesh Ağ Geçidi" },
+      { name: "description", content: "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı." },
+      { name: "author", content: "Aetheris Protocol" },
+      { property: "og:title", content: "Aetheris Protocol" },
+      { property: "og:description", content: "İnternet olmadan çalışan kurumsal mesh altyapısı." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -96,9 +96,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
       },
-
     ],
   }),
   shellComponent: RootShell,
@@ -109,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr">
+    <html lang="tr" className="dark">
       <head>
         <HeadContent />
       </head>
