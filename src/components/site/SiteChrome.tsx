@@ -10,12 +10,14 @@ const nav = [
   { to: "/urun", label: "Ürün" },
   { to: "/tasiyicilar", label: "Taşıyıcılar" },
   { to: "/afet-kamu", label: "Afet & Kamu" },
-  { to: "/karsilastirma", label: "Karşılaştırma" },
+  { to: "/uyumluluk", label: "Uyum" },
+  { to: "/guvenlik", label: "Güvenlik" },
   { to: "/demo", label: "Demo" },
   { to: "/fiyatlandirma", label: "Fiyatlandırma" },
   { to: "/dokumanlar", label: "Dokümanlar" },
   { to: "/rehber", label: "Rehber" },
 ];
+
 
 
 function AuthAffordance() {
