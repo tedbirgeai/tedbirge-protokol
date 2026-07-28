@@ -53,15 +53,38 @@ export function getWebhookSecret(env: PaddleEnv): string {
     : getEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
 }
 
+export class WebhookSignatureError extends Error {}
+
+/**
+ * İmzayı doğrular ve olayı çözümler.
+ * İmza geçersizse `WebhookSignatureError` fırlatır (400 döndürülür).
+ * İmza geçerli ama SDK olayı çözümleyemiyorsa (ör. ilgilenmediğimiz yeni bir
+ * olay tipi) ham JSON ile geri döneriz; böylece Paddle'a gereksiz 400 dönüp
+ * 3 gün boyunca yeniden denemesine yol açmayız.
+ */
 export async function verifyWebhook(req: Request, env: PaddleEnv) {
   const signature = req.headers.get("paddle-signature");
   const body = await req.text();
   const secret = getWebhookSecret(env);
 
   if (!signature || !body) {
-    throw new Error("Missing signature or body");
+    throw new WebhookSignatureError("Missing signature or body");
   }
 
   const paddle = getPaddleClient(env);
-  return await paddle.webhooks.unmarshal(body, secret, signature);
+
+  if (!(await paddle.webhooks.isSignatureValid(body, secret, signature))) {
+    throw new WebhookSignatureError("Invalid Paddle signature");
+  }
+
+  try {
+    return await paddle.webhooks.unmarshal(body, secret, signature);
+  } catch (e) {
+    console.warn("Paddle event could not be parsed by SDK, falling back to raw JSON", e);
+    const raw = JSON.parse(body) as { event_type?: string };
+    return { eventType: raw.event_type ?? "unknown", data: null } as unknown as Awaited<
+      ReturnType<typeof paddle.webhooks.unmarshal>
+    >;
+  }
 }
+

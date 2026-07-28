@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { verifyWebhook, EventName, type PaddleEnv } from "@/lib/paddle.server";
+import {
+  verifyWebhook,
+  WebhookSignatureError,
+  EventName,
+  type PaddleEnv,
+} from "@/lib/paddle.server";
+import { planByProductId, planByPriceId } from "@/lib/paddle-catalog";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let _supabase: any = null;
@@ -29,6 +35,12 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
       rawPriceId: item.price.id,
       rawProductId: item.product?.id,
     });
+    return;
+  }
+
+  const plan = planByProductId(productId) ?? planByPriceId(priceId);
+  if (!plan) {
+    console.warn("Unknown product/price mapping, skipping", { productId, priceId });
     return;
   }
 
@@ -61,7 +73,7 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     email: customData?.email ?? "",
     plan: productId,
     status: "active",
-    node_limit: item.quantity ?? 25,
+    node_limit: item.quantity ?? plan.minNodes,
     provider: "paddle",
     provider_subscription_id: id,
     current_period_end: currentBillingPeriod?.endsAt,
@@ -133,7 +145,11 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           return Response.json({ received: true });
         } catch (e) {
           console.error("Webhook error:", e);
-          return new Response("Webhook error", { status: 400 });
+          if (e instanceof WebhookSignatureError) {
+            return new Response("Invalid signature", { status: 401 });
+          }
+          // İşleme hatası: Paddle yeniden denesin diye 500 döneriz.
+          return new Response("Webhook processing error", { status: 500 });
         }
       },
     },
