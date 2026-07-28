@@ -116,6 +116,8 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/urun" className="text-muted-foreground hover:text-foreground">Yetenekler</Link></li>
             <li><Link to="/tasiyicilar" className="text-muted-foreground hover:text-foreground">Taşıyıcılar</Link></li>
+            <li><Link to="/afet-kamu" className="text-muted-foreground hover:text-foreground">Afet & Kamu</Link></li>
+            <li><Link to="/karsilastirma" className="text-muted-foreground hover:text-foreground">Karşılaştırma</Link></li>
             <li><Link to="/fiyatlandirma" className="text-muted-foreground hover:text-foreground">Fiyatlandırma</Link></li>
             <li><Link to="/dokumanlar" className="text-muted-foreground hover:text-foreground">Dokümanlar</Link></li>
           </ul>
@@ -123,8 +125,10 @@ export function SiteFooter() {
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket</p>
           <ul className="mt-4 space-y-2 text-sm">
+            <li><Link to="/hakkimizda" className="text-muted-foreground hover:text-foreground">Hakkımızda</Link></li>
             <li><Link to="/iletisim" className="text-muted-foreground hover:text-foreground">İletişim</Link></li>
             <li><Link to="/panel" className="text-muted-foreground hover:text-foreground">Müşteri paneli</Link></li>
+
             <li>
               <a href="https://github.com/tedbirgeai/aetheris" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
                 Kaynak kod
