@@ -155,6 +155,40 @@ function Index() {
         </div>
       </section>
 
+      {/* MODULES */}
+      <section className="border-y border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <SectionLabel>Ürün ailesi</SectionLabel>
+          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            Tedbirge Protokol&apos;ün üç modülü
+          </h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                name: "Tedbirge Gateway",
+                body: "Tünel proxy motoru ve exit node: AES-256-GCM chunk şifreleme, zero-knowledge ölçüm ve WAN köprüsü. Tek statik binary olarak çalışır.",
+              },
+              {
+                name: "Tedbirge Loop",
+                body: "Mesh yönlendirme ve gossip halkası: Dijkstra çok-sıçramalı yol seçimi, komşu keşfi, TTL ve loop-prevention.",
+              },
+              {
+                name: "Tedbirge Off-Grid",
+                body: "İnternetsiz muhasebe katmanı: Ed25519 imzalı fiş, relay credit, çift harcama koruması ve sonradan mahsuplaşma.",
+              },
+            ].map((m) => (
+              <div key={m.name} className="rounded-sm border border-border bg-card/50 p-7">
+                <h3 className="font-mono text-sm uppercase tracking-[0.15em] text-primary">
+                  {m.name}
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       {/* ARCHITECTURE */}
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 lg:grid-cols-2 lg:items-center">
