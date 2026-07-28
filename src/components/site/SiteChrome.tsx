@@ -9,9 +9,12 @@ const nav = [
   { to: "/", label: "Genel Bakış" },
   { to: "/urun", label: "Ürün" },
   { to: "/tasiyicilar", label: "Taşıyıcılar" },
+  { to: "/afet-kamu", label: "Afet & Kamu" },
+  { to: "/karsilastirma", label: "Karşılaştırma" },
   { to: "/fiyatlandirma", label: "Fiyatlandırma" },
   { to: "/dokumanlar", label: "Dokümanlar" },
 ];
+
 
 function AuthAffordance() {
   const { user, loading } = useAuth();
