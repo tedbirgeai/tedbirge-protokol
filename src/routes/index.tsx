@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
 const stats = [
   { value: "5 platform", label: "cross-compile binary" },
   { value: "0 bağımlılık", label: "Node.js / CDN yok" },
-  { value: "3 taşıyıcı", label: "LoRa · Wi-Fi · Ethernet" },
+  { value: "9 taşıyıcı", label: "Ethernet · Wi-Fi · LoRa · Uydu · FSO · TVWS" },
   { value: "AES-256", label: "GCM uçtan uca tünel" },
 ];
 
