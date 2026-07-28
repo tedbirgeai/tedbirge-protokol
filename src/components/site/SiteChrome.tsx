@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 
 const nav = [
   { to: "/", label: "Genel Bakış" },
