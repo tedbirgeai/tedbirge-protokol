@@ -15,6 +15,7 @@ import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
 import { Route as IletisimRouteImport } from './routes/iletisim'
+import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
@@ -59,6 +60,11 @@ const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
 const IletisimRoute = IletisimRouteImport.update({
   id: '/iletisim',
   path: '/iletisim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IhracatUyumRoute = IhracatUyumRouteImport.update({
+  id: '/ihracat-uyum',
+  path: '/ihracat-uyum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IadeRoute = IadeRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/gizlilik': typeof GizlilikRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
+  '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/gizlilik': typeof GizlilikRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
+  '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/gizlilik': typeof GizlilikRoute
   '/hakkimizda': typeof HakkimizdaRoute
   '/iade': typeof IadeRoute
+  '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/gizlilik'
     | '/hakkimizda'
     | '/iade'
+    | '/ihracat-uyum'
     | '/iletisim'
     | '/karsilastirma'
     | '/kosullar'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/gizlilik'
     | '/hakkimizda'
     | '/iade'
+    | '/ihracat-uyum'
     | '/iletisim'
     | '/karsilastirma'
     | '/kosullar'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/gizlilik'
     | '/hakkimizda'
     | '/iade'
+    | '/ihracat-uyum'
     | '/iletisim'
     | '/karsilastirma'
     | '/kosullar'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   GizlilikRoute: typeof GizlilikRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
   IadeRoute: typeof IadeRoute
+  IhracatUyumRoute: typeof IhracatUyumRoute
   IletisimRoute: typeof IletisimRoute
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KosullarRoute: typeof KosullarRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/iletisim'
       fullPath: '/iletisim'
       preLoaderRoute: typeof IletisimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ihracat-uyum': {
+      id: '/ihracat-uyum'
+      path: '/ihracat-uyum'
+      fullPath: '/ihracat-uyum'
+      preLoaderRoute: typeof IhracatUyumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/iade': {
@@ -473,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   GizlilikRoute: GizlilikRoute,
   HakkimizdaRoute: HakkimizdaRoute,
   IadeRoute: IadeRoute,
+  IhracatUyumRoute: IhracatUyumRoute,
   IletisimRoute: IletisimRoute,
   KarsilastirmaRoute: KarsilastirmaRoute,
   KosullarRoute: KosullarRoute,
