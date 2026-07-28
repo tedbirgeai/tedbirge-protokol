@@ -186,14 +186,115 @@ function Panel() {
                     <p className="mt-2 font-mono text-[11px] text-muted-foreground">
                       Düğüm limiti: {l.node_limit}
                     </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <CopyButton value={l.license_key} label="Anahtarı kopyala" />
+                      <button
+                        onClick={() => downloadLicense(l)}
+                        className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                      >
+                        .env indir
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
         </div>
+
+        <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Hızlı başlangıç
+          </p>
+          <h2 className="mt-3 text-xl font-semibold tracking-tight">
+            Lisansınızı üç komutta devreye alın
+          </h2>
+          <ol className="mt-6 space-y-6">
+            {quickStart(licenses[0]?.license_key).map((step, i) => (
+              <li key={step.title}>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[11px] text-primary">0{i + 1}</span>
+                  <p className="text-sm font-medium">{step.title}</p>
+                </div>
+                <div className="mt-2 flex items-start gap-2">
+                  <pre className="flex-1 overflow-x-auto rounded-sm border border-border bg-background/70 p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
+                    <code>{step.code}</code>
+                  </pre>
+                  <CopyButton value={step.code} label="Kopyala" />
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/dokumanlar"
+              className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              Dokümanlar
+            </Link>
+            <a
+              href="/tedbirge-teknik-ozet.md"
+              download
+              className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              Teknik özet (.md)
+            </a>
+          </div>
+        </div>
       </section>
     </SitePage>
+  );
+}
+
+function quickStart(key?: string) {
+  const licenseKey = key ?? "LISANS-ANAHTARINIZ";
+  return [
+    {
+      title: "Binary'yi çalıştırılabilir yapın",
+      code: "chmod +x tedbirge-gateway && ./tedbirge-gateway --version",
+    },
+    {
+      title: "Lisansı ortam değişkeni olarak tanımlayın",
+      code: `export TEDBIRGE_LICENSE_KEY=${licenseKey}`,
+    },
+    {
+      title: "Mesh düğümünü başlatın ve doğrulayın",
+      code: `TEDBIRGE_MESH=true TEDBIRGE_MESH_NODE_ID=saha-A \\
+TEDBIRGE_MESH_ADDR=:7946 tedbirge-gateway
+
+tedbirge-cli mesh-demo`,
+    },
+  ];
+}
+
+function downloadLicense(l: License) {
+  const content = `# Tedbirge Gateway lisans yapılandırması
+TEDBIRGE_LICENSE_KEY=${l.license_key}
+TEDBIRGE_LICENSE_PLAN=${l.plan}
+TEDBIRGE_NODE_LIMIT=${l.node_limit}
+`;
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "tedbirge.env";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function CopyButton({ value, label }: { value: string; label: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        await navigator.clipboard.writeText(value);
+        setDone(true);
+        setTimeout(() => setDone(false), 1600);
+      }}
+      className="shrink-0 rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+    >
+      {done ? "Kopyalandı" : label}
+    </button>
   );
 }
 
