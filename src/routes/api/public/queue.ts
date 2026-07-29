@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/public/queue")({
 
         const { data: device } = await supabaseAdmin
           .from("devices")
-          .select("id, status")
+          .select("id, status, e2ee")
           .eq("license_id", license.id)
           .eq("node_id", parsed.node_id)
           .maybeSingle();
@@ -115,6 +115,17 @@ export const Route = createFileRoute("/api/public/queue")({
           });
 
         if (parsed.action === "enqueue") {
+          // Uçtan uca şifreleme zorunlu düğümlerde yalnızca şifreli zarf kabul edilir.
+          const isEnvelope = (p: Record<string, unknown>) =>
+            typeof p.alg === "string" &&
+            typeof p.epk === "string" &&
+            typeof p.iv === "string" &&
+            typeof p.ct === "string";
+          if (device?.e2ee && !parsed.messages.every((m) => isEnvelope(m.payload))) {
+            await logUsage(400);
+            return json({ error: "e2ee_required", detail: "Bu düğüm için şifreli zarf zorunlu." }, 400);
+          }
+
           const rows = parsed.messages.map((m) => ({
             license_id: license.id,
             user_id: license.user_id,
@@ -122,6 +133,8 @@ export const Route = createFileRoute("/api/public/queue")({
             origin_node: parsed.node_id,
             target_node: m.target_node ?? null,
             payload: m.payload as never,
+            encrypted: isEnvelope(m.payload),
+            cipher_alg: isEnvelope(m.payload) ? String(m.payload.alg) : null,
             priority: m.priority,
             status: "queued",
             queued_at: m.queued_at ?? new Date().toISOString(),

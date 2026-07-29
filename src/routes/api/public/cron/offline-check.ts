@@ -93,6 +93,19 @@ export const Route = createFileRoute("/api/public/cron/offline-check")({
             detected_at: now.toISOString(),
           });
 
+          // Kalıcı kesinti olay kaydı (süre, katman, devralan yedek).
+          await supabaseAdmin.from("outage_events").insert({
+            license_id: device.license_id,
+            user_id: device.user_id,
+            device_id: device.id,
+            node_id: device.node_id,
+            layer: device.role ?? "edge",
+            started_at: device.last_seen_at ?? now.toISOString(),
+            failover_to: failoverTo,
+            cause: `${OFFLINE_MINUTES} dakikadır telemetri yok`,
+            resolved: false,
+          });
+
           await supabaseAdmin.from("license_events").insert({
             license_id: device.license_id,
             user_id: device.user_id,

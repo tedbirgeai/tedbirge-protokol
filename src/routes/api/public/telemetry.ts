@@ -198,6 +198,26 @@ export const Route = createFileRoute("/api/public/telemetry")({
             .from("devices")
             .update({ active_uplink: true })
             .eq("id", device.id);
+
+          // Kesinti olay kaydı kapatılır (süre hesaplanarak kalıcı arşive geçer).
+          const { data: openOutage } = await supabaseAdmin
+            .from("outage_events")
+            .select("id, started_at")
+            .eq("device_id", device.id)
+            .eq("resolved", false)
+            .order("started_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (openOutage) {
+            const seconds = Math.max(
+              0,
+              Math.round((Date.now() - new Date(openOutage.started_at).getTime()) / 1000),
+            );
+            await supabaseAdmin
+              .from("outage_events")
+              .update({ ended_at: nowIso, duration_seconds: seconds, resolved: true })
+              .eq("id", openOutage.id);
+          }
           await supabaseAdmin.from("license_events").insert({
             license_id: license.id,
             user_id: license.user_id,

@@ -18,6 +18,7 @@ import { Route as SahaRouteImport } from './routes/saha'
 import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
 import { Route as MevzuatRouteImport } from './routes/mevzuat'
 import { Route as KosullarRouteImport } from './routes/kosullar'
+import { Route as KayitRouteImport } from './routes/kayit'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
 import { Route as KapsamaRouteImport } from './routes/kapsama'
 import { Route as IzinlerRouteImport } from './routes/izinler'
@@ -45,6 +46,7 @@ import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
+import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
@@ -92,6 +94,11 @@ const MevzuatRoute = MevzuatRouteImport.update({
 const KosullarRoute = KosullarRouteImport.update({
   id: '/kosullar',
   path: '/kosullar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KayitRoute = KayitRouteImport.update({
+  id: '/kayit',
+  path: '/kayit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
@@ -228,6 +235,11 @@ const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
   path: '/api/public/openapi.json',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
+  id: '/api/public/enroll',
+  path: '/api/public/enroll',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTeklifIdRoute = AuthenticatedTeklifIdRouteImport.update({
   id: '/teklif/$id',
   path: '/teklif/$id',
@@ -264,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/izinler': typeof IzinlerRoute
   '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
+  '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
@@ -280,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -304,6 +318,7 @@ export interface FileRoutesByTo {
   '/izinler': typeof IzinlerRoute
   '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
+  '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
@@ -320,6 +335,7 @@ export interface FileRoutesByTo {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -346,6 +362,7 @@ export interface FileRoutesById {
   '/izinler': typeof IzinlerRoute
   '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
+  '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
@@ -362,6 +379,7 @@ export interface FileRoutesById {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -388,6 +406,7 @@ export interface FileRouteTypes {
     | '/izinler'
     | '/kapsama'
     | '/karsilastirma'
+    | '/kayit'
     | '/kosullar'
     | '/mevzuat'
     | '/pilot-panosu'
@@ -404,6 +423,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber/'
     | '/teklif/$id'
+    | '/api/public/enroll'
     | '/api/public/openapi.json'
     | '/api/public/queue'
     | '/api/public/telemetry'
@@ -428,6 +448,7 @@ export interface FileRouteTypes {
     | '/izinler'
     | '/kapsama'
     | '/karsilastirma'
+    | '/kayit'
     | '/kosullar'
     | '/mevzuat'
     | '/pilot-panosu'
@@ -444,6 +465,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber'
     | '/teklif/$id'
+    | '/api/public/enroll'
     | '/api/public/openapi.json'
     | '/api/public/queue'
     | '/api/public/telemetry'
@@ -469,6 +491,7 @@ export interface FileRouteTypes {
     | '/izinler'
     | '/kapsama'
     | '/karsilastirma'
+    | '/kayit'
     | '/kosullar'
     | '/mevzuat'
     | '/pilot-panosu'
@@ -485,6 +508,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber/'
     | '/_authenticated/teklif/$id'
+    | '/api/public/enroll'
     | '/api/public/openapi.json'
     | '/api/public/queue'
     | '/api/public/telemetry'
@@ -511,6 +535,7 @@ export interface RootRouteChildren {
   IzinlerRoute: typeof IzinlerRoute
   KapsamaRoute: typeof KapsamaRoute
   KarsilastirmaRoute: typeof KarsilastirmaRoute
+  KayitRoute: typeof KayitRoute
   KosullarRoute: typeof KosullarRoute
   MevzuatRoute: typeof MevzuatRoute
   PilotPanosuRoute: typeof PilotPanosuRoute
@@ -523,6 +548,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
+  ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicQueueRoute: typeof ApiPublicQueueRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -593,6 +619,13 @@ declare module '@tanstack/react-router' {
       path: '/kosullar'
       fullPath: '/kosullar'
       preLoaderRoute: typeof KosullarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kayit': {
+      id: '/kayit'
+      path: '/kayit'
+      fullPath: '/kayit'
+      preLoaderRoute: typeof KayitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/karsilastirma': {
@@ -784,6 +817,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/enroll': {
+      id: '/api/public/enroll'
+      path: '/api/public/enroll'
+      fullPath: '/api/public/enroll'
+      preLoaderRoute: typeof ApiPublicEnrollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/teklif/$id': {
       id: '/_authenticated/teklif/$id'
       path: '/teklif/$id'
@@ -844,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   IzinlerRoute: IzinlerRoute,
   KapsamaRoute: KapsamaRoute,
   KarsilastirmaRoute: KarsilastirmaRoute,
+  KayitRoute: KayitRoute,
   KosullarRoute: KosullarRoute,
   MevzuatRoute: MevzuatRoute,
   PilotPanosuRoute: PilotPanosuRoute,
@@ -856,6 +897,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
+  ApiPublicEnrollRoute: ApiPublicEnrollRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicQueueRoute: ApiPublicQueueRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
@@ -865,3 +907,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

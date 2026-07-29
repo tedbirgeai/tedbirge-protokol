@@ -30,6 +30,12 @@ import {
   LinkAlertBoard,
   FailoverSettings,
 } from "@/components/site/PanelMesh";
+import {
+  QrNodeEnroll,
+  E2eeKeyBoard,
+  OutageLog,
+  CalibrationTest,
+} from "@/components/site/PanelSecure";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 
 
@@ -353,6 +359,24 @@ function Panel() {
           />
         </div>
 
+        <div className="mt-8">
+          <QrNodeEnroll
+            licenses={licenses.map((l) => ({
+              id: l.id,
+              plan: l.plan,
+              node_limit: l.node_limit,
+            }))}
+            onChanged={reloadDevices}
+            refreshKey={refreshKey}
+          />
+        </div>
+
+        <div className="mt-8">
+          <E2eeKeyBoard refreshKey={refreshKey} />
+        </div>
+
+
+
 
         <div className="mt-8">
           <DeviceStatusBoard
@@ -391,6 +415,15 @@ function Panel() {
         <div className="mt-8">
           <LinkAlertBoard refreshKey={refreshKey} />
         </div>
+
+        <div className="mt-8">
+          <OutageLog refreshKey={refreshKey} />
+        </div>
+
+        <div className="mt-8">
+          <CalibrationTest refreshKey={refreshKey} />
+        </div>
+
 
         <div className="mt-8">
           <QueueBoard
