@@ -88,6 +88,14 @@ export const createDevice = createServerFn({ method: "POST" })
       actor: "customer",
     });
 
+    const { dispatchWebhook } = await import("@/lib/webhooks.server");
+    await dispatchWebhook(context.userId, "license_event", {
+      event: "device_created",
+      license_id: license.id,
+      device_id: device.id,
+      node_id: data.nodeId,
+    });
+
     return { ok: true, device };
   });
 
@@ -120,6 +128,14 @@ export const setDeviceStatus = createServerFn({ method: "POST" })
       actor: "customer",
     });
 
+    const { dispatchWebhook } = await import("@/lib/webhooks.server");
+    await dispatchWebhook(context.userId, "license_event", {
+      event: status === "active" ? "device_reactivated" : "device_revoked",
+      license_id: device.license_id,
+      device_id: device.id,
+      node_id: device.node_id,
+    });
+
     return { ok: true, status };
   });
 
@@ -143,6 +159,13 @@ export const deleteDevice = createServerFn({ method: "POST" })
       event: "device_deleted",
       detail: device.node_id,
       actor: "customer",
+    });
+
+    const { dispatchWebhook } = await import("@/lib/webhooks.server");
+    await dispatchWebhook(context.userId, "license_event", {
+      event: "device_deleted",
+      license_id: device.license_id,
+      node_id: device.node_id,
     });
 
     return { ok: true };
@@ -178,6 +201,17 @@ export const createFieldReport = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error || !report) throw new Error("Bildirim kaydedilemedi.");
+
+    const { dispatchWebhook } = await import("@/lib/webhooks.server");
+    await dispatchWebhook(context.userId, "field_report", {
+      report_id: report.id,
+      severity: data.severity,
+      category: data.category,
+      title: data.title,
+      detail: data.detail,
+      device_id: data.deviceId ?? null,
+      license_id: licenseId,
+    });
 
     return { ok: true, report };
   });

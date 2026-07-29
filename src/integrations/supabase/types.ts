@@ -154,6 +154,41 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage_events: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          license_id: string | null
+          status_code: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          license_id?: string | null
+          status_code: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          license_id?: string | null
+          status_code?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_events_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       devices: {
         Row: {
           carrier: string | null
@@ -161,6 +196,8 @@ export type Database = {
           firmware: string | null
           id: string
           label: string | null
+          last_error_at: string | null
+          last_error_code: string | null
           last_seen_at: string | null
           license_id: string
           node_id: string
@@ -175,6 +212,8 @@ export type Database = {
           firmware?: string | null
           id?: string
           label?: string | null
+          last_error_at?: string | null
+          last_error_code?: string | null
           last_seen_at?: string | null
           license_id: string
           node_id: string
@@ -189,6 +228,8 @@ export type Database = {
           firmware?: string | null
           id?: string
           label?: string | null
+          last_error_at?: string | null
+          last_error_code?: string | null
           last_seen_at?: string | null
           license_id?: string
           node_id?: string
@@ -316,6 +357,7 @@ export type Database = {
           id: string
           license_key: string
           node_limit: number
+          organization_id: string | null
           plan: string
           provider: string | null
           provider_subscription_id: string | null
@@ -330,6 +372,7 @@ export type Database = {
           id?: string
           license_key?: string
           node_limit?: number
+          organization_id?: string | null
           plan: string
           provider?: string | null
           provider_subscription_id?: string | null
@@ -344,12 +387,86 @@ export type Database = {
           id?: string
           license_key?: string
           node_limit?: number
+          organization_id?: string | null
           plan?: string
           provider?: string | null
           provider_subscription_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -554,6 +671,97 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_deliveries: {
+        Row: {
+          created_at: string
+          endpoint_id: string
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          response_code: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint_id: string
+          error?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          response_code?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint_id?: string
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          response_code?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_endpoints: {
+        Row: {
+          active: boolean
+          created_at: string
+          events: string[]
+          id: string
+          last_delivery_at: string | null
+          last_status: number | null
+          organization_id: string | null
+          secret: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          events?: string[]
+          id?: string
+          last_delivery_at?: string | null
+          last_status?: number | null
+          organization_id?: string | null
+          secret?: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          events?: string[]
+          id?: string
+          last_delivery_at?: string | null
+          last_status?: number | null
+          organization_id?: string | null
+          secret?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_endpoints_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -563,6 +771,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      org_role: "owner" | "admin" | "operator" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -691,6 +900,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      org_role: ["owner", "admin", "operator", "viewer"],
     },
   },
 } as const

@@ -5,9 +5,10 @@ import { lovable } from "@/integrations/lovable/index";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 export const Route = createFileRoute("/giris")({
-  validateSearch: (search: { next?: unknown }) => ({
+  validateSearch: (search: Record<string, unknown>): { next?: string } => ({
     next: typeof search.next === "string" ? search.next : undefined,
   }),
+
   head: () => ({
     meta: [
       { title: "Giriş — Tedbirge Protokol Müşteri Paneli" },

@@ -11,6 +11,13 @@ import {
   LicenseEventLog,
   FieldReports,
 } from "@/components/site/PanelSections";
+import {
+  DeviceStatusBoard,
+  OrganizationManager,
+  WebhookSettings,
+  ApiUsagePanel,
+  SetupWizard,
+} from "@/components/site/PanelOps";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 
 
@@ -51,6 +58,7 @@ type License = {
   node_limit: number;
   license_key: string;
   current_period_end: string | null;
+  organization_id: string | null;
 };
 
 type Device = {
@@ -63,6 +71,8 @@ type Device = {
   firmware: string | null;
   status: string;
   last_seen_at: string | null;
+  last_error_code: string | null;
+  last_error_at: string | null;
 };
 
 function Panel() {
@@ -77,11 +87,12 @@ function Panel() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const reloadDevices = useCallback(async () => {
-    const { data } = await supabase
-      .from("devices")
-      .select("*")
-      .order("created_at", { ascending: true });
+    const [{ data }, { data: lic }] = await Promise.all([
+      supabase.from("devices").select("*").order("created_at", { ascending: true }),
+      supabase.from("licenses").select("*").order("created_at", { ascending: false }),
+    ]);
     setDevices((data as Device[]) ?? []);
+    setLicenses((lic as License[]) ?? []);
     setRefreshKey((k) => k + 1);
   }, []);
 
@@ -325,6 +336,22 @@ function Panel() {
         </div>
 
 
+        <div className="mt-8">
+          <DeviceStatusBoard
+            devices={devices}
+            licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))}
+            refreshKey={refreshKey}
+          />
+        </div>
+
+        <div className="mt-8">
+          <SetupWizard
+            licenseKey={licenses[0]?.license_key}
+            nodeLimit={licenses[0]?.node_limit ?? 5}
+            registered={devices.length}
+          />
+        </div>
+
         <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -423,6 +450,29 @@ function Panel() {
           <FieldReports
             devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))}
             isAdmin={isAdmin}
+          />
+        </div>
+
+        <div className="mt-8">
+          <ApiUsagePanel
+            licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))}
+            refreshKey={refreshKey}
+          />
+        </div>
+
+        <div className="mt-8">
+          <WebhookSettings userId={user?.id} />
+        </div>
+
+        <div className="mt-8">
+          <OrganizationManager
+            userId={user?.id}
+            licenses={licenses.map((l) => ({
+              id: l.id,
+              plan: l.plan,
+              organization_id: l.organization_id,
+            }))}
+            onChanged={reloadDevices}
           />
         </div>
 
