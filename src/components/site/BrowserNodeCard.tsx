@@ -31,13 +31,12 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
 
   // Bir kez açıldıysa uygulama her açıldığında kendiliğinden başlar (otonom mod).
   useEffect(() => {
-    if (!licenseKey) return;
     if (window.localStorage.getItem(AUTO_KEY) === "1" && !nodeRef.current) start();
     return () => {
       nodeRef.current?.stop();
       nodeRef.current = null;
     };
-  }, [licenseKey, start]);
+  }, [start]);
 
   const running = Boolean(state?.running);
   const directPeers = state?.peers.filter((p) => p.direct).length ?? 0;
