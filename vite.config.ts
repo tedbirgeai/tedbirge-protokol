@@ -22,6 +22,9 @@ export default defineConfig({
         filename: "sw.js",
         devOptions: { enabled: false },
         manifest: false,
+        // Nitro yayınlanacak statik dosyaları dist/client altında sunar.
+        outDir: "dist/client",
+
         workbox: {
           globPatterns: ["**/*.{js,css,woff,woff2,svg,png,ico}"],
           navigateFallback: "/cevrimdisi",
