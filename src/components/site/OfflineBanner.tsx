@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
 /**
- * Bağlantı durumu şeridi. Hat koptuğunda kullanıcı uygulamanın önbellekten
- * çalıştığını görür; bağlantı dönünce kısa süre "yeniden bağlandı" gösterir.
+ * Bağlantı durumu şeridi. Hat koptuğunda bunun telefonun bulut bağlantısı
+ * olduğunu net söyler; PWA önbelleği ile gerçek radyo/mesh taşıyıcısını
+ * birbirine karıştırmaz.
  */
 export function OfflineBanner() {
   const [offline, setOffline] = useState(false);
@@ -39,7 +40,7 @@ export function OfflineBanner() {
       }`}
     >
       {offline
-        ? "Çevrimdışısınız — uygulama önbellekten çalışıyor, canlı veriler bağlantı dönünce güncellenecek."
+        ? "Telefonun interneti koptu — uygulama önbellekten açık. Taşıyıcı devreye girmesi için sahada çevrimiçi gateway + röle + saha radyo düğümü gerekir."
         : "Bağlantı geri geldi — veriler güncelleniyor."}
     </div>
   );
