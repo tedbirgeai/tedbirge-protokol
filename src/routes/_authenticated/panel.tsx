@@ -312,6 +312,19 @@ function Panel() {
           </div>
         </div>
 
+        <div className="mt-8">
+          <NodeCreator
+            licenses={licenses.map((l) => ({
+              id: l.id,
+              plan: l.plan,
+              node_limit: l.node_limit,
+            }))}
+            usedByLicense={usedByLicense}
+            onCreated={reloadDevices}
+          />
+        </div>
+
+
         <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
