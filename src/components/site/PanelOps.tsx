@@ -740,7 +740,7 @@ export function SetupWizard({
   const [step, setStep] = useState(0);
   const [nodeId, setNodeId] = useState("saha-A");
   const [region, setRegion] = useState("TR");
-  const [carrier, setCarrier] = useState("lora");
+  const [carrier, setCarrier] = useState("auto");
   const key = licenseKey ?? "LISANS-ANAHTARINIZ";
 
   const steps = [
@@ -751,7 +751,7 @@ export function SetupWizard({
     },
     {
       title: "Ajanı kurun",
-      body: "Raspberry Pi / x86 Linux için tek satır kurulum.",
+      body: "Raspberry Pi / x86 Linux / macOS için tek satır kurulum. Ajan gerçek ağ arayüzünü otomatik algılar ve 60 saniyede bir canlı heartbeat gönderir.",
       code: `curl -fsSL https://tedbirge-gateway.lovable.app/install.sh | sh
 chmod +x tedbirge-gateway && ./tedbirge-gateway --version`,
     },
@@ -846,7 +846,7 @@ sudo journalctl -u tedbirge-gateway -f`,
               onChange={(e) => setCarrier(e.target.value)}
               className={input}
             >
-              {["lora", "wifi", "eth", "cellular", "satellite", "halow", "tvws", "wigig", "fso"].map(
+              {["auto", "lora", "wifi", "eth", "cellular", "satellite", "halow", "tvws", "wigig", "fso"].map(
                 (c) => (
                   <option key={c} value={c}>
                     {c}

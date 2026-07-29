@@ -125,7 +125,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
 
         const { data: existing } = await supabaseAdmin
           .from("devices")
-          .select("id, status")
+          .select("id, status, label, carrier, firmware, kind")
           .eq("license_id", license.id)
           .eq("node_id", parsed.node_id)
           .maybeSingle();
@@ -151,11 +151,11 @@ export const Route = createFileRoute("/api/public/telemetry")({
               license_id: license.id,
               user_id: license.user_id,
               node_id: parsed.node_id,
-              label: parsed.label ?? null,
+              label: parsed.label ?? existing?.label ?? null,
               region: parsed.region ?? "TR",
-              carrier: parsed.carrier ?? null,
-              firmware: parsed.firmware ?? null,
-              kind: parsed.kind ?? (parsed.thermal ? "ir_camera" : "node"),
+              carrier: parsed.carrier ?? existing?.carrier ?? null,
+              firmware: parsed.firmware ?? existing?.firmware ?? null,
+              kind: parsed.kind ?? existing?.kind ?? (parsed.thermal ? "ir_camera" : "node"),
               status: "active",
               last_seen_at: new Date().toISOString(),
               last_error_code: parsed.error_code ?? null,
