@@ -13,8 +13,12 @@ export const Route = createFileRoute("/api/public/cron/offline-check")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Kimlik: x-cron-secret ya da zamanlayıcının gönderdiği apikey başlığı.
         const secret = process.env.CRON_SECRET;
-        if (!secret || request.headers.get("x-cron-secret") !== secret) {
+        const apiKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+        const bySecret = Boolean(secret) && request.headers.get("x-cron-secret") === secret;
+        const byApiKey = Boolean(apiKey) && request.headers.get("apikey") === apiKey;
+        if (!bySecret && !byApiKey) {
           return new Response("unauthorized", { status: 401 });
         }
 
