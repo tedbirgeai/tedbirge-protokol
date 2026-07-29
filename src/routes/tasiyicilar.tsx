@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 export const Route = createFileRoute("/tasiyicilar")({
   head: () => ({
