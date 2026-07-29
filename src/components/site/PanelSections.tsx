@@ -5,6 +5,8 @@ import {
   createFieldReport,
   updateFieldReport,
 } from "@/lib/devices.functions";
+import { friendlyError, normalizeNodeId } from "@/lib/friendly-error";
+
 
 const REGIONS = ["TR", "EU", "US", "UK", "GCC", "APAC", "JP", "OTHER"] as const;
 const CARRIERS = [
@@ -57,15 +59,22 @@ export function NodeCreator({
 
   const suggestion = useMemo(() => `saha-${String.fromCharCode(65 + used)}`, [used]);
 
+  const effectiveNodeId = normalizeNodeId(nodeId) || suggestion;
+  const nodeIdValid = effectiveNodeId.length >= 2;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!nodeIdValid) {
+      setError("Düğüm adı en az 2 karakter olmalı (örn. saha-A).");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       await createDevice({
         data: {
           licenseId,
-          nodeId: (nodeId || suggestion).trim(),
+          nodeId: effectiveNodeId,
           label: labelText.trim() || undefined,
           region: region as (typeof REGIONS)[number],
           carrier: carrier as (typeof CARRIERS)[number]["id"],
@@ -77,11 +86,12 @@ export function NodeCreator({
       setTimeout(() => setDone(false), 2500);
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Düğüm oluşturulamadı.");
+      setError(friendlyError(err, "Düğüm oluşturulamadı."));
     } finally {
       setBusy(false);
     }
   }
+
 
   if (licenses.length === 0) return null;
 
@@ -94,6 +104,14 @@ export function NodeCreator({
         {license?.node_limit ?? 0}. Düğüm oluşturduğunuzda aynı adla telemetri gönderen cihaz
         otomatik eşleşir.
       </p>
+      <p className="mt-2 rounded-sm border border-border bg-background/50 p-3 text-xs text-muted-foreground">
+        <strong className="text-foreground">Eski düğümleri silmek zorunda değilsiniz.</strong>{" "}
+        Çevrimdışı görünen bir düğüm sadece son 5 dakikada telemetri göndermemiş demektir; cihaz
+        tekrar açıldığında kendiliğinden çevrimiçi olur. Silme işlemi yalnızca düğüm hakkınız
+        dolduğunda ya da o düğümü kalıcı olarak kullanmayacaksanız gerekir. Aynı adı tekrar
+        kullanmak isterseniz önce eskisini silin.
+      </p>
+
 
       <form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-2">
         {licenses.length > 1 && (
@@ -120,12 +138,21 @@ export function NodeCreator({
           </span>
           <input
             value={nodeId}
-            onChange={(e) => setNodeId(e.target.value)}
+            onChange={(e) => setNodeId(normalizeNodeId(e.target.value))}
             placeholder={suggestion}
             maxLength={64}
+            aria-invalid={!nodeIdValid}
             className={`mt-1 ${input}`}
           />
+          <p
+            className={`mt-1 font-mono text-[11px] ${nodeIdValid ? "text-muted-foreground" : "text-destructive"}`}
+          >
+            {nodeIdValid
+              ? `Kayıt adı: ${effectiveNodeId} · en az 2 karakter, harf/rakam/tire`
+              : "En az 2 karakter yazın (örn. ev-01)."}
+          </p>
         </div>
+
         <div>
           <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
             Konum etiketi (opsiyonel)
@@ -171,9 +198,14 @@ export function NodeCreator({
           </select>
         </div>
         <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-          <button type="submit" disabled={busy || remaining <= 0} className={btnPrimary}>
+          <button
+            type="submit"
+            disabled={busy || remaining <= 0 || !nodeIdValid}
+            className={btnPrimary}
+          >
             {busy ? "Oluşturuluyor…" : "Düğümü oluştur"}
           </button>
+
           {done && <span className="font-mono text-[11px] text-primary">Düğüm eklendi.</span>}
           {remaining <= 0 && (
             <span className="font-mono text-[11px] text-muted-foreground">

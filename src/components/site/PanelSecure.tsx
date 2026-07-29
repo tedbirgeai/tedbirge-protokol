@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CARRIERS, TERRAIN, HEIGHTS } from "@/lib/mesh-plan";
 import { createNodeEnrollment, revokeNodeEnrollment, setDeviceE2ee } from "@/lib/enrollment.functions";
 import { runCalibrationTest } from "@/lib/calibration.functions";
+import { friendlyError, normalizeNodeId } from "@/lib/friendly-error";
+
 
 type LicenseLite = { id: string; plan: string; node_limit: number };
 
@@ -82,7 +84,7 @@ export function QrNodeEnroll({
       const res = await createNodeEnrollment({
         data: {
           licenseId,
-          nodeId: nodeId.trim(),
+          nodeId: normalizeNodeId(nodeId),
           label: label.trim() || undefined,
           role,
           carrier: carrier as never,
@@ -97,7 +99,7 @@ export function QrNodeEnroll({
       setLabel("");
       void load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Davet oluşturulamadı.");
+      setError(friendlyError(e, "Davet oluşturulamadı."));
     } finally {
       setBusy(false);
     }
