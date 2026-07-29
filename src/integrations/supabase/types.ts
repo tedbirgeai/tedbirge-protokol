@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_leads: {
+        Row: {
+          carrier_need: string | null
+          contact_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          node_count: string | null
+          organization: string | null
+          phone: string | null
+          qualification_score: number | null
+          status: string
+          summary: string | null
+          transcript: Json | null
+          urgency: string | null
+          use_case: string | null
+        }
+        Insert: {
+          carrier_need?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          node_count?: string | null
+          organization?: string | null
+          phone?: string | null
+          qualification_score?: number | null
+          status?: string
+          summary?: string | null
+          transcript?: Json | null
+          urgency?: string | null
+          use_case?: string | null
+        }
+        Update: {
+          carrier_need?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          node_count?: string | null
+          organization?: string | null
+          phone?: string | null
+          qualification_score?: number | null
+          status?: string
+          summary?: string | null
+          transcript?: Json | null
+          urgency?: string | null
+          use_case?: string | null
+        }
+        Relationships: []
+      }
       licenses: {
         Row: {
           created_at: string
