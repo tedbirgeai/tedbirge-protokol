@@ -191,10 +191,14 @@ export type Database = {
       }
       devices: {
         Row: {
+          active_uplink: boolean
           carrier: string | null
           created_at: string
+          failover_group: string | null
+          failover_priority: number
           firmware: string | null
           id: string
+          is_backup: boolean
           kind: string
           label: string | null
           last_error_at: string | null
@@ -203,15 +207,20 @@ export type Database = {
           license_id: string
           node_id: string
           region: string
+          role: string
           status: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          active_uplink?: boolean
           carrier?: string | null
           created_at?: string
+          failover_group?: string | null
+          failover_priority?: number
           firmware?: string | null
           id?: string
+          is_backup?: boolean
           kind?: string
           label?: string | null
           last_error_at?: string | null
@@ -220,15 +229,20 @@ export type Database = {
           license_id: string
           node_id: string
           region?: string
+          role?: string
           status?: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          active_uplink?: boolean
           carrier?: string | null
           created_at?: string
+          failover_group?: string | null
+          failover_priority?: number
           firmware?: string | null
           id?: string
+          is_backup?: boolean
           kind?: string
           label?: string | null
           last_error_at?: string | null
@@ -237,6 +251,7 @@ export type Database = {
           license_id?: string
           node_id?: string
           region?: string
+          role?: string
           status?: string
           updated_at?: string
           user_id?: string | null
@@ -250,6 +265,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      field_measurements: {
+        Row: {
+          antenna_height: string
+          carrier: string
+          created_at: string
+          distance_km: number
+          id: string
+          link_ok: boolean
+          note: string | null
+          rssi_dbm: number | null
+          snr_db: number | null
+          terrain: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          antenna_height: string
+          carrier: string
+          created_at?: string
+          distance_km: number
+          id?: string
+          link_ok?: boolean
+          note?: string | null
+          rssi_dbm?: number | null
+          snr_db?: number | null
+          terrain: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          antenna_height?: string
+          carrier?: string
+          created_at?: string
+          distance_km?: number
+          id?: string
+          link_ok?: boolean
+          note?: string | null
+          rssi_dbm?: number | null
+          snr_db?: number | null
+          terrain?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       field_reports: {
         Row: {
@@ -468,6 +528,144 @@ export type Database = {
           },
         ]
       }
+      link_alerts: {
+        Row: {
+          acknowledged: boolean
+          created_at: string
+          detail: string | null
+          detected_at: string
+          device_id: string | null
+          failover_to: string | null
+          id: string
+          layer: string
+          license_id: string
+          node_id: string
+          resolved_at: string | null
+          state: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          acknowledged?: boolean
+          created_at?: string
+          detail?: string | null
+          detected_at?: string
+          device_id?: string | null
+          failover_to?: string | null
+          id?: string
+          layer: string
+          license_id: string
+          node_id: string
+          resolved_at?: string | null
+          state: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          acknowledged?: boolean
+          created_at?: string
+          detail?: string | null
+          detected_at?: string
+          device_id?: string | null
+          failover_to?: string | null
+          id?: string
+          layer?: string
+          license_id?: string
+          node_id?: string
+          resolved_at?: string | null
+          state?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_alerts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "link_alerts_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesh_messages: {
+        Row: {
+          attempts: number
+          created_at: string
+          delivered_at: string | null
+          device_id: string | null
+          expires_at: string
+          id: string
+          last_error: string | null
+          license_id: string
+          origin_node: string
+          payload: Json
+          priority: number
+          queued_at: string
+          status: string
+          target_node: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          last_error?: string | null
+          license_id: string
+          origin_node: string
+          payload?: Json
+          priority?: number
+          queued_at?: string
+          status?: string
+          target_node?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          last_error?: string | null
+          license_id?: string
+          origin_node?: string
+          payload?: Json
+          priority?: number
+          queued_at?: string
+          status?: string
+          target_node?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesh_messages_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesh_messages_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -607,6 +805,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      relay_plans: {
+        Row: {
+          antenna_height: string
+          carrier: string
+          created_at: string
+          distance_km: number
+          hop_km: number
+          id: string
+          license_id: string
+          name: string
+          nodes: Json
+          relay_count: number
+          terrain: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          antenna_height: string
+          carrier: string
+          created_at?: string
+          distance_km: number
+          hop_km: number
+          id?: string
+          license_id: string
+          name: string
+          nodes?: Json
+          relay_count: number
+          terrain: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          antenna_height?: string
+          carrier?: string
+          created_at?: string
+          distance_km?: number
+          hop_km?: number
+          id?: string
+          license_id?: string
+          name?: string
+          nodes?: Json
+          relay_count?: number
+          terrain?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relay_plans_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {

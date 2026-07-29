@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 /**
  * Zamanlanmış çağrı: 15 dakikadır telemetri göndermeyen aktif düğümler için
- * "device_offline" webhook bildirimi üretir ve lisans olay günlüğüne yazar.
+ * katman bazlı (gateway / relay / edge) bağlantı alarmı üretir, otomatik
+ * failover uygular ve "device_offline" webhook bildirimi gönderir.
  * Kimlik: x-cron-secret başlığı.
  */
 
@@ -20,38 +21,82 @@ export const Route = createFileRoute("/api/public/cron/offline-check")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { dispatchWebhook } = await import("@/lib/webhooks.server");
 
-        const threshold = new Date(Date.now() - OFFLINE_MINUTES * 60_000).toISOString();
+        const now = new Date();
+        const threshold = new Date(now.getTime() - OFFLINE_MINUTES * 60_000).toISOString();
 
         const { data: devices } = await supabaseAdmin
           .from("devices")
-          .select("id, user_id, license_id, node_id, last_seen_at")
+          .select(
+            "id, user_id, license_id, node_id, last_seen_at, role, failover_group, failover_priority, is_backup, active_uplink",
+          )
           .eq("status", "active")
           .not("last_seen_at", "is", null)
           .lt("last_seen_at", threshold)
           .limit(500);
 
-        if (!devices?.length) return Response.json({ ok: true, offline: 0 });
+        if (!devices?.length) return Response.json({ ok: true, offline: 0, notified: 0, failover: 0 });
 
-        // Aynı kesinti için tekrar bildirim göndermemek adına son olay kontrol edilir.
         let notified = 0;
-        for (const device of devices) {
-          const { data: last } = await supabaseAdmin
-            .from("license_events")
-            .select("created_at")
-            .eq("device_id", device.id)
-            .eq("event", "device_offline")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        let failovers = 0;
 
-          if (last && device.last_seen_at && last.created_at > device.last_seen_at) continue;
+        for (const device of devices) {
+          // Aynı kesinti için tekrar alarm üretilmez.
+          const { data: openAlert } = await supabaseAdmin
+            .from("link_alerts")
+            .select("id")
+            .eq("device_id", device.id)
+            .eq("state", "down")
+            .is("resolved_at", null)
+            .maybeSingle();
+          if (openAlert) continue;
+
+          // Otomatik failover: aynı grupta çevrimiçi, en yüksek öncelikli yedek devralır.
+          let failoverTo: string | null = null;
+          if (device.failover_group) {
+            const { data: candidates } = await supabaseAdmin
+              .from("devices")
+              .select("id, node_id, last_seen_at, failover_priority, role")
+              .eq("license_id", device.license_id)
+              .eq("failover_group", device.failover_group)
+              .eq("status", "active")
+              .neq("id", device.id)
+              .gte("last_seen_at", threshold)
+              .order("failover_priority", { ascending: true })
+              .limit(1);
+
+            const takeover = candidates?.[0];
+            if (takeover) {
+              await supabaseAdmin
+                .from("devices")
+                .update({ active_uplink: true })
+                .eq("id", takeover.id);
+              failoverTo = takeover.node_id;
+              failovers += 1;
+            }
+          }
+
+          await supabaseAdmin.from("devices").update({ active_uplink: false }).eq("id", device.id);
+
+          await supabaseAdmin.from("link_alerts").insert({
+            license_id: device.license_id,
+            user_id: device.user_id,
+            device_id: device.id,
+            node_id: device.node_id,
+            layer: device.role ?? "edge",
+            state: "down",
+            detail: `${OFFLINE_MINUTES} dakikadır telemetri yok`,
+            failover_to: failoverTo,
+            detected_at: now.toISOString(),
+          });
 
           await supabaseAdmin.from("license_events").insert({
             license_id: device.license_id,
             user_id: device.user_id,
             device_id: device.id,
             event: "device_offline",
-            detail: `${device.node_id} · ${OFFLINE_MINUTES} dakikadır telemetri yok`,
+            detail: `${device.node_id} · ${device.role ?? "edge"} katmanı düştü${
+              failoverTo ? ` · devralan: ${failoverTo}` : ""
+            }`,
             actor: "system",
           });
 
@@ -60,13 +105,15 @@ export const Route = createFileRoute("/api/public/cron/offline-check")({
               device_id: device.id,
               license_id: device.license_id,
               node_id: device.node_id,
+              layer: device.role ?? "edge",
+              failover_to: failoverTo,
               last_seen_at: device.last_seen_at,
             });
           }
           notified += 1;
         }
 
-        return Response.json({ ok: true, offline: devices.length, notified });
+        return Response.json({ ok: true, offline: devices.length, notified, failover: failovers });
       },
     },
   },
