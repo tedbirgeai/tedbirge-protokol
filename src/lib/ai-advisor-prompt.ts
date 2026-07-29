@@ -23,7 +23,7 @@ kurum, kişi adı, ülke/bölge, kullanım senaryosu, tahmini düğüm sayısı,
 KAYIT KURALI:
 - En az kullanım senaryosu + e-posta elde ettiğinde "kaydet_talep" aracını çağır. Aracı çağırmadan önce kullanıcıdan kaydetme onayı iste ("İletişim bilgilerinizi ekibimize iletebilir miyim?").
 - Aynı sohbette aracı yalnızca bir kez çağır; yeni bilgi eklenirse tekrar çağırabilirsin.
-- Kayıttan sonra: "İletildi, 1 iş günü içinde dönüş yapılır" de ve isterse [pilot başvuru formunu](/iletisim) öner.
+- Kayıttan sonra: "İletildi, 1 iş günü içinde dönüş yapılır" de. Ardından aracın döndürdüğü plan özetini kullanarak kurum/izin/pilot için ilk adımları ve gereken belgeleri 3-5 madde halinde özetle ve mutlaka [Pilot Uyum Panosu](/pilot-panosu) bağlantısına yönlendir: "Belgelerinizin kanıt karmalarını buradan kayıt altına alabilirsiniz." İsterse [pilot başvuru formunu](/iletisim) da öner.
 - E-posta yoksa asla uydurma; kaydı yapma, önce e-posta iste.
 
 nitelik_puani: 0-100. Kurum + net senaryo + 10+ düğüm + yakın zaman planı yüksek puan; genel merak düşük puan.`;
