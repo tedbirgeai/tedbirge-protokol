@@ -123,6 +123,18 @@ export const Route = createFileRoute("/api/public/telemetry")({
 
         if (deviceError || !device) return json({ error: "device_register_failed" }, 500);
 
+        if (!existing) {
+          await supabaseAdmin.from("license_events").insert({
+            license_id: license.id,
+            user_id: license.user_id,
+            device_id: device.id,
+            event: "device_auto_registered",
+            detail: `${parsed.node_id} · ${parsed.region ?? "TR"} · ${parsed.carrier ?? "—"}`,
+            actor: "node",
+          });
+        }
+
+
         const hasMetric =
           parsed.rtt_ms !== undefined ||
           parsed.throughput_kbps !== undefined ||
