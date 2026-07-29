@@ -21,6 +21,7 @@ import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
 import { buildMeshPlan } from "@/lib/mesh-plan";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
+import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -568,6 +569,8 @@ function Panel() {
               />
 
               <CarrierLiveBoard devices={devices} />
+
+              <CarrierBridgeCard licenseKey={licenses[0]?.license_key} />
 
               <div className="rounded-sm border border-border bg-card/50 p-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
