@@ -265,6 +265,102 @@ function Panel() {
         </div>
 
         <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Cihazlar (düğümler)
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">
+                Lisansa bağlı saha düğümleri
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/saha-raporu"
+                className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+              >
+                Saha raporu
+              </Link>
+              <Link
+                to="/api-dokumantasyon"
+                className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+              >
+                Telemetri API'si
+              </Link>
+            </div>
+          </div>
+
+          {loading ? (
+            <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
+          ) : devices.length === 0 ? (
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Henüz düğüm kaydı yok. Bir düğüm lisans anahtarınızla telemetri uç noktasına ilk
+              isteği gönderdiğinde otomatik olarak burada listelenir.
+            </p>
+          ) : (
+            <div className="mt-5 overflow-x-auto rounded-sm border border-border">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-background/60 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3">Düğüm</th>
+                    <th className="px-4 py-3">Bölge / taşıyıcı</th>
+                    <th className="px-4 py-3">Durum</th>
+                    <th className="px-4 py-3">Son görülme</th>
+                    <th className="px-4 py-3">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {devices.map((d) => (
+                    <tr key={d.id} className="border-t border-border/60">
+                      <td className="px-4 py-3 font-mono text-[12px]">
+                        {d.node_id}
+                        {d.label && (
+                          <span className="block text-[11px] text-muted-foreground">{d.label}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[12px] text-muted-foreground">
+                        {d.region} · {d.carrier ?? "—"}
+                        {d.firmware && <span className="block text-[11px]">v{d.firmware}</span>}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[11px] uppercase">
+                        <span className={d.status === "active" ? "text-primary" : "text-muted-foreground"}>
+                          {d.status === "active" ? "aktif" : "iptal"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
+                        {d.last_seen_at ? new Date(d.last_seen_at).toLocaleString("tr-TR") : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() =>
+                              setDeviceStatus(d.id, d.status === "active" ? "revoked" : "active")
+                            }
+                            disabled={busyId === d.id}
+                            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                          >
+                            {d.status === "active" ? "İptal et" : "Yeniden aç"}
+                          </button>
+                          <button
+                            onClick={() => removeDevice(d.id)}
+                            disabled={busyId === d.id}
+                            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+
+
+        <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Hızlı başlangıç
           </p>
