@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_usage: {
+        Row: {
+          client_hash: string
+          created_at: string
+          id: string
+          request_count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          client_hash: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          client_hash?: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      ai_lead_events: {
+        Row: {
+          channel: string
+          created_at: string
+          delivery_status: string
+          from_status: string | null
+          id: string
+          lead_id: string
+          note: string | null
+          response_body: string | null
+          response_code: number | null
+          to_status: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          delivery_status?: string
+          from_status?: string | null
+          id?: string
+          lead_id: string
+          note?: string | null
+          response_body?: string | null
+          response_code?: number | null
+          to_status: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivery_status?: string
+          from_status?: string | null
+          id?: string
+          lead_id?: string
+          note?: string | null
+          response_body?: string | null
+          response_code?: number | null
+          to_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_lead_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "ai_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_leads: {
         Row: {
           carrier_need: string | null
@@ -22,9 +99,12 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          last_notified_status: string | null
           node_count: string | null
           organization: string | null
           phone: string | null
+          plan: Json | null
+          proposal_ref: string | null
           qualification_score: number | null
           status: string
           summary: string | null
@@ -39,9 +119,12 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_notified_status?: string | null
           node_count?: string | null
           organization?: string | null
           phone?: string | null
+          plan?: Json | null
+          proposal_ref?: string | null
           qualification_score?: number | null
           status?: string
           summary?: string | null
@@ -56,9 +139,12 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          last_notified_status?: string | null
           node_count?: string | null
           organization?: string | null
           phone?: string | null
+          plan?: Json | null
+          proposal_ref?: string | null
           qualification_score?: number | null
           status?: string
           summary?: string | null
