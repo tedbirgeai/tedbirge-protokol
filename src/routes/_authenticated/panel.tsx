@@ -234,7 +234,8 @@ function Panel() {
                       {l.license_key}
                     </p>
                     <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-                      Düğüm limiti: {l.node_limit}
+                      Düğüm limiti: {l.node_limit} · kayıtlı:{" "}
+                      {devices.filter((d) => d.license_id === l.id).length}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <CopyButton value={l.license_key} label="Anahtarı kopyala" />
@@ -244,7 +245,18 @@ function Panel() {
                       >
                         .env indir
                       </button>
+                      <button
+                        onClick={() => rotate(l.id)}
+                        disabled={busyId === l.id}
+                        className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                      >
+                        {busyId === l.id ? "Yenileniyor…" : "Anahtarı yenile"}
+                      </button>
                     </div>
+                    <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                      Anahtar yenilendiğinde eski anahtarla bağlanan düğümler reddedilir.
+                    </p>
+
                   </li>
                 ))}
               </ul>
