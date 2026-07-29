@@ -2,8 +2,9 @@
   "name": "Tedbirge Gateway",
   "short_name": "Tedbirge",
   "description": "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Saha pilotu, uyum panosu ve canlı mesh demosu.",
-  "start_url": "/saha",
+  "start_url": "/",
   "id": "/",
+
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
