@@ -75,6 +75,7 @@ type Device = {
   region: string;
   carrier: string | null;
   firmware: string | null;
+  kind: string | null;
   status: string;
   last_seen_at: string | null;
   last_error_code: string | null;
