@@ -88,9 +88,31 @@ function Admin() {
   }, [isAdmin]);
 
   async function updateLeadStatus(id: string, status: string) {
+    const prev = leads.find((x) => x.id === id)?.status;
     setLeads((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
-    await supabase.from("ai_leads").update({ status }).eq("id", id);
+    setLeadMsg((m) => ({ ...m, [id]: "Güncelleniyor…" }));
+    try {
+      await updateStatusFn({ data: { leadId: id, status: status as never } });
+      setLeadMsg((m) => ({ ...m, [id]: "Durum güncellendi, bildirim gönderildi." }));
+    } catch (e) {
+      setLeads((r) => r.map((x) => (x.id === id ? { ...x, status: prev ?? x.status } : x)));
+      setLeadMsg((m) => ({
+        ...m,
+        [id]: e instanceof Error ? e.message : "Güncellenemedi.",
+      }));
+    }
   }
+
+  async function makePlan(id: string) {
+    setLeadMsg((m) => ({ ...m, [id]: "Plan üretiliyor…" }));
+    try {
+      await rebuildPlanFn({ data: { leadId: id } });
+      setLeadMsg((m) => ({ ...m, [id]: "Plan hazır — teklif paketini açabilirsiniz." }));
+    } catch (e) {
+      setLeadMsg((m) => ({ ...m, [id]: e instanceof Error ? e.message : "Plan üretilemedi." }));
+    }
+  }
+
 
 
   async function updateStatus(id: string, status: string) {
