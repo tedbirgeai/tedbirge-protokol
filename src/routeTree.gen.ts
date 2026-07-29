@@ -45,6 +45,7 @@ import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/tele
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
 
 const UyumlulukRoute = UyumlulukRouteImport.update({
   id: '/uyumluluk',
@@ -226,6 +227,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronOfflineCheckRoute =
+  ApiPublicCronOfflineCheckRouteImport.update({
+    id: '/api/public/cron/offline-check',
+    path: '/api/public/cron/offline-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -299,6 +307,7 @@ export interface FileRoutesByTo {
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -338,6 +347,7 @@ export interface FileRoutesById {
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -377,6 +387,7 @@ export interface FileRouteTypes {
     | '/teklif/$id'
     | '/api/public/openapi.json'
     | '/api/public/telemetry'
+    | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/teklif/$id'
     | '/api/public/openapi.json'
     | '/api/public/telemetry'
+    | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -452,6 +464,7 @@ export interface FileRouteTypes {
     | '/_authenticated/teklif/$id'
     | '/api/public/openapi.json'
     | '/api/public/telemetry'
+    | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -487,6 +500,7 @@ export interface RootRouteChildren {
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
+  ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -744,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/offline-check': {
+      id: '/api/public/cron/offline-check'
+      path: '/api/public/cron/offline-check'
+      fullPath: '/api/public/cron/offline-check'
+      preLoaderRoute: typeof ApiPublicCronOfflineCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -796,6 +817,7 @@ const rootRouteChildren: RootRouteChildren = {
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
+  ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
