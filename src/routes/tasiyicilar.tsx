@@ -256,6 +256,7 @@ function Carriers() {
       </section>
 
       <section className="border-t border-border/60 bg-card/30">
+        <div className="mx-auto max-w-4xl px-6 py-16">
           <SectionLabel>Onuncu katman</SectionLabel>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight">
             Zero-KVKK efemer RF çerçeveleme
