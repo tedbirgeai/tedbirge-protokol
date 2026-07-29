@@ -14,6 +14,8 @@ const nav = [
   { to: "/uyumluluk", label: "Uyum" },
   { to: "/guvenlik", label: "Güvenlik" },
   { to: "/demo", label: "Demo" },
+  { to: "/saha", label: "Saha" },
+
   { to: "/fiyatlandirma", label: "Fiyatlandırma" },
   { to: "/dokumanlar", label: "Dokümanlar" },
   { to: "/rehber", label: "Rehber" },
@@ -129,8 +131,10 @@ export function SiteFooter() {
             <li><Link to="/fiyatlandirma" className="text-muted-foreground hover:text-foreground">Fiyatlandırma</Link></li>
             <li><Link to="/dokumanlar" className="text-muted-foreground hover:text-foreground">Dokümanlar</Link></li>
             <li><Link to="/demo" className="text-muted-foreground hover:text-foreground">Canlı demo</Link></li>
+            <li><Link to="/saha" className="text-muted-foreground hover:text-foreground">Saha erişimi (ücretsiz)</Link></li>
             <li><Link to="/rehber" className="text-muted-foreground hover:text-foreground">Rehber</Link></li>
             <li><a href="/tedbirge-teknik-ozet.md" download className="text-muted-foreground hover:text-foreground">Teknik özet (.md)</a></li>
+
           </ul>
         </div>
         <div>
@@ -140,6 +144,9 @@ export function SiteFooter() {
             <li><Link to="/uyumluluk" className="text-muted-foreground hover:text-foreground">Spektrum & uyum</Link></li>
             <li><Link to="/sertifikasyon" className="text-muted-foreground hover:text-foreground">Sertifikasyon & test</Link></li>
             <li><Link to="/turkiye-mevzuat" className="text-muted-foreground hover:text-foreground">Türkiye mevzuatı</Link></li>
+            <li><Link to="/izinler" className="text-muted-foreground hover:text-foreground">Devlet izinleri</Link></li>
+            <li><Link to="/pilot-panosu" className="text-muted-foreground hover:text-foreground">Pilot uyum panosu</Link></li>
+
             <li><Link to="/ihracat-uyum" className="text-muted-foreground hover:text-foreground">İhracat kontrolü</Link></li>
             <li><Link to="/guvenlik" className="text-muted-foreground hover:text-foreground">Güvenlik & tehdit modeli</Link></li>
             <li><Link to="/en" className="text-muted-foreground hover:text-foreground">English overview</Link></li>

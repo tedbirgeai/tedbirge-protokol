@@ -297,6 +297,19 @@ TEDBIRGE_REGION_LOCK=signed # operatör tarafından değiştirilemez`}</code>
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
+            to="/izinler"
+            className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+          >
+            Devlet izinleri
+          </Link>
+          <Link
+            to="/pilot-panosu"
+            className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+          >
+            Pilot uyum panosu
+          </Link>
+          <Link
+
             to="/uyumluluk"
             className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
           >

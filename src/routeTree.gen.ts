@@ -14,8 +14,11 @@ import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
+import { Route as SahaRouteImport } from './routes/saha'
+import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
+import { Route as IzinlerRouteImport } from './routes/izinler'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
@@ -61,6 +64,16 @@ const SertifikasyonRoute = SertifikasyonRouteImport.update({
   path: '/sertifikasyon',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SahaRoute = SahaRouteImport.update({
+  id: '/saha',
+  path: '/saha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PilotPanosuRoute = PilotPanosuRouteImport.update({
+  id: '/pilot-panosu',
+  path: '/pilot-panosu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KosullarRoute = KosullarRouteImport.update({
   id: '/kosullar',
   path: '/kosullar',
@@ -69,6 +82,11 @@ const KosullarRoute = KosullarRouteImport.update({
 const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
   id: '/karsilastirma',
   path: '/karsilastirma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IzinlerRoute = IzinlerRouteImport.update({
+  id: '/izinler',
+  path: '/izinler',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IletisimRoute = IletisimRouteImport.update({
@@ -181,8 +199,11 @@ export interface FileRoutesByFullPath {
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
+  '/izinler': typeof IzinlerRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
+  '/pilot-panosu': typeof PilotPanosuRoute
+  '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
@@ -208,8 +229,11 @@ export interface FileRoutesByTo {
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
+  '/izinler': typeof IzinlerRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
+  '/pilot-panosu': typeof PilotPanosuRoute
+  '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
@@ -237,8 +261,11 @@ export interface FileRoutesById {
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
+  '/izinler': typeof IzinlerRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
+  '/pilot-panosu': typeof PilotPanosuRoute
+  '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
@@ -266,8 +293,11 @@ export interface FileRouteTypes {
     | '/iade'
     | '/ihracat-uyum'
     | '/iletisim'
+    | '/izinler'
     | '/karsilastirma'
     | '/kosullar'
+    | '/pilot-panosu'
+    | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
@@ -293,8 +323,11 @@ export interface FileRouteTypes {
     | '/iade'
     | '/ihracat-uyum'
     | '/iletisim'
+    | '/izinler'
     | '/karsilastirma'
     | '/kosullar'
+    | '/pilot-panosu'
+    | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
@@ -321,8 +354,11 @@ export interface FileRouteTypes {
     | '/iade'
     | '/ihracat-uyum'
     | '/iletisim'
+    | '/izinler'
     | '/karsilastirma'
     | '/kosullar'
+    | '/pilot-panosu'
+    | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
@@ -350,8 +386,11 @@ export interface RootRouteChildren {
   IadeRoute: typeof IadeRoute
   IhracatUyumRoute: typeof IhracatUyumRoute
   IletisimRoute: typeof IletisimRoute
+  IzinlerRoute: typeof IzinlerRoute
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KosullarRoute: typeof KosullarRoute
+  PilotPanosuRoute: typeof PilotPanosuRoute
+  SahaRoute: typeof SahaRoute
   SertifikasyonRoute: typeof SertifikasyonRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
@@ -399,6 +438,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SertifikasyonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/saha': {
+      id: '/saha'
+      path: '/saha'
+      fullPath: '/saha'
+      preLoaderRoute: typeof SahaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pilot-panosu': {
+      id: '/pilot-panosu'
+      path: '/pilot-panosu'
+      fullPath: '/pilot-panosu'
+      preLoaderRoute: typeof PilotPanosuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kosullar': {
       id: '/kosullar'
       path: '/kosullar'
@@ -411,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/karsilastirma'
       fullPath: '/karsilastirma'
       preLoaderRoute: typeof KarsilastirmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/izinler': {
+      id: '/izinler'
+      path: '/izinler'
+      fullPath: '/izinler'
+      preLoaderRoute: typeof IzinlerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/iletisim': {
@@ -577,8 +637,11 @@ const rootRouteChildren: RootRouteChildren = {
   IadeRoute: IadeRoute,
   IhracatUyumRoute: IhracatUyumRoute,
   IletisimRoute: IletisimRoute,
+  IzinlerRoute: IzinlerRoute,
   KarsilastirmaRoute: KarsilastirmaRoute,
   KosullarRoute: KosullarRoute,
+  PilotPanosuRoute: PilotPanosuRoute,
+  SahaRoute: SahaRoute,
   SertifikasyonRoute: SertifikasyonRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
