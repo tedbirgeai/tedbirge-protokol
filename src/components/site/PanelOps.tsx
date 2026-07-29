@@ -433,6 +433,7 @@ const EVENT_OPTIONS = [
   { id: "field_report", label: "Saha uyarı & şikayet" },
   { id: "device_offline", label: "Düğüm offline" },
   { id: "rate_limited", label: "Hız sınırı (429)" },
+  { id: "ir_alarm", label: "Kızılötesi alarm" },
 ] as const;
 
 export function WebhookSettings({ userId }: { userId: string | undefined }) {

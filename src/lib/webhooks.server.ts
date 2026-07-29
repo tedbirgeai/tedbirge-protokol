@@ -9,7 +9,8 @@ export type WebhookEventType =
   | "license_event"
   | "field_report"
   | "device_offline"
-  | "rate_limited";
+  | "rate_limited"
+  | "ir_alarm";
 
 async function hmacHex(secret: string, payload: string): Promise<string> {
   const key = await crypto.subtle.importKey(
