@@ -430,7 +430,9 @@ function Panel() {
                       </td>
 
                       <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                        {d.last_seen_at ? new Date(d.last_seen_at).toLocaleString("tr-TR") : "—"}
+                        {d.last_seen_at
+                          ? `${new Date(d.last_seen_at).toLocaleString("tr-TR")} · ${sinceLabel(d.last_seen_at)}`
+                          : "telemetri bekleniyor"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
