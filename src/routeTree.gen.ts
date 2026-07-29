@@ -14,6 +14,7 @@ import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
+import { Route as SahaRouteImport } from './routes/saha'
 import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
@@ -61,6 +62,11 @@ const TasiyicilarRoute = TasiyicilarRouteImport.update({
 const SertifikasyonRoute = SertifikasyonRouteImport.update({
   id: '/sertifikasyon',
   path: '/sertifikasyon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SahaRoute = SahaRouteImport.update({
+  id: '/saha',
+  path: '/saha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PilotPanosuRoute = PilotPanosuRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/pilot-panosu': typeof PilotPanosuRoute
+  '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/pilot-panosu': typeof PilotPanosuRoute
+  '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/pilot-panosu': typeof PilotPanosuRoute
+  '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/karsilastirma'
     | '/kosullar'
     | '/pilot-panosu'
+    | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/karsilastirma'
     | '/kosullar'
     | '/pilot-panosu'
+    | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/karsilastirma'
     | '/kosullar'
     | '/pilot-panosu'
+    | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
@@ -378,6 +390,7 @@ export interface RootRouteChildren {
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KosullarRoute: typeof KosullarRoute
   PilotPanosuRoute: typeof PilotPanosuRoute
+  SahaRoute: typeof SahaRoute
   SertifikasyonRoute: typeof SertifikasyonRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
@@ -423,6 +436,13 @@ declare module '@tanstack/react-router' {
       path: '/sertifikasyon'
       fullPath: '/sertifikasyon'
       preLoaderRoute: typeof SertifikasyonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saha': {
+      id: '/saha'
+      path: '/saha'
+      fullPath: '/saha'
+      preLoaderRoute: typeof SahaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pilot-panosu': {
@@ -621,6 +641,7 @@ const rootRouteChildren: RootRouteChildren = {
   KarsilastirmaRoute: KarsilastirmaRoute,
   KosullarRoute: KosullarRoute,
   PilotPanosuRoute: PilotPanosuRoute,
+  SahaRoute: SahaRoute,
   SertifikasyonRoute: SertifikasyonRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
