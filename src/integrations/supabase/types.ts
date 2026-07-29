@@ -195,6 +195,7 @@ export type Database = {
           created_at: string
           firmware: string | null
           id: string
+          kind: string
           label: string | null
           last_error_at: string | null
           last_error_code: string | null
@@ -211,6 +212,7 @@ export type Database = {
           created_at?: string
           firmware?: string | null
           id?: string
+          kind?: string
           label?: string | null
           last_error_at?: string | null
           last_error_code?: string | null
@@ -227,6 +229,7 @@ export type Database = {
           created_at?: string
           firmware?: string | null
           id?: string
+          kind?: string
           label?: string | null
           last_error_at?: string | null
           last_error_code?: string | null
@@ -301,6 +304,66 @@ export type Database = {
           },
           {
             foreignKeyName: "field_reports_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ir_frames: {
+        Row: {
+          alarm: boolean
+          alarm_reason: string | null
+          created_at: string
+          detections: number | null
+          device_id: string
+          frame_hash: string | null
+          id: string
+          license_id: string
+          note: string | null
+          temp_avg_c: number | null
+          temp_max_c: number | null
+          temp_min_c: number | null
+        }
+        Insert: {
+          alarm?: boolean
+          alarm_reason?: string | null
+          created_at?: string
+          detections?: number | null
+          device_id: string
+          frame_hash?: string | null
+          id?: string
+          license_id: string
+          note?: string | null
+          temp_avg_c?: number | null
+          temp_max_c?: number | null
+          temp_min_c?: number | null
+        }
+        Update: {
+          alarm?: boolean
+          alarm_reason?: string | null
+          created_at?: string
+          detections?: number | null
+          device_id?: string
+          frame_hash?: string | null
+          id?: string
+          license_id?: string
+          note?: string | null
+          temp_avg_c?: number | null
+          temp_max_c?: number | null
+          temp_min_c?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ir_frames_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ir_frames_license_id_fkey"
             columns: ["license_id"]
             isOneToOne: false
             referencedRelation: "licenses"
