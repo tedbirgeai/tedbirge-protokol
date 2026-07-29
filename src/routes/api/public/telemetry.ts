@@ -44,6 +44,19 @@ export const Route = createFileRoute("/api/public/telemetry")({
           return json({ error: "missing_or_invalid_license" }, 401);
         }
 
+        const { checkApiRateLimit } = await import("@/lib/api-rate-limit.server");
+        const limit = await checkApiRateLimit("telemetry", licenseKey);
+        if (!limit.ok) {
+          return new Response(JSON.stringify({ error: limit.message }), {
+            status: 429,
+            headers: {
+              "Content-Type": "application/json",
+              "Retry-After": String(limit.retryAfterSeconds),
+              ...CORS,
+            },
+          });
+        }
+
         let parsed;
         try {
           parsed = Body.parse(await request.json());
@@ -52,6 +65,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
 
         const { data: license } = await supabaseAdmin
           .from("licenses")
