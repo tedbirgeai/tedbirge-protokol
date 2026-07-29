@@ -87,6 +87,10 @@ const ICE: RTCConfiguration = {
 export class BrowserNode {
   readonly nodeId = getBrowserNodeId();
   private licenseKey: string;
+  /** Lisans yoksa düğüm "demo modu"nda çalışır: P2P + kuyruk var, bulut telemetrisi yok. */
+  private get demoMode() {
+    return !this.licenseKey;
+  }
   private onState: (s: BrowserNodeState) => void;
   private channel: ReturnType<typeof supabase.channel> | null = null;
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
@@ -94,8 +98,8 @@ export class BrowserNode {
   private timer: ReturnType<typeof setInterval> | null = null;
   private state: BrowserNodeState;
 
-  constructor(licenseKey: string, onState: (s: BrowserNodeState) => void) {
-    this.licenseKey = licenseKey;
+  constructor(licenseKey: string | undefined, onState: (s: BrowserNodeState) => void) {
+    this.licenseKey = licenseKey ?? "";
     this.onState = onState;
     this.state = {
       running: false,
@@ -340,6 +344,7 @@ export class BrowserNode {
   }
 
   private async postTelemetry(body: Record<string, unknown>) {
+    if (this.demoMode) return false;
     try {
       const res = await fetch("/api/public/telemetry", {
         method: "POST",
@@ -366,6 +371,12 @@ export class BrowserNode {
       note: `tarayici-dugumu · dogrudan-es:${directPeers}`,
       ...(this.state.online ? {} : { error_code: "uplink_offline" }),
     };
+
+    if (this.demoMode) {
+      // Demo modu: buluta yazmadan eşlerle P2P ve kuyruk çalışmaya devam eder.
+      this.emit({ lastHeartbeatAt: new Date().toISOString(), error: null });
+      return;
+    }
 
     if (!this.state.online) {
       // Bulut yok: kuyruğa al ve eşler üzerinden röle etmeyi dene.

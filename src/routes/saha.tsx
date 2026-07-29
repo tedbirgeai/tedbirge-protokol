@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 
 const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
 const DESC =
@@ -142,6 +143,18 @@ function FieldAccess() {
               />
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pt-16">
+        <SectionLabel>Herkese açık düğüm demosu</SectionLabel>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">Bu cihazı şimdi düğüm yap</h2>
+        <p className="mt-4 max-w-2xl text-muted-foreground">
+          Hesap ya da lisans gerekmez. Düğümü başlatın; aynı linki açan diğer cihazlarla doğrudan
+          (P2P) eşleşir, bağlantı koptuğunda paketler kuyruğa alınır ve dönünce iletilir.
+        </p>
+        <div className="mt-8">
+          <BrowserNodeCard />
         </div>
       </section>
 

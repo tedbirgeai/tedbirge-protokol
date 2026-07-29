@@ -15,7 +15,7 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
   useEffect(() => setNodeId(getBrowserNodeId()), []);
 
   const start = useCallback(() => {
-    if (!licenseKey || nodeRef.current) return;
+    if (nodeRef.current) return;
     const node = new BrowserNode(licenseKey, setState);
     nodeRef.current = node;
     void node.start();
@@ -31,13 +31,12 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
 
   // Bir kez açıldıysa uygulama her açıldığında kendiliğinden başlar (otonom mod).
   useEffect(() => {
-    if (!licenseKey) return;
     if (window.localStorage.getItem(AUTO_KEY) === "1" && !nodeRef.current) start();
     return () => {
       nodeRef.current?.stop();
       nodeRef.current = null;
     };
-  }, [licenseKey, start]);
+  }, [start]);
 
   const running = Boolean(state?.running);
   const directPeers = state?.peers.filter((p) => p.direct).length ?? 0;
@@ -68,7 +67,11 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
 
           <dl className="mt-4 space-y-1 font-mono text-[11px]">
             <Line k="Durum" v={running ? "çalışıyor" : "kapalı"} ok={running} />
-            <Line k="Bulut" v={state?.online === false ? "kopuk (kuyruk)" : "bağlı"} ok={state?.online !== false} />
+            <Line
+              k="Bulut"
+              v={!licenseKey ? "demo (kayıt yok)" : state?.online === false ? "kopuk (kuyruk)" : "bağlı"}
+              ok={licenseKey ? state?.online !== false : undefined}
+            />
             <Line k="Doğrudan eş" v={String(directPeers)} ok={directPeers > 0} />
             <Line k="Kuyruk" v={String(state?.queued ?? 0)} ok={(state?.queued ?? 0) === 0} />
             <Line k="Son heartbeat" v={state?.lastHeartbeatAt ? new Date(state.lastHeartbeatAt).toLocaleTimeString("tr-TR") : "—"} ok={Boolean(state?.lastHeartbeatAt)} />
@@ -86,7 +89,6 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
             ) : (
               <button
                 onClick={start}
-                disabled={!licenseKey}
                 className="rounded-sm bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground disabled:opacity-50"
               >
                 Düğümü başlat
@@ -102,10 +104,34 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
           </div>
 
           {!licenseKey && (
-            <p className="mt-3 text-[11px] text-muted-foreground">Önce bir lisans oluşturun; düğüm lisans anahtarıyla kimliklenir.</p>
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Demo modu: eşleşme, P2P röle ve çevrimdışı kuyruk çalışır; panelde kalıcı kayıt için lisans gerekir.
+            </p>
           )}
           {state?.error && <p className="mt-3 text-[11px] text-destructive">{state.error}</p>}
         </div>
+      </div>
+
+      <div className="mt-5 grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-3">
+        {[
+          {
+            t: "Çevrimdışı kuyruk",
+            b: "Bağlantı koptuğunda paketler cihazda kalıcı olarak saklanır (en fazla 200 kayıt) ve bağlantı dönünce sırayla iletilir.",
+          },
+          {
+            t: "Sınırlamalar",
+            b: "Tarayıcı yalnızca cihazın Wi-Fi/hücresel radyosunu kullanır; menzil ~50-100 m. LoRa/HaLow/TVWS menzili için radyo modülü gerekir.",
+          },
+          {
+            t: "Yükseltme yolu",
+            b: "Lisans + gateway/röle donanımı eklendiğinde aynı düğüm kimliği korunur; 6-15 km zincir ve panel kaydı devreye girer.",
+          },
+        ].map((c) => (
+          <div key={c.t} className="bg-background/60 p-4">
+            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">{c.t}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{c.b}</p>
+          </div>
+        ))}
       </div>
 
       {running && state && state.peers.length > 0 && (
