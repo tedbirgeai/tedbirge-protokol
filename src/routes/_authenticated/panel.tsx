@@ -19,6 +19,7 @@ import { QrNodeEnroll, E2eeKeyBoard, OutageLog, CalibrationTest } from "@/compon
 import { HealthCards, LiveFeed, KeyRotation, CalibrationReports } from "@/components/site/PanelSystem";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
+import { buildMeshPlan } from "@/lib/mesh-plan";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
