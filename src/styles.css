@@ -162,3 +162,31 @@
     linear-gradient(to bottom, oklch(1 0 0 / 5%) 1px, transparent 1px);
   background-size: 56px 56px;
 }
+
+@media print {
+  header,
+  footer,
+  .print-hide {
+    display: none !important;
+  }
+  :root,
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  * {
+    color: #000 !important;
+    border-color: #999 !important;
+    box-shadow: none !important;
+  }
+  input,
+  textarea,
+  select {
+    background: transparent !important;
+  }
+  article,
+  section {
+    break-inside: avoid;
+  }
+}
