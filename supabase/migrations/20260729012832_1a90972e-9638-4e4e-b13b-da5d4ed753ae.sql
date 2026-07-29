@@ -1,0 +1,1 @@
+DELETE FROM public.ai_leads WHERE email = 'test-lead@example.com';
