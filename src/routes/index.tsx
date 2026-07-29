@@ -17,8 +17,10 @@ export const Route = createFileRoute("/")({
           "İnternet olmadan çalışan kurumsal mesh altyapısı: çok-sıçramalı yönlendirme, zero-knowledge tünel, kullanım bazlı faturalama.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app" }],
   }),
   component: Index,
 });

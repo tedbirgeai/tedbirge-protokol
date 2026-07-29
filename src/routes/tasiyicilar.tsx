@@ -17,8 +17,10 @@ export const Route = createFileRoute("/tasiyicilar")({
         content: "Menzil, bant genişliği, gecikme ve yasal statüsüyle dokuz fiziksel taşıyıcı.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/tasiyicilar" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/tasiyicilar" }],
   }),
   component: Carriers,
 });

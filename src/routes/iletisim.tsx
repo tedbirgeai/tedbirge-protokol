@@ -18,8 +18,10 @@ export const Route = createFileRoute("/iletisim")({
         content: "Üç düğümlük mesh pilotu ve kullanım bazlı faturalama entegrasyonu için iletişime geçin.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/iletisim" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/iletisim" }],
   }),
   component: Contact,
 });

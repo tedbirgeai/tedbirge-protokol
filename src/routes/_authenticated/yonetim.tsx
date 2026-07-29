@@ -1,8 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
+
 
 export const Route = createFileRoute("/_authenticated/yonetim")({
   head: () => ({
@@ -69,6 +72,10 @@ function Admin() {
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [leadMsg, setLeadMsg] = useState<Record<string, string>>({});
+  const updateStatusFn = useServerFn(updateAiLeadStatus);
+  const rebuildPlanFn = useServerFn(rebuildLeadPlan);
+
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -88,9 +95,31 @@ function Admin() {
   }, [isAdmin]);
 
   async function updateLeadStatus(id: string, status: string) {
+    const prev = leads.find((x) => x.id === id)?.status;
     setLeads((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
-    await supabase.from("ai_leads").update({ status }).eq("id", id);
+    setLeadMsg((m) => ({ ...m, [id]: "Güncelleniyor…" }));
+    try {
+      await updateStatusFn({ data: { leadId: id, status: status as never } });
+      setLeadMsg((m) => ({ ...m, [id]: "Durum güncellendi, bildirim gönderildi." }));
+    } catch (e) {
+      setLeads((r) => r.map((x) => (x.id === id ? { ...x, status: prev ?? x.status } : x)));
+      setLeadMsg((m) => ({
+        ...m,
+        [id]: e instanceof Error ? e.message : "Güncellenemedi.",
+      }));
+    }
   }
+
+  async function makePlan(id: string) {
+    setLeadMsg((m) => ({ ...m, [id]: "Plan üretiliyor…" }));
+    try {
+      await rebuildPlanFn({ data: { leadId: id } });
+      setLeadMsg((m) => ({ ...m, [id]: "Plan hazır — teklif paketini açabilirsiniz." }));
+    } catch (e) {
+      setLeadMsg((m) => ({ ...m, [id]: e instanceof Error ? e.message : "Plan üretilemedi." }));
+    }
+  }
+
 
 
   async function updateStatus(id: string, status: string) {
@@ -200,6 +229,27 @@ function Admin() {
                       {l.summary}
                     </p>
                   )}
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Link
+                      to="/teklif/$id"
+                      params={{ id: l.id }}
+                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] hover:bg-secondary"
+                    >
+                      Teklif paketi
+                    </Link>
+                    <button
+                      onClick={() => makePlan(l.id)}
+                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] hover:bg-secondary"
+                    >
+                      Plan üret
+                    </button>
+                    {leadMsg[l.id] && (
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {leadMsg[l.id]}
+                      </span>
+                    )}
+                  </div>
+
                   {l.use_case && (
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
                       {l.use_case}

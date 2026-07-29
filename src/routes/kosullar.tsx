@@ -13,8 +13,10 @@ export const Route = createFileRoute("/kosullar")({
       { property: "og:title", content: "Tedbirge Kullanım Koşulları" },
       { property: "og:description", content: "Hizmet ve lisans kullanım koşulları." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/kosullar" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/kosullar" }],
   }),
   component: Terms,
 });

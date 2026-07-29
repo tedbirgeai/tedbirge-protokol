@@ -20,8 +20,10 @@ export const Route = createFileRoute("/fiyatlandirma")({
         content: "Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı ücretlendirme.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/fiyatlandirma" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/fiyatlandirma" }],
   }),
   component: Pricing,
 });
