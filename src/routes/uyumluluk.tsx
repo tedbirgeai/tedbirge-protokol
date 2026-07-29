@@ -225,13 +225,20 @@ TEDBIRGE_LORA_DUTY_CYCLE=0.01`}</code>
             hangi taşıyıcıların açılabileceğini raporlayalım.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <Link
+            to="/sertifikasyon"
+            className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+          >
+            Sertifikasyon & test
+          </Link>
           <Link
             to="/ihracat-uyum"
             className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
           >
             İhracat uyumu
           </Link>
+
           <Link
             to="/iletisim"
             className="rounded-sm bg-primary px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
