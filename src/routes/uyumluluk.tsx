@@ -78,15 +78,34 @@ const regions = [
     fso: "Lisanssız · Class 1M",
   },
   {
+    region: "Japonya (MIC / ARIB STD-T108)",
+    sub: "JP",
+    lora: "920–923 MHz · LBT zorunlu · 20 mW",
+    halow: "Kapalı — 802.11ah profili onaysız",
+    tvws: "Kapalı",
+    wigig: "57–66 GHz serbest",
+    fso: "Lisanssız · Class 1M",
+  },
+  {
+    region: "Güney Kore (RRA) · Çin (SRRC) · Hindistan (WPC)",
+    sub: "KR-CN-IN",
+    lora: "KR 917–923.5 MHz · CN 470–510 MHz (868 yasak) · IN 865–867 MHz",
+    halow: "Üçünde de kapalı",
+    tvws: "Kapalı",
+    wigig: "60 GHz serbest (yerel tip onayı ile)",
+    fso: "Lisanssız · Class 1M",
+  },
+  {
     region: "Afrika & LATAM (ITU Bölge 1/2 karma)",
     sub: "AF-LATAM",
-    lora: "868 veya 915 MHz — ulusal düzenleyiciye göre seçilir",
+    lora: "868 veya 915 MHz — ulusal düzenleyiciye göre seçilir (BR 902–907.5/915–928)",
     halow: "Ülke bazlı · varsayılan kapalı",
     tvws: "ZA/KE beyaz alan çerçevesi · izinli",
     wigig: "57–66 GHz genellikle serbest",
     fso: "Lisanssız · Class 1M",
   },
 ];
+
 
 const rules = [
   {
