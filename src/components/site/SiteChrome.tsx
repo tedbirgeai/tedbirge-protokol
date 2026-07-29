@@ -131,6 +131,7 @@ export function SiteFooter() {
             <li><Link to="/karsilastirma" className="text-muted-foreground hover:text-foreground">Karşılaştırma</Link></li>
             <li><Link to="/fiyatlandirma" className="text-muted-foreground hover:text-foreground">Fiyatlandırma</Link></li>
             <li><Link to="/dokumanlar" className="text-muted-foreground hover:text-foreground">Dokümanlar</Link></li>
+            <li><Link to="/kapsama" className="text-muted-foreground hover:text-foreground">Kapsama planlayıcı</Link></li>
             <li><Link to="/demo" className="text-muted-foreground hover:text-foreground">Canlı demo</Link></li>
             <li><Link to="/saha" className="text-muted-foreground hover:text-foreground">Saha erişimi (ücretsiz)</Link></li>
             <li><Link to="/rehber" className="text-muted-foreground hover:text-foreground">Rehber</Link></li>
