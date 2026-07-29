@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
+import { rotateLicenseKey } from "@/lib/licenses.functions";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
