@@ -16,12 +16,12 @@ export type CarrierId =
   | "eth";
 
 export const CARRIERS = [
-  { id: "lora", name: "LoRa 868 MHz", baseKm: 5, mobile: true, note: "Düşük hız (0.3–37 kbps), mesaj/telemetri" },
-  { id: "halow", name: "Wi-Fi HaLow 802.11ah", baseKm: 1.2, mobile: true, note: "IP trafiği, ~1–15 Mbps" },
-  { id: "tvws", name: "TVWS (470–790 MHz)", baseKm: 8, mobile: false, note: "Veritabanı izni gerekir" },
-  { id: "wifi", name: "Wi-Fi 2.4/5 GHz yönlü", baseKm: 3, mobile: false, note: "Sabit nokta-nokta, LoS şart" },
-  { id: "wigig", name: "WiGig 60 GHz", baseKm: 1, mobile: false, note: "Gigabit, yağmurdan etkilenir" },
-  { id: "fso", name: "FSO lazer", baseKm: 2, mobile: false, note: "Sisde kesilir, mekanik hizalama" },
+  { id: "lora", name: "LoRa 868 MHz", baseKm: 5, mobile: true, note: "Düşük hız (0.3–37 kbps): internet değil, mesaj/telemetri; LoRa modül + anten gerekir" },
+  { id: "halow", name: "Wi-Fi HaLow 802.11ah", baseKm: 1.2, mobile: true, note: "IP trafiği, ~1–15 Mbps; telefonda değil ayrı HaLow donanımda çalışır" },
+  { id: "tvws", name: "TVWS (470–790 MHz)", baseKm: 8, mobile: false, note: "Veritabanı/izin + TVWS radyo gerekir" },
+  { id: "wifi", name: "Wi-Fi 2.4/5 GHz yönlü", baseKm: 3, mobile: false, note: "Sabit nokta-nokta, LoS şart; telefon Wi‑Fi roaming'i değildir" },
+  { id: "wigig", name: "WiGig 60 GHz", baseKm: 1, mobile: false, note: "Gigabit, yağmurdan etkilenir; hizalı özel donanım gerekir" },
+  { id: "fso", name: "FSO lazer", baseKm: 2, mobile: false, note: "Sisde kesilir; optik hizalama ve özel donanım gerekir" },
   { id: "cellular", name: "Hücresel (LTE/5G)", baseKm: 0, mobile: true, note: "Operatör kapsaması varsa sınırsız" },
   { id: "satellite", name: "Uydu", baseKm: 0, mobile: true, note: "Gökyüzü görüşü varsa sınırsız" },
   { id: "eth", name: "Ethernet / fiber", baseKm: 0.1, mobile: false, note: "Sabit omurga" },
@@ -140,7 +140,7 @@ export function buildMeshPlan(input: {
   chain.push({
     role: "edge",
     nodeId: "saha-01",
-    label: "Saha ucu (cep/araç)",
+    label: "Saha ucu (telefonun bağlı olduğu radyo düğümü/araç)",
     distanceKm: Number(input.distanceKm.toFixed(2)),
   });
 
@@ -170,6 +170,7 @@ export function agentSnippet(plan: MeshPlan, licenseKey = "<LISANS_ANAHTARINIZ>"
             ? "--store-forward on --failover-priority 10"
             : "--roaming on --queue-store on";
       return `# ${n.label}
+# Not: Bu komut yazılım düğümünü başlatır; LoRa/HaLow/TVWS/WiGig/FSO için ilgili fiziksel radyo modülü ve anten bağlı olmalıdır.
 tedbirge-agent --role ${n.role} --carrier ${plan.carrier.id} --region TR \\
   --license-key ${licenseKey} --node-id ${n.nodeId} ${roleFlags}`;
     })

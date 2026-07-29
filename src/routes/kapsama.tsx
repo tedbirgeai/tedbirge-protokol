@@ -104,6 +104,12 @@ function CoveragePlanner() {
             kadar</strong> mesafe kalmasına ya da aradaki boşluğu dolduran röle düğümlerine bağlıdır. Aşağıdaki
             planlayıcı, sizin taşıyıcı/arazi koşulunuzda kaç röleye ihtiyacınız olduğunu gerçekçi rakamlarla söyler.
           </p>
+          <div className="mt-6 rounded-lg border border-destructive/40 bg-destructive/10 p-5 text-sm leading-relaxed text-muted-foreground">
+            <strong className="text-foreground">Kritik saha gerçeği:</strong> iPhone tek başına LoRa/HaLow/TVWS
+            düğümü değildir. Wi‑Fi menzilinden çıkınca telefonun bulut bağlantısı kesilir; PWA yalnızca
+            önbellekten açılır. 6 km / 15 km senaryosu için ev köprüsü dışında sahaya yerleştirilmiş fiziksel
+            röleler ve telefonun yanında/araçta çalışan saha radyo düğümü gerekir.
+          </div>
         </div>
       </section>
 
@@ -112,15 +118,15 @@ function CoveragePlanner() {
           {[
             {
               t: "1 düğüm",
-              d: "Sadece ev içi kapsama + telemetri. Uzaklaşınca bağlantı kesilir; mesajlarınız uç düğümde kuyruğa alınır, menzile girince otomatik iletilir (store-and-forward).",
+              d: "Sadece ev içi kapsama + telemetri. Uzaklaşınca telefonun interneti kesilir; saha radyo düğümü yoksa mesaj taşıma başlamaz.",
             },
             {
               t: "2–3 düğüm",
-              d: "Ev → çatı/tepe rölesi → cep. Mahalle/köy ölçeğinde kesintisiz mesajlaşma ve konum akışı. Pilot lisansın 5 düğüm limiti bu senaryo için yeterlidir.",
+              d: "Ev → çatı/tepe rölesi → saha radyo düğümü. Mahalle/köy ölçeğinde mesajlaşma ve konum akışı; telefon bu saha düğümüne yerel olarak bağlanır.",
             },
             {
               t: "Hibrit taşıyıcı",
-              d: "Hücresel veya uydu taşıyıcısı açıkken yönlendirici otomatik en iyi yolu seçer; şebeke düşerse aynı oturum LoRa/HaLow üzerinden devam eder. Kopma yerine hız düşer.",
+              d: "Hücresel/uydu varsa tam internet oradan akar; şebeke düşerse LoRa gibi düşük hızlı taşıyıcılar yalnız kritik telemetri/mesaj kuyruğunu taşır.",
             },
           ].map((c) => (
             <div key={c.t} className="rounded-lg border border-border bg-card p-5">
@@ -247,10 +253,14 @@ function CoveragePlanner() {
                   </p>
                   <p className="mt-5 text-sm text-muted-foreground">
                     {distanceKm} km mesafede kesintisiz bağlantı için ev köprüsü + <strong className="text-foreground">
-                    {plan.relays} röle</strong> + cepteki uç düğüm gerekir (toplam {plan.totalNodes} düğüm).
+                    {plan.relays} röle</strong> + telefonun bağlı olduğu saha radyo düğümü gerekir (toplam {plan.totalNodes} düğüm).
                     {plan.totalNodes > 5
                       ? " Bu, 5 düğümlük pilot limitini aşar; Enterprise plana geçmeniz ya da röleleri daha yüksek noktalara taşımanız gerekir."
                       : " Bu, 5 düğümlük pilot lisansı ile karşılanabilir."}
+                  </p>
+                  <p className="mt-3 rounded border border-border bg-card p-3 text-xs text-muted-foreground">
+                    Bu sonuç yazılım lisansı veya telefon PWA'sı ile otomatik oluşmaz; her satır için sahada
+                    çalışan fiziksel düğüm, uygun radyo modülü, anten, güç ve görüş hattı gerekir.
                   </p>
                   {!plan.carrier.mobile && (
                     <p className="mt-3 rounded border border-border bg-card p-3 text-xs text-muted-foreground">
