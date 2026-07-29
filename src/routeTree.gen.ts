@@ -46,6 +46,7 @@ import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -235,6 +236,11 @@ const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
   path: '/api/public/openapi.json',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicEnrollRoute = ApiPublicEnrollRouteImport.update({
   id: '/api/public/enroll',
   path: '/api/public/enroll',
@@ -294,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/enroll': typeof ApiPublicEnrollRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/rehber/'
     | '/teklif/$id'
     | '/api/public/enroll'
+    | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/queue'
     | '/api/public/telemetry'
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/rehber'
     | '/teklif/$id'
     | '/api/public/enroll'
+    | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/queue'
     | '/api/public/telemetry'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/rehber/'
     | '/_authenticated/teklif/$id'
     | '/api/public/enroll'
+    | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/queue'
     | '/api/public/telemetry'
@@ -549,6 +561,7 @@ export interface RootRouteChildren {
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicQueueRoute: typeof ApiPublicQueueRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -817,6 +830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/enroll': {
       id: '/api/public/enroll'
       path: '/api/public/enroll'
@@ -898,6 +918,7 @@ const rootRouteChildren: RootRouteChildren = {
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicQueueRoute: ApiPublicQueueRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
@@ -907,13 +928,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -12,6 +12,7 @@ import {
   provisionRelayChain,
   updateNodeTopology,
   acknowledgeLinkAlert,
+  listFieldMeasurements,
 } from "@/lib/mesh.functions";
 
 type LicenseLite = { id: string; plan: string; node_limit: number; license_key: string };
@@ -77,25 +78,18 @@ export function RelayChainWizard({
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data } = await supabase
-        .from("field_measurements")
-        .select("carrier, terrain, antenna_height, distance_km, link_ok")
-        .limit(500);
-      if (!alive) return;
-      setMeasurements(
-        (data ?? []).map((m) => ({
-          carrier: m.carrier,
-          terrain: m.terrain,
-          antenna_height: m.antenna_height,
-          distance_km: Number(m.distance_km),
-          link_ok: m.link_ok,
-        })),
-      );
+      try {
+        const rows = (await listFieldMeasurements()) as Measurement[];
+        if (alive) setMeasurements(rows);
+      } catch {
+        if (alive) setMeasurements([]);
+      }
     })();
     return () => {
       alive = false;
     };
   }, []);
+
 
   const plan = useMemo(
     () => buildMeshPlan({ carrierId, terrainId, heightId, distanceKm, measurements }),

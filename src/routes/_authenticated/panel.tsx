@@ -1,16 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
-import { rotateLicenseKey } from "@/lib/licenses.functions";
 import { setDeviceStatus as setDeviceStatusFn, deleteDevice } from "@/lib/devices.functions";
-import {
-  NodeCreator,
-  LicenseEventLog,
-  FieldReports,
-} from "@/components/site/PanelSections";
+import { NodeCreator, LicenseEventLog, FieldReports } from "@/components/site/PanelSections";
 import {
   DeviceStatusBoard,
   OrganizationManager,
@@ -18,28 +13,12 @@ import {
   ApiUsagePanel,
   SetupWizard,
 } from "@/components/site/PanelOps";
-import {
-  CarrierLiveBoard,
-  IrCameraBoard,
-  isDeviceOnline,
-  sinceLabel,
-} from "@/components/site/PanelLive";
-import {
-  RelayChainWizard,
-  QueueBoard,
-  LinkAlertBoard,
-  FailoverSettings,
-} from "@/components/site/PanelMesh";
-import {
-  QrNodeEnroll,
-  E2eeKeyBoard,
-  OutageLog,
-  CalibrationTest,
-} from "@/components/site/PanelSecure";
+import { CarrierLiveBoard, IrCameraBoard, isDeviceOnline, sinceLabel } from "@/components/site/PanelLive";
+import { RelayChainWizard, QueueBoard, LinkAlertBoard, FailoverSettings } from "@/components/site/PanelMesh";
+import { QrNodeEnroll, E2eeKeyBoard, OutageLog, CalibrationTest } from "@/components/site/PanelSecure";
+import { HealthCards, LiveFeed, KeyRotation, CalibrationReports } from "@/components/site/PanelSystem";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
-
-
-
+import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -47,10 +26,10 @@ export const Route = createFileRoute("/_authenticated/panel")({
       { title: "Müşteri Paneli — Tedbirge Protokol" },
       {
         name: "description",
-        content: "Tedbirge lisans anahtarlarınızı, abonelik durumunuzu ve pilot başvurularınızı yönetin.",
+        content: "Tedbirge lisans anahtarlarınızı, düğümlerinizi ve sistem sağlığınızı tek ekrandan yönetin.",
       },
       { property: "og:title", content: "Tedbirge Müşteri Paneli" },
-      { property: "og:description", content: "Lisans, abonelik ve pilot yönetimi." },
+      { property: "og:description", content: "Lisans, düğüm, canlı akış ve sistem sağlığı yönetimi." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -99,9 +78,23 @@ type Device = {
   active_uplink: boolean | null;
 };
 
+type TabId = "genel" | "dugumler" | "canli" | "mesh" | "kalibrasyon" | "guvenlik" | "yonetim";
+
+const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
+  { id: "genel", label: "Genel bakış" },
+  { id: "dugumler", label: "Düğümler" },
+  { id: "canli", label: "Canlı akış" },
+  { id: "mesh", label: "Mesh & kurulum", needs: "operate" },
+  { id: "kalibrasyon", label: "Kalibrasyon" },
+  { id: "guvenlik", label: "Güvenlik" },
+  { id: "yonetim", label: "Yönetim", needs: "manage" },
+];
+
 function Panel() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
+  const { role, canOperate, canManage } = usePanelRole(user?.id);
+  const [tab, setTab] = useState<TabId>("genel");
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
@@ -152,32 +145,15 @@ function Panel() {
     if (!user) return;
     const channel = supabase
       .channel("panel-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "devices" },
-        () => void reloadDevices(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "telemetry_samples" },
-        () => setRefreshKey((k) => k + 1),
+      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, () => void reloadDevices())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "telemetry_samples" }, () =>
+        setRefreshKey((k) => k + 1),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, [user, reloadDevices]);
-
-  async function rotate(licenseId: string) {
-    setBusyId(licenseId);
-    try {
-      const { licenseKey } = await rotateLicenseKey({ data: { licenseId } });
-      setLicenses((ls) => ls.map((l) => (l.id === licenseId ? { ...l, license_key: licenseKey } : l)));
-      setRefreshKey((k) => k + 1);
-    } finally {
-      setBusyId(null);
-    }
-  }
 
   async function setDeviceStatus(id: string, status: "active" | "revoked") {
     setBusyId(id);
@@ -206,8 +182,16 @@ function Panel() {
     return acc;
   }, {});
 
+  const onlineCount = devices.filter((d) => isDeviceOnline(d)).length;
 
+  const visibleTabs = useMemo(
+    () => TABS.filter((t) => (t.needs === "manage" ? canManage : t.needs === "operate" ? canOperate : true)),
+    [canManage, canOperate],
+  );
 
+  useEffect(() => {
+    if (!visibleTabs.some((t) => t.id === tab)) setTab("genel");
+  }, [visibleTabs, tab]);
 
   async function openPortal() {
     if (!subscription) return;
@@ -231,403 +215,359 @@ function Panel() {
     ["active", "trialing", "past_due"].includes(subscription.status) &&
     (!subscription.current_period_end || new Date(subscription.current_period_end) > new Date());
 
+  const liteLicenses = licenses.map((l) => ({ id: l.id, plan: l.plan, node_limit: l.node_limit }));
+  const keyedLicenses = licenses.map((l) => ({
+    id: l.id,
+    plan: l.plan,
+    node_limit: l.node_limit,
+    license_key: l.license_key,
+  }));
+
   return (
     <SitePage>
-      <section className="mx-auto max-w-5xl px-6 py-16">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
+      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
+          <div className="min-w-0">
             <SectionLabel>Müşteri paneli</SectionLabel>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-              {user?.email}
-            </h1>
+            <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight sm:text-3xl">{user?.email}</h1>
+            <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+              {ROLE_LABEL[role]} · {onlineCount}/{devices.length} düğüm çevrimiçi
+            </p>
           </div>
           {isAdmin && (
             <Link
               to="/yonetim"
-              className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+              className="shrink-0 rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
             >
               Yönetim ekranı
             </Link>
           )}
-        </div>
+        </header>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <div className="rounded-sm border border-border bg-card/50 p-6">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Abonelik
-            </p>
-            {loading ? (
-              <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
-            ) : subscription ? (
-              <div className="mt-4 space-y-2 text-sm">
-                <Row k="Plan" v={subscription.product_id} />
-                <Row k="Fiyat" v={subscription.price_id} />
-                <Row k="Durum" v={active ? "Aktif" : subscription.status} />
-                <Row
-                  k="Dönem sonu"
-                  v={
-                    subscription.current_period_end
-                      ? new Date(subscription.current_period_end).toLocaleDateString("tr-TR")
-                      : "—"
-                  }
-                />
-                <button
-                  onClick={openPortal}
-                  disabled={portalBusy}
-                  className="mt-4 w-full rounded-sm border border-border px-4 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
-                >
-                  {portalBusy ? "Açılıyor…" : "Abonelik yönetimi"}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Aktif aboneliğiniz yok. Community sürümünü ücretsiz kullanabilir veya
-                  Enterprise aboneliği başlatabilirsiniz.
-                </p>
-                <Link
-                  to="/fiyatlandirma"
-                  className="mt-4 inline-block rounded-sm bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.15em] text-primary-foreground"
-                >
-                  Planları gör
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-sm border border-border bg-card/50 p-6">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Lisanslar
-            </p>
-            {licenses.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
-                Henüz lisans anahtarı üretilmedi. Abonelik başladığında anahtar burada görünür.
-              </p>
-            ) : (
-              <ul className="mt-4 space-y-4">
-                {licenses.map((l) => (
-                  <li key={l.id} className="rounded-sm border border-border bg-background/50 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">
-                        {l.plan}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground">{l.status}</span>
-                    </div>
-                    <p className="mt-3 break-all font-mono text-[12px] text-foreground">
-                      {l.license_key}
-                    </p>
-                    <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-                      Düğüm limiti: {l.node_limit} · kayıtlı:{" "}
-                      {devices.filter((d) => d.license_id === l.id).length}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <CopyButton value={l.license_key} label="Anahtarı kopyala" />
-                      <button
-                        onClick={() => downloadLicense(l)}
-                        className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
-                      >
-                        .env indir
-                      </button>
-                      <button
-                        onClick={() => rotate(l.id)}
-                        disabled={busyId === l.id}
-                        className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
-                      >
-                        {busyId === l.id ? "Yenileniyor…" : "Anahtarı yenile"}
-                      </button>
-                    </div>
-                    <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                      Anahtar yenilendiğinde eski anahtarla bağlanan düğümler reddedilir.
-                    </p>
-
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <NodeCreator
-            licenses={licenses.map((l) => ({
-              id: l.id,
-              plan: l.plan,
-              node_limit: l.node_limit,
-            }))}
-            usedByLicense={usedByLicense}
-            onCreated={reloadDevices}
-          />
-        </div>
-
-        <div className="mt-8">
-          <QrNodeEnroll
-            licenses={licenses.map((l) => ({
-              id: l.id,
-              plan: l.plan,
-              node_limit: l.node_limit,
-            }))}
-            onChanged={reloadDevices}
-            refreshKey={refreshKey}
-          />
-        </div>
-
-        <div className="mt-8">
-          <E2eeKeyBoard refreshKey={refreshKey} />
-        </div>
-
-
-
-
-        <div className="mt-8">
-          <DeviceStatusBoard
-            devices={devices}
-            licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))}
-            refreshKey={refreshKey}
-          />
-        </div>
-
-        <div className="mt-8">
-          <CarrierLiveBoard devices={devices} />
-        </div>
-
-        <div className="mt-8">
-          <IrCameraBoard
-            devices={devices}
-            licenseKey={licenses[0]?.license_key}
-            refreshKey={refreshKey}
-          />
-        </div>
-
-
-        <div className="mt-8">
-          <RelayChainWizard
-            licenses={licenses.map((l) => ({
-              id: l.id,
-              plan: l.plan,
-              node_limit: l.node_limit,
-              license_key: l.license_key,
-            }))}
-            devices={devices}
-            onProvisioned={reloadDevices}
-          />
-        </div>
-
-        <div className="mt-8">
-          <LinkAlertBoard refreshKey={refreshKey} />
-        </div>
-
-        <div className="mt-8">
-          <OutageLog refreshKey={refreshKey} />
-        </div>
-
-        <div className="mt-8">
-          <CalibrationTest refreshKey={refreshKey} />
-        </div>
-
-
-        <div className="mt-8">
-          <QueueBoard
-            licenses={licenses.map((l) => ({
-              id: l.id,
-              plan: l.plan,
-              node_limit: l.node_limit,
-              license_key: l.license_key,
-            }))}
-            refreshKey={refreshKey}
-          />
-        </div>
-
-        <div className="mt-8">
-          <FailoverSettings devices={devices} onUpdated={reloadDevices} />
-        </div>
-
-        <div className="mt-8">
-          <SetupWizard
-            licenseKey={licenses[0]?.license_key}
-            nodeLimit={licenses[0]?.node_limit ?? 5}
-            registered={devices.length}
-          />
-        </div>
-
-        <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Cihazlar (düğümler)
-              </p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight">
-                Lisansa bağlı saha düğümleri
-              </h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                to="/saha-raporu"
-                className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+        {/* Sekmeli gezinme: uzun kaydırma yerine tek tıkla bölüm değişimi. */}
+        <nav className="sticky top-0 z-20 -mx-4 mt-6 border-b border-border bg-background/95 px-4 backdrop-blur sm:-mx-6 sm:px-6">
+          <div className="flex gap-1 overflow-x-auto py-2">
+            {visibleTabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                aria-current={tab === t.id ? "page" : undefined}
+                className={`shrink-0 rounded-sm px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em] transition-colors ${
+                  tab === t.id
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border text-muted-foreground hover:bg-secondary"
+                }`}
               >
-                Saha raporu
-              </Link>
-              <Link
-                to="/api-dokumantasyon"
-                className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
-              >
-                Telemetri API'si
-              </Link>
-            </div>
-          </div>
-
-          {loading ? (
-            <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
-          ) : devices.length === 0 ? (
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Henüz düğüm kaydı yok. Bir düğüm lisans anahtarınızla telemetri uç noktasına ilk
-              isteği gönderdiğinde otomatik olarak burada listelenir.
-            </p>
-          ) : (
-            <div className="mt-5 overflow-x-auto rounded-sm border border-border">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-background/60 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3">Düğüm</th>
-                    <th className="px-4 py-3">Bölge / taşıyıcı</th>
-                    <th className="px-4 py-3">Durum</th>
-                    <th className="px-4 py-3">Son görülme</th>
-                    <th className="px-4 py-3">İşlem</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {devices.map((d) => (
-                    <tr key={d.id} className="border-t border-border/60">
-                      <td className="px-4 py-3 font-mono text-[12px]">
-                        {d.node_id}
-                        {d.label && (
-                          <span className="block text-[11px] text-muted-foreground">{d.label}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-[12px] text-muted-foreground">
-                        {d.region} · {d.carrier ?? "—"}
-                        {d.firmware && <span className="block text-[11px]">v{d.firmware}</span>}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-[11px] uppercase">
-                        {d.status !== "active" ? (
-                          <span className="text-muted-foreground">iptal</span>
-                        ) : isDeviceOnline(d) ? (
-                          <span className="flex items-center gap-1.5 text-primary">
-                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-                            çevrimiçi
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">çevrimdışı</span>
-                        )}
-                      </td>
-
-                      <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                        {d.last_seen_at
-                          ? `${new Date(d.last_seen_at).toLocaleString("tr-TR")} · ${sinceLabel(d.last_seen_at)}`
-                          : "telemetri bekleniyor"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() =>
-                              setDeviceStatus(d.id, d.status === "active" ? "revoked" : "active")
-                            }
-                            disabled={busyId === d.id}
-                            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
-                          >
-                            {d.status === "active" ? "İptal et" : "Yeniden aç"}
-                          </button>
-                          <button
-                            onClick={() => removeDevice(d.id)}
-                            disabled={busyId === d.id}
-                            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
-                          >
-                            Sil
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-8">
-          <FieldReports
-            devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))}
-            isAdmin={isAdmin}
-          />
-        </div>
-
-        <div className="mt-8">
-          <ApiUsagePanel
-            licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))}
-            refreshKey={refreshKey}
-          />
-        </div>
-
-        <div className="mt-8">
-          <WebhookSettings userId={user?.id} />
-        </div>
-
-        <div className="mt-8">
-          <OrganizationManager
-            userId={user?.id}
-            licenses={licenses.map((l) => ({
-              id: l.id,
-              plan: l.plan,
-              organization_id: l.organization_id,
-            }))}
-            onChanged={reloadDevices}
-          />
-        </div>
-
-        <div className="mt-8">
-          <LicenseEventLog refreshKey={refreshKey} />
-        </div>
-
-
-
-
-        <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Hızlı başlangıç
-          </p>
-          <h2 className="mt-3 text-xl font-semibold tracking-tight">
-            Lisansınızı üç komutta devreye alın
-          </h2>
-          <ol className="mt-6 space-y-6">
-            {quickStart(licenses[0]?.license_key).map((step, i) => (
-              <li key={step.title}>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-[11px] text-primary">0{i + 1}</span>
-                  <p className="text-sm font-medium">{step.title}</p>
-                </div>
-                <div className="mt-2 flex items-start gap-2">
-                  <pre className="flex-1 overflow-x-auto rounded-sm border border-border bg-background/70 p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
-                    <code>{step.code}</code>
-                  </pre>
-                  <CopyButton value={step.code} label="Kopyala" />
-                </div>
-              </li>
+                {t.label}
+              </button>
             ))}
-          </ol>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to="/dokumanlar"
-              className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
-            >
-              Dokümanlar
-            </Link>
-            <a
-              href="/tedbirge-teknik-ozet.md"
-              download
-              className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
-            >
-              Teknik özet (.md)
-            </a>
           </div>
+        </nav>
+
+        <div className="mt-8 space-y-8">
+          {tab === "genel" && (
+            <>
+              <HealthCards refreshKey={refreshKey} />
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="rounded-sm border border-border bg-card/50 p-6">
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Abonelik</p>
+                  {loading ? (
+                    <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
+                  ) : subscription ? (
+                    <div className="mt-4 space-y-2 text-sm">
+                      <Row k="Plan" v={subscription.product_id} />
+                      <Row k="Fiyat" v={subscription.price_id} />
+                      <Row k="Durum" v={active ? "Aktif" : subscription.status} />
+                      <Row
+                        k="Dönem sonu"
+                        v={
+                          subscription.current_period_end
+                            ? new Date(subscription.current_period_end).toLocaleDateString("tr-TR")
+                            : "—"
+                        }
+                      />
+                      <button
+                        onClick={openPortal}
+                        disabled={portalBusy}
+                        className="mt-4 w-full rounded-sm border border-border px-4 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                      >
+                        {portalBusy ? "Açılıyor…" : "Abonelik yönetimi"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Aktif aboneliğiniz yok. Community sürümünü ücretsiz kullanabilir veya Enterprise
+                        aboneliği başlatabilirsiniz.
+                      </p>
+                      <Link
+                        to="/fiyatlandirma"
+                        className="mt-4 inline-block rounded-sm bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.15em] text-primary-foreground"
+                      >
+                        Planları gör
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-sm border border-border bg-card/50 p-6">
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Lisanslar</p>
+                  {licenses.length === 0 ? (
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      Henüz lisans anahtarı üretilmedi. Abonelik başladığında anahtar burada görünür.
+                    </p>
+                  ) : (
+                    <ul className="mt-4 space-y-4">
+                      {licenses.map((l) => (
+                        <li key={l.id} className="rounded-sm border border-border bg-background/50 p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">
+                              {l.plan}
+                            </span>
+                            <span className="font-mono text-[11px] text-muted-foreground">{l.status}</span>
+                          </div>
+                          <p className="mt-3 break-all font-mono text-[12px] text-foreground">{l.license_key}</p>
+                          <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+                            Düğüm limiti: {l.node_limit} · kayıtlı:{" "}
+                            {devices.filter((d) => d.license_id === l.id).length}
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <CopyButton value={l.license_key} label="Anahtarı kopyala" />
+                            <button
+                              onClick={() => downloadLicense(l)}
+                              className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                            >
+                              .env indir
+                            </button>
+                          </div>
+                          <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                            Anahtar yenileme “Güvenlik” sekmesindedir.
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-sm border border-border bg-card/50 p-6">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Hızlı başlangıç
+                </p>
+                <h2 className="mt-3 text-xl font-semibold tracking-tight">
+                  Lisansınızı üç komutta devreye alın
+                </h2>
+                <ol className="mt-6 space-y-6">
+                  {quickStart(licenses[0]?.license_key).map((step, i) => (
+                    <li key={step.title}>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[11px] text-primary">0{i + 1}</span>
+                        <p className="text-sm font-medium">{step.title}</p>
+                      </div>
+                      <div className="mt-2 flex items-start gap-2">
+                        <pre className="flex-1 overflow-x-auto rounded-sm border border-border bg-background/70 p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
+                          <code>{step.code}</code>
+                        </pre>
+                        <CopyButton value={step.code} label="Kopyala" />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    to="/dokumanlar"
+                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Dokümanlar
+                  </Link>
+                  <a
+                    href="/tedbirge-teknik-ozet.md"
+                    download
+                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Teknik özet (.md)
+                  </a>
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "dugumler" && (
+            <>
+              {canOperate && (
+                <>
+                  <NodeCreator licenses={liteLicenses} usedByLicense={usedByLicense} onCreated={reloadDevices} />
+                  <QrNodeEnroll licenses={liteLicenses} onChanged={reloadDevices} refreshKey={refreshKey} />
+                </>
+              )}
+
+              <DeviceStatusBoard
+                devices={devices}
+                licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))}
+                refreshKey={refreshKey}
+              />
+
+              <CarrierLiveBoard devices={devices} />
+
+              <div className="rounded-sm border border-border bg-card/50 p-6">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                      Cihazlar (düğümler)
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold tracking-tight">Lisansa bağlı saha düğümleri</h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      to="/saha-raporu"
+                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    >
+                      Saha raporu
+                    </Link>
+                    <Link
+                      to="/api-dokumantasyon"
+                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    >
+                      Telemetri API'si
+                    </Link>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
+                ) : devices.length === 0 ? (
+                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                    Henüz düğüm kaydı yok. Bir düğüm lisans anahtarınızla telemetri uç noktasına ilk isteği
+                    gönderdiğinde otomatik olarak burada listelenir.
+                  </p>
+                ) : (
+                  <div className="mt-5 overflow-x-auto rounded-sm border border-border">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-background/60 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">Düğüm</th>
+                          <th className="px-4 py-3">Bölge / taşıyıcı</th>
+                          <th className="px-4 py-3">Durum</th>
+                          <th className="px-4 py-3">Son görülme</th>
+                          {canOperate && <th className="px-4 py-3">İşlem</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {devices.map((d) => (
+                          <tr key={d.id} className="border-t border-border/60">
+                            <td className="px-4 py-3 font-mono text-[12px]">
+                              {d.node_id}
+                              {d.label && (
+                                <span className="block text-[11px] text-muted-foreground">{d.label}</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-[12px] text-muted-foreground">
+                              {d.region} · {d.carrier ?? "—"}
+                              {d.firmware && <span className="block text-[11px]">v{d.firmware}</span>}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-[11px] uppercase">
+                              {d.status !== "active" ? (
+                                <span className="text-muted-foreground">iptal</span>
+                              ) : isDeviceOnline(d) ? (
+                                <span className="flex items-center gap-1.5 text-primary">
+                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                                  çevrimiçi
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">çevrimdışı</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
+                              {d.last_seen_at
+                                ? `${new Date(d.last_seen_at).toLocaleString("tr-TR")} · ${sinceLabel(d.last_seen_at)}`
+                                : "telemetri bekleniyor"}
+                            </td>
+                            {canOperate && (
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    onClick={() =>
+                                      setDeviceStatus(d.id, d.status === "active" ? "revoked" : "active")
+                                    }
+                                    disabled={busyId === d.id}
+                                    className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                                  >
+                                    {d.status === "active" ? "İptal et" : "Yeniden aç"}
+                                  </button>
+                                  <button
+                                    onClick={() => removeDevice(d.id)}
+                                    disabled={busyId === d.id}
+                                    className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
+                                  >
+                                    Sil
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {tab === "canli" && (
+            <>
+              <LiveFeed />
+              <LinkAlertBoard refreshKey={refreshKey} />
+              <QueueBoard licenses={keyedLicenses} refreshKey={refreshKey} />
+              <OutageLog refreshKey={refreshKey} />
+              <IrCameraBoard devices={devices} licenseKey={licenses[0]?.license_key} refreshKey={refreshKey} />
+            </>
+          )}
+
+          {tab === "mesh" && (
+            <>
+              <SetupWizard
+                licenseKey={licenses[0]?.license_key}
+                nodeLimit={licenses[0]?.node_limit ?? 5}
+                registered={devices.length}
+              />
+              <RelayChainWizard licenses={keyedLicenses} devices={devices} onProvisioned={reloadDevices} />
+              <FailoverSettings devices={devices} onUpdated={reloadDevices} />
+            </>
+          )}
+
+          {tab === "kalibrasyon" && (
+            <>
+              <CalibrationTest refreshKey={refreshKey} />
+              <CalibrationReports refreshKey={refreshKey} />
+            </>
+          )}
+
+          {tab === "guvenlik" && (
+            <>
+              <KeyRotation licenses={keyedLicenses} canManage={canManage} onRotated={reloadDevices} />
+              <E2eeKeyBoard refreshKey={refreshKey} />
+              <FieldReports devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))} isAdmin={isAdmin} />
+            </>
+          )}
+
+          {tab === "yonetim" && canManage && (
+            <>
+              <ApiUsagePanel licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))} refreshKey={refreshKey} />
+              <WebhookSettings userId={user?.id} />
+              <OrganizationManager
+                userId={user?.id}
+                licenses={licenses.map((l) => ({
+                  id: l.id,
+                  plan: l.plan,
+                  organization_id: l.organization_id,
+                }))}
+                onChanged={reloadDevices}
+              />
+              <LicenseEventLog refreshKey={refreshKey} />
+            </>
+          )}
         </div>
       </section>
     </SitePage>
