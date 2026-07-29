@@ -351,6 +351,19 @@ function Panel() {
         </div>
 
         <div className="mt-8">
+          <CarrierLiveBoard devices={devices} />
+        </div>
+
+        <div className="mt-8">
+          <IrCameraBoard
+            devices={devices}
+            licenseKey={licenses[0]?.license_key}
+            refreshKey={refreshKey}
+          />
+        </div>
+
+
+        <div className="mt-8">
           <SetupWizard
             licenseKey={licenses[0]?.license_key}
             nodeLimit={licenses[0]?.node_limit ?? 5}
