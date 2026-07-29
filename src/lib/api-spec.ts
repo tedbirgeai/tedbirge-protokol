@@ -46,6 +46,17 @@ export const OPENAPI_SPEC = {
           hops: { type: "integer", example: 2 },
           bytes: { type: "integer", example: 82910 },
           note: { type: "string", maxLength: 500 },
+          error_code: { type: "string", maxLength: 40, description: "Düğümün son hata kodu." },
+          kind: {
+            type: "string",
+            enum: ["node", "ir_camera"],
+            description: "Cihaz türü: mesh düğümü veya kızılötesi (termal) kamera.",
+          },
+          thermal: {
+            type: "object",
+            description:
+              "Kızılötesi kamera kare özeti: temp_max_c, temp_min_c, temp_avg_c, detections, alarm, alarm_reason, frame_hash. Görüntü taşınmaz.",
+          },
         },
       },
       TelemetryResponse: {
@@ -54,6 +65,7 @@ export const OPENAPI_SPEC = {
           ok: { type: "boolean" },
           device_id: { type: "string", format: "uuid" },
           recorded: { type: "boolean" },
+          ir_recorded: { type: "boolean" },
           node_limit: { type: "integer" },
           region: { type: "string" },
         },
