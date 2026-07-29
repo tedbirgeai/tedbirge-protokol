@@ -38,6 +38,7 @@ import { Route as RehberIndexRouteImport } from './routes/rehber.index'
 import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
+import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authenticated/saha-raporu'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
@@ -188,6 +189,11 @@ const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
   path: '/yonetim',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSahaRaporuRoute = AuthenticatedSahaRaporuRouteImport.update({
+  id: '/saha-raporu',
+  path: '/saha-raporu',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   id: '/panel',
   path: '/panel',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -313,6 +321,7 @@ export interface FileRoutesById {
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
     | '/urun'
     | '/uyumluluk'
     | '/panel'
+    | '/saha-raporu'
     | '/yonetim'
     | '/api/chat'
     | '/rehber/$slug'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/urun'
     | '/uyumluluk'
     | '/panel'
+    | '/saha-raporu'
     | '/yonetim'
     | '/api/chat'
     | '/rehber/$slug'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/urun'
     | '/uyumluluk'
     | '/_authenticated/panel'
+    | '/_authenticated/saha-raporu'
     | '/_authenticated/yonetim'
     | '/api/chat'
     | '/rehber/$slug'
@@ -670,6 +682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedYonetimRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saha-raporu': {
+      id: '/_authenticated/saha-raporu'
+      path: '/saha-raporu'
+      fullPath: '/saha-raporu'
+      preLoaderRoute: typeof AuthenticatedSahaRaporuRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/panel': {
       id: '/_authenticated/panel'
       path: '/panel'
@@ -710,12 +729,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedSahaRaporuRoute: typeof AuthenticatedSahaRaporuRoute
   AuthenticatedYonetimRoute: typeof AuthenticatedYonetimRoute
   AuthenticatedTeklifIdRoute: typeof AuthenticatedTeklifIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedSahaRaporuRoute: AuthenticatedSahaRaporuRoute,
   AuthenticatedYonetimRoute: AuthenticatedYonetimRoute,
   AuthenticatedTeklifIdRoute: AuthenticatedTeklifIdRoute,
 }
