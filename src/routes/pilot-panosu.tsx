@@ -144,12 +144,12 @@ function PilotBoard() {
 
   function exportJson() {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `tedbirge-pilot-${state.site || "saha"}-${state.startedAt}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    window.URL.revokeObjectURL(url);
   }
 
   function importJson(files: FileList | null) {
