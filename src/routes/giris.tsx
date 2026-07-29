@@ -19,8 +19,10 @@ export const Route = createFileRoute("/giris")({
       { property: "og:title", content: "Tedbirge — Giriş" },
       { property: "og:description", content: "Tedbirge müşteri paneli girişi ve hesap oluşturma." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/giris" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/giris" }],
   }),
   component: AuthPage,
 });

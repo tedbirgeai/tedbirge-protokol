@@ -13,8 +13,10 @@ export const Route = createFileRoute("/gizlilik")({
       { property: "og:title", content: "Tedbirge Gizlilik Bildirimi" },
       { property: "og:description", content: "Kişisel veri işleme, paylaşım ve haklarınız." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/gizlilik" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/gizlilik" }],
   }),
   component: Privacy,
 });

@@ -13,8 +13,10 @@ export const Route = createFileRoute("/iade")({
       { property: "og:title", content: "Tedbirge İade Politikası" },
       { property: "og:description", content: "30 günlük para iade garantisi ve iade süreci." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://tedbirge-gateway.lovable.app/iade" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/iade" }],
   }),
   component: Refund,
 });
