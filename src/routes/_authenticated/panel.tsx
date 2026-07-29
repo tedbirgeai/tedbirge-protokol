@@ -24,6 +24,12 @@ import {
   isDeviceOnline,
   sinceLabel,
 } from "@/components/site/PanelLive";
+import {
+  RelayChainWizard,
+  QueueBoard,
+  LinkAlertBoard,
+  FailoverSettings,
+} from "@/components/site/PanelMesh";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 
 
@@ -80,6 +86,11 @@ type Device = {
   last_seen_at: string | null;
   last_error_code: string | null;
   last_error_at: string | null;
+  role: string | null;
+  failover_group: string | null;
+  failover_priority: number | null;
+  is_backup: boolean | null;
+  active_uplink: boolean | null;
 };
 
 function Panel() {
@@ -363,6 +374,39 @@ function Panel() {
           />
         </div>
 
+
+        <div className="mt-8">
+          <RelayChainWizard
+            licenses={licenses.map((l) => ({
+              id: l.id,
+              plan: l.plan,
+              node_limit: l.node_limit,
+              license_key: l.license_key,
+            }))}
+            devices={devices}
+            onProvisioned={reloadDevices}
+          />
+        </div>
+
+        <div className="mt-8">
+          <LinkAlertBoard refreshKey={refreshKey} />
+        </div>
+
+        <div className="mt-8">
+          <QueueBoard
+            licenses={licenses.map((l) => ({
+              id: l.id,
+              plan: l.plan,
+              node_limit: l.node_limit,
+              license_key: l.license_key,
+            }))}
+            refreshKey={refreshKey}
+          />
+        </div>
+
+        <div className="mt-8">
+          <FailoverSettings devices={devices} onUpdated={reloadDevices} />
+        </div>
 
         <div className="mt-8">
           <SetupWizard
