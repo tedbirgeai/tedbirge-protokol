@@ -51,6 +51,7 @@ export function setupOfflineSupport() {
     void unregisterAppWorkers();
     return;
   }
+  window.sessionStorage.removeItem(REFRESH_MARKER);
 
   let intervalId: number | undefined;
   let refreshing = false;
@@ -70,7 +71,6 @@ export function setupOfflineSupport() {
   const armUpdateSignals = (registration: ServiceWorkerRegistration) => {
     const checkNow = async () => {
       try {
-        notify({ state: "checking", message: "Güncelleme kontrol ediliyor." });
         await registration.update();
         if (registration.waiting && navigator.serviceWorker.controller) {
           notify({ state: "available", message: "Yeni sürüm hazır — otomatik etkinleştiriliyor." });
