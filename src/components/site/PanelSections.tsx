@@ -190,9 +190,14 @@ export function NodeCreator({
           </select>
         </div>
         <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-          <button type="submit" disabled={busy || remaining <= 0} className={btnPrimary}>
+          <button
+            type="submit"
+            disabled={busy || remaining <= 0 || !nodeIdValid}
+            className={btnPrimary}
+          >
             {busy ? "Oluşturuluyor…" : "Düğümü oluştur"}
           </button>
+
           {done && <span className="font-mono text-[11px] text-primary">Düğüm eklendi.</span>}
           {remaining <= 0 && (
             <span className="font-mono text-[11px] text-muted-foreground">
