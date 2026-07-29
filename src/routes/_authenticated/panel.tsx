@@ -45,19 +45,33 @@ type License = {
   current_period_end: string | null;
 };
 
+type Device = {
+  id: string;
+  license_id: string;
+  node_id: string;
+  label: string | null;
+  region: string;
+  carrier: string | null;
+  firmware: string | null;
+  status: string;
+  last_seen_at: string | null;
+};
+
 function Panel() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let active = true;
     (async () => {
-      const [{ data: subs }, { data: lic }] = await Promise.all([
+      const [{ data: subs }, { data: lic }, { data: dev }] = await Promise.all([
         supabase
           .from("subscriptions")
           .select("*")
@@ -67,16 +81,50 @@ function Panel() {
           .limit(1)
           .maybeSingle(),
         supabase.from("licenses").select("*").order("created_at", { ascending: false }),
+        supabase.from("devices").select("*").order("created_at", { ascending: true }),
       ]);
       if (!active) return;
       setSubscription((subs as Subscription | null) ?? null);
       setLicenses((lic as License[]) ?? []);
+      setDevices((dev as Device[]) ?? []);
       setLoading(false);
     })();
     return () => {
       active = false;
     };
   }, [user]);
+
+  async function rotate(licenseId: string) {
+    setBusyId(licenseId);
+    try {
+      const { licenseKey } = await rotateLicenseKey({ data: { licenseId } });
+      setLicenses((ls) => ls.map((l) => (l.id === licenseId ? { ...l, license_key: licenseKey } : l)));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function setDeviceStatus(id: string, status: "active" | "revoked") {
+    setBusyId(id);
+    try {
+      await supabase.from("devices").update({ status }).eq("id", id);
+      setDevices((ds) => ds.map((d) => (d.id === id ? { ...d, status } : d)));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function removeDevice(id: string) {
+    setBusyId(id);
+    try {
+      await supabase.from("devices").delete().eq("id", id);
+      setDevices((ds) => ds.filter((d) => d.id !== id));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+
 
   async function openPortal() {
     if (!subscription) return;
