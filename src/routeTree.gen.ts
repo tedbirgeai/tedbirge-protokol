@@ -39,6 +39,7 @@ import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -191,6 +192,11 @@ const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   path: '/panel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
+  id: '/api/public/telemetry',
+  path: '/api/public/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTeklifIdRoute = AuthenticatedTeklifIdRouteImport.update({
   id: '/teklif/$id',
   path: '/teklif/$id',
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -337,6 +346,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber/'
     | '/teklif/$id'
+    | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -370,6 +380,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber'
     | '/teklif/$id'
+    | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber/'
     | '/_authenticated/teklif/$id'
+    | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -436,6 +448,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
+  ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -651,6 +664,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPanelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/telemetry': {
+      id: '/api/public/telemetry'
+      path: '/api/public/telemetry'
+      fullPath: '/api/public/telemetry'
+      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/teklif/$id': {
       id: '/_authenticated/teklif/$id'
       path: '/teklif/$id'
@@ -712,6 +732,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
+  ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
