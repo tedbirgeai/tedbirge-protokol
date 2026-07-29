@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import {
+  REGION_MATRIX,
+  MATRIX_NOTE,
+  MATRIX_SOURCES,
+  RUNTIME_RULES,
+  REGION_PROFILE_SNIPPET,
+} from "@/lib/regulation";
 
 const TITLE = "Spektrum & Uyum Matrisi — Ülke Bazlı Taşıyıcı Kuralları";
 const DESC =
