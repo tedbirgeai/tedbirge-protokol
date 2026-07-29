@@ -40,6 +40,7 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -197,6 +198,11 @@ const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
   path: '/api/public/telemetry',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
+  id: '/api/public/openapi.json',
+  path: '/api/public/openapi.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTeklifIdRoute = AuthenticatedTeklifIdRouteImport.update({
   id: '/teklif/$id',
   path: '/teklif/$id',
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber/'
     | '/teklif/$id'
+    | '/api/public/openapi.json'
     | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber'
     | '/teklif/$id'
+    | '/api/public/openapi.json'
     | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   id:
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/rehber/$slug'
     | '/rehber/'
     | '/_authenticated/teklif/$id'
+    | '/api/public/openapi.json'
     | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -448,6 +460,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
+  ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -671,6 +684,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelemetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/openapi.json': {
+      id: '/api/public/openapi.json'
+      path: '/api/public/openapi.json'
+      fullPath: '/api/public/openapi.json'
+      preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/teklif/$id': {
       id: '/_authenticated/teklif/$id'
       path: '/teklif/$id'
@@ -732,6 +752,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
+  ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OPENAPI_SPEC } from "@/lib/api-spec";
 
-export const Route = createFileRoute("/api/public/openapi[.]json")({
+export const Route = createFileRoute("/api/public/openapi.json")({
   server: {
     handlers: {
       GET: async () =>
