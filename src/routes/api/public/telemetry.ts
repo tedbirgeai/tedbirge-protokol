@@ -94,22 +94,18 @@ export const Route = createFileRoute("/api/public/telemetry")({
           return json({ error: "invalid_body" }, 400);
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-
-        const { data: license } = await supabaseAdmin
-          .from("licenses")
-          .select("id, user_id, status, node_limit, current_period_end")
-          .eq("license_key", licenseKey)
-          .maybeSingle();
-
-        if (!license) return json({ error: "license_not_found" }, 401);
+        if (!license) {
+          return json({ error: "license_not_found" }, 401);
+        }
         if (!["active", "trialing", "pilot", "pending"].includes(license.status)) {
+          await logUsage(403);
           return json({ error: "license_inactive", status: license.status }, 403);
         }
         if (license.current_period_end && new Date(license.current_period_end) < new Date()) {
+          await logUsage(403);
           return json({ error: "license_expired" }, 403);
         }
+
 
         const { data: existing } = await supabaseAdmin
           .from("devices")
