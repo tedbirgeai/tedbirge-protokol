@@ -12,7 +12,7 @@ const nav = [
   { to: "/urun", label: "Ürün" },
   { to: "/tasiyicilar", label: "Taşıyıcılar" },
   { to: "/afet-kamu", label: "Afet & Kamu" },
-  { to: "/uyumluluk", label: "Uyum" },
+  { to: "/mevzuat", label: "Regülasyon" },
   { to: "/guvenlik", label: "Güvenlik" },
   { to: "/demo", label: "Demo" },
   { to: "/saha", label: "Saha" },
@@ -142,6 +142,7 @@ export function SiteFooter() {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket & uyum</p>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/hakkimizda" className="text-muted-foreground hover:text-foreground">Hakkımızda</Link></li>
+            <li><Link to="/mevzuat" className="text-muted-foreground hover:text-foreground">Regülasyon merkezi</Link></li>
             <li><Link to="/uyumluluk" className="text-muted-foreground hover:text-foreground">Spektrum & uyum</Link></li>
             <li><Link to="/sertifikasyon" className="text-muted-foreground hover:text-foreground">Sertifikasyon & test</Link></li>
             <li><Link to="/turkiye-mevzuat" className="text-muted-foreground hover:text-foreground">Türkiye mevzuatı</Link></li>

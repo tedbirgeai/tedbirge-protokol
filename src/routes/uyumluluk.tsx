@@ -1,5 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import {
+  REGION_MATRIX,
+  MATRIX_NOTE,
+  MATRIX_SOURCES,
+  RUNTIME_RULES,
+  REGION_PROFILE_SNIPPET,
+} from "@/lib/regulation";
 
 const TITLE = "Spektrum & Uyum Matrisi — Ülke Bazlı Taşıyıcı Kuralları";
 const DESC =
@@ -22,109 +29,10 @@ export const Route = createFileRoute("/uyumluluk")({
   component: Compliance,
 });
 
-const regions = [
-  {
-    region: "Türkiye (BTK)",
-    sub: "TR",
-    lora: "868 MHz (SRD) · 25 mW e.r.p. · %1 görev döngüsü",
-    halow: "Üretimde kapalı — 900 MHz bandı lisanslı",
-    tvws: "Üretimde kapalı — beyaz alan çerçevesi yok",
-    wigig: "60 GHz serbest · EIRP sınırlı",
-    fso: "Lisanssız (optik) · göz güvenliği Class 1M",
-  },
-  {
-    region: "Avrupa Birliği (ETSI EN 300 220 / 302 567)",
-    sub: "EU",
-    lora: "863–870 MHz · 25 mW e.r.p. · %0.1–%1 görev döngüsü",
-    halow: "Üretimde kapalı — 863–868 uyumlu profil yok",
-    tvws: "Ülke bazlı (EN 301 598) · varsayılan kapalı",
-    wigig: "57–66 GHz · 40 dBm EIRP",
-    fso: "Lisanssız · IEC 60825 Class 1M",
-  },
-  {
-    region: "ABD / Kanada (FCC Part 15 / ISED)",
-    sub: "US-CA",
-    lora: "902–928 MHz · frekans atlamalı · 1 W iletim",
-    halow: "802.11ah 902–928 MHz · açılabilir profil",
-    tvws: "470–698 MHz · veri tabanı sorgusu zorunlu",
-    wigig: "57–71 GHz · Part 15.255",
-    fso: "Lisanssız · Class 1M",
-  },
-  {
-    region: "Birleşik Krallık (Ofcom)",
-    sub: "UK",
-    lora: "863–870 MHz · IR 2030 · %1 görev döngüsü",
-    halow: "Kapalı",
-    tvws: "470–790 MHz · veri tabanı destekli, izinli",
-    wigig: "57–71 GHz serbest",
-    fso: "Lisanssız · Class 1M",
-  },
-  {
-    region: "Körfez (BAE TDRA · S. Arabistan CST)",
-    sub: "GCC",
-    lora: "865–868 MHz · 25 mW · yerel kayıt",
-    halow: "Kapalı",
-    tvws: "Kapalı",
-    wigig: "57–66 GHz serbest",
-    fso: "Lisanssız · Class 1M",
-  },
-  {
-    region: "APAC (AU/NZ ACMA · JP ARIB · SG IMDA)",
-    sub: "APAC",
-    lora: "915–928 MHz (AU/NZ) · 920–923 MHz (JP, LBT zorunlu)",
-    halow: "AU/NZ açılabilir · JP profil sınırlı",
-    tvws: "SG/NZ pilot çerçevesi · varsayılan kapalı",
-    wigig: "57–66 GHz serbest",
-    fso: "Lisanssız · Class 1M",
-  },
-  {
-    region: "Japonya (MIC / ARIB STD-T108)",
-    sub: "JP",
-    lora: "920–923 MHz · LBT zorunlu · 20 mW",
-    halow: "Kapalı — 802.11ah profili onaysız",
-    tvws: "Kapalı",
-    wigig: "57–66 GHz serbest",
-    fso: "Lisanssız · Class 1M",
-  },
-  {
-    region: "Güney Kore (RRA) · Çin (SRRC) · Hindistan (WPC)",
-    sub: "KR-CN-IN",
-    lora: "KR 917–923.5 MHz · CN 470–510 MHz (868 yasak) · IN 865–867 MHz",
-    halow: "Üçünde de kapalı",
-    tvws: "Kapalı",
-    wigig: "60 GHz serbest (yerel tip onayı ile)",
-    fso: "Lisanssız · Class 1M",
-  },
-  {
-    region: "Afrika & LATAM (ITU Bölge 1/2 karma)",
-    sub: "AF-LATAM",
-    lora: "868 veya 915 MHz — ulusal düzenleyiciye göre seçilir (BR 902–907.5/915–928)",
-    halow: "Ülke bazlı · varsayılan kapalı",
-    tvws: "ZA/KE beyaz alan çerçevesi · izinli",
-    wigig: "57–66 GHz genellikle serbest",
-    fso: "Lisanssız · Class 1M",
-  },
-];
+const regions = REGION_MATRIX;
 
 
-const rules = [
-  {
-    t: "Varsayılan olarak kısıtlı",
-    b: "Yasal statüsü belirsiz her taşıyıcı üretim yapılandırmasında kapalı gelir. Açmak, bölge profilinin açıkça seçilmesini ve operatör onayını gerektirir.",
-  },
-  {
-    t: "Bölge profili tek kaynaktan",
-    b: "TEDBIRGE_REGION ortam değişkeni tek doğruluk kaynağıdır; frekans planı, iletim gücü tavanı ve görev döngüsü bütçesi bu profilden türetilir.",
-  },
-  {
-    t: "Görev döngüsü zorlaması",
-    b: "Sub-GHz taşıyıcılarda görev döngüsü bütçesi çalışma zamanında sayılır; bütçe dolduğunda paketler kuyruğa alınır, sessizce ihlal edilmez.",
-  },
-  {
-    t: "Sorumluluk paylaşımı",
-    b: "Lisans, kayıt ve saha izinleri operatörün sorumluluğundadır. Tedbirge, kuralları teknik olarak uygulanabilir kılar; hukuki temsil sağlamaz.",
-  },
-];
+const rules = RUNTIME_RULES;
 
 function Compliance() {
   return (
@@ -181,15 +89,9 @@ function Compliance() {
           </table>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Ethernet, Wi-Fi (2.4/5 GHz), hücresel ve uydu taşıyıcıları her bölgede operatörün
-          mevcut aboneliği/donanımı üzerinden çalışır; ek spektrum izni gerektirmez.
+{MATRIX_NOTE}
         </p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Kaynaklar: ETSI EN 300 220 / EN 302 567, FCC Part 15.247 &amp; 15.255, Ofcom IR 2030,
-          BTK KEGY, ACMA/ARIB/IMDA sub-GHz düzenlemeleri, IEC 60825-1 lazer sınıflandırması.
-          Matris bilgilendirme amaçlıdır; konuşlanmadan önce ilgili ulusal düzenleyicinin
-          yürürlükteki metni esas alınmalıdır.
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">{MATRIX_SOURCES}</p>
       </section>
 
       <section className="border-y border-border/60 bg-card/30">
@@ -207,10 +109,7 @@ function Compliance() {
             ))}
           </div>
           <pre className="mt-8 overflow-x-auto rounded-sm border border-border bg-background/70 p-5 font-mono text-[12px] leading-relaxed text-muted-foreground">
-            <code>{`# Bölge profilini seçin — kapalı taşıyıcılar açılmaz
-TEDBIRGE_REGION=EU        # TR | EU | US | UK | GCC | APAC
-TEDBIRGE_CARRIERS=eth,wifi,cellular,satellite
-TEDBIRGE_LORA_DUTY_CYCLE=0.01`}</code>
+            <code>{REGION_PROFILE_SNIPPET}</code>
           </pre>
         </div>
       </section>
