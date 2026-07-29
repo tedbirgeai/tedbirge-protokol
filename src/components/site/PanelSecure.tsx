@@ -99,7 +99,7 @@ export function QrNodeEnroll({
       setLabel("");
       void load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Davet oluşturulamadı.");
+      setError(friendlyError(e, "Davet oluşturulamadı."));
     } finally {
       setBusy(false);
     }
