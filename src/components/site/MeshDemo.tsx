@@ -10,8 +10,8 @@ const NODES: { id: NodeId; label: string; x: number; y: number; carrier: string 
   { id: "C", label: "exit-C", x: 86, y: 72, carrier: "Uydu / WAN" },
 ];
 
-function pos(id: NodeId) {
-  const n = NODES.find((x) => x.id === id)!;
+function pos(id: NodeId | undefined) {
+  const n = NODES.find((x) => x.id === id) ?? NODES[0];
   return { x: n.x, y: n.y };
 }
 
@@ -123,10 +123,11 @@ export function MeshDemo() {
   }, [mounted, path]);
 
   const packet = useMemo(() => {
-    if (!mounted || !path) return null;
+    if (!mounted || !path || path.length < 2) return null;
     const segments = path.length - 1;
-    const t = Math.min(progress, 0.999) * segments;
-    const i = Math.floor(t);
+    const safeProgress = Number.isFinite(progress) ? Math.min(Math.max(progress, 0), 0.999) : 0;
+    const t = safeProgress * segments;
+    const i = Math.min(Math.max(Math.floor(t), 0), segments - 1);
     const f = t - i;
     const a = pos(path[i]);
     const b = pos(path[i + 1]);
