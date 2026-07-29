@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
 import { Route as UrunRouteImport } from './routes/urun'
+import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
 import { Route as KosullarRouteImport } from './routes/kosullar'
@@ -43,6 +44,11 @@ const UyumlulukRoute = UyumlulukRouteImport.update({
 const UrunRoute = UrunRouteImport.update({
   id: '/urun',
   path: '/urun',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TurkiyeMevzuatRoute = TurkiyeMevzuatRouteImport.update({
+  id: '/turkiye-mevzuat',
+  path: '/turkiye-mevzuat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasiyicilarRoute = TasiyicilarRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/kosullar': typeof KosullarRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
+  '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/kosullar': typeof KosullarRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
+  '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/kosullar': typeof KosullarRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
+  '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/kosullar'
     | '/sertifikasyon'
     | '/tasiyicilar'
+    | '/turkiye-mevzuat'
     | '/urun'
     | '/uyumluluk'
     | '/panel'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/kosullar'
     | '/sertifikasyon'
     | '/tasiyicilar'
+    | '/turkiye-mevzuat'
     | '/urun'
     | '/uyumluluk'
     | '/panel'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/kosullar'
     | '/sertifikasyon'
     | '/tasiyicilar'
+    | '/turkiye-mevzuat'
     | '/urun'
     | '/uyumluluk'
     | '/_authenticated/panel'
@@ -342,6 +354,7 @@ export interface RootRouteChildren {
   KosullarRoute: typeof KosullarRoute
   SertifikasyonRoute: typeof SertifikasyonRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
+  TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
   UrunRoute: typeof UrunRoute
   UyumlulukRoute: typeof UyumlulukRoute
   RehberSlugRoute: typeof RehberSlugRoute
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/urun'
       fullPath: '/urun'
       preLoaderRoute: typeof UrunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/turkiye-mevzuat': {
+      id: '/turkiye-mevzuat'
+      path: '/turkiye-mevzuat'
+      fullPath: '/turkiye-mevzuat'
+      preLoaderRoute: typeof TurkiyeMevzuatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasiyicilar': {
@@ -561,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   KosullarRoute: KosullarRoute,
   SertifikasyonRoute: SertifikasyonRoute,
   TasiyicilarRoute: TasiyicilarRoute,
+  TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
   UrunRoute: UrunRoute,
   UyumlulukRoute: UyumlulukRoute,
   RehberSlugRoute: RehberSlugRoute,
@@ -570,13 +591,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
