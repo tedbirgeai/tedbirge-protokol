@@ -229,6 +229,27 @@ function Admin() {
                       {l.summary}
                     </p>
                   )}
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Link
+                      to="/teklif/$id"
+                      params={{ id: l.id }}
+                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] hover:bg-secondary"
+                    >
+                      Teklif paketi
+                    </Link>
+                    <button
+                      onClick={() => makePlan(l.id)}
+                      className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] hover:bg-secondary"
+                    >
+                      Plan üret
+                    </button>
+                    {leadMsg[l.id] && (
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {leadMsg[l.id]}
+                      </span>
+                    )}
+                  </div>
+
                   {l.use_case && (
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
                       {l.use_case}
