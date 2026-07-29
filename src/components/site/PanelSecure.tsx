@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CARRIERS, TERRAIN, HEIGHTS } from "@/lib/mesh-plan";
 import { createNodeEnrollment, revokeNodeEnrollment, setDeviceE2ee } from "@/lib/enrollment.functions";
 import { runCalibrationTest } from "@/lib/calibration.functions";
+import { friendlyError, normalizeNodeId } from "@/lib/friendly-error";
+
 
 type LicenseLite = { id: string; plan: string; node_limit: number };
 
