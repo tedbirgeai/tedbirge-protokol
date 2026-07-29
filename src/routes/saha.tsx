@@ -88,15 +88,32 @@ function FieldAccess() {
     <SitePage>
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="grid-bg absolute inset-0 opacity-60" aria-hidden />
-        <div className="relative mx-auto max-w-6xl px-6 py-20">
-          <SectionLabel>Saha erişimi</SectionLabel>
-          <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">
-            Bulunduğunuz yerden, ücretsiz, kurulumsuz erişim
+        <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-14">
+          <SectionLabel>Saha erişimi · kayıt gerekmez</SectionLabel>
+          <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight md:text-5xl">
+            Bu cihazı şimdi düğüme dönüştür
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Aşağıdaki linki tarayıcınıza yapıştırın; Tedbirge Gateway saha arayüzü, canlı mesh
-            simülasyonu ve pilot uyum panosu anında açılır. Kayıt, ödeme veya abonelik yok.
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
+            Aşağıdaki “Düğümü başlat” düğmesine basın. Hesap, ödeme veya kurulum yok; aynı linki
+            açan diğer cihazlarla doğrudan (P2P) eşleşir, bağlantı koparsa paketler kuyruğa alınır.
           </p>
+          <div className="mt-6">
+            <BrowserNodeCard />
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="relative mx-auto max-w-6xl px-6 py-16">
+          <SectionLabel>Ekibe gönder</SectionLabel>
+          <h2 className="mt-4 max-w-3xl text-2xl font-semibold tracking-tight md:text-3xl">
+            Ücretsiz, kurulumsuz erişim linki
+          </h2>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Aşağıdaki linki paylaşın; Tedbirge Gateway saha arayüzü, canlı mesh simülasyonu ve
+            pilot uyum panosu anında açılır. Kayıt, ödeme veya abonelik yok.
+          </p>
+
 
           <div className="mt-10 grid gap-8 rounded-sm border border-border bg-card/40 p-7 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
