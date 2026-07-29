@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 export const Route = createFileRoute("/giris")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: { next?: unknown }) => ({
     next: typeof search.next === "string" ? search.next : undefined,
   }),
   head: () => ({
