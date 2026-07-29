@@ -44,9 +44,38 @@ export const Route = createFileRoute("/api/public/telemetry")({
           return json({ error: "missing_or_invalid_license" }, 401);
         }
 
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Lisans kimliği kullanım grafikleri ve 429 özetleri için önce çözümlenir.
+        const { data: license } = await supabaseAdmin
+          .from("licenses")
+          .select("id, user_id, status, node_limit, current_period_end")
+          .eq("license_key", licenseKey)
+          .maybeSingle();
+
+        const logUsage = async (statusCode: number) => {
+          if (!license) return;
+          await supabaseAdmin.from("api_usage_events").insert({
+            license_id: license.id,
+            user_id: license.user_id,
+            endpoint: "telemetry",
+            status_code: statusCode,
+          });
+        };
+
         const { checkApiRateLimit } = await import("@/lib/api-rate-limit.server");
         const limit = await checkApiRateLimit("telemetry", licenseKey);
         if (!limit.ok) {
+          await logUsage(429);
+          if (license?.user_id) {
+            const { dispatchWebhook } = await import("@/lib/webhooks.server");
+            await dispatchWebhook(license.user_id, "rate_limited", {
+              license_id: license.id,
+              endpoint: "telemetry",
+              retry_after_seconds: limit.retryAfterSeconds,
+              message: limit.message,
+            });
+          }
           return new Response(JSON.stringify({ error: limit.message }), {
             status: 429,
             headers: {
@@ -56,6 +85,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
             },
           });
         }
+
 
         let parsed;
         try {
