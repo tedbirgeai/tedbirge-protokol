@@ -84,6 +84,24 @@ const ICE: RTCConfiguration = {
   iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
 };
 
+/**
+ * Cihazın gerçekte kullandığı taşıyıcıyı raporlar (uydurma değer yok).
+ * Network Information API yoksa "wifi" varsayılır; panelde taşıyıcı yalnızca
+ * gerçek telemetri geldiğinde aktif görünür.
+ */
+export function detectCarrier(): "wifi" | "cellular" | "ethernet" {
+  const conn = (navigator as unknown as { connection?: { type?: string; effectiveType?: string } })
+    .connection;
+  const type = conn?.type;
+  if (type === "cellular") return "cellular";
+  if (type === "ethernet") return "ethernet";
+  if (type === "wifi") return "wifi";
+  // iOS/Safari: type yok. effectiveType 2g/3g genelde hücresel demektir.
+  if (conn?.effectiveType && ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) return "cellular";
+  return "wifi";
+}
+
+
 export class BrowserNode {
   readonly nodeId = getBrowserNodeId();
   private licenseKey: string;
