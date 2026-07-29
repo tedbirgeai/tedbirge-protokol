@@ -38,6 +38,7 @@ import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const UyumlulukRoute = UyumlulukRouteImport.update({
@@ -184,6 +185,11 @@ const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   path: '/panel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeklifIdRoute = AuthenticatedTeklifIdRouteImport.update({
+  id: '/teklif/$id',
+  path: '/teklif/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
+  '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
+  '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
+  '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/rehber/$slug'
     | '/rehber/'
+    | '/teklif/$id'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/rehber/$slug'
     | '/rehber'
+    | '/teklif/$id'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/rehber/$slug'
     | '/rehber/'
+    | '/_authenticated/teklif/$id'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -619,6 +631,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPanelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/teklif/$id': {
+      id: '/_authenticated/teklif/$id'
+      path: '/teklif/$id'
+      fullPath: '/teklif/$id'
+      preLoaderRoute: typeof AuthenticatedTeklifIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -632,11 +651,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedYonetimRoute: typeof AuthenticatedYonetimRoute
+  AuthenticatedTeklifIdRoute: typeof AuthenticatedTeklifIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedYonetimRoute: AuthenticatedYonetimRoute,
+  AuthenticatedTeklifIdRoute: AuthenticatedTeklifIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
