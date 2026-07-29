@@ -140,11 +140,13 @@ function RootComponent() {
 
   useEffect(() => {
     setupOfflineSupport();
+    bootNodeRuntime();
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <OfflineBanner />
+      <NodeDock />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
