@@ -43,6 +43,7 @@ import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authenticated/saha-raporu'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -217,6 +218,11 @@ const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
   path: '/api/public/telemetry',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicQueueRoute = ApiPublicQueueRouteImport.update({
+  id: '/api/public/queue',
+  path: '/api/public/queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
   id: '/api/public/openapi.json',
   path: '/api/public/openapi.json',
@@ -275,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/rehber/'
     | '/teklif/$id'
     | '/api/public/openapi.json'
+    | '/api/public/queue'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/rehber'
     | '/teklif/$id'
     | '/api/public/openapi.json'
+    | '/api/public/queue'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
@@ -475,6 +486,7 @@ export interface FileRouteTypes {
     | '/rehber/'
     | '/_authenticated/teklif/$id'
     | '/api/public/openapi.json'
+    | '/api/public/queue'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
@@ -512,6 +524,7 @@ export interface RootRouteChildren {
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
+  ApiPublicQueueRoute: typeof ApiPublicQueueRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -757,6 +770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelemetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/queue': {
+      id: '/api/public/queue'
+      path: '/api/public/queue'
+      fullPath: '/api/public/queue'
+      preLoaderRoute: typeof ApiPublicQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/openapi.json': {
       id: '/api/public/openapi.json'
       path: '/api/public/openapi.json'
@@ -837,6 +857,7 @@ const rootRouteChildren: RootRouteChildren = {
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
+  ApiPublicQueueRoute: ApiPublicQueueRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,

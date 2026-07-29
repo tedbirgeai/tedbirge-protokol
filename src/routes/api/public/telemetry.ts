@@ -168,6 +168,56 @@ export const Route = createFileRoute("/api/public/telemetry")({
 
         if (deviceError || !device) return json({ error: "device_register_failed" }, 500);
 
+        // Bağlantı geri döndü: açık kesinti alarmı kapatılır, panel anında uyarılır.
+        const { data: openAlert } = await supabaseAdmin
+          .from("link_alerts")
+          .select("id, layer, failover_to, detected_at")
+          .eq("device_id", device.id)
+          .eq("state", "down")
+          .is("resolved_at", null)
+          .maybeSingle();
+
+        if (openAlert) {
+          const nowIso = new Date().toISOString();
+          await supabaseAdmin
+            .from("link_alerts")
+            .update({ resolved_at: nowIso })
+            .eq("id", openAlert.id);
+          await supabaseAdmin.from("link_alerts").insert({
+            license_id: license.id,
+            user_id: license.user_id,
+            device_id: device.id,
+            node_id: parsed.node_id,
+            layer: openAlert.layer,
+            state: "up",
+            detail: "Bağlantı geri geldi; kuyruktaki mesajlar iletiliyor.",
+            detected_at: nowIso,
+            resolved_at: nowIso,
+          });
+          await supabaseAdmin
+            .from("devices")
+            .update({ active_uplink: true })
+            .eq("id", device.id);
+          await supabaseAdmin.from("license_events").insert({
+            license_id: license.id,
+            user_id: license.user_id,
+            device_id: device.id,
+            event: "device_online",
+            detail: `${parsed.node_id} · ${openAlert.layer} katmanı geri döndü`,
+            actor: "system",
+          });
+          if (license.user_id) {
+            const { dispatchWebhook } = await import("@/lib/webhooks.server");
+            await dispatchWebhook(license.user_id, "license_event", {
+              event: "device_online",
+              license_id: license.id,
+              device_id: device.id,
+              node_id: parsed.node_id,
+              layer: openAlert.layer,
+            });
+          }
+        }
+
         if (!existing) {
           await supabaseAdmin.from("license_events").insert({
             license_id: license.id,
@@ -243,9 +293,16 @@ export const Route = createFileRoute("/api/public/telemetry")({
 
         await logUsage(200);
 
+        const { count: pendingQueue } = await supabaseAdmin
+          .from("mesh_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("license_id", license.id)
+          .eq("status", "queued");
+
         return json({
           ok: true,
           device_id: device.id,
+          pending_queue: pendingQueue ?? 0,
           recorded: hasMetric,
           ir_recorded: irRecorded,
           node_limit: license.node_limit,

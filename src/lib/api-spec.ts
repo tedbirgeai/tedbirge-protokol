@@ -66,8 +66,37 @@ export const OPENAPI_SPEC = {
           device_id: { type: "string", format: "uuid" },
           recorded: { type: "boolean" },
           ir_recorded: { type: "boolean" },
+          pending_queue: {
+            type: "integer",
+            description: "Bu lisansta teslim bekleyen store-and-forward mesajı sayısı.",
+          },
           node_limit: { type: "integer" },
           region: { type: "string" },
+        },
+      },
+      QueueRequest: {
+        type: "object",
+        required: ["action", "node_id"],
+        description:
+          "Store-and-forward kuyruğu. action=enqueue: kopma sırasında biriken mesajları yükler. action=fetch: hedef düğüm kuyruğu öncelik + sıra düzeninde çeker. action=ack: teslim onayı verir.",
+        properties: {
+          action: { type: "string", enum: ["enqueue", "fetch", "ack"] },
+          node_id: { type: "string", maxLength: 64, example: "saha-01" },
+          limit: { type: "integer", minimum: 1, maximum: 200, default: 50 },
+          ids: { type: "array", items: { type: "string", format: "uuid" } },
+          messages: {
+            type: "array",
+            maxItems: 200,
+            items: {
+              type: "object",
+              properties: {
+                target_node: { type: "string", maxLength: 64, example: "ev-01" },
+                priority: { type: "integer", minimum: 1, maximum: 9, default: 5 },
+                payload: { type: "object" },
+                queued_at: { type: "string", format: "date-time" },
+              },
+            },
+          },
         },
       },
       Error: { type: "object", properties: { error: { type: "string" } } },
@@ -98,6 +127,25 @@ export const OPENAPI_SPEC = {
               "Lisans pasif/süresi dolmuş, cihaz iptal edilmiş veya düğüm limiti aşılmış (license_inactive | license_expired | device_revoked | node_limit_reached)",
             content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
           },
+        },
+      },
+      options: { summary: "CORS ön kontrolü", responses: { "204": { description: "Yok" } } },
+    },
+    "/api/public/queue": {
+      post: {
+        summary: "Store-and-forward mesaj kuyruğu",
+        description:
+          "İnternet/mesh kopmasında düğümde biriken mesajlar kalıcı olarak saklanır; bağlantı geri geldiğinde öncelik ve sıra düzeninde teslim edilir. Teslim onayı (ack) gelene kadar mesaj kuyrukta kalır.",
+        operationId: "postQueue",
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/QueueRequest" } } },
+        },
+        responses: {
+          "200": { description: "İşlendi" },
+          "400": { description: "Geçersiz gövde", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "401": { description: "Lisans yok/geçersiz", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "429": { description: "Hız sınırı" },
         },
       },
       options: { summary: "CORS ön kontrolü", responses: { "204": { description: "Yok" } } },
