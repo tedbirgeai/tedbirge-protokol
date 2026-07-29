@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setupOfflineSupport } from "../lib/pwa";
 import { OfflineBanner } from "../components/site/OfflineBanner";
+import { NodeDock } from "../components/site/NodeDock";
+import { bootNodeRuntime } from "../lib/node-runtime";
 
 
 function NotFoundComponent() {
@@ -138,11 +140,13 @@ function RootComponent() {
 
   useEffect(() => {
     setupOfflineSupport();
+    bootNodeRuntime();
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <OfflineBanner />
+      <NodeDock />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
