@@ -66,6 +66,16 @@ function Panel() {
   const [loading, setLoading] = useState(true);
   const [portalBusy, setPortalBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const reloadDevices = useCallback(async () => {
+    const { data } = await supabase
+      .from("devices")
+      .select("*")
+      .order("created_at", { ascending: true });
+    setDevices((data as Device[]) ?? []);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -94,11 +104,33 @@ function Panel() {
     };
   }, [user]);
 
+  // Gerçek zamanlı telemetri: düğüm ve ölçüm değişikliklerini anında yansıtır.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("panel-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "devices" },
+        () => void reloadDevices(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "telemetry_samples" },
+        () => setRefreshKey((k) => k + 1),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, reloadDevices]);
+
   async function rotate(licenseId: string) {
     setBusyId(licenseId);
     try {
       const { licenseKey } = await rotateLicenseKey({ data: { licenseId } });
       setLicenses((ls) => ls.map((l) => (l.id === licenseId ? { ...l, license_key: licenseKey } : l)));
+      setRefreshKey((k) => k + 1);
     } finally {
       setBusyId(null);
     }
@@ -107,8 +139,9 @@ function Panel() {
   async function setDeviceStatus(id: string, status: "active" | "revoked") {
     setBusyId(id);
     try {
-      await supabase.from("devices").update({ status }).eq("id", id);
+      await setDeviceStatusFn({ data: { deviceId: id, status } });
       setDevices((ds) => ds.map((d) => (d.id === id ? { ...d, status } : d)));
+      setRefreshKey((k) => k + 1);
     } finally {
       setBusyId(null);
     }
@@ -117,12 +150,19 @@ function Panel() {
   async function removeDevice(id: string) {
     setBusyId(id);
     try {
-      await supabase.from("devices").delete().eq("id", id);
+      await deleteDevice({ data: { deviceId: id } });
       setDevices((ds) => ds.filter((d) => d.id !== id));
+      setRefreshKey((k) => k + 1);
     } finally {
       setBusyId(null);
     }
   }
+
+  const usedByLicense = devices.reduce<Record<string, number>>((acc, d) => {
+    acc[d.license_id] = (acc[d.license_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
 
 
 
