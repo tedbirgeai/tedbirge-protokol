@@ -419,6 +419,18 @@ function Panel() {
           )}
         </div>
 
+        <div className="mt-8">
+          <FieldReports
+            devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))}
+            isAdmin={isAdmin}
+          />
+        </div>
+
+        <div className="mt-8">
+          <LicenseEventLog refreshKey={refreshKey} />
+        </div>
+
+
 
 
         <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
