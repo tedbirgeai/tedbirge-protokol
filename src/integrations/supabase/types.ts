@@ -189,16 +189,70 @@ export type Database = {
           },
         ]
       }
+      calibration_runs: {
+        Row: {
+          accuracy_pct: number | null
+          antenna_height: string
+          bias_km: number | null
+          calibrated_hop_km: number
+          carrier: string
+          created_at: string
+          detail: Json | null
+          id: string
+          mae_km: number | null
+          model_hop_km: number
+          sample_count: number
+          terrain: string
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          accuracy_pct?: number | null
+          antenna_height: string
+          bias_km?: number | null
+          calibrated_hop_km: number
+          carrier: string
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          mae_km?: number | null
+          model_hop_km: number
+          sample_count: number
+          terrain: string
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          accuracy_pct?: number | null
+          antenna_height?: string
+          bias_km?: number | null
+          calibrated_hop_km?: number
+          carrier?: string
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          mae_km?: number | null
+          model_hop_km?: number
+          sample_count?: number
+          terrain?: string
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           active_uplink: boolean
           carrier: string | null
           created_at: string
+          e2ee: boolean
           failover_group: string | null
           failover_priority: number
           firmware: string | null
           id: string
           is_backup: boolean
+          key_fingerprint: string | null
+          key_updated_at: string | null
           kind: string
           label: string | null
           last_error_at: string | null
@@ -206,6 +260,7 @@ export type Database = {
           last_seen_at: string | null
           license_id: string
           node_id: string
+          public_key: string | null
           region: string
           role: string
           status: string
@@ -216,11 +271,14 @@ export type Database = {
           active_uplink?: boolean
           carrier?: string | null
           created_at?: string
+          e2ee?: boolean
           failover_group?: string | null
           failover_priority?: number
           firmware?: string | null
           id?: string
           is_backup?: boolean
+          key_fingerprint?: string | null
+          key_updated_at?: string | null
           kind?: string
           label?: string | null
           last_error_at?: string | null
@@ -228,6 +286,7 @@ export type Database = {
           last_seen_at?: string | null
           license_id: string
           node_id: string
+          public_key?: string | null
           region?: string
           role?: string
           status?: string
@@ -238,11 +297,14 @@ export type Database = {
           active_uplink?: boolean
           carrier?: string | null
           created_at?: string
+          e2ee?: boolean
           failover_group?: string | null
           failover_priority?: number
           firmware?: string | null
           id?: string
           is_backup?: boolean
+          key_fingerprint?: string | null
+          key_updated_at?: string | null
           kind?: string
           label?: string | null
           last_error_at?: string | null
@@ -250,6 +312,7 @@ export type Database = {
           last_seen_at?: string | null
           license_id?: string
           node_id?: string
+          public_key?: string | null
           region?: string
           role?: string
           status?: string
@@ -597,9 +660,11 @@ export type Database = {
       mesh_messages: {
         Row: {
           attempts: number
+          cipher_alg: string | null
           created_at: string
           delivered_at: string | null
           device_id: string | null
+          encrypted: boolean
           expires_at: string
           id: string
           last_error: string | null
@@ -615,9 +680,11 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          cipher_alg?: string | null
           created_at?: string
           delivered_at?: string | null
           device_id?: string | null
+          encrypted?: boolean
           expires_at?: string
           id?: string
           last_error?: string | null
@@ -633,9 +700,11 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          cipher_alg?: string | null
           created_at?: string
           delivered_at?: string | null
           device_id?: string | null
+          encrypted?: boolean
           expires_at?: string
           id?: string
           last_error?: string | null
@@ -659,6 +728,74 @@ export type Database = {
           },
           {
             foreignKeyName: "mesh_messages_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      node_enrollments: {
+        Row: {
+          carrier: string
+          claimed_at: string | null
+          claimed_fingerprint: string | null
+          created_at: string
+          device_id: string | null
+          expires_at: string
+          id: string
+          kind: string
+          label: string | null
+          license_id: string
+          node_id: string
+          region: string
+          role: string
+          status: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carrier?: string
+          claimed_at?: string | null
+          claimed_fingerprint?: string | null
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          license_id: string
+          node_id: string
+          region?: string
+          role?: string
+          status?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carrier?: string
+          claimed_at?: string | null
+          claimed_fingerprint?: string | null
+          created_at?: string
+          device_id?: string | null
+          expires_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          license_id?: string
+          node_id?: string
+          region?: string
+          role?: string
+          status?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "node_enrollments_license_id_fkey"
             columns: ["license_id"]
             isOneToOne: false
             referencedRelation: "licenses"
@@ -728,6 +865,57 @@ export type Database = {
           owner_id?: string
           slug?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      outage_events: {
+        Row: {
+          cause: string | null
+          created_at: string
+          device_id: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          failover_to: string | null
+          id: string
+          layer: string
+          license_id: string
+          node_id: string
+          resolved: boolean
+          started_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cause?: string | null
+          created_at?: string
+          device_id?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          failover_to?: string | null
+          id?: string
+          layer: string
+          license_id: string
+          node_id: string
+          resolved?: boolean
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cause?: string | null
+          created_at?: string
+          device_id?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          failover_to?: string | null
+          id?: string
+          layer?: string
+          license_id?: string
+          node_id?: string
+          resolved?: boolean
+          started_at?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
