@@ -15,7 +15,7 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
   useEffect(() => setNodeId(getBrowserNodeId()), []);
 
   const start = useCallback(() => {
-    if (!licenseKey || nodeRef.current) return;
+    if (nodeRef.current) return;
     const node = new BrowserNode(licenseKey, setState);
     nodeRef.current = node;
     void node.start();
