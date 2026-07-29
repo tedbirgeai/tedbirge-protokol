@@ -144,6 +144,9 @@ export function SiteFooter() {
             <li><Link to="/uyumluluk" className="text-muted-foreground hover:text-foreground">Spektrum & uyum</Link></li>
             <li><Link to="/sertifikasyon" className="text-muted-foreground hover:text-foreground">Sertifikasyon & test</Link></li>
             <li><Link to="/turkiye-mevzuat" className="text-muted-foreground hover:text-foreground">Türkiye mevzuatı</Link></li>
+            <li><Link to="/izinler" className="text-muted-foreground hover:text-foreground">Devlet izinleri</Link></li>
+            <li><Link to="/pilot-panosu" className="text-muted-foreground hover:text-foreground">Pilot uyum panosu</Link></li>
+
             <li><Link to="/ihracat-uyum" className="text-muted-foreground hover:text-foreground">İhracat kontrolü</Link></li>
             <li><Link to="/guvenlik" className="text-muted-foreground hover:text-foreground">Güvenlik & tehdit modeli</Link></li>
             <li><Link to="/en" className="text-muted-foreground hover:text-foreground">English overview</Link></li>
