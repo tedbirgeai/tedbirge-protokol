@@ -20,6 +20,7 @@ import { HealthCards, LiveFeed, KeyRotation, CalibrationReports } from "@/compon
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
 import { buildMeshPlan } from "@/lib/mesh-plan";
+import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -103,9 +104,9 @@ function MobileStationCard() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Cep telefonu / tablet</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">Telefonunuzdan düğüm oluşturmanıza gerek yok</h2>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight">Uygulamayı telefona ekleyin</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Cep telefonu ve tablet <strong className="text-foreground">düğüm cihazı değil</strong>, yönetim ve izleme istasyonudur. Düğüm evdeki bilgisayarınızda (veya Raspberry Pi/Orange Pi gibi küçük bir Linux cihazda) çalışır. Telefondan sadece durum izlersiniz.
+            Telefon ve tablet, yukarıdaki <strong className="text-foreground">tarayıcı düğümü</strong> ile donanımsız çalışan gerçek bir düğüme dönüşür; ayrıca yönetim/izleme istasyonudur. Uzun menzil (LoRa/HaLow/TVWS) istiyorsanız o taşıyıcıya ait radyo modülünü ayrıca eklersiniz.
           </p>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
             <li>Bilgisayardaki düğümü başlatın (lisans anahtarı + node-id ile).</li>
@@ -421,6 +422,7 @@ function Panel() {
         <div className="mt-8 space-y-8">
           {tab === "genel" && (
             <>
+              <BrowserNodeCard licenseKey={licenses[0]?.license_key} />
               <MobileStationCard />
               <FieldRealityCard devices={devices} />
               <HealthCards refreshKey={refreshKey} />
