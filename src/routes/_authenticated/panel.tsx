@@ -1,11 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
 import { rotateLicenseKey } from "@/lib/licenses.functions";
+import { setDeviceStatus as setDeviceStatusFn, deleteDevice } from "@/lib/devices.functions";
+import {
+  NodeCreator,
+  LicenseEventLog,
+  FieldReports,
+} from "@/components/site/PanelSections";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+
+
 
 
 export const Route = createFileRoute("/_authenticated/panel")({
