@@ -176,23 +176,14 @@ export const CURL_EXAMPLE = `curl -X POST ${SITE_URL}/api/public/telemetry \\
     "bytes": 82910
   }'`;
 
-export const AGENT_SNIPPET = `#!/usr/bin/env bash
-# tedbirge-agent.sh — düğümden 60 sn'de bir ölçüm gönderir
-set -euo pipefail
-: "\${TEDBIRGE_LICENSE_KEY:?lisans anahtari gerekli}"
-NODE_ID="\${TEDBIRGE_MESH_NODE_ID:-saha-A}"
-REGION="\${TEDBIRGE_REGION:-TR}"
-ENDPOINT="${SITE_URL}/api/public/telemetry"
-
-while true; do
-  RTT=$(ping -c 3 -q 1.1.1.1 2>/dev/null | awk -F'/' 'END{print $5+0}')
-  LOSS=$(ping -c 3 -q 1.1.1.1 2>/dev/null | awk -F', ' '/packet loss/{print $3+0}')
-  curl -sS -X POST "$ENDPOINT" \\
-    -H "Content-Type: application/json" \\
-    -H "X-Tedbirge-License: $TEDBIRGE_LICENSE_KEY" \\
-    -d "{\\"node_id\\":\\"$NODE_ID\\",\\"region\\":\\"$REGION\\",\\"carrier\\":\\"\${TEDBIRGE_CARRIER:-wifi}\\",\\"rtt_ms\\":$RTT,\\"packet_loss_pct\\":$LOSS}" >/dev/null
-  sleep 60
-done`;
+export const AGENT_SNIPPET = `curl -fsSL ${SITE_URL}/install.sh | sh
+export TEDBIRGE_LICENSE_KEY=<LISANS_ANAHTARINIZ>
+export TEDBIRGE_NODE_ID=ev-01
+export TEDBIRGE_REGION=TR
+export TEDBIRGE_CARRIER=auto
+./tedbirge-gateway oneshot
+./tedbirge-cli carriers
+./tedbirge-gateway`;
 
 export const PY_SNIPPET = `import os, requests
 

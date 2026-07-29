@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 export function OfflineBanner() {
   const [offline, setOffline] = useState(false);
   const [recovered, setRecovered] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const goOffline = () => {
@@ -28,7 +29,24 @@ export function OfflineBanner() {
     };
   }, []);
 
-  if (!offline && !recovered) return null;
+  useEffect(() => {
+    const onUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      if (!detail?.message) return;
+      setUpdateMessage(detail.message);
+      window.setTimeout(() => setUpdateMessage(null), 6000);
+    };
+    window.addEventListener("tedbirge:pwa-update", onUpdate);
+    return () => window.removeEventListener("tedbirge:pwa-update", onUpdate);
+  }, []);
+
+  if (!offline && !recovered && !updateMessage) return null;
+
+  const message = offline
+    ? "Telefonun interneti koptu — uygulama önbellekten açık. Taşıyıcı devreye girmesi için sahada çevrimiçi gateway + röle + saha radyo düğümü gerekir."
+    : recovered
+      ? "Bağlantı geri geldi — veriler güncelleniyor."
+      : updateMessage;
 
   return (
     <div
@@ -36,12 +54,12 @@ export function OfflineBanner() {
       className={`fixed inset-x-0 top-0 z-[60] px-3 py-2 text-center text-xs font-medium ${
         offline
           ? "bg-destructive text-destructive-foreground"
-          : "bg-primary text-primary-foreground"
+          : recovered
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-secondary-foreground"
       }`}
     >
-      {offline
-        ? "Telefonun interneti koptu — uygulama önbellekten açık. Taşıyıcı devreye girmesi için sahada çevrimiçi gateway + röle + saha radyo düğümü gerekir."
-        : "Bağlantı geri geldi — veriler güncelleniyor."}
+      {message}
     </div>
   );
 }

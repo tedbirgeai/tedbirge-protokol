@@ -735,19 +735,22 @@ function quickStart(key?: string) {
   const licenseKey = key ?? "LISANS-ANAHTARINIZ";
   return [
     {
-      title: "Binary'yi çalıştırılabilir yapın",
-      code: "chmod +x tedbirge-gateway && ./tedbirge-gateway --version",
+      title: "Ajanı tek komutla indirin",
+      code: "curl -fsSL https://tedbirge-gateway.lovable.app/install.sh | sh",
     },
     {
-      title: "Lisansı ortam değişkeni olarak tanımlayın",
-      code: `export TEDBIRGE_LICENSE_KEY=${licenseKey}`,
+      title: "Lisans ve düğüm kimliğini tanımlayın",
+      code: `export TEDBIRGE_LICENSE_KEY=${licenseKey}
+export TEDBIRGE_NODE_ID=ev-01
+export TEDBIRGE_REGION=TR
+export TEDBIRGE_CARRIER=auto`,
     },
     {
-      title: "Mesh düğümünü başlatın ve doğrulayın",
-      code: `TEDBIRGE_MESH=true TEDBIRGE_MESH_NODE_ID=saha-A \\
-TEDBIRGE_MESH_ADDR=:7946 tedbirge-gateway
+      title: "Heartbeat'i başlatın ve taşıyıcıyı doğrulayın",
+      code: `./tedbirge-gateway oneshot
+./tedbirge-cli carriers
 
-tedbirge-cli mesh-demo`,
+./tedbirge-gateway`,
     },
   ];
 }
