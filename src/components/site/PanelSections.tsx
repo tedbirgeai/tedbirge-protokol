@@ -57,15 +57,22 @@ export function NodeCreator({
 
   const suggestion = useMemo(() => `saha-${String.fromCharCode(65 + used)}`, [used]);
 
+  const effectiveNodeId = normalizeNodeId(nodeId) || suggestion;
+  const nodeIdValid = effectiveNodeId.length >= 2;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!nodeIdValid) {
+      setError("Düğüm adı en az 2 karakter olmalı (örn. saha-A).");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       await createDevice({
         data: {
           licenseId,
-          nodeId: (nodeId || suggestion).trim(),
+          nodeId: effectiveNodeId,
           label: labelText.trim() || undefined,
           region: region as (typeof REGIONS)[number],
           carrier: carrier as (typeof CARRIERS)[number]["id"],
@@ -77,11 +84,12 @@ export function NodeCreator({
       setTimeout(() => setDone(false), 2500);
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Düğüm oluşturulamadı.");
+      setError(friendlyError(err, "Düğüm oluşturulamadı."));
     } finally {
       setBusy(false);
     }
   }
+
 
   if (licenses.length === 0) return null;
 
