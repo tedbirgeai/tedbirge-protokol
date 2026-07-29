@@ -90,6 +90,56 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "yonetim", label: "Yönetim", needs: "manage" },
 ];
 
+/** Cep telefonunun paneldeki rolünü netleştiren bilgi kartı.
+ *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. */
+function MobileStationCard() {
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
+  const sahaLink = origin ? `${origin}/saha` : "https://tedbirge-gateway.lovable.app/saha";
+
+  return (
+    <div className="rounded-sm border border-primary/30 bg-primary/5 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="max-w-2xl">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Cep telefonu / tablet</p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight">Telefonunuzdan düğüm oluşturmanıza gerek yok</h2>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Cep telefonu ve tablet <strong className="text-foreground">düğüm cihazı değil</strong>, yönetim ve izleme istasyonudur. Düğüm evdeki bilgisayarınızda (veya Raspberry Pi/Orange Pi gibi küçük bir Linux cihazda) çalışır. Telefondan sadece durum izlersiniz.
+          </p>
+          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+            <li>Bilgisayardaki düğümü başlatın (lisans anahtarı + node-id ile).</li>
+            <li>Telefonda aşağıdaki linki açın ve “Ana ekrana ekle” deyin.</li>
+            <li>Paneldeki düğüm “çevrimiçi” olur; telefondan izleyin.</li>
+          </ol>
+        </div>
+        <div className="min-w-[16rem] rounded-sm border border-border bg-card/50 p-5">
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Mobil erişim linki</p>
+          <p className="mt-2 break-all font-mono text-sm text-foreground">{sahaLink}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a
+              href={sahaLink}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-sm bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground"
+            >
+              Telefonda aç
+            </a>
+            <button
+              onClick={() => void navigator.clipboard.writeText(sahaLink)}
+              className="rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              Linki kopyala
+            </button>
+          </div>
+          <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
+            iPhone kullanıyorsanız Safari ile açıp paylaş menüsünden “Ana Ekrana Ekle” seçin. Android’de Chrome menüden “Uygulamayı yükle” yeterlidir.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Panel() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
