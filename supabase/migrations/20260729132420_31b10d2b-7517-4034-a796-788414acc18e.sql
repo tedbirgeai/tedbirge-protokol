@@ -1,0 +1,1 @@
+DELETE FROM public.devices WHERE node_id = 'ir-test-1';
