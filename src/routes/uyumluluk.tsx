@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Spektrum & Uyum Matrisi — Ülke Bazlı Taşıyıcı Kuralları";
 const DESC =
   "Tedbirge Gateway taşıyıcılarının bölge bazlı spektrum, güç ve görev döngüsü sınırları: AB/TR, ABD/Kanada, Birleşik Krallık, Körfez, APAC ve Afrika profilleri.";
-const URL = "https://artisan-project-studio.lovable.app/uyumluluk";
+const URL = "https://tedbirge-gateway.lovable.app/uyumluluk";
 
 export const Route = createFileRoute("/uyumluluk")({
   head: () => ({

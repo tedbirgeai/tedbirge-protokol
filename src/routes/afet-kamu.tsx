@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Afet ve Kamu Güvenliği Haberleşmesi — Tedbirge Protokol";
 const DESC =
   "GSM ve elektrik çöktüğünde saha içi haberleşmeyi ayakta tutan off-grid mesh altyapısı. AFAD, il afet müdürlükleri, itfaiye ve arama-kurtarma ekipleri için sayısal telsize tamamlayıcı veri katmanı.";
-const URL = "https://artisan-project-studio.lovable.app/afet-kamu";
+const URL = "https://tedbirge-gateway.lovable.app/afet-kamu";
 
 export const Route = createFileRoute("/afet-kamu")({
   head: () => ({

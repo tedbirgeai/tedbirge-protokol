@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "İhracat Kontrolü & Çift Kullanım Beyanı — Tedbirge Gateway";
 const DESC =
   "Tedbirge Gateway'in kriptografik yetenekleri, Wassenaar Düzenlemesi kapsamındaki sınıflandırması, yasaklı ülke politikası ve son kullanıcı beyanı süreci.";
-const URL = "https://artisan-project-studio.lovable.app/ihracat-uyum";
+const URL = "https://tedbirge-gateway.lovable.app/ihracat-uyum";
 
 export const Route = createFileRoute("/ihracat-uyum")({
   head: () => ({

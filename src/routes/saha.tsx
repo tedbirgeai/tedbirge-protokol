@@ -6,8 +6,8 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
 const DESC =
   "Sahadaki ekipler Tedbirge Gateway'i kurulum yapmadan tarayıcıdan test etsin: ücretsiz erişim linki, QR kod ve telefon, tablet ya da bilgisayara uygulama olarak ekleme adımları.";
-const CANONICAL = "https://artisan-project-studio.lovable.app/saha";
-const FALLBACK_ORIGIN = "https://artisan-project-studio.lovable.app";
+const CANONICAL = "https://tedbirge-gateway.lovable.app/saha";
+const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 
 export const Route = createFileRoute("/saha")({
   head: () => ({

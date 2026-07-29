@@ -35,6 +35,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RehberIndexRouteImport } from './routes/rehber.index'
 import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -168,6 +169,11 @@ const RehberSlugRoute = RehberSlugRouteImport.update({
   path: '/rehber/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
   id: '/yonetim',
   path: '/yonetim',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
+  '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
+  '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/uyumluluk': typeof UyumlulukRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
+  '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/uyumluluk'
     | '/panel'
     | '/yonetim'
+    | '/api/chat'
     | '/rehber/$slug'
     | '/rehber/'
     | '/api/public/payments/webhook'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/uyumluluk'
     | '/panel'
     | '/yonetim'
+    | '/api/chat'
     | '/rehber/$slug'
     | '/rehber'
     | '/api/public/payments/webhook'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/uyumluluk'
     | '/_authenticated/panel'
     | '/_authenticated/yonetim'
+    | '/api/chat'
     | '/rehber/$slug'
     | '/rehber/'
     | '/api/public/payments/webhook'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
   UrunRoute: typeof UrunRoute
   UyumlulukRoute: typeof UyumlulukRoute
+  ApiChatRoute: typeof ApiChatRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -585,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RehberSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/yonetim': {
       id: '/_authenticated/yonetim'
       path: '/yonetim'
@@ -647,6 +667,7 @@ const rootRouteChildren: RootRouteChildren = {
   TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
   UrunRoute: UrunRoute,
   UyumlulukRoute: UyumlulukRoute,
+  ApiChatRoute: ApiChatRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,

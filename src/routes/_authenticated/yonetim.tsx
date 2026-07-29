@@ -44,10 +44,29 @@ const statusLabels: Record<string, string> = {
   lost: "Kaybedildi",
 };
 
+type AiLead = {
+  id: string;
+  organization: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  use_case: string | null;
+  carrier_need: string | null;
+  node_count: string | null;
+  urgency: string | null;
+  qualification_score: number | null;
+  summary: string | null;
+  status: string;
+  created_at: string;
+};
+
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
+  const [tab, setTab] = useState<"pilot" | "ai">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
+  const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +80,18 @@ function Admin() {
         setRows((data as PilotRequest[]) ?? []);
         setLoading(false);
       });
+    supabase
+      .from("ai_leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setLeads((data as AiLead[]) ?? []));
   }, [isAdmin]);
+
+  async function updateLeadStatus(id: string, status: string) {
+    setLeads((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
+    await supabase.from("ai_leads").update({ status }).eq("id", id);
+  }
+
 
   async function updateStatus(id: string, status: string) {
     setRows((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
@@ -96,9 +126,93 @@ function Admin() {
     <SitePage>
       <section className="mx-auto max-w-6xl px-6 py-16">
         <SectionLabel>Yönetim</SectionLabel>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Pilot başvuruları</h1>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+          {tab === "pilot" ? "Pilot başvuruları" : "AI danışman talepleri"}
+        </h1>
 
+        <div className="mt-6 flex gap-2 border-b border-border/60 pb-4">
+          <button
+            onClick={() => setTab("pilot")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "pilot" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            Pilot formu ({rows.length})
+          </button>
+          <button
+            onClick={() => setTab("ai")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "ai" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            AI talepleri ({leads.length})
+          </button>
+        </div>
+
+        {tab === "ai" ? (
+          leads.length === 0 ? (
+            <p className="mt-8 text-sm text-muted-foreground">
+              Henüz AI danışman üzerinden gelen talep yok.
+            </p>
+          ) : (
+            <div className="mt-8 space-y-4">
+              {leads.map((l) => (
+                <div key={l.id} className="rounded-sm border border-border bg-card/50 p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="font-medium">
+                        {l.contact_name ?? "—"}
+                        {l.organization ? ` · ${l.organization}` : ""}
+                        {typeof l.qualification_score === "number" ? (
+                          <span className="ml-3 rounded-sm border border-primary/50 px-2 py-0.5 font-mono text-[10px] text-primary">
+                            skor {l.qualification_score}
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="mt-1 font-mono text-xs text-muted-foreground">
+                        {l.email ?? "—"}
+                        {l.phone ? ` · ${l.phone}` : ""}
+                        {l.country ? ` · ${l.country}` : ""}
+                        {l.node_count ? ` · ${l.node_count} düğüm` : ""}
+                        {l.carrier_need ? ` · ${l.carrier_need}` : ""}
+                        {l.urgency ? ` · ${l.urgency}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        {new Date(l.created_at).toLocaleString("tr-TR")}
+                      </span>
+                      <select
+                        value={l.status}
+                        onChange={(e) => updateLeadStatus(l.id, e.target.value)}
+                        className="rounded-sm border border-border bg-background px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em]"
+                      >
+                        {statuses.map((s) => (
+                          <option key={s} value={s}>
+                            {statusLabels[s]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {l.summary && (
+                    <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                      {l.summary}
+                    </p>
+                  )}
+                  {l.use_case && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                      {l.use_case}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+        <>
         <div className="mt-6 flex flex-wrap gap-2">
+
           {["all", ...statuses].map((s) => (
             <button
               key={s}
@@ -156,7 +270,10 @@ function Admin() {
             ))}
           </div>
         )}
+        </>
+        )}
       </section>
+
     </SitePage>
   );
 }

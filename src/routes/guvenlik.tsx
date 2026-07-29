@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Güvenlik & Tehdit Modeli — Sıfır-Bilgi Geçidin Sınırları";
 const DESC =
   "Tedbirge Gateway'in tehdit modeli: kriptografik temeller, hangi saldırganlara karşı koruma sağlanır, sıfır-bilgi iddiasının kapsamı, bilinen sınırlar ve zafiyet bildirim süreci.";
-const URL = "https://artisan-project-studio.lovable.app/guvenlik";
+const URL = "https://tedbirge-gateway.lovable.app/guvenlik";
 
 export const Route = createFileRoute("/guvenlik")({
   head: () => ({

@@ -4,7 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 const TITLE = "Türkiye Mevzuat Uyumu — BTK, KVKK, TSE ve Kamu Kuralları";
 const DESC =
   "Tedbirge Gateway'in Türkiye'deki yasal çerçeveye tam uyumu: 5809 sayılı Elektronik Haberleşme Kanunu, BTK telsiz ve KEGY kuralları, TDDY/EMC/LVD işaretlemesi, KVKK 6698, 5651, 6563 ve kamu alım gereklilikleri.";
-const URL = "https://artisan-project-studio.lovable.app/turkiye-mevzuat";
+const URL = "https://tedbirge-gateway.lovable.app/turkiye-mevzuat";
 
 export const Route = createFileRoute("/turkiye-mevzuat")({
   head: () => ({
