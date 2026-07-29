@@ -130,12 +130,21 @@ export function NodeCreator({
           </span>
           <input
             value={nodeId}
-            onChange={(e) => setNodeId(e.target.value)}
+            onChange={(e) => setNodeId(normalizeNodeId(e.target.value))}
             placeholder={suggestion}
             maxLength={64}
+            aria-invalid={!nodeIdValid}
             className={`mt-1 ${input}`}
           />
+          <p
+            className={`mt-1 font-mono text-[11px] ${nodeIdValid ? "text-muted-foreground" : "text-destructive"}`}
+          >
+            {nodeIdValid
+              ? `Kayıt adı: ${effectiveNodeId} · en az 2 karakter, harf/rakam/tire`
+              : "En az 2 karakter yazın (örn. ev-01)."}
+          </p>
         </div>
+
         <div>
           <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
             Konum etiketi (opsiyonel)
