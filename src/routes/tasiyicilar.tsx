@@ -238,8 +238,24 @@ function Carriers() {
         )}
       </section>
 
+      <section className="border-t border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <SectionLabel>Taşıyıcıyı canlıya al</SectionLabel>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+            Kendi modemini bağla — direk dikmeden
+          </h2>
+          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            Hibrit model gereği donanım üretmiyoruz. Elinizde hâlihazırda bulunan LoRa, HaLow,
+            TVWS, WiGig, FSO veya uydu modemini USB (Web Serial) ya da Bluetooth ile bağlayın;
+            gerçek RSSI/SNR ölçümü okunur ve o taşıyıcı panoda aktif olur.
+          </p>
+          <div className="mt-8">
+            <CarrierBridgeCard />
+          </div>
+        </div>
+      </section>
+
       <section className="border-t border-border/60 bg-card/30">
-        <div className="mx-auto max-w-4xl px-6 py-16">
           <SectionLabel>Onuncu katman</SectionLabel>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight">
             Zero-KVKK efemer RF çerçeveleme
