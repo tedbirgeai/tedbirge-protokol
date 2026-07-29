@@ -10,8 +10,8 @@ const NODES: { id: NodeId; label: string; x: number; y: number; carrier: string 
   { id: "C", label: "exit-C", x: 86, y: 72, carrier: "Uydu / WAN" },
 ];
 
-function pos(id: NodeId) {
-  const n = NODES.find((x) => x.id === id)!;
+function pos(id: NodeId | undefined) {
+  const n = NODES.find((x) => x.id === id) ?? NODES[0];
   return { x: n.x, y: n.y };
 }
 
