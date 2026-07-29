@@ -82,7 +82,7 @@ export function QrNodeEnroll({
       const res = await createNodeEnrollment({
         data: {
           licenseId,
-          nodeId: nodeId.trim(),
+          nodeId: normalizeNodeId(nodeId),
           label: label.trim() || undefined,
           role,
           carrier: carrier as never,
