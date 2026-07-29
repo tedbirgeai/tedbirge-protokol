@@ -422,6 +422,7 @@ function Panel() {
           {tab === "genel" && (
             <>
               <MobileStationCard />
+              <FieldRealityCard devices={devices} />
               <HealthCards refreshKey={refreshKey} />
 
 
