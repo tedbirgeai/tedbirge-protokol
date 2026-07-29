@@ -155,6 +155,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
               region: parsed.region ?? "TR",
               carrier: parsed.carrier ?? null,
               firmware: parsed.firmware ?? null,
+              kind: parsed.kind ?? (parsed.thermal ? "ir_camera" : "node"),
               status: "active",
               last_seen_at: new Date().toISOString(),
               last_error_code: parsed.error_code ?? null,
@@ -199,12 +200,54 @@ export const Route = createFileRoute("/api/public/telemetry")({
           });
         }
 
+        // Kızılötesi kamera karesi: içerik değil, yalnızca metrik + imza saklanır.
+        let irRecorded = false;
+        if (parsed.thermal) {
+          const t = parsed.thermal;
+          const { error: irError } = await supabaseAdmin.from("ir_frames").insert({
+            device_id: device.id,
+            license_id: license.id,
+            temp_max_c: t.temp_max_c ?? null,
+            temp_min_c: t.temp_min_c ?? null,
+            temp_avg_c: t.temp_avg_c ?? null,
+            detections: t.detections ?? null,
+            alarm: t.alarm ?? false,
+            alarm_reason: t.alarm_reason ?? null,
+            frame_hash: t.frame_hash ?? null,
+            note: t.note ?? null,
+          });
+          irRecorded = !irError;
+
+          if (t.alarm && license.user_id) {
+            const { dispatchWebhook } = await import("@/lib/webhooks.server");
+            await dispatchWebhook(license.user_id, "ir_alarm", {
+              device_id: device.id,
+              license_id: license.id,
+              node_id: parsed.node_id,
+              temp_max_c: t.temp_max_c ?? null,
+              detections: t.detections ?? null,
+              reason: t.alarm_reason ?? null,
+            });
+            await supabaseAdmin.from("license_events").insert({
+              license_id: license.id,
+              user_id: license.user_id,
+              device_id: device.id,
+              event: "ir_alarm",
+              detail: `${parsed.node_id} · ${t.alarm_reason ?? "termal alarm"}${
+                t.temp_max_c !== undefined ? ` · ${t.temp_max_c}°C` : ""
+              }`,
+              actor: "node",
+            });
+          }
+        }
+
         await logUsage(200);
 
         return json({
           ok: true,
           device_id: device.id,
           recorded: hasMetric,
+          ir_recorded: irRecorded,
           node_limit: license.node_limit,
           // Bölge profili: düğüm bu değeri kendi taşıyıcı kilidi için kullanır.
           region: parsed.region ?? "TR",
