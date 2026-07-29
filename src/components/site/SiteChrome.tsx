@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
+import { AiAdvisor } from "@/components/site/AiAdvisor";
 
 const nav = [
   { to: "/", label: "Genel Bakış" },
@@ -187,6 +188,7 @@ export function SitePage({ children }: { children: ReactNode }) {
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />
+      <AiAdvisor />
     </div>
   );
 }
