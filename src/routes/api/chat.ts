@@ -97,29 +97,76 @@ export const Route = createFileRoute("/api/chat")({
               const score = Number.isFinite(input.nitelik_puani)
                 ? Math.max(0, Math.min(100, Math.round(Number(input.nitelik_puani))))
                 : null;
-              const { error } = await supabaseAdmin.from("ai_leads").insert({
-                organization: input.kurum?.slice(0, 200) ?? null,
-                contact_name: input.kisi?.slice(0, 200) ?? null,
-                email: email.slice(0, 200),
-                phone: input.telefon?.slice(0, 60) ?? null,
-                country: input.ulke?.slice(0, 120) ?? null,
-                use_case: input.senaryo?.slice(0, 4000) ?? null,
-                carrier_need: input.tasiyici?.slice(0, 400) ?? null,
-                node_count: input.dugum_sayisi?.slice(0, 60) ?? null,
-                urgency: input.aciliyet?.slice(0, 200) ?? null,
-                qualification_score: score,
-                summary: input.ozet?.slice(0, 4000) ?? null,
-                transcript: messages as unknown as never,
-              });
-              if (error) {
-                console.error("[ai_leads] insert failed", error.message);
+              const { data: inserted, error } = await supabaseAdmin
+                .from("ai_leads")
+                .insert({
+                  organization: input.kurum?.slice(0, 200) ?? null,
+                  contact_name: input.kisi?.slice(0, 200) ?? null,
+                  email: email.slice(0, 200),
+                  phone: input.telefon?.slice(0, 60) ?? null,
+                  country: input.ulke?.slice(0, 120) ?? null,
+                  use_case: input.senaryo?.slice(0, 4000) ?? null,
+                  carrier_need: input.tasiyici?.slice(0, 400) ?? null,
+                  node_count: input.dugum_sayisi?.slice(0, 60) ?? null,
+                  urgency: input.aciliyet?.slice(0, 200) ?? null,
+                  qualification_score: score,
+                  summary: input.ozet?.slice(0, 4000) ?? null,
+                  transcript: messages as unknown as never,
+                })
+                .select("id")
+                .single();
+              if (error || !inserted) {
+                console.error("[ai_leads] insert failed", error?.message);
                 return { ok: false, hata: "Kayıt sırasında teknik hata oluştu." };
               }
-              return { ok: true, mesaj: "Talep ekibe iletildi." };
+
+              const { generateLeadPlan } = await import("@/lib/lead-plan.server");
+              const plan = await generateLeadPlan({
+                kurum: input.kurum ?? null,
+                ulke: input.ulke ?? null,
+                senaryo: input.senaryo ?? null,
+                tasiyici: input.tasiyici ?? null,
+                dugum: input.dugum_sayisi ?? null,
+                aciliyet: input.aciliyet ?? null,
+              });
+              if (plan) {
+                await supabaseAdmin
+                  .from("ai_leads")
+                  .update({ plan: plan as unknown as never, proposal_ref: inserted.id })
+                  .eq("id", inserted.id);
+              }
+
+              const { notifyLeadStatus } = await import("@/lib/lead-notify.server");
+              await notifyLeadStatus({
+                leadId: inserted.id,
+                fromStatus: null,
+                toStatus: "new",
+                note: input.ozet?.slice(0, 500) ?? null,
+                lead: {
+                  email,
+                  phone: input.telefon ?? null,
+                  contact_name: input.kisi ?? null,
+                  organization: input.kurum ?? null,
+                },
+              });
+
+              return {
+                ok: true,
+                mesaj: "Talep ekibe iletildi.",
+                plan_ozeti: plan
+                  ? {
+                      ilk_adim: plan.adimlar[0]?.baslik ?? null,
+                      belge_sayisi: plan.belgeler.length,
+                    }
+                  : null,
+                yonlendirme:
+                  "Belgeleri ve kanıtları /pilot-panosu adresinden yükleyebilir; kontrol listesini oradan takip edebilir.",
+              };
             } catch (e) {
               console.error("[ai_leads] insert exception", e);
               return { ok: false, hata: "Kayıt sırasında teknik hata oluştu." };
             }
+
           },
         });
 
