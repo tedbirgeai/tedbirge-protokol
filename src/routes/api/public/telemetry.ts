@@ -25,6 +25,7 @@ const Body = z.object({
   hops: z.number().int().min(0).max(64).optional(),
   bytes: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
   note: z.string().max(500).optional(),
+  error_code: z.string().max(40).optional(),
 });
 
 function json(body: unknown, status = 200) {
@@ -141,6 +142,8 @@ export const Route = createFileRoute("/api/public/telemetry")({
               firmware: parsed.firmware ?? null,
               status: "active",
               last_seen_at: new Date().toISOString(),
+              last_error_code: parsed.error_code ?? null,
+              last_error_at: parsed.error_code ? new Date().toISOString() : null,
             },
             { onConflict: "license_id,node_id" },
           )
@@ -180,6 +183,8 @@ export const Route = createFileRoute("/api/public/telemetry")({
             note: parsed.note ?? null,
           });
         }
+
+        await logUsage(200);
 
         return json({
           ok: true,
