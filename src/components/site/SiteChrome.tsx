@@ -12,7 +12,7 @@ const nav = [
   { to: "/urun", label: "Ürün" },
   { to: "/tasiyicilar", label: "Taşıyıcılar" },
   { to: "/afet-kamu", label: "Afet & Kamu" },
-  { to: "/uyumluluk", label: "Uyum" },
+  { to: "/mevzuat", label: "Regülasyon" },
   { to: "/guvenlik", label: "Güvenlik" },
   { to: "/demo", label: "Demo" },
   { to: "/saha", label: "Saha" },
