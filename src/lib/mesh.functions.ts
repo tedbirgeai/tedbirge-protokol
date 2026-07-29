@@ -248,20 +248,8 @@ export const saveFieldMeasurement = createServerFn({ method: "POST" })
 
 /** Kapsama sayfasının kalibrasyonu için anonim ölçüm özeti (kişi bilgisi içermez). */
 export const listFieldMeasurements = createServerFn({ method: "GET" }).handler(async () => {
-  const { createClient } = await import("@supabase/supabase-js");
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  const client = createClient(process.env.SUPABASE_URL!, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input: RequestInfo | URL, init?: RequestInit) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
-  const { data } = await client
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("field_measurements")
     .select("carrier, terrain, antenna_height, distance_km, link_ok")
     .order("created_at", { ascending: false })
@@ -274,3 +262,4 @@ export const listFieldMeasurements = createServerFn({ method: "GET" }).handler(a
     link_ok: Boolean(m.link_ok),
   }));
 });
+
