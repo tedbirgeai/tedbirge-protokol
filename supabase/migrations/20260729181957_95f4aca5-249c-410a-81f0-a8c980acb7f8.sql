@@ -1,0 +1,1 @@
+select n.nspname as schema, c.relname as table_name, count(p.polname)::int as policy_count from pg_class c join pg_namespace n on n.oid = c.relnamespace left join pg_policy p on p.polrelid = c.oid where n.nspname='public' and c.relkind in ('r','p') and c.relrowsecurity group by n.nspname, c.relname, c.relrowsecurity having count(p.polname)=0 order by c.relname;
