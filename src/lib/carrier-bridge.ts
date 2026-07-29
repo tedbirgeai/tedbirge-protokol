@@ -1,0 +1,348 @@
+/**
+ * Taşıyıcı Köprüsü (Carrier Bridge)
+ * ------------------------------------------------------------------
+ * Hibrit model: Tedbirge direk dikmez, kablo döşemez, uydu fırlatmaz.
+ * Zaten piyasada olan modemleri (LoRa, HaLow, TVWS, WiGig, FSO, uydu
+ * terminali) kullanıcının kendi cihazına takılı haliyle mesh'e bağlar.
+ *
+ * Nasıl çalışır:
+ *  - Web Serial API: USB/UART üzerinden bağlı modemden satır okur.
+ *  - Web Bluetooth: BLE üzerinden (Meshtastic/Nordic UART) modem okur.
+ *  - Okunan RSSI/SNR/kayıp değerleri gerçek telemetri olarak panele
+ *    gönderilir; taşıyıcı ancak o zaman "aktif" görünür. Uydurma yok.
+ *
+ * Donanım yoksa hiçbir taşıyıcı aktif olmaz — bu bilinçli bir tasarım.
+ */
+
+import { useSyncExternalStore } from "react";
+import { getBrowserNodeId } from "@/lib/browser-node";
+
+export type CarrierId = "lora" | "halow" | "tvws" | "wigig" | "fso" | "satellite";
+
+export type CarrierDef = {
+  id: CarrierId;
+  name: string;
+  transport: ("serial" | "bluetooth")[];
+  baud: number;
+  hint: string;
+};
+
+export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
+  {
+    id: "lora",
+    name: "LoRa sub-GHz",
+    transport: ["serial", "bluetooth"],
+    baud: 115200,
+    hint: "Meshtastic / RAK / Heltec / E22 USB veya BLE modülü",
+  },
+  {
+    id: "halow",
+    name: "Wi-Fi HaLow (802.11ah)",
+    transport: ["serial"],
+    baud: 115200,
+    hint: "Morse Micro / Newracom USB köprü (AT arayüzü)",
+  },
+  {
+    id: "tvws",
+    name: "TVWS (beyaz alan)",
+    transport: ["serial"],
+    baud: 115200,
+    hint: "6Harmonics / Adaptrum CPE seri konsolu",
+  },
+  {
+    id: "wigig",
+    name: "WiGig 60 GHz",
+    transport: ["serial"],
+    baud: 115200,
+    hint: "Terragraph / MikroTik Wireless Wire konsolu",
+  },
+  {
+    id: "fso",
+    name: "FSO lazer",
+    transport: ["serial"],
+    baud: 9600,
+    hint: "Optik terminal yönetim portu (hizalama + RSSI)",
+  },
+  {
+    id: "satellite",
+    name: "Uydu terminali",
+    transport: ["serial"],
+    baud: 9600,
+    hint: "Iridium / Inmarsat AT modemi veya VSAT konsolu",
+  },
+];
+
+export type BridgeLink = {
+  carrier: CarrierId;
+  transport: "serial" | "bluetooth";
+  connectedAt: number;
+  lastFrameAt: number | null;
+  rssi: number | null;
+  snr: number | null;
+  rttMs: number | null;
+  lossPct: number | null;
+  frames: number;
+  lastLine: string;
+  uploaded: number;
+  error: string | null;
+};
+
+type BridgeState = { links: Record<string, BridgeLink>; supported: { serial: boolean; bluetooth: boolean } };
+
+let state: BridgeState = { links: {}, supported: { serial: false, bluetooth: false } };
+const listeners = new Set<() => void>();
+let license = "";
+
+function publish() {
+  state = { ...state, links: { ...state.links } };
+  listeners.forEach((l) => l());
+}
+
+export function setBridgeLicense(key?: string) {
+  license = key ?? "";
+}
+
+export function refreshBridgeSupport() {
+  if (typeof navigator === "undefined") return;
+  state = {
+    ...state,
+    supported: {
+      serial: "serial" in navigator,
+      bluetooth: "bluetooth" in navigator,
+    },
+  };
+  publish();
+}
+
+/** Modem satırından gerçek ölçüm çıkarır. JSON, AT ve Meshtastic biçimlerini tanır. */
+export function parseCarrierLine(line: string): Partial<BridgeLink> {
+  const out: Partial<BridgeLink> = {};
+  const trimmed = line.trim();
+  if (!trimmed) return out;
+
+  if (trimmed.startsWith("{")) {
+    try {
+      const j = JSON.parse(trimmed) as Record<string, unknown>;
+      const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+      out.rssi = num(j.rssi) ?? num(j.RSSI);
+      out.snr = num(j.snr) ?? num(j.SNR);
+      out.rttMs = num(j.rtt) ?? num(j.rtt_ms);
+      out.lossPct = num(j.loss) ?? num(j.packet_loss_pct);
+      return out;
+    } catch {
+      /* düz metin olarak devam */
+    }
+  }
+
+  const rssi = /rssi[^-\d]{0,4}(-?\d+(?:\.\d+)?)/i.exec(trimmed);
+  if (rssi) out.rssi = Number(rssi[1]);
+  const snr = /snr[^-\d]{0,4}(-?\d+(?:\.\d+)?)/i.exec(trimmed);
+  if (snr) out.snr = Number(snr[1]);
+  const rtt = /(?:rtt|latency|ping)[^\d]{0,4}(\d+(?:\.\d+)?)/i.exec(trimmed);
+  if (rtt) out.rttMs = Number(rtt[1]);
+  const loss = /(?:loss|per)[^\d]{0,4}(\d+(?:\.\d+)?)\s*%?/i.exec(trimmed);
+  if (loss) out.lossPct = Math.min(100, Number(loss[1]));
+  return out;
+}
+
+type Handle = {
+  stop: () => Promise<void>;
+  timer: ReturnType<typeof setInterval> | null;
+};
+
+const handles = new Map<string, Handle>();
+
+function upsert(carrier: CarrierId, patch: Partial<BridgeLink>) {
+  const prev = state.links[carrier];
+  if (!prev) return;
+  state.links[carrier] = { ...prev, ...patch };
+  publish();
+}
+
+async function postTelemetry(carrier: CarrierId) {
+  const link = state.links[carrier];
+  if (!link || !license) return;
+  const body = {
+    node_id: `${getBrowserNodeId()}-${carrier}`,
+    label: `${BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)?.name} köprüsü`,
+    carrier,
+    firmware: `carrier-bridge-1.0/${link.transport}`,
+    rtt_ms: link.rttMs ?? 0,
+    packet_loss_pct: link.lossPct ?? 0,
+    hops: 1,
+    note: `kopru · rssi:${link.rssi ?? "-"} snr:${link.snr ?? "-"} kare:${link.frames}`,
+  };
+  try {
+    const res = await fetch("/api/public/telemetry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tedbirge-License": license },
+      body: JSON.stringify(body),
+    });
+    upsert(carrier, {
+      uploaded: res.ok ? link.uploaded + 1 : link.uploaded,
+      error: res.ok ? null : `Panele yazılamadı (HTTP ${res.status}) — lisans anahtarını kontrol edin.`,
+    });
+  } catch {
+    upsert(carrier, { error: "Bulut erişilemedi; ölçüm yerelde tutuluyor." });
+  }
+}
+
+function startUplink(carrier: CarrierId) {
+  const h = handles.get(carrier);
+  if (!h || h.timer) return;
+  void postTelemetry(carrier);
+  h.timer = setInterval(() => void postTelemetry(carrier), 30_000);
+}
+
+function ingest(carrier: CarrierId, chunk: string) {
+  const parsed = parseCarrierLine(chunk);
+  const prev = state.links[carrier];
+  if (!prev) return;
+  upsert(carrier, {
+    ...parsed,
+    rssi: parsed.rssi ?? prev.rssi,
+    snr: parsed.snr ?? prev.snr,
+    rttMs: parsed.rttMs ?? prev.rttMs,
+    lossPct: parsed.lossPct ?? prev.lossPct,
+    frames: prev.frames + 1,
+    lastFrameAt: Date.now(),
+    lastLine: chunk.slice(0, 160),
+  });
+}
+
+/** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
+export async function connectSerialCarrier(carrier: CarrierId) {
+  const nav = navigator as unknown as { serial?: { requestPort: () => Promise<any> } };
+  if (!nav.serial) throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
+  const def = BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)!;
+  const port = await nav.serial.requestPort();
+  await port.open({ baudRate: def.baud });
+
+  state.links[carrier] = {
+    carrier,
+    transport: "serial",
+    connectedAt: Date.now(),
+    lastFrameAt: null,
+    rssi: null,
+    snr: null,
+    rttMs: null,
+    lossPct: null,
+    frames: 0,
+    lastLine: "",
+    uploaded: 0,
+    error: null,
+  };
+  publish();
+
+  let stopped = false;
+  const decoder = new TextDecoderStream();
+  port.readable.pipeTo(decoder.writable).catch(() => undefined);
+  const reader = decoder.readable.getReader();
+
+  (async () => {
+    let buf = "";
+    while (!stopped) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value ?? "";
+      const lines = buf.split(/\r?\n/);
+      buf = lines.pop() ?? "";
+      lines.forEach((l) => ingest(carrier, l));
+    }
+  })().catch((e) => upsert(carrier, { error: e instanceof Error ? e.message : "seri okuma hatası" }));
+
+  handles.set(carrier, {
+    timer: null,
+    stop: async () => {
+      stopped = true;
+      try {
+        await reader.cancel();
+      } catch {
+        /* yok say */
+      }
+      try {
+        await port.close();
+      } catch {
+        /* yok say */
+      }
+    },
+  });
+  startUplink(carrier);
+}
+
+const NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+/** BLE modem (Meshtastic / Nordic UART): Web Bluetooth ile bağlanır. */
+export async function connectBluetoothCarrier(carrier: CarrierId) {
+  const nav = navigator as unknown as { bluetooth?: any };
+  if (!nav.bluetooth) throw new Error("Bu tarayıcı Web Bluetooth desteklemiyor.");
+  const device = await nav.bluetooth.requestDevice({
+    filters: [{ services: [NUS_SERVICE] }],
+    optionalServices: [NUS_SERVICE],
+  });
+  const server = await device.gatt.connect();
+  const service = await server.getPrimaryService(NUS_SERVICE);
+  const tx = await service.getCharacteristic(NUS_TX);
+
+  state.links[carrier] = {
+    carrier,
+    transport: "bluetooth",
+    connectedAt: Date.now(),
+    lastFrameAt: null,
+    rssi: null,
+    snr: null,
+    rttMs: null,
+    lossPct: null,
+    frames: 0,
+    lastLine: "",
+    uploaded: 0,
+    error: null,
+  };
+  publish();
+
+  const decoder = new TextDecoder();
+  const onValue = (event: Event) => {
+    const dv = (event.target as unknown as { value: DataView }).value;
+    decoder
+      .decode(dv)
+      .split(/\r?\n/)
+      .forEach((l) => l && ingest(carrier, l));
+  };
+  tx.addEventListener("characteristicvaluechanged", onValue);
+  await tx.startNotifications();
+
+  handles.set(carrier, {
+    timer: null,
+    stop: async () => {
+      try {
+        await tx.stopNotifications();
+        tx.removeEventListener("characteristicvaluechanged", onValue);
+        device.gatt.disconnect();
+      } catch {
+        /* yok say */
+      }
+    },
+  });
+  startUplink(carrier);
+}
+
+export async function disconnectCarrier(carrier: CarrierId) {
+  const h = handles.get(carrier);
+  if (h?.timer) clearInterval(h.timer);
+  await h?.stop();
+  handles.delete(carrier);
+  delete state.links[carrier];
+  publish();
+}
+
+export function useCarrierBridge() {
+  return useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => state,
+    () => state,
+  );
+}

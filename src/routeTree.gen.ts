@@ -25,6 +25,7 @@ import { Route as IzinlerRouteImport } from './routes/izinler'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
 import { Route as IadeRouteImport } from './routes/iade'
+import { Route as HibritModelRouteImport } from './routes/hibrit-model'
 import { Route as HakkimizdaRouteImport } from './routes/hakkimizda'
 import { Route as GuvenlikRouteImport } from './routes/guvenlik'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
@@ -131,6 +132,11 @@ const IhracatUyumRoute = IhracatUyumRouteImport.update({
 const IadeRoute = IadeRouteImport.update({
   id: '/iade',
   path: '/iade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HibritModelRoute = HibritModelRouteImport.update({
+  id: '/hibrit-model',
+  path: '/hibrit-model',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HakkimizdaRoute = HakkimizdaRouteImport.update({
@@ -283,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/gizlilik': typeof GizlilikRoute
   '/guvenlik': typeof GuvenlikRoute
   '/hakkimizda': typeof HakkimizdaRoute
+  '/hibrit-model': typeof HibritModelRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
@@ -327,6 +334,7 @@ export interface FileRoutesByTo {
   '/gizlilik': typeof GizlilikRoute
   '/guvenlik': typeof GuvenlikRoute
   '/hakkimizda': typeof HakkimizdaRoute
+  '/hibrit-model': typeof HibritModelRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
@@ -373,6 +381,7 @@ export interface FileRoutesById {
   '/gizlilik': typeof GizlilikRoute
   '/guvenlik': typeof GuvenlikRoute
   '/hakkimizda': typeof HakkimizdaRoute
+  '/hibrit-model': typeof HibritModelRoute
   '/iade': typeof IadeRoute
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
@@ -419,6 +428,7 @@ export interface FileRouteTypes {
     | '/gizlilik'
     | '/guvenlik'
     | '/hakkimizda'
+    | '/hibrit-model'
     | '/iade'
     | '/ihracat-uyum'
     | '/iletisim'
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/gizlilik'
     | '/guvenlik'
     | '/hakkimizda'
+    | '/hibrit-model'
     | '/iade'
     | '/ihracat-uyum'
     | '/iletisim'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/gizlilik'
     | '/guvenlik'
     | '/hakkimizda'
+    | '/hibrit-model'
     | '/iade'
     | '/ihracat-uyum'
     | '/iletisim'
@@ -554,6 +566,7 @@ export interface RootRouteChildren {
   GizlilikRoute: typeof GizlilikRoute
   GuvenlikRoute: typeof GuvenlikRoute
   HakkimizdaRoute: typeof HakkimizdaRoute
+  HibritModelRoute: typeof HibritModelRoute
   IadeRoute: typeof IadeRoute
   IhracatUyumRoute: typeof IhracatUyumRoute
   IletisimRoute: typeof IletisimRoute
@@ -694,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/iade'
       fullPath: '/iade'
       preLoaderRoute: typeof IadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hibrit-model': {
+      id: '/hibrit-model'
+      path: '/hibrit-model'
+      fullPath: '/hibrit-model'
+      preLoaderRoute: typeof HibritModelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hakkimizda': {
@@ -919,6 +939,7 @@ const rootRouteChildren: RootRouteChildren = {
   GizlilikRoute: GizlilikRoute,
   GuvenlikRoute: GuvenlikRoute,
   HakkimizdaRoute: HakkimizdaRoute,
+  HibritModelRoute: HibritModelRoute,
   IadeRoute: IadeRoute,
   IhracatUyumRoute: IhracatUyumRoute,
   IletisimRoute: IletisimRoute,

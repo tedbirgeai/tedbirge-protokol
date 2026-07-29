@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 export const Route = createFileRoute("/tasiyicilar")({
   head: () => ({
@@ -236,6 +237,23 @@ function Carriers() {
         {filtered.length === 0 && (
           <p className="text-sm text-muted-foreground">Eşleşen taşıyıcı bulunamadı.</p>
         )}
+      </section>
+
+      <section className="border-t border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <SectionLabel>Taşıyıcıyı canlıya al</SectionLabel>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+            Kendi modemini bağla — direk dikmeden
+          </h2>
+          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            Hibrit model gereği donanım üretmiyoruz. Elinizde hâlihazırda bulunan LoRa, HaLow,
+            TVWS, WiGig, FSO veya uydu modemini USB (Web Serial) ya da Bluetooth ile bağlayın;
+            gerçek RSSI/SNR ölçümü okunur ve o taşıyıcı panoda aktif olur.
+          </p>
+          <div className="mt-8">
+            <CarrierBridgeCard />
+          </div>
+        </div>
       </section>
 
       <section className="border-t border-border/60 bg-card/30">

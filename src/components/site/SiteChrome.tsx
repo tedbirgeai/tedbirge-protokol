@@ -126,6 +126,7 @@ export function SiteFooter() {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Ürün</p>
           <ul className="mt-4 space-y-2 text-sm">
             <li><Link to="/urun" className="text-muted-foreground hover:text-foreground">Yetenekler</Link></li>
+            <li><Link to="/hibrit-model" className="text-muted-foreground hover:text-foreground">Hibrit model</Link></li>
             <li><Link to="/tasiyicilar" className="text-muted-foreground hover:text-foreground">Taşıyıcılar</Link></li>
             <li><Link to="/afet-kamu" className="text-muted-foreground hover:text-foreground">Afet & Kamu</Link></li>
             <li><Link to="/karsilastirma" className="text-muted-foreground hover:text-foreground">Karşılaştırma</Link></li>

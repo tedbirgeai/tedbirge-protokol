@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
+import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
 const DESC =
@@ -99,6 +100,9 @@ function FieldAccess() {
           </p>
           <div className="mt-6">
             <BrowserNodeCard />
+          </div>
+          <div className="mt-6">
+            <CarrierBridgeCard />
           </div>
         </div>
       </section>
