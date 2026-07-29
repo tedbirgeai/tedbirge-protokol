@@ -57,4 +57,4 @@ Linux (amd64/arm64), Windows, macOS. CGO gerektirmeyen cross-compilation.
 - Enterprise — düğüm başına aylık abonelik, lisans anahtarı ile düğüm limiti
 - Operator — özel kapsam, kurumsal sözleşme
 
-Ayrıntı: https://artisan-project-studio.lovable.app/fiyatlandirma
+Ayrıntı: https://tedbirge-gateway.lovable.app/fiyatlandirma
