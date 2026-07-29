@@ -69,6 +69,10 @@ function Admin() {
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [leadMsg, setLeadMsg] = useState<Record<string, string>>({});
+  const updateStatusFn = useServerFn(updateAiLeadStatus);
+  const rebuildPlanFn = useServerFn(rebuildLeadPlan);
+
 
   useEffect(() => {
     if (!isAdmin) return;
