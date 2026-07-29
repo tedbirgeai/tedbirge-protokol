@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setupOfflineSupport } from "../lib/pwa";
 import { OfflineBanner } from "../components/site/OfflineBanner";
+import { NodeDock } from "../components/site/NodeDock";
+import { bootNodeRuntime } from "../lib/node-runtime";
 
 
 function NotFoundComponent() {
