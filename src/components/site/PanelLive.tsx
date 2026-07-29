@@ -85,13 +85,19 @@ export function CarrierLiveBoard({ devices }: { devices: LiveDevice[] }) {
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">Anlık taşıyıcı durumu</h2>
         <span className="font-mono text-[11px] text-muted-foreground">
-          {activeCount}/9 taşıyıcı canlı · 5 dk telemetri penceresi
+          {activeCount}/9 taşıyıcı canlı · fiziksel düğüm telemetrisi
         </span>
       </div>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        Bir taşıyıcı yalnızca o taşıyıcıya bağlı gerçek düğüm son 5 dakika içinde telemetri
+        gönderirse aktif görünür. Telefonda PWA yüklü olması LoRa/HaLow/TVWS donanımı kurulduğu
+        anlamına gelmez.
+      </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => {
           const live = r.online > 0;
+          const state = live ? "aktif" : r.total > 0 ? "pasif" : "kurulu değil";
           return (
             <div
               key={r.id}
@@ -111,7 +117,7 @@ export function CarrierLiveBoard({ devices }: { devices: LiveDevice[] }) {
                       live ? "animate-pulse bg-primary" : "bg-muted-foreground/50"
                     }`}
                   />
-                  {live ? "aktif" : "pasif"}
+                  {state}
                 </span>
               </div>
               <p className="mt-2 font-mono text-[11px] text-muted-foreground">
