@@ -10,26 +10,8 @@ const StatusInput = z.object({
 
 const PlanInput = z.object({ leadId: z.string().uuid() });
 
-async function assertAdmin(supabase: {
-  from: (t: string) => {
-    select: (c: string) => {
-      eq: (
-        c: string,
-        v: string,
-      ) => {
-        eq: (c: string, v: string) => { maybeSingle: () => Promise<{ data: unknown }> };
-      };
-    };
-  };
-}) {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("role", "admin")
-    .eq("role", "admin")
-    .maybeSingle();
-  if (!data) throw new Error("Bu işlem için admin yetkisi gerekir.");
-}
+
+
 
 export const updateAiLeadStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
