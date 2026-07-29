@@ -417,10 +417,18 @@ function Panel() {
                         {d.firmware && <span className="block text-[11px]">v{d.firmware}</span>}
                       </td>
                       <td className="px-4 py-3 font-mono text-[11px] uppercase">
-                        <span className={d.status === "active" ? "text-primary" : "text-muted-foreground"}>
-                          {d.status === "active" ? "aktif" : "iptal"}
-                        </span>
+                        {d.status !== "active" ? (
+                          <span className="text-muted-foreground">iptal</span>
+                        ) : isDeviceOnline(d) ? (
+                          <span className="flex items-center gap-1.5 text-primary">
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                            çevrimiçi
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">çevrimdışı</span>
+                        )}
                       </td>
+
                       <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
                         {d.last_seen_at ? new Date(d.last_seen_at).toLocaleString("tr-TR") : "—"}
                       </td>
