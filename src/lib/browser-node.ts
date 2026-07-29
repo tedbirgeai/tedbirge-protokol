@@ -381,7 +381,7 @@ export class BrowserNode {
     const body = {
       node_id: this.nodeId,
       label: "Tarayıcı düğümü (mobil/masaüstü)",
-      carrier: "wifi",
+      carrier: detectCarrier(),
       firmware: "browser-node-1.0",
       hops: directPeers ? 1 : 0,
       packet_loss_pct: this.state.online ? 0 : 100,
