@@ -104,6 +104,14 @@ export function NodeCreator({
         {license?.node_limit ?? 0}. Düğüm oluşturduğunuzda aynı adla telemetri gönderen cihaz
         otomatik eşleşir.
       </p>
+      <p className="mt-2 rounded-sm border border-border bg-background/50 p-3 text-xs text-muted-foreground">
+        <strong className="text-foreground">Eski düğümleri silmek zorunda değilsiniz.</strong>{" "}
+        Çevrimdışı görünen bir düğüm sadece son 5 dakikada telemetri göndermemiş demektir; cihaz
+        tekrar açıldığında kendiliğinden çevrimiçi olur. Silme işlemi yalnızca düğüm hakkınız
+        dolduğunda ya da o düğümü kalıcı olarak kullanmayacaksanız gerekir. Aynı adı tekrar
+        kullanmak isterseniz önce eskisini silin.
+      </p>
+
 
       <form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-2">
         {licenses.length > 1 && (
