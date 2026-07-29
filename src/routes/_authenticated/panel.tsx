@@ -1,11 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { createPortalSession } from "@/utils/payments.functions";
 import { rotateLicenseKey } from "@/lib/licenses.functions";
+import { setDeviceStatus as setDeviceStatusFn, deleteDevice } from "@/lib/devices.functions";
+import {
+  NodeCreator,
+  LicenseEventLog,
+  FieldReports,
+} from "@/components/site/PanelSections";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+
+
 
 
 export const Route = createFileRoute("/_authenticated/panel")({
@@ -66,6 +74,16 @@ function Panel() {
   const [loading, setLoading] = useState(true);
   const [portalBusy, setPortalBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const reloadDevices = useCallback(async () => {
+    const { data } = await supabase
+      .from("devices")
+      .select("*")
+      .order("created_at", { ascending: true });
+    setDevices((data as Device[]) ?? []);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -94,11 +112,33 @@ function Panel() {
     };
   }, [user]);
 
+  // Gerçek zamanlı telemetri: düğüm ve ölçüm değişikliklerini anında yansıtır.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("panel-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "devices" },
+        () => void reloadDevices(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "telemetry_samples" },
+        () => setRefreshKey((k) => k + 1),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, reloadDevices]);
+
   async function rotate(licenseId: string) {
     setBusyId(licenseId);
     try {
       const { licenseKey } = await rotateLicenseKey({ data: { licenseId } });
       setLicenses((ls) => ls.map((l) => (l.id === licenseId ? { ...l, license_key: licenseKey } : l)));
+      setRefreshKey((k) => k + 1);
     } finally {
       setBusyId(null);
     }
@@ -107,8 +147,9 @@ function Panel() {
   async function setDeviceStatus(id: string, status: "active" | "revoked") {
     setBusyId(id);
     try {
-      await supabase.from("devices").update({ status }).eq("id", id);
+      await setDeviceStatusFn({ data: { deviceId: id, status } });
       setDevices((ds) => ds.map((d) => (d.id === id ? { ...d, status } : d)));
+      setRefreshKey((k) => k + 1);
     } finally {
       setBusyId(null);
     }
@@ -117,12 +158,19 @@ function Panel() {
   async function removeDevice(id: string) {
     setBusyId(id);
     try {
-      await supabase.from("devices").delete().eq("id", id);
+      await deleteDevice({ data: { deviceId: id } });
       setDevices((ds) => ds.filter((d) => d.id !== id));
+      setRefreshKey((k) => k + 1);
     } finally {
       setBusyId(null);
     }
   }
+
+  const usedByLicense = devices.reduce<Record<string, number>>((acc, d) => {
+    acc[d.license_id] = (acc[d.license_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
 
 
 
@@ -264,6 +312,19 @@ function Panel() {
           </div>
         </div>
 
+        <div className="mt-8">
+          <NodeCreator
+            licenses={licenses.map((l) => ({
+              id: l.id,
+              plan: l.plan,
+              node_limit: l.node_limit,
+            }))}
+            usedByLicense={usedByLicense}
+            onCreated={reloadDevices}
+          />
+        </div>
+
+
         <div className="mt-8 rounded-sm border border-border bg-card/50 p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -357,6 +418,18 @@ function Panel() {
             </div>
           )}
         </div>
+
+        <div className="mt-8">
+          <FieldReports
+            devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))}
+            isAdmin={isAdmin}
+          />
+        </div>
+
+        <div className="mt-8">
+          <LicenseEventLog refreshKey={refreshKey} />
+        </div>
+
 
 
 

@@ -30,5 +30,14 @@ export const rotateLicenseKey = createServerFn({ method: "POST" })
       .eq("id", license.id);
     if (error) throw new Error("Anahtar yenilenemedi.");
 
+    await supabaseAdmin.from("license_events").insert({
+      license_id: license.id,
+      user_id: context.userId,
+      event: "license_key_rotated",
+      detail: "Lisans anahtarı yenilendi; eski anahtar geçersiz.",
+      actor: "customer",
+    });
+
     return { ok: true, licenseKey: newKey };
+
   });

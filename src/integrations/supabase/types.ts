@@ -207,6 +207,107 @@ export type Database = {
           },
         ]
       }
+      field_reports: {
+        Row: {
+          admin_note: string | null
+          category: string
+          created_at: string
+          detail: string
+          device_id: string | null
+          id: string
+          license_id: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          category?: string
+          created_at?: string
+          detail: string
+          device_id?: string | null
+          id?: string
+          license_id?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          category?: string
+          created_at?: string
+          detail?: string
+          device_id?: string | null
+          id?: string
+          license_id?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_reports_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_reports_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_events: {
+        Row: {
+          actor: string
+          created_at: string
+          detail: string | null
+          device_id: string | null
+          event: string
+          id: string
+          license_id: string
+          user_id: string | null
+        }
+        Insert: {
+          actor?: string
+          created_at?: string
+          detail?: string | null
+          device_id?: string | null
+          event: string
+          id?: string
+          license_id: string
+          user_id?: string | null
+        }
+        Update: {
+          actor?: string
+          created_at?: string
+          detail?: string | null
+          device_id?: string | null
+          event?: string
+          id?: string
+          license_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_events_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       licenses: {
         Row: {
           created_at: string
