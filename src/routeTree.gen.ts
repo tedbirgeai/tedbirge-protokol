@@ -31,6 +31,7 @@ import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as ApiDokumantasyonRouteImport } from './routes/api-dokumantasyon'
 import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -38,7 +39,10 @@ import { Route as RehberIndexRouteImport } from './routes/rehber.index'
 import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
+import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authenticated/saha-raporu'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticated/teklif.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -152,6 +156,11 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDokumantasyonRoute = ApiDokumantasyonRouteImport.update({
+  id: '/api-dokumantasyon',
+  path: '/api-dokumantasyon',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AfetKamuRoute = AfetKamuRouteImport.update({
   id: '/afet-kamu',
   path: '/afet-kamu',
@@ -186,10 +195,25 @@ const AuthenticatedYonetimRoute = AuthenticatedYonetimRouteImport.update({
   path: '/yonetim',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSahaRaporuRoute = AuthenticatedSahaRaporuRouteImport.update({
+  id: '/saha-raporu',
+  path: '/saha-raporu',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   id: '/panel',
   path: '/panel',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
+  id: '/api/public/telemetry',
+  path: '/api/public/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
+  id: '/api/public/openapi.json',
+  path: '/api/public/openapi.json',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTeklifIdRoute = AuthenticatedTeklifIdRouteImport.update({
   id: '/teklif/$id',
@@ -206,6 +230,7 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/afet-kamu': typeof AfetKamuRoute
+  '/api-dokumantasyon': typeof ApiDokumantasyonRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -229,16 +254,20 @@ export interface FileRoutesByFullPath {
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/afet-kamu': typeof AfetKamuRoute
+  '/api-dokumantasyon': typeof ApiDokumantasyonRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -262,11 +291,14 @@ export interface FileRoutesByTo {
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -274,6 +306,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/afet-kamu': typeof AfetKamuRoute
+  '/api-dokumantasyon': typeof ApiDokumantasyonRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -297,11 +330,14 @@ export interface FileRoutesById {
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
+  '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -309,6 +345,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/afet-kamu'
+    | '/api-dokumantasyon'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -332,16 +369,20 @@ export interface FileRouteTypes {
     | '/urun'
     | '/uyumluluk'
     | '/panel'
+    | '/saha-raporu'
     | '/yonetim'
     | '/api/chat'
     | '/rehber/$slug'
     | '/rehber/'
     | '/teklif/$id'
+    | '/api/public/openapi.json'
+    | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/afet-kamu'
+    | '/api-dokumantasyon'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -365,17 +406,21 @@ export interface FileRouteTypes {
     | '/urun'
     | '/uyumluluk'
     | '/panel'
+    | '/saha-raporu'
     | '/yonetim'
     | '/api/chat'
     | '/rehber/$slug'
     | '/rehber'
     | '/teklif/$id'
+    | '/api/public/openapi.json'
+    | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/afet-kamu'
+    | '/api-dokumantasyon'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -399,11 +444,14 @@ export interface FileRouteTypes {
     | '/urun'
     | '/uyumluluk'
     | '/_authenticated/panel'
+    | '/_authenticated/saha-raporu'
     | '/_authenticated/yonetim'
     | '/api/chat'
     | '/rehber/$slug'
     | '/rehber/'
     | '/_authenticated/teklif/$id'
+    | '/api/public/openapi.json'
+    | '/api/public/telemetry'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -411,6 +459,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AfetKamuRoute: typeof AfetKamuRoute
+  ApiDokumantasyonRoute: typeof ApiDokumantasyonRoute
   DemoRoute: typeof DemoRoute
   DokumanlarRoute: typeof DokumanlarRoute
   EnRoute: typeof EnRoute
@@ -436,6 +485,8 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
+  ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
+  ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -595,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api-dokumantasyon': {
+      id: '/api-dokumantasyon'
+      path: '/api-dokumantasyon'
+      fullPath: '/api-dokumantasyon'
+      preLoaderRoute: typeof ApiDokumantasyonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/afet-kamu': {
       id: '/afet-kamu'
       path: '/afet-kamu'
@@ -644,12 +702,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedYonetimRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saha-raporu': {
+      id: '/_authenticated/saha-raporu'
+      path: '/saha-raporu'
+      fullPath: '/saha-raporu'
+      preLoaderRoute: typeof AuthenticatedSahaRaporuRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/panel': {
       id: '/_authenticated/panel'
       path: '/panel'
       fullPath: '/panel'
       preLoaderRoute: typeof AuthenticatedPanelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/telemetry': {
+      id: '/api/public/telemetry'
+      path: '/api/public/telemetry'
+      fullPath: '/api/public/telemetry'
+      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/openapi.json': {
+      id: '/api/public/openapi.json'
+      path: '/api/public/openapi.json'
+      fullPath: '/api/public/openapi.json'
+      preLoaderRoute: typeof ApiPublicOpenapiDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/teklif/$id': {
       id: '/_authenticated/teklif/$id'
@@ -670,12 +749,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedSahaRaporuRoute: typeof AuthenticatedSahaRaporuRoute
   AuthenticatedYonetimRoute: typeof AuthenticatedYonetimRoute
   AuthenticatedTeklifIdRoute: typeof AuthenticatedTeklifIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedSahaRaporuRoute: AuthenticatedSahaRaporuRoute,
   AuthenticatedYonetimRoute: AuthenticatedYonetimRoute,
   AuthenticatedTeklifIdRoute: AuthenticatedTeklifIdRoute,
 }
@@ -687,6 +768,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AfetKamuRoute: AfetKamuRoute,
+  ApiDokumantasyonRoute: ApiDokumantasyonRoute,
   DemoRoute: DemoRoute,
   DokumanlarRoute: DokumanlarRoute,
   EnRoute: EnRoute,
@@ -712,6 +794,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
+  ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
+  ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport

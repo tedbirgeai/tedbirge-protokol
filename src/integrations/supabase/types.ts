@@ -154,6 +154,59 @@ export type Database = {
         }
         Relationships: []
       }
+      devices: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          firmware: string | null
+          id: string
+          label: string | null
+          last_seen_at: string | null
+          license_id: string
+          node_id: string
+          region: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          carrier?: string | null
+          created_at?: string
+          firmware?: string | null
+          id?: string
+          label?: string | null
+          last_seen_at?: string | null
+          license_id: string
+          node_id: string
+          region?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          carrier?: string | null
+          created_at?: string
+          firmware?: string | null
+          id?: string
+          label?: string | null
+          last_seen_at?: string | null
+          license_id?: string
+          node_id?: string
+          region?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       licenses: {
         Row: {
           created_at: string
@@ -321,6 +374,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      telemetry_samples: {
+        Row: {
+          bytes: number | null
+          carrier: string | null
+          created_at: string
+          device_id: string
+          hops: number | null
+          id: string
+          license_id: string
+          note: string | null
+          packet_loss_pct: number | null
+          rtt_ms: number | null
+          throughput_kbps: number | null
+        }
+        Insert: {
+          bytes?: number | null
+          carrier?: string | null
+          created_at?: string
+          device_id: string
+          hops?: number | null
+          id?: string
+          license_id: string
+          note?: string | null
+          packet_loss_pct?: number | null
+          rtt_ms?: number | null
+          throughput_kbps?: number | null
+        }
+        Update: {
+          bytes?: number | null
+          carrier?: string | null
+          created_at?: string
+          device_id?: string
+          hops?: number | null
+          id?: string
+          license_id?: string
+          note?: string | null
+          packet_loss_pct?: number | null
+          rtt_ms?: number | null
+          throughput_kbps?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telemetry_samples_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telemetry_samples_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

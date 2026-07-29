@@ -134,7 +134,10 @@ export function SiteFooter() {
             <li><Link to="/demo" className="text-muted-foreground hover:text-foreground">Canlı demo</Link></li>
             <li><Link to="/saha" className="text-muted-foreground hover:text-foreground">Saha erişimi (ücretsiz)</Link></li>
             <li><Link to="/rehber" className="text-muted-foreground hover:text-foreground">Rehber</Link></li>
+            <li><Link to="/api-dokumantasyon" className="text-muted-foreground hover:text-foreground">Telemetri API'si</Link></li>
+            <li><Link to="/saha-raporu" className="text-muted-foreground hover:text-foreground">Saha test raporu</Link></li>
             <li><a href="/tedbirge-teknik-ozet.md" download className="text-muted-foreground hover:text-foreground">Teknik özet (.md)</a></li>
+
 
           </ul>
         </div>
