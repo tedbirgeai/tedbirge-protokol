@@ -267,7 +267,9 @@ function Panel() {
         <div className="mt-8 space-y-8">
           {tab === "genel" && (
             <>
+              <MobileStationCard />
               <HealthCards refreshKey={refreshKey} />
+
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="rounded-sm border border-border bg-card/50 p-6">
