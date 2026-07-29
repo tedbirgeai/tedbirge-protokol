@@ -1,8 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
+
 
 export const Route = createFileRoute("/_authenticated/yonetim")({
   head: () => ({
