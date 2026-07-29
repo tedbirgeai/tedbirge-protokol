@@ -3,8 +3,22 @@ import { convertToModelMessages, streamText, stepCountIs, tool, type UIMessage }
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { ADVISOR_SYSTEM_PROMPT } from "@/lib/ai-advisor-prompt";
+import { checkChatRateLimit } from "@/lib/chat-rate-limit.server";
 
 type ChatRequestBody = { messages?: unknown };
+
+const MAX_MESSAGES = 60;
+const MAX_CHARS = 6000;
+
+function messageText(message: unknown): string {
+  const parts = (message as { parts?: unknown }).parts;
+  if (!Array.isArray(parts)) return "";
+  return parts
+    .map((p) => (p && typeof p === "object" && (p as { type?: string }).type === "text"
+      ? String((p as { text?: unknown }).text ?? "")
+      : ""))
+    .join("");
+}
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -21,14 +35,41 @@ export const Route = createFileRoute("/api/chat")({
         if (!Array.isArray(messages) || messages.length === 0) {
           return new Response("Mesaj gerekli", { status: 400 });
         }
-        if (messages.length > 60) {
+        if (messages.length > MAX_MESSAGES) {
           return new Response("Sohbet çok uzun", { status: 413 });
+        }
+
+        const invalid = messages.some(
+          (m) =>
+            !m ||
+            typeof m !== "object" ||
+            !["user", "assistant", "system"].includes(String((m as { role?: unknown }).role)) ||
+            !Array.isArray((m as { parts?: unknown }).parts),
+        );
+        if (invalid) return new Response("Mesaj biçimi geçersiz", { status: 400 });
+
+        const totalChars = messages.reduce((n, m) => n + messageText(m).length, 0);
+        if (totalChars > MAX_CHARS * 4) {
+          return new Response("Sohbet çok uzun", { status: 413 });
+        }
+        const last = messages[messages.length - 1];
+        if (messageText(last).length > MAX_CHARS) {
+          return new Response("Mesaj çok uzun", { status: 413 });
+        }
+
+        const limit = await checkChatRateLimit(request);
+        if (!limit.ok) {
+          return new Response(limit.message, {
+            status: 429,
+            headers: { "retry-after": String(limit.retryAfterSeconds) },
+          });
         }
 
         const key = process.env.LOVABLE_API_KEY;
         if (!key) return new Response("AI yapılandırması eksik", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
+
 
         const kaydet_talep = tool({
           description:
