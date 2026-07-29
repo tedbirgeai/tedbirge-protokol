@@ -44,10 +44,29 @@ const statusLabels: Record<string, string> = {
   lost: "Kaybedildi",
 };
 
+type AiLead = {
+  id: string;
+  organization: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  use_case: string | null;
+  carrier_need: string | null;
+  node_count: string | null;
+  urgency: string | null;
+  qualification_score: number | null;
+  summary: string | null;
+  status: string;
+  created_at: string;
+};
+
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
+  const [tab, setTab] = useState<"pilot" | "ai">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
+  const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +80,18 @@ function Admin() {
         setRows((data as PilotRequest[]) ?? []);
         setLoading(false);
       });
+    supabase
+      .from("ai_leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setLeads((data as AiLead[]) ?? []));
   }, [isAdmin]);
+
+  async function updateLeadStatus(id: string, status: string) {
+    setLeads((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
+    await supabase.from("ai_leads").update({ status }).eq("id", id);
+  }
+
 
   async function updateStatus(id: string, status: string) {
     setRows((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
