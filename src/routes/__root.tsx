@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { setupOfflineSupport } from "../lib/pwa";
+import { OfflineBanner } from "../components/site/OfflineBanner";
+
 
 function NotFoundComponent() {
   return (
@@ -133,8 +136,13 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    setupOfflineSupport();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
+      <OfflineBanner />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
