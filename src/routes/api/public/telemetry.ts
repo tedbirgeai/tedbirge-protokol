@@ -26,6 +26,21 @@ const Body = z.object({
   bytes: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
   note: z.string().max(500).optional(),
   error_code: z.string().max(40).optional(),
+  // Cihaz türü: standart mesh düğümü ya da kızılötesi (termal) kamera.
+  kind: z.enum(["node", "ir_camera"]).optional(),
+  // Kızılötesi kamera kare özeti; yalnızca kind = ir_camera için işlenir.
+  thermal: z
+    .object({
+      temp_max_c: z.number().min(-100).max(2000).optional(),
+      temp_min_c: z.number().min(-100).max(2000).optional(),
+      temp_avg_c: z.number().min(-100).max(2000).optional(),
+      detections: z.number().int().min(0).max(10_000).optional(),
+      alarm: z.boolean().optional(),
+      alarm_reason: z.string().max(160).optional(),
+      frame_hash: z.string().max(128).optional(),
+      note: z.string().max(500).optional(),
+    })
+    .optional(),
 });
 
 function json(body: unknown, status = 200) {
