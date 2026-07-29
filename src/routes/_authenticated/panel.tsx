@@ -141,6 +141,109 @@ function MobileStationCard() {
   );
 }
 
+const RADIO_CARRIERS = new Set(["lora", "halow", "tvws", "wifi", "wigig", "fso"]);
+
+function likelyGateway(d: Device) {
+  const id = d.node_id.toLowerCase();
+  return d.role === "gateway" || id.startsWith("ev") || id.startsWith("home") || id.startsWith("gw");
+}
+
+function FieldRealityCard({ devices }: { devices: Device[] }) {
+  const [browserOnline, setBrowserOnline] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setBrowserOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
+
+  const online = devices.filter((d) => isDeviceOnline(d));
+  const radioOnline = online.filter((d) => typeof d.carrier === "string" && RADIO_CARRIERS.has(d.carrier));
+  const gatewayOnline = online.some(likelyGateway);
+  const relayOnline = online.filter((d) => d.role === "relay").length;
+  const edgeOnline = online.some((d) => d.role === "edge");
+  const sixKm = buildMeshPlan({ carrierId: "lora", terrainId: "suburb", heightId: "roof", distanceKm: 6 });
+  const fifteenKm = buildMeshPlan({ carrierId: "lora", terrainId: "suburb", heightId: "roof", distanceKm: 15 });
+
+  const oneReady = browserOnline && gatewayOnline && edgeOnline && radioOnline.length >= 2;
+  const sixReady = oneReady && relayOnline >= sixKm.relays && radioOnline.length >= sixKm.totalNodes;
+  const fifteenReady = oneReady && relayOnline >= fifteenKm.relays && radioOnline.length >= fifteenKm.totalNodes;
+
+  const blocker = !browserOnline
+    ? "Telefon şu anda buluta bağlı değil; gördüğünüz kırmızı şerit PWA önbelleğini gösterir, mesh taşıma başladığını göstermez."
+    : !gatewayOnline
+      ? "Çevrimiçi ev köprüsü görünmüyor. Önce evdeki gateway ajanı telemetri göndermeli."
+      : !edgeOnline
+        ? "Saha ucu görünmüyor. Telefon tek başına edge değildir; yanında/araçta ayrı radyo düğümü gerekir."
+        : relayOnline === 0
+          ? "Ara röle yok. Wi‑Fi menzili dışına çıkınca 6 km / 15 km taşıma başlamaz."
+          : "Zincir kısmen hazır; mesafe için gereken röle sayısını canlı düğüm sayısıyla eşleştirin.";
+
+  return (
+    <div className="rounded-sm border border-destructive/40 bg-destructive/5 p-6">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-destructive">Saha bağlantısı teşhisi</p>
+      <h2 className="mt-2 text-xl font-semibold tracking-tight">Taşıyıcılar neden devreye girmedi?</h2>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        Taşıyıcı seçmek yazılım kaydıdır; gerçek taşıma için her taşıyıcıda fiziksel radyo donanımı,
+        anten, güç ve çevrimiçi telemetri gerekir. iPhone PWA, LoRa/HaLow/TVWS radyosu gibi çalışamaz.
+      </p>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <RealityMetric k="Telefon bulut" v={browserOnline ? "bağlı" : "kopuk"} ok={browserOnline} />
+        <RealityMetric k="Gateway" v={gatewayOnline ? "online" : "yok"} ok={gatewayOnline} />
+        <RealityMetric k="Röle" v={`${relayOnline} online`} ok={relayOnline > 0} />
+        <RealityMetric k="Saha ucu" v={edgeOnline ? "online" : "yok"} ok={edgeOnline} />
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <Readiness label="1 km saha" ready={oneReady} detail="Gateway + saha radyo düğümü gerekir." />
+        <Readiness
+          label="6 km LoRa"
+          ready={sixReady}
+          detail={`${sixKm.totalNodes} fiziksel düğüm / ${sixKm.relays} röle gerekir.`}
+        />
+        <Readiness
+          label="15 km LoRa"
+          ready={fifteenReady}
+          detail={`${fifteenKm.totalNodes} fiziksel düğüm / ${fifteenKm.relays} röle gerekir.`}
+        />
+      </div>
+
+      <p className="mt-5 rounded-sm border border-border bg-background/60 p-4 text-sm leading-relaxed text-muted-foreground">
+        <strong className="text-foreground">Asıl kaynak:</strong> {blocker}
+      </p>
+    </div>
+  );
+}
+
+function RealityMetric({ k, v, ok }: { k: string; v: string; ok: boolean }) {
+  return (
+    <div className="rounded-sm border border-border bg-background/60 p-3">
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{k}</p>
+      <p className={`mt-1 font-mono text-sm ${ok ? "text-primary" : "text-destructive"}`}>● {v}</p>
+    </div>
+  );
+}
+
+function Readiness({ label, ready, detail }: { label: string; ready: boolean; detail: string }) {
+  return (
+    <div className="rounded-sm border border-border bg-background/60 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[11px] uppercase tracking-[0.15em]">{label}</span>
+        <span className={`font-mono text-[10px] uppercase ${ready ? "text-primary" : "text-destructive"}`}>
+          {ready ? "hazır" : "hazır değil"}
+        </span>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+    </div>
+  );
+}
+
 function Panel() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
