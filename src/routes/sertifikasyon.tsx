@@ -278,6 +278,12 @@ function Certification() {
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link
+              to="/turkiye-mevzuat"
+              className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              Türkiye mevzuatı
+            </Link>
+            <Link
               to="/uyumluluk"
               className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
             >
