@@ -18,6 +18,12 @@ import {
   ApiUsagePanel,
   SetupWizard,
 } from "@/components/site/PanelOps";
+import {
+  CarrierLiveBoard,
+  IrCameraBoard,
+  isDeviceOnline,
+  sinceLabel,
+} from "@/components/site/PanelLive";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 
 
