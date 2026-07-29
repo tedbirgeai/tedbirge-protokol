@@ -20,6 +20,7 @@ import { HealthCards, LiveFeed, KeyRotation, CalibrationReports } from "@/compon
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
 import { buildMeshPlan } from "@/lib/mesh-plan";
+import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -421,6 +422,7 @@ function Panel() {
         <div className="mt-8 space-y-8">
           {tab === "genel" && (
             <>
+              <BrowserNodeCard licenseKey={licenses[0]?.license_key} />
               <MobileStationCard />
               <FieldRealityCard devices={devices} />
               <HealthCards refreshKey={refreshKey} />
