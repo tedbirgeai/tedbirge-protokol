@@ -46,20 +46,13 @@ function CoveragePlanner() {
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   async function loadMeasurements() {
-    const { data } = await supabase
-      .from("field_measurements")
-      .select("carrier, terrain, antenna_height, distance_km, link_ok")
-      .limit(500);
-    setMeasurements(
-      (data ?? []).map((m) => ({
-        carrier: m.carrier,
-        terrain: m.terrain,
-        antenna_height: m.antenna_height,
-        distance_km: Number(m.distance_km),
-        link_ok: m.link_ok,
-      })),
-    );
+    try {
+      setMeasurements((await listFieldMeasurements()) as Measurement[]);
+    } catch {
+      setMeasurements([]);
+    }
   }
+
 
   useEffect(() => {
     void loadMeasurements();
