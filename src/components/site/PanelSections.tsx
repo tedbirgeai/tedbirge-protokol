@@ -5,6 +5,8 @@ import {
   createFieldReport,
   updateFieldReport,
 } from "@/lib/devices.functions";
+import { friendlyError, normalizeNodeId } from "@/lib/friendly-error";
+
 
 const REGIONS = ["TR", "EU", "US", "UK", "GCC", "APAC", "JP", "OTHER"] as const;
 const CARRIERS = [
