@@ -19,6 +19,7 @@ import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
 import { Route as MevzuatRouteImport } from './routes/mevzuat'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
+import { Route as KapsamaRouteImport } from './routes/kapsama'
 import { Route as IzinlerRouteImport } from './routes/izinler'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
@@ -95,6 +96,11 @@ const KosullarRoute = KosullarRouteImport.update({
 const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
   id: '/karsilastirma',
   path: '/karsilastirma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KapsamaRoute = KapsamaRouteImport.update({
+  id: '/kapsama',
+  path: '/kapsama',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IzinlerRoute = IzinlerRouteImport.update({
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/izinler': typeof IzinlerRoute
+  '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/mevzuat': typeof MevzuatRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/izinler': typeof IzinlerRoute
+  '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/mevzuat': typeof MevzuatRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/izinler': typeof IzinlerRoute
+  '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/kosullar': typeof KosullarRoute
   '/mevzuat': typeof MevzuatRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/ihracat-uyum'
     | '/iletisim'
     | '/izinler'
+    | '/kapsama'
     | '/karsilastirma'
     | '/kosullar'
     | '/mevzuat'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/ihracat-uyum'
     | '/iletisim'
     | '/izinler'
+    | '/kapsama'
     | '/karsilastirma'
     | '/kosullar'
     | '/mevzuat'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/ihracat-uyum'
     | '/iletisim'
     | '/izinler'
+    | '/kapsama'
     | '/karsilastirma'
     | '/kosullar'
     | '/mevzuat'
@@ -485,6 +497,7 @@ export interface RootRouteChildren {
   IhracatUyumRoute: typeof IhracatUyumRoute
   IletisimRoute: typeof IletisimRoute
   IzinlerRoute: typeof IzinlerRoute
+  KapsamaRoute: typeof KapsamaRoute
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KosullarRoute: typeof KosullarRoute
   MevzuatRoute: typeof MevzuatRoute
@@ -574,6 +587,13 @@ declare module '@tanstack/react-router' {
       path: '/karsilastirma'
       fullPath: '/karsilastirma'
       preLoaderRoute: typeof KarsilastirmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kapsama': {
+      id: '/kapsama'
+      path: '/kapsama'
+      fullPath: '/kapsama'
+      preLoaderRoute: typeof KapsamaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/izinler': {
@@ -802,6 +822,7 @@ const rootRouteChildren: RootRouteChildren = {
   IhracatUyumRoute: IhracatUyumRoute,
   IletisimRoute: IletisimRoute,
   IzinlerRoute: IzinlerRoute,
+  KapsamaRoute: KapsamaRoute,
   KarsilastirmaRoute: KarsilastirmaRoute,
   KosullarRoute: KosullarRoute,
   MevzuatRoute: MevzuatRoute,
@@ -823,13 +844,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
