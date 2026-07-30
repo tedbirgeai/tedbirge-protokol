@@ -24,6 +24,19 @@ export function AiAdvisor() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // Panelden gelen "danışmanı aç" isteklerini karşılar (proaktif içgörü butonları).
+  useEffect(() => {
+    function handler(e: Event) {
+      const prefill = (e as CustomEvent<{ prefill?: string }>).detail?.prefill;
+      setOpen(true);
+      if (prefill) setInput(prefill);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+    window.addEventListener("tedbirge:advisor", handler);
+    return () => window.removeEventListener("tedbirge:advisor", handler);
+  }, []);
+
+
   useEffect(() => {
     if (!busy) inputRef.current?.focus();
   }, [busy]);
