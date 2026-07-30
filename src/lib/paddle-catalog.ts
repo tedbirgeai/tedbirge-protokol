@@ -7,10 +7,13 @@
  */
 
 export const PRODUCTS = {
+  pro: "tedbirge_pro",
   enterprise: "tedbirge_enterprise",
 } as const;
 
 export const PRICES = {
+  proMonthly: "tedbirge_pro_monthly",
+  proYearly: "tedbirge_pro_yearly",
   enterpriseMonthly: "tedbirge_enterprise_monthly",
   enterpriseYearly: "tedbirge_enterprise_yearly",
 } as const;
@@ -28,7 +31,19 @@ export type PlanDefinition = {
   unitPrice: { month: number; year: number };
 };
 
+/** Ücretsiz Community katmanının düğüm tavanı. */
+export const COMMUNITY_NODE_LIMIT = 5;
+
 export const PLANS: Record<PlanKey, PlanDefinition> = {
+  pro: {
+    key: "pro",
+    productId: PRODUCTS.pro,
+    label: "Pro",
+    minNodes: 6,
+    maxNodes: 24,
+    prices: { month: PRICES.proMonthly, year: PRICES.proYearly },
+    unitPrice: { month: 29, year: 290 },
+  },
   enterprise: {
     key: "enterprise",
     productId: PRODUCTS.enterprise,
@@ -56,3 +71,23 @@ export function planByPriceId(priceId: string): PlanDefinition | undefined {
 export function isKnownPrice(priceId: string): boolean {
   return Boolean(planByPriceId(priceId));
 }
+
+/**
+ * Satın alınan adedi plan sınırlarına sabitler. Community (lisanssız) 5 düğüm,
+ * Pro 6–24, Enterprise 25+. Kota denetimi bu tek fonksiyondan beslenir.
+ */
+export function resolveNodeLimit(plan: PlanDefinition, quantity?: number | null): number {
+  const q = Number.isFinite(quantity) ? Number(quantity) : plan.minNodes;
+  return Math.min(plan.maxNodes, Math.max(plan.minNodes, Math.round(q)));
+}
+
+/** Düğüm sayısına göre gereken en küçük ücretli plan (yoksa Community yeterli). */
+export function planForNodeCount(nodes: number): PlanDefinition | null {
+  if (nodes <= COMMUNITY_NODE_LIMIT) return null;
+  return (
+    Object.values(PLANS)
+      .sort((a, b) => a.minNodes - b.minNodes)
+      .find((p) => nodes <= p.maxNodes) ?? PLANS.enterprise
+  );
+}
+

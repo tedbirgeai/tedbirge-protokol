@@ -6,7 +6,7 @@ import {
   EventName,
   type PaddleEnv,
 } from "@/lib/paddle.server";
-import { planByProductId, planByPriceId } from "@/lib/paddle-catalog";
+import { planByProductId, planByPriceId, resolveNodeLimit } from "@/lib/paddle-catalog";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let _supabase: any = null;
@@ -73,7 +73,7 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     email: customData?.email ?? "",
     plan: productId,
     status: "active",
-    node_limit: item.quantity ?? plan.minNodes,
+    node_limit: resolveNodeLimit(plan, item.quantity),
     provider: "paddle",
     provider_subscription_id: id,
     current_period_end: currentBillingPeriod?.endsAt,
@@ -88,7 +88,7 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
 }
 
 async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
-  const { id, status, currentBillingPeriod, scheduledChange } = data;
+  const { id, status, currentBillingPeriod, scheduledChange, items } = data;
 
   await getSupabase()
     .from("subscriptions")
@@ -101,7 +101,29 @@ async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
     })
     .eq("paddle_subscription_id", id)
     .eq("environment", env);
+
+  // Plan/adet değişiminde lisans kotasını da senkronla (Community 5 → Pro 6-24 → Enterprise 25+).
+  const item = items?.[0];
+  const productId = item?.product?.importMeta?.externalId;
+  const priceId = item?.price?.importMeta?.externalId;
+  const plan =
+    (productId ? planByProductId(productId) : undefined) ??
+    (priceId ? planByPriceId(priceId) : undefined);
+
+  if (plan) {
+    await getSupabase()
+      .from("licenses")
+      .update({
+        plan: plan.productId,
+        node_limit: resolveNodeLimit(plan, item?.quantity),
+        status: ["active", "trialing", "past_due"].includes(status) ? "active" : status,
+        current_period_end: currentBillingPeriod?.endsAt,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("provider_subscription_id", id);
+  }
 }
+
 
 async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
   await getSupabase()

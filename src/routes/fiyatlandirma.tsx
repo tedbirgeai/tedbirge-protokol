@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { PLANS } from "@/lib/paddle-catalog";
+import { PLANS, type PlanKey } from "@/lib/paddle-catalog";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/fiyatlandirma")({
@@ -56,12 +56,19 @@ function Pricing() {
   const { user } = useAuth();
   const { openCheckout, loading } = usePaddleCheckout();
   const [cycle, setCycle] = useState<"month" | "year">("month");
-  const [nodes, setNodes] = useState(25);
+  const [planKey, setPlanKey] = useState<PlanKey>("pro");
+  const [nodes, setNodes] = useState(PLANS.pro.minNodes);
 
-  const plan = PLANS.enterprise;
+  const plan = PLANS[planKey];
   const priceId = plan.prices[cycle];
   const unitPrice = plan.unitPrice[cycle];
   const total = unitPrice * nodes;
+
+  function selectPlan(key: PlanKey) {
+    setPlanKey(key);
+    setNodes((n) => Math.min(PLANS[key].maxNodes, Math.max(PLANS[key].minNodes, n)));
+  }
+
 
   async function startCheckout() {
     if (!user) {
@@ -103,7 +110,7 @@ function Pricing() {
             </p>
             <ul className="mt-7 flex-1 space-y-3 text-sm">
               {[
-                "Sınırsız düğüm, kendi altyapınızda",
+                "5 düğüme kadar ücretsiz kota",
                 "Mesh router, tünel motoru, CLI SDK",
                 "Topluluk desteği (GitHub Issues)",
                 "Gömülü /admin paneli",
@@ -122,16 +129,31 @@ function Pricing() {
             </Link>
           </div>
 
-          {/* Enterprise */}
+          {/* Pro / Enterprise */}
           <div className="flex flex-col rounded-sm border border-primary/60 bg-card p-8 shadow-[0_0_60px_-20px_var(--color-primary)]">
             <div className="flex items-center justify-between">
-              <h2 className="font-mono text-sm uppercase tracking-[0.2em]">Enterprise</h2>
+              <h2 className="font-mono text-sm uppercase tracking-[0.2em]">{plan.label}</h2>
               <span className="rounded-full bg-primary/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-primary">
                 Popüler
               </span>
             </div>
 
             <div className="mt-5 inline-flex rounded-sm border border-border p-1 font-mono text-[11px] uppercase tracking-[0.12em]">
+              <button
+                onClick={() => selectPlan("pro")}
+                className={`rounded-sm px-3 py-1.5 ${planKey === "pro" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                Pro · 6–24 düğüm
+              </button>
+              <button
+                onClick={() => selectPlan("enterprise")}
+                className={`rounded-sm px-3 py-1.5 ${planKey === "enterprise" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                Enterprise · 25+
+              </button>
+            </div>
+
+            <div className="mt-3 inline-flex rounded-sm border border-border p-1 font-mono text-[11px] uppercase tracking-[0.12em]">
               <button
                 onClick={() => setCycle("month")}
                 className={`rounded-sm px-3 py-1.5 ${cycle === "month" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
@@ -154,13 +176,13 @@ function Pricing() {
             </div>
 
             <label className="mt-6 block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-              Düğüm sayısı: {nodes}
+              Düğüm sayısı: {nodes} ({plan.minNodes}–{plan.maxNodes})
             </label>
             <input
               type="range"
-              min={25}
-              max={500}
-              step={5}
+              min={plan.minNodes}
+              max={planKey === "pro" ? plan.maxNodes : 500}
+              step={1}
               value={nodes}
               onChange={(e) => setNodes(Number(e.target.value))}
               className="mt-3 w-full accent-[var(--color-primary)]"
@@ -170,20 +192,30 @@ function Pricing() {
             </p>
 
             <ul className="mt-7 flex-1 space-y-3 text-sm">
-              {[
-                "Postgres + Redis üretim modu, mTLS",
-                "Kullanım bazlı faturalama sayacı",
-                "e-Fatura ve POS köprüsü",
-                "Grafana panosu + Prometheus",
-                "SLA: 8×5 destek, %99.9 panel",
-                "İmzalı çoklu platform binary dağıtımı",
-              ].map((f) => (
+              {(planKey === "pro"
+                ? [
+                    "6–24 düğüm kotası, çoklu organizasyon",
+                    "Öncelikli API limiti + webhook bildirimleri",
+                    "Kesinti/olay günlüğü ve uyum raporu",
+                    "Kalibrasyon PDF/CSV raporları",
+                    "E-posta desteği (1 iş günü)",
+                  ]
+                : [
+                    "Postgres + Redis üretim modu, mTLS",
+                    "Kullanım bazlı faturalama sayacı",
+                    "e-Fatura ve POS köprüsü",
+                    "Grafana panosu + Prometheus",
+                    "SLA: 8×5 destek, %99.9 panel",
+                    "İmzalı çoklu platform binary dağıtımı",
+                  ]
+              ).map((f) => (
                 <li key={f} className="flex gap-3 text-muted-foreground">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
                   <span>{f}</span>
                 </li>
               ))}
             </ul>
+
 
             <button
               onClick={startCheckout}
