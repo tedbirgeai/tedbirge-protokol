@@ -73,7 +73,7 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     email: customData?.email ?? "",
     plan: productId,
     status: "active",
-    node_limit: item.quantity ?? plan.minNodes,
+    node_limit: resolveNodeLimit(plan, item.quantity),
     provider: "paddle",
     provider_subscription_id: id,
     current_period_end: currentBillingPeriod?.endsAt,
