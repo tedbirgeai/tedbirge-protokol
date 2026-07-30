@@ -99,6 +99,9 @@ function FieldAccess() {
             açan diğer cihazlarla doğrudan (P2P) eşleşir, bağlantı koparsa paketler kuyruğa alınır.
           </p>
           <div className="mt-6">
+            <EasyConsole />
+          </div>
+          <div className="mt-6">
             <BrowserNodeCard />
           </div>
           <div className="mt-6">
