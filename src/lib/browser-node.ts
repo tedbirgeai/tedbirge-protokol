@@ -24,10 +24,17 @@ import { supabase } from "@/integrations/supabase/client";
 const ID_KEY = "tedbirge.browser-node.id";
 const QUEUE_KEY = "tedbirge.browser-node.queue";
 const CHANNEL = "tedbirge-mesh-v1";
+/** Yerel keşif kanalı: aynı cihaz/aynı origin üzerindeki sekme ve PWA örnekleri. */
+const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
+/** Yerel keşif duyuru aralığı (ms). */
+const LOCAL_ANNOUNCE_MS = 4_000;
 const MAX_TTL = 4;
 const MAX_QUEUE = 200;
 
 export type PeerInfo = { nodeId: string; state: RTCPeerConnectionState; direct: boolean };
+
+/** Sinyalleşmenin hangi yoldan yürüdüğü: bulut → yerel LAN → eş rölesi. */
+export type DiscoveryMode = "cloud" | "local" | "relay" | "none";
 
 export type BrowserNodeState = {
   running: boolean;
@@ -39,6 +46,8 @@ export type BrowserNodeState = {
   lastRelayAt: string | null;
   rttMs: number | null;
   error: string | null;
+  /** Aktif keşif yolu — bulut düşerse otomatik yerel yedeğe geçer. */
+  discovery: DiscoveryMode;
 };
 
 export type MeshEnvelope = {
@@ -46,10 +55,11 @@ export type MeshEnvelope = {
   from: string;
   to: string | "*";
   ttl: number;
-  kind: "ping" | "pong" | "telemetry" | "text";
+  kind: "ping" | "pong" | "telemetry" | "text" | "signal";
   body: unknown;
   at: number;
 };
+
 
 function randomId(prefix: string) {
   const bytes = new Uint8Array(6);
