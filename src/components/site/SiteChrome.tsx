@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
+import brandMark from "@/assets/tedbirge-mark.png.asset.json";
+
 
 const nav = [
   { to: "/", label: "Genel Bakış" },
@@ -72,14 +74,19 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="grid size-7 place-items-center rounded-sm border border-primary/40 bg-primary/10">
-            <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_2px_var(--color-primary)]" />
-          </span>
-          <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
+          <img
+            src={brandMark.url}
+            alt="Tedbirge Gateway logosu"
+            width={32}
+            height={32}
+            className="size-8 shrink-0 rounded-full object-cover shadow-[0_0_18px_-4px_var(--color-primary)]"
+          />
+          <span className="whitespace-nowrap font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
             TEDBİRGE GATEWAY
           </span>
         </Link>
+
 
         <nav className="hidden items-center gap-5 lg:flex">
           {nav.map((item) => (

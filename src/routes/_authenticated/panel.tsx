@@ -23,6 +23,10 @@ import { buildMeshPlan } from "@/lib/mesh-plan";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
+import { PanelNetworkMap } from "@/components/site/PanelNetworkMap";
+import { PanelAi } from "@/components/site/PanelAi";
+import { PanelCommerce } from "@/components/site/PanelCommerce";
+
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
@@ -82,17 +86,31 @@ type Device = {
   active_uplink: boolean | null;
 };
 
-type TabId = "genel" | "dugumler" | "canli" | "mesh" | "kalibrasyon" | "guvenlik" | "yonetim";
+type TabId =
+  | "genel"
+  | "harita"
+  | "dugumler"
+  | "yapayzeka"
+  | "canli"
+  | "mesh"
+  | "kalibrasyon"
+  | "guvenlik"
+  | "yonetim"
+  | "ayarlar";
 
 const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "genel", label: "Genel bakış" },
+  { id: "harita", label: "Ağ haritası" },
   { id: "dugumler", label: "Düğümler" },
+  { id: "yapayzeka", label: "Yapay zeka" },
   { id: "canli", label: "Canlı akış" },
   { id: "mesh", label: "Mesh & kurulum", needs: "operate" },
   { id: "kalibrasyon", label: "Kalibrasyon" },
   { id: "guvenlik", label: "Güvenlik" },
   { id: "yonetim", label: "Yönetim", needs: "manage" },
+  { id: "ayarlar", label: "Ayarlar" },
 ];
+
 
 /** Cep telefonunun paneldeki rolünü netleştiren bilgi kartı.
  *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. */
@@ -340,6 +358,10 @@ function Panel() {
   }, {});
 
   const onlineCount = devices.filter((d) => isDeviceOnline(d)).length;
+  const activeDeviceCount = devices.filter((d) => d.status === "active").length;
+  const nodeLimit = licenses[0]?.node_limit ?? 5;
+  const quotaPct = Math.min(100, Math.round((activeDeviceCount / Math.max(1, nodeLimit)) * 100));
+
 
   const visibleTabs = useMemo(
     () => TABS.filter((t) => (t.needs === "manage" ? canManage : t.needs === "operate" ? canOperate : true)),
@@ -391,14 +413,20 @@ function Panel() {
               {ROLE_LABEL[role]} · {onlineCount}/{devices.length} düğüm çevrimiçi
             </p>
           </div>
-          {isAdmin && (
-            <Link
-              to="/yonetim"
-              className="shrink-0 rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
-            >
-              Yönetim ekranı
-            </Link>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="rounded-sm border border-primary/50 bg-primary/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.15em] text-primary">
+              Düğüm {activeDeviceCount}/{nodeLimit}
+            </span>
+            {isAdmin && (
+              <Link
+                to="/yonetim"
+                className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+              >
+                Yönetim ekranı
+              </Link>
+            )}
+          </div>
+
         </header>
 
         {/* Sekmeli gezinme: uzun kaydırma yerine tek tıkla bölüm değişimi. */}
@@ -426,134 +454,72 @@ function Panel() {
             <>
               <EasyConsole compact />
               <BrowserNodeCard licenseKey={licenses[0]?.license_key} />
-              <MobileStationCard />
-              <FieldRealityCard devices={devices} />
               <HealthCards refreshKey={refreshKey} />
-
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="rounded-sm border border-border bg-card/50 p-6">
-                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Abonelik</p>
-                  {loading ? (
-                    <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
-                  ) : subscription ? (
-                    <div className="mt-4 space-y-2 text-sm">
-                      <Row k="Plan" v={subscription.product_id} />
-                      <Row k="Fiyat" v={subscription.price_id} />
-                      <Row k="Durum" v={active ? "Aktif" : subscription.status} />
-                      <Row
-                        k="Dönem sonu"
-                        v={
-                          subscription.current_period_end
-                            ? new Date(subscription.current_period_end).toLocaleDateString("tr-TR")
-                            : "—"
-                        }
-                      />
-                      <button
-                        onClick={openPortal}
-                        disabled={portalBusy}
-                        className="mt-4 w-full rounded-sm border border-border px-4 py-2.5 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
-                      >
-                        {portalBusy ? "Açılıyor…" : "Abonelik yönetimi"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Aktif aboneliğiniz yok. Community sürümünü ücretsiz kullanabilir veya Enterprise
-                        aboneliği başlatabilirsiniz.
-                      </p>
-                      <Link
-                        to="/fiyatlandirma"
-                        className="mt-4 inline-block rounded-sm bg-primary px-4 py-2.5 font-mono text-xs uppercase tracking-[0.15em] text-primary-foreground"
-                      >
-                        Planları gör
-                      </Link>
-                    </div>
-                  )}
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Ücretsiz düğüm hakkı
+                  </p>
+                  <p className="mt-3 font-mono text-4xl text-primary">
+                    {activeDeviceCount}
+                    <span className="text-2xl text-muted-foreground"> / {nodeLimit}</span>
+                  </p>
+                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${quotaPct}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {activeDeviceCount >= nodeLimit
+                      ? "Ücretsiz hakkınız doldu. Daha fazla düğüm için planı yükseltin."
+                      : `${nodeLimit - activeDeviceCount} düğüm hakkınız kaldı; yeni cihazı QR ile saniyeler içinde ekleyin.`}
+                  </p>
+                  <button
+                    onClick={() => setTab(canManage ? "yonetim" : "ayarlar")}
+                    className="mt-4 rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Planı yönet
+                  </button>
                 </div>
 
                 <div className="rounded-sm border border-border bg-card/50 p-6">
-                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Lisanslar</p>
-                  {licenses.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      Henüz lisans anahtarı üretilmedi. Abonelik başladığında anahtar burada görünür.
-                    </p>
-                  ) : (
-                    <ul className="mt-4 space-y-4">
-                      {licenses.map((l) => (
-                        <li key={l.id} className="rounded-sm border border-border bg-background/50 p-4">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">
-                              {l.plan}
-                            </span>
-                            <span className="font-mono text-[11px] text-muted-foreground">{l.status}</span>
-                          </div>
-                          <p className="mt-3 break-all font-mono text-[12px] text-foreground">{l.license_key}</p>
-                          <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-                            Düğüm limiti: {l.node_limit} · kayıtlı:{" "}
-                            {devices.filter((d) => d.license_id === l.id).length}
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <CopyButton value={l.license_key} label="Anahtarı kopyala" />
-                            <button
-                              onClick={() => downloadLicense(l)}
-                              className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
-                            >
-                              .env indir
-                            </button>
-                          </div>
-                          <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                            Anahtar yenileme “Güvenlik” sekmesindedir.
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-sm border border-border bg-card/50 p-6">
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Hızlı başlangıç
-                </p>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight">
-                  Lisansınızı üç komutta devreye alın
-                </h2>
-                <ol className="mt-6 space-y-6">
-                  {quickStart(licenses[0]?.license_key).map((step, i) => (
-                    <li key={step.title}>
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[11px] text-primary">0{i + 1}</span>
-                        <p className="text-sm font-medium">{step.title}</p>
-                      </div>
-                      <div className="mt-2 flex items-start gap-2">
-                        <pre className="flex-1 overflow-x-auto rounded-sm border border-border bg-background/70 p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
-                          <code>{step.code}</code>
-                        </pre>
-                        <CopyButton value={step.code} label="Kopyala" />
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link
-                    to="/dokumanlar"
-                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
-                  >
-                    Dokümanlar
-                  </Link>
-                  <a
-                    href="/tedbirge-teknik-ozet.md"
-                    download
-                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
-                  >
-                    Teknik özet (.md)
-                  </a>
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Ağ özeti
+                  </p>
+                  <div className="mt-4 space-y-2 text-sm">
+                    <Row k="Çevrimiçi düğüm" v={`${onlineCount} / ${devices.length}`} />
+                    <Row k="Lisans" v={licenses[0]?.plan ?? "community"} />
+                    <Row
+                      k="Abonelik"
+                      v={loading ? "yükleniyor…" : active ? "aktif" : subscription?.status ?? "community"}
+                    />
+                    <Row k="Rol" v={ROLE_LABEL[role]} />
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setTab("harita")}
+                      className="rounded-sm bg-primary px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-primary-foreground"
+                    >
+                      Ağ haritasını aç
+                    </button>
+                    <button
+                      onClick={() => setTab("yapayzeka")}
+                      className="rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] hover:bg-secondary"
+                    >
+                      Yapay zeka önerileri
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
           )}
+
+          {tab === "harita" && <PanelNetworkMap devices={devices} refreshKey={refreshKey} />}
+
+          {tab === "yapayzeka" && <PanelAi devices={devices} refreshKey={refreshKey} />}
+
 
           {tab === "dugumler" && (
             <>
@@ -718,6 +684,13 @@ function Panel() {
 
           {tab === "yonetim" && canManage && (
             <>
+              <PanelCommerce
+                subscription={subscription}
+                licenses={licenses}
+                deviceCountByLicense={usedByLicense}
+                onOpenPortal={openPortal}
+                portalBusy={portalBusy}
+              />
               <ApiUsagePanel licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))} refreshKey={refreshKey} />
               <WebhookSettings userId={user?.id} />
               <OrganizationManager
@@ -732,6 +705,90 @@ function Panel() {
               <LicenseEventLog refreshKey={refreshKey} />
             </>
           )}
+
+          {tab === "ayarlar" && (
+            <>
+              {!canManage && (
+                <PanelCommerce
+                  subscription={subscription}
+                  licenses={licenses}
+                  deviceCountByLicense={usedByLicense}
+                  onOpenPortal={openPortal}
+                  portalBusy={portalBusy}
+                />
+              )}
+              <MobileStationCard />
+              <FieldRealityCard devices={devices} />
+
+              <div className="rounded-sm border border-border bg-card/50 p-6">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Gelişmiş kurulum
+                </p>
+                <h2 className="mt-3 text-xl font-semibold tracking-tight">
+                  Lisansınızı üç komutta devreye alın
+                </h2>
+                <ol className="mt-6 space-y-6">
+                  {quickStart(licenses[0]?.license_key).map((step, i) => (
+                    <li key={step.title}>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[11px] text-primary">0{i + 1}</span>
+                        <p className="text-sm font-medium">{step.title}</p>
+                      </div>
+                      <div className="mt-2 flex items-start gap-2">
+                        <pre className="flex-1 overflow-x-auto rounded-sm border border-border bg-background/70 p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
+                          <code>{step.code}</code>
+                        </pre>
+                        <CopyButton value={step.code} label="Kopyala" />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  {licenses.map((l) => (
+                    <button
+                      key={l.id}
+                      onClick={() => downloadLicense(l)}
+                      className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                    >
+                      {l.plan} .env indir
+                    </button>
+                  ))}
+                  <Link
+                    to="/dokumanlar"
+                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Dokümanlar
+                  </Link>
+                  <a
+                    href="/tedbirge-teknik-ozet.md"
+                    download
+                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Teknik özet (.md)
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-sm border border-border bg-card/50 p-6">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Kriptografi ve protokol detayı
+                </p>
+                <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Row k="Uçtan uca tünel" v="AES-256-GCM" />
+                  <Row k="Kimlik / imza" v="Ed25519" />
+                  <Row k="Anahtar türetme" v="HKDF-SHA256" />
+                  <Row k="Anahtar rotasyonu" v="Güvenlik sekmesi" />
+                  <Row k="Kuyruk" v="store-and-forward" />
+                  <Row k="Taşıyıcı" v="PHY-agnostic (9 taşıyıcı)" />
+                </dl>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  Bu değerler protokol sabitleridir; günlük kullanımda müdahale gerektirmez ve arka planda
+                  otonom uygulanır.
+                </p>
+              </div>
+            </>
+          )}
+
         </div>
       </section>
     </SitePage>
