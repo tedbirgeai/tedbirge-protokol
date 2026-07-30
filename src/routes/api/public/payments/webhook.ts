@@ -6,7 +6,7 @@ import {
   EventName,
   type PaddleEnv,
 } from "@/lib/paddle.server";
-import { planByProductId, planByPriceId } from "@/lib/paddle-catalog";
+import { planByProductId, planByPriceId, resolveNodeLimit } from "@/lib/paddle-catalog";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let _supabase: any = null;
