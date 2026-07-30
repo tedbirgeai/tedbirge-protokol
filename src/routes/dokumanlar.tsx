@@ -408,6 +408,39 @@ function Docs() {
         </div>
       </section>
 
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <SectionLabel>Kurumsal Rapor</SectionLabel>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight">
+            Bütünsel Nihai Fizibilite ve Strateji Raporu
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            Finansal fizibilite, GTM, operasyon, teknik ölçeklenebilirlik, risk, sertifikasyon ve
+            12 aylık yol haritasını kapsayan 11 başlıklı rapor. Sürüm 1.0.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {REPORT_FILES.map((f) => (
+              <a
+                key={f.href}
+                href={f.href}
+                download
+                className="group rounded-sm border border-border bg-card/50 p-5 transition-colors hover:border-primary"
+              >
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                  {f.format}
+                </p>
+                <p className="mt-2 text-sm font-medium text-foreground">{f.label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{f.meta}</p>
+                <p className="mt-3 font-mono text-xs text-muted-foreground group-hover:text-foreground">
+                  İndir →
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
       <div className="mx-auto grid max-w-6xl gap-12 px-6 py-14 lg:grid-cols-[220px_1fr]">
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-6">
