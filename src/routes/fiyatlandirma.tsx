@@ -110,7 +110,7 @@ function Pricing() {
             </p>
             <ul className="mt-7 flex-1 space-y-3 text-sm">
               {[
-                "Sınırsız düğüm, kendi altyapınızda",
+                "5 düğüme kadar ücretsiz kota",
                 "Mesh router, tünel motoru, CLI SDK",
                 "Topluluk desteği (GitHub Issues)",
                 "Gömülü /admin paneli",
