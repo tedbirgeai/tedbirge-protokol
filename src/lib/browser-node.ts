@@ -445,6 +445,13 @@ export class BrowserNode {
       } else if (env.kind === "pong") {
         const sentAt = Number((env.body as { at?: number })?.at ?? 0);
         if (sentAt) this.emit({ rttMs: Date.now() - sentAt });
+      } else if (env.kind === "signal") {
+        // Eş rölesiyle taşınan WebRTC sinyali: bize aitse doğrudan işlenir.
+        void this.onSignal({
+          from: env.from,
+          to: this.nodeId,
+          data: env.body as Record<string, unknown>,
+        });
       } else if (env.kind === "telemetry" && this.state.online) {
         // Bulutu görebilen düğüm, göremeyen eşin heartbeat'ini onun adına iletir.
         void this.postTelemetry(env.body as Record<string, unknown>);
