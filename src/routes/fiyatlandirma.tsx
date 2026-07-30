@@ -56,12 +56,19 @@ function Pricing() {
   const { user } = useAuth();
   const { openCheckout, loading } = usePaddleCheckout();
   const [cycle, setCycle] = useState<"month" | "year">("month");
-  const [nodes, setNodes] = useState(25);
+  const [planKey, setPlanKey] = useState<PlanKey>("pro");
+  const [nodes, setNodes] = useState(PLANS.pro.minNodes);
 
-  const plan = PLANS.enterprise;
+  const plan = PLANS[planKey];
   const priceId = plan.prices[cycle];
   const unitPrice = plan.unitPrice[cycle];
   const total = unitPrice * nodes;
+
+  function selectPlan(key: PlanKey) {
+    setPlanKey(key);
+    setNodes((n) => Math.min(PLANS[key].maxNodes, Math.max(PLANS[key].minNodes, n)));
+  }
+
 
   async function startCheckout() {
     if (!user) {
