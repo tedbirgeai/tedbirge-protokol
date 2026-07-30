@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
+import brandMark from "@/assets/tedbirge-mark.png.asset.json";
+
 
 const nav = [
   { to: "/", label: "Genel Bakış" },
