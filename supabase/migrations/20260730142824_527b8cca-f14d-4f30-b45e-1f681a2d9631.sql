@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "link_alerts_owner_update" ON public.link_alerts;
