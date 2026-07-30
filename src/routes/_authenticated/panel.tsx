@@ -23,6 +23,10 @@ import { buildMeshPlan } from "@/lib/mesh-plan";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
+import { PanelNetworkMap } from "@/components/site/PanelNetworkMap";
+import { PanelAi } from "@/components/site/PanelAi";
+import { PanelCommerce } from "@/components/site/PanelCommerce";
+
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
