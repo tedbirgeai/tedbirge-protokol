@@ -413,14 +413,20 @@ function Panel() {
               {ROLE_LABEL[role]} · {onlineCount}/{devices.length} düğüm çevrimiçi
             </p>
           </div>
-          {isAdmin && (
-            <Link
-              to="/yonetim"
-              className="shrink-0 rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
-            >
-              Yönetim ekranı
-            </Link>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="rounded-sm border border-primary/50 bg-primary/10 px-3 py-2 font-mono text-xs uppercase tracking-[0.15em] text-primary">
+              Düğüm {activeDeviceCount}/{nodeLimit}
+            </span>
+            {isAdmin && (
+              <Link
+                to="/yonetim"
+                className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+              >
+                Yönetim ekranı
+              </Link>
+            )}
+          </div>
+
         </header>
 
         {/* Sekmeli gezinme: uzun kaydırma yerine tek tıkla bölüm değişimi. */}
