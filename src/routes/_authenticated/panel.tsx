@@ -423,6 +423,7 @@ function Panel() {
         <div className="mt-8 space-y-8">
           {tab === "genel" && (
             <>
+              <EasyConsole compact />
               <BrowserNodeCard licenseKey={licenses[0]?.license_key} />
               <MobileStationCard />
               <FieldRealityCard devices={devices} />
