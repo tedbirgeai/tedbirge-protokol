@@ -108,6 +108,14 @@ for (const { file, sql } of loadMigrations()) {
     }
 
     // --- RLS policies -------------------------------------------------------
+    const dropMatch = stmt.match(
+      /^DROP\s+POLICY\s+(?:IF\s+EXISTS\s+)?"?([^"\s]+)"?\s+ON\s+(?:public\.)?"?([a-z0-9_]+)"?/i,
+    );
+    if (dropMatch) {
+      policyIssues.delete(`${dropMatch[2]}:${dropMatch[1]}`);
+      continue;
+    }
+
     const policyMatch = stmt.match(
       /^CREATE\s+(?:OR\s+REPLACE\s+)?POLICY\s+"?([^"\s]+)"?\s+ON\s+(?:public\.)?"?([a-z0-9_]+)"?([\s\S]*)$/i,
     );
@@ -125,21 +133,26 @@ for (const { file, sql } of loadMigrations()) {
             .map((r) => r.trim().replace(/^"|"$/g, ""))
         : ["public"];
       const clientRoles = roles.filter((r) => CLIENT_ROLES.includes(r));
+      const id = `${table}:${name}`;
+      policyIssues.delete(id);
 
       if (isWrite && clientRoles.length > 0) {
         if (LOCKED_TABLES.includes(table)) {
-          violations.push(
+          policyIssues.set(
+            id,
             `${file}: policy "${name}" grants ${command} on public.${table} to ${clientRoles.join(", ")} — this table must stay service-role-write-only.`,
           );
         }
         const allowed = RESTRICTED_WRITE_TABLES[table];
         if (allowed && clientRoles.some((r) => !allowed.includes(r))) {
-          violations.push(
+          policyIssues.set(
+            id,
             `${file}: policy "${name}" grants ${command} on public.${table} to ${clientRoles.join(", ")}; only ${allowed.join(", ")} may write.`,
           );
         }
       }
     }
+
   }
 }
 
