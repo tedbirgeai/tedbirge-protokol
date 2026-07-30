@@ -376,8 +376,9 @@ export class BrowserNode {
       }
     }
 
-    if (!delivered) {
-      // Son çare: bulutu gören bir eş varsa sinyal onun üzerinden taşınır.
+    // Son çare: açık bir eş varsa sinyal onun üzerinden taşınır.
+    // Sinyaller kısa ömürlüdür; eş yoksa kuyruğa yazılmaz, duyuruyla yeniden denenir.
+    if (!delivered && this.snapshotPeers().some((p) => p.direct)) {
       this.sendEnvelope({
         id: randomId("pkt"),
         from: this.nodeId,
