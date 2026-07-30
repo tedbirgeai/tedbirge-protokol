@@ -14,6 +14,7 @@ const nav = [
   { to: "/afet-kamu", label: "Afet & Kamu" },
   { to: "/mevzuat", label: "Regülasyon" },
   { to: "/guvenlik", label: "Güvenlik" },
+  { to: "/kur", label: "Kolay Kurulum" },
   { to: "/demo", label: "Demo" },
   { to: "/saha", label: "Saha" },
 
