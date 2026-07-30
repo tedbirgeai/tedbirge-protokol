@@ -63,6 +63,9 @@ function statements(sql) {
 }
 
 const violations = [];
+/** Live write-policy problems, keyed `table:policy` so DROP POLICY clears them. */
+const policyIssues = new Map();
+
 
 /** Effective grant/revoke state, replayed in migration order. */
 const grantState = new Map(); // `${table}:${role}` -> Set<privilege>
