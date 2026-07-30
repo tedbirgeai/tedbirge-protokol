@@ -148,6 +148,55 @@ function RegulationHub() {
         </div>
       </section>
 
+      <section id="sorumluluk" className="mx-auto max-w-6xl px-6 py-20 print:hidden">
+        <SectionLabel>Sorumluluk sınırlandırması</SectionLabel>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">{LIABILITY_5651.title}</h2>
+        <ol className="mt-10 space-y-px overflow-hidden rounded-sm border border-border bg-border">
+          {LIABILITY_5651.clauses.map((c, i) => (
+            <li key={i} className="flex gap-5 bg-background/60 p-7">
+              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <p className="flex-1 text-sm leading-relaxed text-muted-foreground">{c}</p>
+            </li>
+          ))}
+        </ol>
+
+        <div
+          role="note"
+          className="mt-8 rounded-sm border border-amber-400/40 bg-amber-400/5 p-7"
+        >
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-amber-400">
+            {FIRMWARE_SPECTRUM_WARNING.title}
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            {FIRMWARE_SPECTRUM_WARNING.body}
+          </p>
+        </div>
+      </section>
+
+      <section id="kvkk" className="border-y border-border/60 bg-card/30 print:hidden">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <SectionLabel>Veri mahremiyeti</SectionLabel>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight">{PRIVACY_NOTICE.title}</h2>
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+            Son güncelleme {PRIVACY_NOTICE.updated} · Veri sorumlusu {REG_VENDOR}
+          </p>
+          <div className="mt-10 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2">
+            {PRIVACY_NOTICE.sections.map((s) => (
+              <article key={s.h} className="bg-background/60 p-7">
+                <h3 className="text-base font-semibold">{s.h}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.p}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-6 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+            {PRIVACY_NOTICE.note}
+          </p>
+        </div>
+      </section>
+
+
       <section id="uyum-beyani" className="mx-auto max-w-6xl px-6 py-20">
         <div className="print:hidden">
           <SectionLabel>Uyum beyanı</SectionLabel>
