@@ -26,6 +26,7 @@ let snapshot: BrowserNodeState = {
   lastRelayAt: null,
   rttMs: null,
   error: null,
+  discovery: "none",
 };
 
 const listeners = new Set<() => void>();
