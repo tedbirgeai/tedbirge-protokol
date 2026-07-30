@@ -11,6 +11,9 @@ import {
   REG_VERSION,
   REG_REVIEWED,
   REG_VENDOR,
+  LIABILITY_5651,
+  FIRMWARE_SPECTRUM_WARNING,
+  PRIVACY_NOTICE,
 } from "@/lib/regulation";
 
 const TITLE = "Regülasyon Merkezi — Spektrum, Sertifikasyon, Mevzuat ve İhracat";
