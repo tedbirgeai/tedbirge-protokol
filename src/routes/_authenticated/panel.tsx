@@ -358,6 +358,10 @@ function Panel() {
   }, {});
 
   const onlineCount = devices.filter((d) => isDeviceOnline(d)).length;
+  const activeDeviceCount = devices.filter((d) => d.status === "active").length;
+  const nodeLimit = licenses[0]?.node_limit ?? 5;
+  const quotaPct = Math.min(100, Math.round((activeDeviceCount / Math.max(1, nodeLimit)) * 100));
+
 
   const visibleTabs = useMemo(
     () => TABS.filter((t) => (t.needs === "manage" ? canManage : t.needs === "operate" ? canOperate : true)),
