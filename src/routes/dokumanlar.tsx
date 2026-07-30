@@ -345,6 +345,27 @@ TEDBIRGE_EXIT_NODE=true`,
   },
 ];
 
+const REPORT_FILES: { format: string; label: string; meta: string; href: string }[] = [
+  {
+    format: "PDF",
+    label: "Tam rapor (13 sayfa)",
+    meta: "Yönetici özeti + 11 başlık · ~122 KB",
+    href: "/raporlar/tedbirge-gateway-nihai-fizibilite-raporu.pdf",
+  },
+  {
+    format: "DOCX",
+    label: "Word sürümü",
+    meta: "Düzenlenebilir metin · ~50 KB",
+    href: "/raporlar/tedbirge-gateway-nihai-fizibilite-raporu.docx",
+  },
+  {
+    format: "PPTX",
+    label: "Yönetim sunumu (10 slayt)",
+    meta: "Yatırımcı / kurul sunumu · ~48 KB",
+    href: "/raporlar/tedbirge-gateway-nihai-fizibilite-sunum.pptx",
+  },
+];
+
 function Code({ children }: { children: string }) {
   return (
     <pre className="overflow-x-auto rounded-sm border border-border bg-card/50 p-5 font-mono text-[13px] leading-relaxed text-muted-foreground">
