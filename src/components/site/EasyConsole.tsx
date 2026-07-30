@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+
 import QRCode from "qrcode";
 import { describeNode, startNode, stopNode, useNodeRuntime } from "@/lib/node-runtime";
+import { NetworkModal, type NetworkTab } from "@/components/site/NetworkModal";
+
 
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 const FREE_NODE_QUOTA = 5;
@@ -63,6 +65,14 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<NetworkTab>("peers");
+
+  function openModal(tab: NetworkTab) {
+    setModalTab(tab);
+    setModalOpen(true);
+  }
+
 
   useEffect(() => setOrigin(window.location.origin), []);
 
@@ -181,25 +191,37 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
           done={step === 3}
           active={step === 3}
           title="Bağlantıları görün"
-          body="Ağ profili, kapsama planı ve ayrıntılı izleme panelden yönetilir."
+          body="Ağ profili, düğüm ekleme ve güvenli durum bildirimleri tek ekrandan yönetilir."
           action={
             <div className="flex flex-wrap items-center gap-3">
-              <Link
-                to="/panel"
+              <button
+                type="button"
+                onClick={() => openModal("peers")}
                 className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] text-foreground hover:border-primary/60"
               >
                 Bağlantıları gör
-              </Link>
-              <Link
-                to="/kapsama"
+              </button>
+              <button
+                type="button"
+                onClick={() => openModal("profile")}
                 className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] text-foreground hover:border-primary/60"
               >
                 Ağ profili
-              </Link>
+              </button>
+              <button
+                type="button"
+                onClick={() => openModal("alerts")}
+                className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] text-foreground hover:border-primary/60"
+              >
+                Bildirimler
+              </button>
             </div>
           }
         />
       </ol>
+
+      <NetworkModal open={modalOpen} onOpenChange={setModalOpen} tab={modalTab} />
+
 
       {!compact && (
         <div className="mt-6 grid gap-6 border-t border-border/60 pt-6 md:grid-cols-[auto_1fr]">
