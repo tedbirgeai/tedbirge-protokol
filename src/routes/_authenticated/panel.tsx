@@ -732,6 +732,13 @@ function Panel() {
 
           {tab === "yonetim" && canManage && (
             <>
+              <PanelCommerce
+                subscription={subscription}
+                licenses={licenses}
+                deviceCountByLicense={usedByLicense}
+                onOpenPortal={openPortal}
+                portalBusy={portalBusy}
+              />
               <ApiUsagePanel licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))} refreshKey={refreshKey} />
               <WebhookSettings userId={user?.id} />
               <OrganizationManager
@@ -746,6 +753,90 @@ function Panel() {
               <LicenseEventLog refreshKey={refreshKey} />
             </>
           )}
+
+          {tab === "ayarlar" && (
+            <>
+              {!canManage && (
+                <PanelCommerce
+                  subscription={subscription}
+                  licenses={licenses}
+                  deviceCountByLicense={usedByLicense}
+                  onOpenPortal={openPortal}
+                  portalBusy={portalBusy}
+                />
+              )}
+              <MobileStationCard />
+              <FieldRealityCard devices={devices} />
+
+              <div className="rounded-sm border border-border bg-card/50 p-6">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Gelişmiş kurulum
+                </p>
+                <h2 className="mt-3 text-xl font-semibold tracking-tight">
+                  Lisansınızı üç komutta devreye alın
+                </h2>
+                <ol className="mt-6 space-y-6">
+                  {quickStart(licenses[0]?.license_key).map((step, i) => (
+                    <li key={step.title}>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[11px] text-primary">0{i + 1}</span>
+                        <p className="text-sm font-medium">{step.title}</p>
+                      </div>
+                      <div className="mt-2 flex items-start gap-2">
+                        <pre className="flex-1 overflow-x-auto rounded-sm border border-border bg-background/70 p-4 font-mono text-[12px] leading-relaxed text-muted-foreground">
+                          <code>{step.code}</code>
+                        </pre>
+                        <CopyButton value={step.code} label="Kopyala" />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  {licenses.map((l) => (
+                    <button
+                      key={l.id}
+                      onClick={() => downloadLicense(l)}
+                      className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                    >
+                      {l.plan} .env indir
+                    </button>
+                  ))}
+                  <Link
+                    to="/dokumanlar"
+                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Dokümanlar
+                  </Link>
+                  <a
+                    href="/tedbirge-teknik-ozet.md"
+                    download
+                    className="rounded-sm border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] hover:bg-secondary"
+                  >
+                    Teknik özet (.md)
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-sm border border-border bg-card/50 p-6">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Kriptografi ve protokol detayı
+                </p>
+                <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Row k="Uçtan uca tünel" v="AES-256-GCM" />
+                  <Row k="Kimlik / imza" v="Ed25519" />
+                  <Row k="Anahtar türetme" v="HKDF-SHA256" />
+                  <Row k="Anahtar rotasyonu" v="Güvenlik sekmesi" />
+                  <Row k="Kuyruk" v="store-and-forward" />
+                  <Row k="Taşıyıcı" v="PHY-agnostic (9 taşıyıcı)" />
+                </dl>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  Bu değerler protokol sabitleridir; günlük kullanımda müdahale gerektirmez ve arka planda
+                  otonom uygulanır.
+                </p>
+              </div>
+            </>
+          )}
+
         </div>
       </section>
     </SitePage>
