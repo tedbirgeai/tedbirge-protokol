@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
+import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
