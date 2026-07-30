@@ -347,12 +347,49 @@ export class BrowserNode {
     await this.signal(remote, { type: "offer", sdp: offer.sdp });
   }
 
+  /**
+   * Sinyal gönderimi üç katmanlı yedeklidir:
+   *  1) Bulut (Supabase Realtime) — internet varsa.
+   *  2) Yerel yayın (BroadcastChannel) — internet yokken aynı origin/cihaz.
+   *  3) Eş rölesi — açık DataChannel'lar üzerinden TTL'li "signal" zarfı.
+   * Hiçbiri yoksa hata verilmez; duyurular periyodik olarak yeniden denenir.
+   */
   private async signal(to: string, data: Record<string, unknown>) {
-    await this.channel?.send({
-      type: "broadcast",
-      event: "signal",
-      payload: { from: this.nodeId, to, data },
-    });
+    const payload = { from: this.nodeId, to, data };
+    let delivered = false;
+
+    if (this.cloudUp && this.state.online && this.channel) {
+      try {
+        await this.channel.send({ type: "broadcast", event: "signal", payload });
+        delivered = true;
+      } catch {
+        this.cloudUp = false;
+      }
+    }
+
+    if (!delivered && this.localBus) {
+      try {
+        this.localBus.postMessage({ kind: "signal", ...payload });
+        delivered = true;
+      } catch {
+        /* kanal kapalı */
+      }
+    }
+
+    if (!delivered) {
+      // Son çare: bulutu gören bir eş varsa sinyal onun üzerinden taşınır.
+      this.sendEnvelope({
+        id: randomId("pkt"),
+        from: this.nodeId,
+        to,
+        ttl: MAX_TTL,
+        kind: "signal",
+        body: data,
+        at: Date.now(),
+      });
+    }
+
+    this.emit({});
   }
 
   private async onSignal(payload: unknown) {
