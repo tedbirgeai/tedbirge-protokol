@@ -268,13 +268,23 @@ export class BrowserNode {
   stop() {
     this.timer && clearInterval(this.timer);
     this.timer = null;
+    if (this.localTimer) clearInterval(this.localTimer);
+    this.localTimer = null;
     window.removeEventListener("online", this.handleOnline);
     window.removeEventListener("offline", this.handleOffline);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
+    try {
+      this.localBus?.close();
+    } catch {
+      /* zaten kapalı */
+    }
+    this.localBus = null;
+    this.localSeen.clear();
+    this.cloudUp = false;
     if (this.channel) void supabase.removeChannel(this.channel);
     this.channel = null;
-    this.emit({ running: false });
+    this.emit({ running: false, discovery: "none" });
   }
 
   private handleOnline = () => {
