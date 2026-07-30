@@ -26,6 +26,7 @@ let snapshot: BrowserNodeState = {
   lastRelayAt: null,
   rttMs: null,
   error: null,
+  discovery: "none",
 };
 
 const listeners = new Set<() => void>();
@@ -72,7 +73,7 @@ export function stopNode() {
   } catch {
     /* private mode */
   }
-  publish({ ...snapshot, running: false, peers: [], rttMs: null });
+  publish({ ...snapshot, running: false, peers: [], rttMs: null, discovery: "none" });
 }
 
 export function pingNodePeers() {
@@ -133,6 +134,8 @@ export function describeNode(s: BrowserNodeState): NodeStatus {
   const queued = s.queued;
   if (!s.running) return { tone: "off", text: "Düğüm kapalı", directPeers, queued };
   if (directPeers > 0) return { tone: "linked", text: `Bağlı · ${directPeers} eş`, directPeers, queued };
+  if (s.discovery === "local" && !s.online)
+    return { tone: "offline", text: `Yerel keşif · kuyruk ${queued}`, directPeers, queued };
   if (s.online) return { tone: "online", text: "Çalışıyor · eş aranıyor", directPeers, queued };
   return { tone: "offline", text: `Çevrimdışı · kuyruk ${queued}`, directPeers, queued };
 }

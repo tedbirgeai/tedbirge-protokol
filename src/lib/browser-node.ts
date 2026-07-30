@@ -24,10 +24,17 @@ import { supabase } from "@/integrations/supabase/client";
 const ID_KEY = "tedbirge.browser-node.id";
 const QUEUE_KEY = "tedbirge.browser-node.queue";
 const CHANNEL = "tedbirge-mesh-v1";
+/** Yerel keşif kanalı: aynı cihaz/aynı origin üzerindeki sekme ve PWA örnekleri. */
+const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
+/** Yerel keşif duyuru aralığı (ms). */
+const LOCAL_ANNOUNCE_MS = 4_000;
 const MAX_TTL = 4;
 const MAX_QUEUE = 200;
 
 export type PeerInfo = { nodeId: string; state: RTCPeerConnectionState; direct: boolean };
+
+/** Sinyalleşmenin hangi yoldan yürüdüğü: bulut → yerel LAN → eş rölesi. */
+export type DiscoveryMode = "cloud" | "local" | "relay" | "none";
 
 export type BrowserNodeState = {
   running: boolean;
@@ -39,6 +46,8 @@ export type BrowserNodeState = {
   lastRelayAt: string | null;
   rttMs: number | null;
   error: string | null;
+  /** Aktif keşif yolu — bulut düşerse otomatik yerel yedeğe geçer. */
+  discovery: DiscoveryMode;
 };
 
 export type MeshEnvelope = {
@@ -46,10 +55,11 @@ export type MeshEnvelope = {
   from: string;
   to: string | "*";
   ttl: number;
-  kind: "ping" | "pong" | "telemetry" | "text";
+  kind: "ping" | "pong" | "telemetry" | "text" | "signal";
   body: unknown;
   at: number;
 };
+
 
 function randomId(prefix: string) {
   const bytes = new Uint8Array(6);
@@ -111,6 +121,12 @@ export class BrowserNode {
   }
   private onState: (s: BrowserNodeState) => void;
   private channel: ReturnType<typeof supabase.channel> | null = null;
+  /** Bulut sinyalleşmesi gerçekten çalışıyor mu (SUBSCRIBED alındı mı). */
+  private cloudUp = false;
+  /** Yerel keşif kanalı — internet yokken aynı origin/cihaz üzerindeki eşler. */
+  private localBus: BroadcastChannel | null = null;
+  private localSeen = new Map<string, number>();
+  private localTimer: ReturnType<typeof setInterval> | null = null;
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
   private seen = new Set<string>();
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -129,12 +145,28 @@ export class BrowserNode {
       lastRelayAt: null,
       rttMs: null,
       error: null,
+      discovery: "none",
     };
   }
 
   private emit(patch: Partial<BrowserNodeState>) {
-    this.state = { ...this.state, ...patch, peers: this.snapshotPeers(), queued: readQueue().length };
+    this.state = {
+      ...this.state,
+      ...patch,
+      peers: this.snapshotPeers(),
+      queued: readQueue().length,
+      discovery: patch.discovery ?? this.discoveryMode(),
+    };
     this.onState(this.state);
+  }
+
+  /** Aktif keşif yolu: bulut > yerel yayın > eş rölesi > yok. */
+  private discoveryMode(): DiscoveryMode {
+    if (!this.state.running) return "none";
+    if (this.cloudUp && this.state.online) return "cloud";
+    if (this.localBus) return "local";
+    if (this.snapshotPeers().some((p) => p.direct)) return "relay";
+    return "none";
   }
 
   private snapshotPeers(): PeerInfo[] {
@@ -152,6 +184,8 @@ export class BrowserNode {
     window.addEventListener("online", this.handleOnline);
     window.addEventListener("offline", this.handleOffline);
 
+    this.startLocalDiscovery();
+
     this.channel = supabase.channel(CHANNEL, {
       config: { broadcast: { self: false }, presence: { key: this.nodeId } },
     });
@@ -161,8 +195,14 @@ export class BrowserNode {
       .on("broadcast", { event: "signal" }, ({ payload }) => void this.onSignal(payload))
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
+          this.cloudUp = true;
           await this.channel?.track({ nodeId: this.nodeId, at: Date.now() });
           void this.dialNewPeers();
+          this.emit({});
+        } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+          // Bulut sinyalleşmesi düştü: yerel keşif ve eş rölesi devreye girer.
+          this.cloudUp = false;
+          this.emit({});
         }
       });
 
@@ -170,16 +210,81 @@ export class BrowserNode {
     this.timer = setInterval(() => void this.heartbeat(), 60_000);
   }
 
+  /**
+   * Yerel keşif düşüşü (local discovery fallback).
+   * Tarayıcı sandbox'ı ham mDNS soketi açamaz; en yakın eşdeğer, aynı origin
+   * altındaki tüm sekme/PWA örneklerini birbirine bağlayan BroadcastChannel'dır.
+   * Bu kanal internet olmadan da çalışır ve WebRTC teklif/yanıt/ICE paketlerini
+   * buluta hiç çıkmadan taşır. Buradan kurulan DataChannel'lar ayrıca eş rölesi
+   * olarak kullanılır: bulutu göremeyen bir düğüm, sinyalini gören bir eş
+   * üzerinden iletir (kind: "signal").
+   */
+  private startLocalDiscovery() {
+    if (this.localBus || typeof BroadcastChannel === "undefined") return;
+    try {
+      this.localBus = new BroadcastChannel(LOCAL_CHANNEL);
+    } catch {
+      this.localBus = null;
+      return;
+    }
+    this.localBus.onmessage = (e) => void this.onLocalMessage(e.data);
+    this.announceLocal();
+    this.localTimer = setInterval(() => this.announceLocal(), LOCAL_ANNOUNCE_MS);
+  }
+
+  private announceLocal() {
+    try {
+      this.localBus?.postMessage({ kind: "announce", from: this.nodeId, at: Date.now() });
+    } catch {
+      /* kanal kapanmış olabilir */
+    }
+  }
+
+  private async onLocalMessage(raw: unknown) {
+    const msg = raw as {
+      kind?: string;
+      from?: string;
+      to?: string;
+      data?: Record<string, unknown>;
+    };
+    if (!msg?.from || msg.from === this.nodeId) return;
+
+    if (msg.kind === "announce") {
+      this.localSeen.set(msg.from, Date.now());
+      // Çift teklifi önlemek için yalnızca kimliği "küçük" olan taraf arar.
+      if (!this.peers.has(msg.from) && this.nodeId < msg.from) {
+        await this.createOffer(msg.from);
+      }
+      this.emit({});
+      return;
+    }
+
+    if (msg.kind === "signal" && msg.to === this.nodeId && msg.data) {
+      await this.onSignal({ from: msg.from, to: msg.to, data: msg.data });
+    }
+  }
+
+
   stop() {
     this.timer && clearInterval(this.timer);
     this.timer = null;
+    if (this.localTimer) clearInterval(this.localTimer);
+    this.localTimer = null;
     window.removeEventListener("online", this.handleOnline);
     window.removeEventListener("offline", this.handleOffline);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
+    try {
+      this.localBus?.close();
+    } catch {
+      /* zaten kapalı */
+    }
+    this.localBus = null;
+    this.localSeen.clear();
+    this.cloudUp = false;
     if (this.channel) void supabase.removeChannel(this.channel);
     this.channel = null;
-    this.emit({ running: false });
+    this.emit({ running: false, discovery: "none" });
   }
 
   private handleOnline = () => {
@@ -242,12 +347,50 @@ export class BrowserNode {
     await this.signal(remote, { type: "offer", sdp: offer.sdp });
   }
 
+  /**
+   * Sinyal gönderimi üç katmanlı yedeklidir:
+   *  1) Bulut (Supabase Realtime) — internet varsa.
+   *  2) Yerel yayın (BroadcastChannel) — internet yokken aynı origin/cihaz.
+   *  3) Eş rölesi — açık DataChannel'lar üzerinden TTL'li "signal" zarfı.
+   * Hiçbiri yoksa hata verilmez; duyurular periyodik olarak yeniden denenir.
+   */
   private async signal(to: string, data: Record<string, unknown>) {
-    await this.channel?.send({
-      type: "broadcast",
-      event: "signal",
-      payload: { from: this.nodeId, to, data },
-    });
+    const payload = { from: this.nodeId, to, data };
+    let delivered = false;
+
+    if (this.cloudUp && this.state.online && this.channel) {
+      try {
+        await this.channel.send({ type: "broadcast", event: "signal", payload });
+        delivered = true;
+      } catch {
+        this.cloudUp = false;
+      }
+    }
+
+    if (!delivered && this.localBus) {
+      try {
+        this.localBus.postMessage({ kind: "signal", ...payload });
+        delivered = true;
+      } catch {
+        /* kanal kapalı */
+      }
+    }
+
+    // Son çare: açık bir eş varsa sinyal onun üzerinden taşınır.
+    // Sinyaller kısa ömürlüdür; eş yoksa kuyruğa yazılmaz, duyuruyla yeniden denenir.
+    if (!delivered && this.snapshotPeers().some((p) => p.direct)) {
+      this.sendEnvelope({
+        id: randomId("pkt"),
+        from: this.nodeId,
+        to,
+        ttl: MAX_TTL,
+        kind: "signal",
+        body: data,
+        at: Date.now(),
+      });
+    }
+
+    this.emit({});
   }
 
   private async onSignal(payload: unknown) {
@@ -302,6 +445,13 @@ export class BrowserNode {
       } else if (env.kind === "pong") {
         const sentAt = Number((env.body as { at?: number })?.at ?? 0);
         if (sentAt) this.emit({ rttMs: Date.now() - sentAt });
+      } else if (env.kind === "signal") {
+        // Eş rölesiyle taşınan WebRTC sinyali: bize aitse doğrudan işlenir.
+        void this.onSignal({
+          from: env.from,
+          to: this.nodeId,
+          data: env.body as Record<string, unknown>,
+        });
       } else if (env.kind === "telemetry" && this.state.online) {
         // Bulutu görebilen düğüm, göremeyen eşin heartbeat'ini onun adına iletir.
         void this.postTelemetry(env.body as Record<string, unknown>);

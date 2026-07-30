@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { HCL, HCL_DISCLAIMER, HCL_STATUS_LABEL, HCL_VERSION } from "@/lib/hcl";
 
 export const Route = createFileRoute("/dokumanlar")({
   head: () => ({
@@ -38,7 +39,28 @@ type Doc = {
   entries: Entry[];
 };
 
+/** Onaylı Donanım Listesi (HCL) — tek kaynaktan (src/lib/hcl.ts) türetilir. */
+const hclDoc: Doc = {
+  id: "hcl",
+  group: "Donanım",
+  title: `Onaylı Donanım Listesi (HCL) · ${HCL_VERSION}`,
+  summary:
+    "Test edilmiş ve doğrudan desteklenen taşıyıcı donanımları: Semtech SX1262 LoRa, RAK Wi-Fi HaLow, ESP32 Meshtastic, Nordic UART BLE.",
+  entries: [
+    { type: "text", body: HCL_DISCLAIMER },
+    ...HCL.flatMap((h): Entry[] => [
+      {
+        type: "text",
+        body: `${h.vendor} — ${h.model} · Taşıyıcı: ${h.carrier} · Bağlantı: ${h.link} · Durum: ${HCL_STATUS_LABEL[h.status]}`,
+      },
+      { type: "table", rows: h.specs },
+      { type: "text", body: h.note },
+    ]),
+  ],
+};
+
 const docs: Doc[] = [
+  hclDoc,
   {
     id: "baslangic",
     group: "Başlangıç",

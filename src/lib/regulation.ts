@@ -208,3 +208,68 @@ export const DECLARATION_ROWS: Array<[string, string]> = [
   ["Log yükümlülüğü", "5651 kapsamında erişim sağlayıcı sıfatı müşteridedir; opsiyonel log modülü sağlanır"],
   ["Sorumluluk sınırı", "Lisans, tip onayı ve saha izinleri operatöre aittir; bu belge hukuki görüş değildir"],
 ];
+
+/* ------------------------------------------------------------------ *
+ * Yasal sorumluluk sınırlandırması ve sözleşme metinleri
+ * ------------------------------------------------------------------ */
+
+/** 5651 sayılı kanun — toplu kullanım sağlayıcı sorumluluk sınırlandırması. */
+export const LIABILITY_5651 = {
+  title: "5651 sayılı Kanun — Toplu Kullanım Sağlayıcı Sorumluluk Sınırlandırması",
+  clauses: [
+    "Tedbirge Gateway üzerinden kurulan mesh ağı, kapalı devre ve izole bir haberleşme ortamıdır; genel internet erişimi (web, sosyal medya, e-posta) dağıtmaz. Bu nedenle düğüm işleten taraf, 5651 sayılı Kanun'un 2/1-(e) maddesi anlamında \"erişim sağlayıcı\" sıfatını kendiliğinden kazanmaz.",
+    "Düğüm sahibi, ağı bir işyeri, kamu kurumu, kamp alanı veya benzeri bir mekânda üçüncü kişilerin kullanımına açar ve bu ağ üzerinden genel internete çıkış (exit node) etkinleştirilirse, 5651 sayılı Kanun'un 7. maddesi uyarınca \"toplu kullanım sağlayıcı\" sıfatı doğar. Bu durumda iç IP dağıtım loglarının elektronik ortamda kendi sistemine kaydedilmesi yükümlülüğü münhasıran düğüm sahibine aittir.",
+    "Tedbirge, opsiyonel bir log modülü sağlar; ancak logların tutulması, saklanması, doğruluğu, gizliliği ve talep hâlinde yetkili makamlara sunulması yükümlülüğü işleten tarafa aittir. Tedbirge bu verilere erişemez, kopyasını tutmaz ve yerine geçemez.",
+    "Tedbirge, taşınan içeriği çözemez (uçtan uca şifreleme) ve içeriği kontrol etme, izleme veya hukuka aykırı içeriği araştırma yükümlülüğü altında değildir (5651 md. 6/2 kıyasen). Tedbirge'nin sorumluluğu, yazılımın belgelenen teknik işlevi ile sınırlıdır.",
+    "Exit node etkinleştiren veya ağı ticari olarak üçüncü kişilere sunan işletenlerin, yer/erişim/toplu kullanım sağlayıcı sıfatına ilişkin BTK bildirim ve belge yükümlülüklerini bağımsız hukuki danışmanlıkla değerlendirmesi gerekir.",
+  ],
+};
+
+/** Harici donanıma özel firmware yüklenmesi hâlinde spektrum sorumluluğu. */
+export const FIRMWARE_SPECTRUM_WARNING = {
+  title: "Uyarı — Harici Donanım ve Özel Firmware Spektrum Sorumluluğu",
+  body:
+    "Tedbirge yazılımı, bölge profilinde (TEDBIRGE_REGION) tanımlı frekans, iletim gücü ve görev döngüsü tavanlarını yazılımsal olarak zorlar. Kullanıcının, bağlı harici radyo donanımına (LoRa/HaLow/TVWS modülleri dâhil) üretici dışı, değiştirilmiş veya özel (custom) firmware yüklemesi, bölge kilidini donanım tarafında devre dışı bırakabilir. Böyle bir durumda ortaya çıkan frekans, güç veya görev döngüsü ihlallerinden doğan tüm idari, hukuki ve cezai sorumluluk — 5809 sayılı Elektronik Haberleşme Kanunu ve BTK Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği kapsamındaki yaptırımlar dâhil — münhasıran kullanıcıya/işletene aittir. Tedbirge, değiştirilmiş firmware ile çalışan donanımlar için hiçbir uygunluk beyanı vermez ve garanti kapsamı bu hâlde sona erer.",
+};
+
+/** KVKK / GDPR aydınlatma metni taslağı. */
+export const PRIVACY_NOTICE = {
+  title: "KVKK / GDPR Aydınlatma Metni (Taslak)",
+  updated: REG_REVIEWED,
+  sections: [
+    {
+      h: "1. Veri sorumlusu",
+      p: `Veri sorumlusu: ${REG_VENDOR}, Türkiye. İletişim: tedbirge34@gmail.com. 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) md. 10 ve GDPR md. 13–14 kapsamında bilgilendirme yapılmaktadır.`,
+    },
+    {
+      h: "2. İşlenen veriler",
+      p: "Hesap verileri (e-posta, ad, kurum), lisans ve abonelik kayıtları, düğüm telemetrisi (düğüm kimliği, RTT, paket kaybı, verim, bayt sayacı, zaman damgası), destek yazışmaları ve teknik günlükler (IP adresi, tarayıcı bilgisi). Mesh tüneli içinden geçen mesaj/dosya içeriği işlenmez.",
+    },
+    {
+      h: "3. İşleme amaçları ve hukuki sebep",
+      p: "Sözleşmenin kurulması ve ifası (KVKK 5/2-c, GDPR 6/1-b): hesap, lisans, faturalama. Hukuki yükümlülük (KVKK 5/2-ç, GDPR 6/1-c): vergi ve mevzuat kayıtları. Meşru menfaat (KVKK 5/2-f, GDPR 6/1-f): ağ güvenliği, kötüye kullanım tespiti, hizmet kalitesi ölçümü. Açık rıza (GDPR 6/1-a): yalnızca pazarlama iletişimi için.",
+    },
+    {
+      h: "4. Sıfır-bilgi ilkesi",
+      p: "Ağ üzerinden taşınan yük uçtan uca AES-256-GCM ile şifrelenir; özel anahtar kullanıcı cihazından çıkmaz. Sunucu tarafında yalnızca SHA-256 özeti, bayt sayacı ve zaman damgası tutulur. Tedbirge, taşınan içeriği teknik olarak çözemez; bu nedenle içerik verisi üzerinde erişim, düzeltme veya ifşa talebi yerine getirilemez.",
+    },
+    {
+      h: "5. Aktarım",
+      p: "Veriler, hizmetin sunulması için kullanılan bulut altyapısı (AB/AB'ye eşdeğer korumalı bölgeler) ve ödeme sağlayıcısı (Paddle — Merchant of Record) ile paylaşılır. Yurt dışına aktarım GDPR md. 46 standart sözleşme maddeleri ve KVKK md. 9 çerçevesinde yapılır.",
+    },
+    {
+      h: "6. Saklama süreleri",
+      p: "Telemetri örnekleri 90 gün; olay/denetim günlükleri 12 ay; fatura ve ticari kayıtlar mevzuat gereği 10 yıl; hesap verileri hesap kapatıldıktan sonra 6 ay içinde silinir veya anonimleştirilir.",
+    },
+    {
+      h: "7. Haklarınız",
+      p: "KVKK md. 11 ve GDPR md. 15–22 uyarınca; verilerinize erişme, düzeltme, silme, işlemeyi kısıtlama, taşınabilirlik ve itiraz haklarına sahipsiniz. Başvurularınızı tedbirge34@gmail.com adresine iletebilirsiniz; talepler en geç 30 gün içinde yanıtlanır. Ayrıca Kişisel Verileri Koruma Kurumu'na veya yetkili AB denetim otoritesine şikâyette bulunabilirsiniz.",
+    },
+    {
+      h: "8. Çerezler ve yerel depolama",
+      p: "Uygulama; oturum, düğüm kimliği, şifreleme anahtarı ve çevrimdışı mesaj kuyruğu için tarayıcı yerel depolamasını kullanır. Bu veriler cihazınızda kalır, sunucuya gönderilmez. Üçüncü taraf reklam veya izleme çerezi kullanılmaz.",
+    },
+  ],
+  note:
+    "Bu metin taslaktır ve hukuki görüş yerine geçmez. Kurumsal konuşlanmadan önce kendi veri envanteriniz ve VERBİS yükümlülüğünüz doğrultusunda hukuk müşavirinizle nihai hâline getirilmelidir.",
+};
