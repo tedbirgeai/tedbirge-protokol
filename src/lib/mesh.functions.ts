@@ -205,13 +205,25 @@ export const acknowledgeLinkAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    // link_alerts is service-role-write-only (client roles hold no write grant),
+    // so verify ownership with the caller's RLS-scoped client first, then write
+    // with the admin client.
+    const { data: alert } = await context.supabase
+      .from("link_alerts")
+      .select("id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!alert) throw new Error("Alarm bulunamadı.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("link_alerts")
       .update({ acknowledged: true })
-      .eq("id", data.id);
+      .eq("id", alert.id);
     if (error) throw new Error("Alarm güncellenemedi.");
     return { ok: true };
   });
+
 
 /** /kapsama sayfasından gerçek saha ölçümü kaydı. */
 export const saveFieldMeasurement = createServerFn({ method: "POST" })
