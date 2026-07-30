@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import QRCode from "qrcode";
 import { describeNode, startNode, stopNode, useNodeRuntime } from "@/lib/node-runtime";
+import { NetworkModal, type NetworkTab } from "@/components/site/NetworkModal";
+
 
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 const FREE_NODE_QUOTA = 5;
@@ -63,6 +65,14 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
   const [qr, setQr] = useState("");
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<NetworkTab>("peers");
+
+  function openModal(tab: NetworkTab) {
+    setModalTab(tab);
+    setModalOpen(true);
+  }
+
 
   useEffect(() => setOrigin(window.location.origin), []);
 
