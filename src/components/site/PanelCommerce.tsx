@@ -96,8 +96,18 @@ export function PanelCommerce({
               points={["5 düğüm", "Tüm taşıyıcı köprüleri", "Topluluk desteği", "Temel API limiti"]}
             />
             <PlanCard
+              name="Pro"
+              current={activeSub && subscription?.product_id === "tedbirge_pro"}
+              points={[
+                "6–24 düğüm kotası",
+                "Öncelikli API limiti + webhook",
+                "Kesinti/olay günlüğü ve uyum raporu",
+                "E-posta desteği (1 iş günü)",
+              ]}
+            />
+            <PlanCard
               name="Enterprise"
-              current={!!activeSub}
+              current={activeSub && subscription?.product_id === "tedbirge_enterprise"}
               points={[
                 "Sınırsız düğüm ve organizasyon",
                 "Öncelikli API limiti + webhook",
@@ -106,6 +116,7 @@ export function PanelCommerce({
               ]}
             />
           </div>
+
         </div>
       </div>
 
