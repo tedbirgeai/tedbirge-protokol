@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
-import { PLANS } from "@/lib/paddle-catalog";
+import { PLANS, type PlanKey } from "@/lib/paddle-catalog";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/fiyatlandirma")({
