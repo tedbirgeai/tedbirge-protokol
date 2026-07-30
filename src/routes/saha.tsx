@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
+import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
@@ -98,6 +99,9 @@ function FieldAccess() {
             Aşağıdaki “Düğümü başlat” düğmesine basın. Hesap, ödeme veya kurulum yok; aynı linki
             açan diğer cihazlarla doğrudan (P2P) eşleşir, bağlantı koparsa paketler kuyruğa alınır.
           </p>
+          <div className="mt-6">
+            <EasyConsole />
+          </div>
           <div className="mt-6">
             <BrowserNodeCard />
           </div>

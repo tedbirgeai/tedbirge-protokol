@@ -14,6 +14,7 @@ const nav = [
   { to: "/afet-kamu", label: "Afet & Kamu" },
   { to: "/mevzuat", label: "Regülasyon" },
   { to: "/guvenlik", label: "Güvenlik" },
+  { to: "/kur", label: "Kolay Kurulum" },
   { to: "/demo", label: "Demo" },
   { to: "/saha", label: "Saha" },
 
@@ -135,6 +136,8 @@ export function SiteFooter() {
             <li><Link to="/kapsama" className="text-muted-foreground hover:text-foreground">Kapsama planlayıcı</Link></li>
             <li><Link to="/demo" className="text-muted-foreground hover:text-foreground">Canlı demo</Link></li>
             <li><Link to="/saha" className="text-muted-foreground hover:text-foreground">Saha erişimi (ücretsiz)</Link></li>
+            <li><Link to="/kur" className="text-muted-foreground hover:text-foreground">Kolay kurulum sihirbazı</Link></li>
+            <li><Link to="/katil" className="text-muted-foreground hover:text-foreground">Ağa katıl (karşılama)</Link></li>
             <li><Link to="/rehber" className="text-muted-foreground hover:text-foreground">Rehber</Link></li>
             <li><Link to="/api-dokumantasyon" className="text-muted-foreground hover:text-foreground">Telemetri API'si</Link></li>
             <li><Link to="/saha-raporu" className="text-muted-foreground hover:text-foreground">Saha test raporu</Link></li>

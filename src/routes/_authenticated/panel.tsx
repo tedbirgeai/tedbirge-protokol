@@ -21,6 +21,7 @@ import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
 import { buildMeshPlan } from "@/lib/mesh-plan";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
+import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 
 export const Route = createFileRoute("/_authenticated/panel")({
@@ -423,6 +424,7 @@ function Panel() {
         <div className="mt-8 space-y-8">
           {tab === "genel" && (
             <>
+              <EasyConsole compact />
               <BrowserNodeCard licenseKey={licenses[0]?.license_key} />
               <MobileStationCard />
               <FieldRealityCard devices={devices} />
