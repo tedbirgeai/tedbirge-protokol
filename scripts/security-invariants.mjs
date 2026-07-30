@@ -159,7 +159,10 @@ for (const { file, sql } of loadMigrations()) {
   }
 }
 
+violations.push(...policyIssues.values());
+
 // --- Final effective grant state ------------------------------------------
+
 for (const table of LOCKED_TABLES) {
   for (const role of ["anon", "authenticated"]) {
     const privs = grantState.get(key(table, role));
