@@ -73,7 +73,7 @@ export function stopNode() {
   } catch {
     /* private mode */
   }
-  publish({ ...snapshot, running: false, peers: [], rttMs: null });
+  publish({ ...snapshot, running: false, peers: [], rttMs: null, discovery: "none" });
 }
 
 export function pingNodePeers() {
