@@ -82,17 +82,31 @@ type Device = {
   active_uplink: boolean | null;
 };
 
-type TabId = "genel" | "dugumler" | "canli" | "mesh" | "kalibrasyon" | "guvenlik" | "yonetim";
+type TabId =
+  | "genel"
+  | "harita"
+  | "dugumler"
+  | "yapayzeka"
+  | "canli"
+  | "mesh"
+  | "kalibrasyon"
+  | "guvenlik"
+  | "yonetim"
+  | "ayarlar";
 
 const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "genel", label: "Genel bakış" },
+  { id: "harita", label: "Ağ haritası" },
   { id: "dugumler", label: "Düğümler" },
+  { id: "yapayzeka", label: "Yapay zeka" },
   { id: "canli", label: "Canlı akış" },
   { id: "mesh", label: "Mesh & kurulum", needs: "operate" },
   { id: "kalibrasyon", label: "Kalibrasyon" },
   { id: "guvenlik", label: "Güvenlik" },
   { id: "yonetim", label: "Yönetim", needs: "manage" },
+  { id: "ayarlar", label: "Ayarlar" },
 ];
+
 
 /** Cep telefonunun paneldeki rolünü netleştiren bilgi kartı.
  *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. */
