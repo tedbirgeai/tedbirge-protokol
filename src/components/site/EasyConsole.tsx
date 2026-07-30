@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+
 import QRCode from "qrcode";
 import { describeNode, startNode, stopNode, useNodeRuntime } from "@/lib/node-runtime";
 import { NetworkModal, type NetworkTab } from "@/components/site/NetworkModal";
