@@ -152,19 +152,38 @@ function Proposal() {
 
   return (
     <SitePage>
-      <section className="mx-auto max-w-4xl px-6 py-14 print:py-0">
-        <div className="print:hidden">
+      <section className="mx-auto max-w-4xl px-6 py-14 print:max-w-none print:px-0 print:py-0">
+        {/* Baskıya özel antetli başlık */}
+        <div className="print-only print-block mb-6 border-b-2 pb-3">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="font-mono text-[13pt] font-semibold uppercase tracking-[0.18em]">
+                TEDBİRGE GATEWAY
+              </p>
+              <p className="font-mono text-[8pt] uppercase tracking-[0.14em]">
+                Mehmet DİNÇ · Türkiye · tedbirge34@gmail.com
+              </p>
+            </div>
+            <div className="text-right font-mono text-[8pt] uppercase tracking-[0.12em]">
+              <p>Pilot Teklif / Başvuru Paketi</p>
+              <p>Paket no {lead.id.slice(0, 8)}</p>
+              <p>{new Date(lead.created_at).toLocaleDateString("tr-TR")}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="print-hide">
           <SectionLabel>Teklif / Başvuru paketi</SectionLabel>
         </div>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight print:mt-0 print:text-[16pt]">
           {lead.organization ?? lead.contact_name ?? "Pilot talebi"}
         </h1>
-        <p className="mt-2 font-mono text-xs text-muted-foreground">
+        <p className="mt-2 font-mono text-xs text-muted-foreground print-hide">
           Paket no {lead.id.slice(0, 8)} · {new Date(lead.created_at).toLocaleString("tr-TR")} ·
           Mehmet DİNÇ (Tedbirge Gateway)
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-3 print:hidden">
+        <div className="mt-6 flex flex-wrap gap-3 print-hide">
           <button
             onClick={() => window.print()}
             className="rounded-sm bg-primary px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground"
@@ -191,7 +210,7 @@ function Proposal() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-3 rounded-sm border border-border bg-card/40 p-6 text-sm sm:grid-cols-2">
+        <div className="print-block mt-8 grid gap-3 rounded-sm border border-border bg-card/40 p-6 text-sm sm:grid-cols-2 print:mt-4 print:grid-cols-2 print:gap-2 print:p-3">
           <Field label="İlgili kişi" value={lead.contact_name} />
           <Field label="E-posta" value={lead.email} />
           <Field label="Telefon" value={lead.phone} />
@@ -204,6 +223,7 @@ function Proposal() {
             value={lead.qualification_score != null ? String(lead.qualification_score) : null}
           />
         </div>
+
 
         {lead.summary && (
           <Block title="Talep özeti">
