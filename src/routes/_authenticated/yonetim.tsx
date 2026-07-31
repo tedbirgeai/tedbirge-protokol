@@ -68,7 +68,7 @@ type AiLead = {
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -157,8 +157,13 @@ function Admin() {
       <section className="mx-auto max-w-6xl px-6 py-16">
         <SectionLabel>Yönetim</SectionLabel>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-          {tab === "pilot" ? "Pilot başvuruları" : "AI danışman talepleri"}
+          {tab === "pilot"
+            ? "Pilot başvuruları"
+            : tab === "ai"
+              ? "AI danışman talepleri"
+              : "İdari belgeler & dilekçeler"}
         </h1>
+
 
         <div className="mt-6 flex gap-2 border-b border-border/60 pb-4">
           <button
