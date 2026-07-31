@@ -193,9 +193,19 @@ function Admin() {
           >
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
           </button>
+          <button
+            onClick={() => setTab("plan")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "plan" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            İş planı
+          </button>
         </div>
 
-        {tab === "docs" ? (
+        {tab === "plan" ? (
+          <AdminBusinessPlan />
+        ) : tab === "docs" ? (
           <AdminOfficialDrafts />
         ) : tab === "ai" ? (
           leads.length === 0 ? (
