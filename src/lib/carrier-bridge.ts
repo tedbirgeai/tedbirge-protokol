@@ -26,7 +26,7 @@ import {
 import { decodeEnvelope } from "@/lib/mesh-envelope";
 import type { Priority } from "@/lib/store/idb";
 
-export type CarrierId = "lora" | "halow" | "tvws" | "wigig" | "fso" | "satellite";
+export type CarrierId = "lora" | "halow" | "tvws" | "wigig" | "fso" | "cellular" | "satellite";
 
 export type CarrierDef = {
   id: CarrierId;
@@ -34,6 +34,14 @@ export type CarrierDef = {
   transport: ("serial" | "bluetooth")[];
   baud: number;
   hint: string;
+  /** Operatör aboneliği/hat beyanı olmadan veri düzlemine açılmaz. */
+  requiresSubscription?: boolean;
+  /** Tipik tek yön gecikmesi (ms) — failover skorunda kullanılır. */
+  typLatencyMs: number;
+  /** Yaklaşık taşıma maliyeti (TL/MB) — 0 = ücretsiz spektrum. */
+  costPerMb: number;
+  /** Yaklaşık kullanılabilir taşıma kapasitesi (kbit/s). */
+  capacityKbps: number;
 };
 
 export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
@@ -43,6 +51,9 @@ export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
     transport: ["serial", "bluetooth"],
     baud: 115200,
     hint: "Meshtastic / RAK / Heltec / E22 USB veya BLE modülü",
+    typLatencyMs: 1200,
+    costPerMb: 0,
+    capacityKbps: 5,
   },
   {
     id: "halow",
@@ -50,6 +61,9 @@ export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
     transport: ["serial"],
     baud: 115200,
     hint: "Morse Micro / Newracom USB köprü (AT arayüzü)",
+    typLatencyMs: 60,
+    costPerMb: 0,
+    capacityKbps: 4000,
   },
   {
     id: "tvws",
@@ -57,6 +71,9 @@ export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
     transport: ["serial"],
     baud: 115200,
     hint: "6Harmonics / Adaptrum CPE seri konsolu",
+    typLatencyMs: 80,
+    costPerMb: 0,
+    capacityKbps: 8000,
   },
   {
     id: "wigig",
@@ -64,6 +81,9 @@ export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
     transport: ["serial"],
     baud: 115200,
     hint: "Terragraph / MikroTik Wireless Wire konsolu",
+    typLatencyMs: 5,
+    costPerMb: 0,
+    capacityKbps: 500000,
   },
   {
     id: "fso",
@@ -71,6 +91,20 @@ export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
     transport: ["serial"],
     baud: 9600,
     hint: "Optik terminal yönetim portu (hizalama + RSSI)",
+    typLatencyMs: 4,
+    costPerMb: 0,
+    capacityKbps: 1000000,
+  },
+  {
+    id: "cellular",
+    name: "Hücresel modem (LTE/5G)",
+    transport: ["serial"],
+    baud: 115200,
+    hint: "Quectel / SIMCom AT modemi — operatör hattı ve aboneliği gerekir",
+    requiresSubscription: true,
+    typLatencyMs: 45,
+    costPerMb: 0.35,
+    capacityKbps: 20000,
   },
   {
     id: "satellite",
@@ -78,8 +112,53 @@ export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
     transport: ["serial"],
     baud: 9600,
     hint: "Iridium / Inmarsat AT modemi veya VSAT konsolu",
+    requiresSubscription: true,
+    typLatencyMs: 700,
+    costPerMb: 45,
+    capacityKbps: 128,
   },
 ];
+
+/* --------------------- operatör abonelik kapısı --------------------- */
+
+const SUB_KEY = "tedbirge.carrier.subscriptions";
+let subscriptions: Record<string, boolean> = {};
+let subsLoaded = false;
+
+function loadSubs() {
+  if (subsLoaded) return;
+  subsLoaded = true;
+  try {
+    subscriptions = JSON.parse(window.localStorage.getItem(SUB_KEY) ?? "{}") as Record<string, boolean>;
+  } catch {
+    subscriptions = {};
+  }
+}
+
+/** Hücresel/uydu taşıyıcı için abonelik beyanı — kapı açılmadan bağlanmaz. */
+export function setCarrierSubscription(carrier: CarrierId, active: boolean) {
+  loadSubs();
+  subscriptions = { ...subscriptions, [carrier]: active };
+  try {
+    window.localStorage.setItem(SUB_KEY, JSON.stringify(subscriptions));
+  } catch {
+    /* private mode */
+  }
+  publish();
+}
+
+export function carrierSubscribed(carrier: CarrierId) {
+  loadSubs();
+  return Boolean(subscriptions[carrier]);
+}
+
+/** Yetkilendirme kapısı: abonelik beyanı yoksa taşıyıcı kullanılamaz. */
+export function carrierAuthorized(carrier: CarrierId) {
+  const def = BRIDGEABLE_CARRIERS.find((c) => c.id === carrier);
+  if (!def?.requiresSubscription) return true;
+  return carrierSubscribed(carrier);
+}
+
 
 export type BridgeLink = {
   carrier: CarrierId;
