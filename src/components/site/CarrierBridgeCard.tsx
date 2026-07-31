@@ -24,7 +24,6 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const { links, supported } = useCarrierBridge();
   const [busy, setBusy] = useState<CarrierId | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [subTick, setSubTick] = useState(0);
 
   useEffect(() => {
     refreshBridgeSupport();
@@ -122,10 +121,7 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                     type="checkbox"
                     className="mt-0.5"
                     checked={carrierSubscribed(c.id)}
-                    onChange={(e) => {
-                      setCarrierSubscription(c.id, e.target.checked);
-                      setSubTick((t) => t + 1);
-                    }}
+                    onChange={(e) => setCarrierSubscription(c.id, e.target.checked)}
                   />
                   <span className="text-muted-foreground">
                     Bu taşıyıcı için geçerli bir <strong>operatör hattı/aboneliğim</strong> olduğunu ve
