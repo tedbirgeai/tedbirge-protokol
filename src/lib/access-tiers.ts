@@ -164,7 +164,9 @@ export async function refreshAccessTier(): Promise<AccessTier> {
     publish({ tier: "local", endpoint: remembered, checkedAt: Date.now() });
     return "local";
   }
-  const endpoint = await scanLocalNetwork();
+  // Otomatik yerel tarama yalnızca gerçekten çevrimdışıyken yapılır;
+  // çevrimiçi ama geçici hata durumlarında ağ gereksiz yere yoklanmaz.
+  const endpoint = navigator.onLine ? null : await scanLocalNetwork();
   const tier: AccessTier = endpoint ? "local" : "island";
   publish({ tier, endpoint, checkedAt: Date.now() });
   return tier;
