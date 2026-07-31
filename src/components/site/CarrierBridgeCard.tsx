@@ -9,6 +9,8 @@ import {
   useCarrierBridge,
   type CarrierId,
 } from "@/lib/carrier-bridge";
+import { useCarrierScheduler, schedulerRegion } from "@/lib/carrier-scheduler";
+import { dataPlaneReady } from "@/lib/carrier-bridge";
 
 const box = "rounded-sm border border-border bg-card/60 p-5";
 const label = "font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground";
@@ -44,6 +46,8 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   };
 
   const liveCount = Object.keys(links).length;
+  const spectrum = useCarrierScheduler();
+  const dutyPct = Math.min(100, Math.round(spectrum.ratio * 100));
 
   return (
     <div className={box}>
@@ -69,6 +73,28 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
           {msg}
         </p>
       )}
+
+      {/* Spektrum bütçesi — BTK/ETSI görev döngüsü yazılımsal tavanı */}
+      <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className={label}>Spektrum bütçesi · bölge {schedulerRegion()}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            %{dutyPct} kullanıldı · kuyruk {spectrum.queued} · engellenen {spectrum.blocked}
+          </span>
+        </div>
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-sm bg-secondary">
+          <div
+            className={`h-full ${dutyPct > 90 ? "bg-destructive" : "bg-primary"}`}
+            style={{ width: `${dutyPct}%` }}
+          />
+        </div>
+        <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+          {spectrum.limitNote}
+          {spectrum.nextWindowAt
+            ? ` · bütçe doldu, sonraki yayın penceresi ${new Date(spectrum.nextWindowAt).toLocaleTimeString("tr-TR")}`
+            : ""}
+        </p>
+      </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {BRIDGEABLE_CARRIERS.map((c) => {
@@ -99,6 +125,14 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                   <dd>{link.frames}</dd>
                   <dt className="text-muted-foreground">Panele yazım</dt>
                   <dd>{link.uploaded}</dd>
+                  <dt className="text-muted-foreground">Mesh RX/TX</dt>
+                  <dd>
+                    {link.rxPackets ?? 0} / {link.txPackets ?? 0}
+                  </dd>
+                  <dt className="text-muted-foreground">Veri düzlemi</dt>
+                  <dd className={dataPlaneReady(c.id) ? "text-primary" : "text-muted-foreground"}>
+                    {dataPlaneReady(c.id) ? "aktif" : "yalnız ölçüm"}
+                  </dd>
                 </dl>
               )}
               {live && link.error && (
