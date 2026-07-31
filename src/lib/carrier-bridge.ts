@@ -381,6 +381,7 @@ export async function connectBluetoothCarrier(carrier: CarrierId) {
   const server = await device.gatt.connect();
   const service = await server.getPrimaryService(NUS_SERVICE);
   const tx = await service.getCharacteristic(NUS_TX);
+  const rx = await service.getCharacteristic(NUS_RX).catch(() => null);
 
   state.links[carrier] = {
     carrier,
