@@ -1,20 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { PROTOCOL_LAYERS } from "@/lib/protocol-layers";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tedbirge Protokol — Off-Grid Mesh ve Sıfır-Bilgi Ağ Geçidi" },
+      { title: "Tedbirge Protocol — Kurumsal Bağlantı Sürekliliği Platformu" },
       {
         name: "description",
         content:
-          "Taşıyıcı-bağımsız mesh SDK ve sıfır-bilgi tünel geçidi. Tek statik binary, LoRa/Wi-Fi/Ethernet, Ed25519 güvenlik ve kullanım bazlı faturalama.",
+          "İnternet kesildiğinde de çalışan kurumsal ağ altyapısı. Uçtan uca şifreli, kurulum gerektirmeyen, 7 katmanlı Tedbirge Protocol ve Resilience-as-a-Service abonelik modeli.",
       },
-      { property: "og:title", content: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
+      { property: "og:title", content: "Tedbirge Protocol — Bağlantı Sürekliliği Platformu" },
       {
         property: "og:description",
         content:
-          "İnternet olmadan çalışan kurumsal mesh altyapısı: çok-sıçramalı yönlendirme, zero-knowledge tünel, kullanım bazlı faturalama.",
+          "Kesintisiz bağlantı, otomatik yedekleme ve çevrimdışı veri güvenliği. 2 tıkla kurulan kurumsal ağ platformu.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app" },
@@ -26,61 +27,61 @@ export const Route = createFileRoute("/")({
 });
 
 const stats = [
-  { value: "5 platform", label: "cross-compile binary" },
-  { value: "0 bağımlılık", label: "Node.js / CDN yok" },
-  { value: "9 taşıyıcı", label: "Ethernet · Wi-Fi · LoRa · Uydu · FSO · TVWS" },
-  { value: "AES-256", label: "GCM uçtan uca tünel" },
+  { value: "2 tıkla", label: "kurulum — dosya indirme yok" },
+  { value: "%99,9", label: "hedeflenen bağlantı sürekliliği" },
+  { value: "9 taşıyıcı", label: "Ethernet · Wi-Fi · LoRa · Uydu · Hücresel" },
+  { value: "E2EE", label: "uçtan uca şifreli, sıfır-bilgi" },
 ];
 
-const features = [
+const benefits = [
   {
-    tag: "MESH",
-    title: "Çok-sıçramalı Dijkstra yönlendirme",
-    body: "A → C doğrudan yoksa paket B üzerinden hop-by-hop taşınır. En düşük RTT × taşıyıcı ağırlığı maliyetli yol otomatik seçilir; TTL ve loop-prevention yerleşiktir.",
+    tag: "SÜREKLILIK",
+    title: "Hat koptuğunda oturum düşmez",
+    body: "Bağlantı zayıfladığında trafik en hızlı alternatif taşıyıcıya otomatik geçer. Ekipleriniz kesintiyi fark etmez, müdahale gerekmez.",
   },
   {
     tag: "GÜVENLİK",
-    title: "Ağ içi sıfır-bilgi kalkanı",
-    body: "Ed25519 düğüm kimliği, katılım için Proof-of-Work, nonce kayan penceresiyle replay koruması. Taşınan yükün içeriği asla saklanmaz — yalnızca SHA-256 ve bayt sayımı.",
+    title: "Uçtan uca şifreli, sıfır-bilgi",
+    body: "Veriniz yalnızca gönderen ve alan cihazda okunabilir. Ara noktalar içeriği göremez; sistem yalnızca hacim bilgisini tutar.",
   },
   {
-    tag: "OFF-GRID",
-    title: "İnternetsiz bakiye muhasebesi",
-    body: "Röle düğümleri taşıdıkları baytlar için Ed25519 imzalı fiş keser. Bağlantı sıfır olsa bile relay credit matematiksel olarak kanıtlanır ve sonradan mahsuplaşır.",
+    tag: "ÇEVRİMDIŞI",
+    title: "İnternetsiz sahada veri kaybı yok",
+    body: "Bağlantı yokken ölçüm ve mesajlar cihazda güvenle bekler; hat geldiğinde kayıpsız biçimde merkeze aktarılır.",
   },
   {
-    tag: "BİLLING",
-    title: "Thread-safe kullanım sayacı",
-    body: "Kalıcı faturalama defteri, WAL dayanıklı kuyruk, Redis dağıtık hız sınırlama ve Stripe / e-Fatura köprüsü ile kullanım bazlı gelir modeli.",
+    tag: "KOLAYLIK",
+    title: "Kurulum dosyası ve terminal yok",
+    body: "Bilgisayar, tablet veya telefonda tarayıcıyı açın, “Ağı başlat” deyin. Kimlik, şifreleme ve doğrulama arka planda tamamlanır.",
   },
   {
-    tag: "EXIT NODE",
-    title: "Komşu üzerinden WAN köprüsü",
-    body: "İnterneti olmayan düğüm, WAN erişimli komşuya şifreli mesh üzerinden çıkar. Exit düğüm yalnızca hedef adresi bilir, içeriği değil.",
+    tag: "GÖRÜNÜRLÜK",
+    title: "Tek ekranda canlı teşhis",
+    body: "Gecikme, teslim oranı ve kuyruk durumu anlık izlenir; sorun büyümeden uyarı alır, raporunu tek tıkla dışa aktarırsınız.",
   },
   {
-    tag: "OPS",
-    title: "Gömülü offline panel",
-    body: "go:embed ile tek binary içinde /admin paneli: canlı mesh topolojisi, WAL derinliği, geçiş hızı, kredi dökümü, WebSocket telemetri ve Prometheus metrikleri.",
+    tag: "YÖNETİM",
+    title: "Rol bazlı kurumsal panel",
+    body: "Yönetici, operatör ve izleyici yetkileri ayrıdır. Lisans, kota, olay günlüğü ve kurumsal teklif üretimi aynı panelde.",
   },
 ];
 
 const useCases = [
   {
     title: "Savunma & Kamu",
-    body: "Altyapısız sahada komuta-kontrol trafiği: merkezi sunucu ve DNS gerekmeden çok-sıçramalı şifreli iletişim.",
+    body: "Altyapısız sahada komuta-kontrol trafiği: merkezi sunucu gerekmeden şifreli ve kesintisiz iletişim.",
   },
   {
     title: "Enerji & Maden",
-    body: "Kapsama dışı tesislerde IoT telemetrisi LoRa üzerinden toplanır, WAN'lı tek düğümden merkeze aktarılır.",
+    body: "Kapsama dışı tesislerde saha ölçümleri toplanır, bağlantısı olan tek noktadan merkeze aktarılır.",
   },
   {
     title: "Afet & İnsani Yardım",
-    body: "Şebeke çöktüğünde saatler içinde kurulan yerel mesh; 0-WAN mesaj ve dosya takası saha ekipleri arasında sürer.",
+    body: "Şebeke çöktüğünde saatler içinde kurulan yerel ağ; internet olmadan mesaj ve dosya paylaşımı sürer.",
   },
   {
     title: "Telekom & ISP",
-    body: "Alternatif PHY taşıyıcılarla son-kilometre kapsaması ve kullanım bazlı faturalanan yönetilen ağ hizmeti.",
+    body: "Alternatif taşıyıcılarla son-kilometre kapsaması ve kullanım bazlı faturalanan yönetilen hizmet.",
   },
 ];
 
@@ -97,32 +98,38 @@ function Index() {
         <div className="relative mx-auto max-w-6xl px-6 py-24 md:py-32">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
             <span className="size-1.5 rounded-full bg-primary" />
-            v0.6a — turnkey
+            Resilience-as-a-Service
           </div>
 
           <h1 className="mt-7 max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight text-foreground md:text-6xl">
-            İnternet olmadığında da{" "}
-            <span className="text-primary">çalışan ağ altyapısı</span>
+            İnternet kesilse de{" "}
+            <span className="text-primary">çalışmaya devam eden ağ</span>
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
-            SDK'sıdır. Çöldeki off-grid saha cihazından kurumsal veri merkezine kadar tek
-            statik binary ile çalışır.
+            Tedbirge Protocol, kurumunuzun bağlantı sürekliliğini yedi katmanla güvence altına alır.
+            Kurulum dosyası, terminal veya anahtar yönetimi yok: tarayıcınızı açın, iki tıkla ağa
+            katılın. Şifreleme ve doğrulama arka planda otomatik çalışır.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link
-              to="/iletisim"
+              to="/kur"
               className="rounded-sm bg-primary px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Pilot başvurusu
+              2 tıkla başlat
             </Link>
             <Link
-              to="/urun"
+              to="/protokol"
               className="rounded-sm border border-border px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary"
             >
-              Mimariyi incele
+              7 katmanı incele
+            </Link>
+            <Link
+              to="/iletisim"
+              className="rounded-sm border border-border px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary"
+            >
+              Pilot başvurusu
             </Link>
           </div>
 
@@ -137,15 +144,53 @@ function Index() {
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/* 7 LAYERS */}
+      <section className="border-b border-border/60 bg-card/30">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <SectionLabel>Tedbirge Protocol</SectionLabel>
+          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+            Tek çatı, yedi katman
+          </h2>
+          <p className="mt-4 max-w-2xl text-muted-foreground">
+            Her katman tek bir işi yapar ve birbirini yedekler. Karmaşık olan her şey arka planda;
+            sizin tarafınızda yalnızca açık isimler ve hızlı aksiyonlar var.
+          </p>
+
+          <div className="mt-12 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
+            {PROTOCOL_LAYERS.map((l) => (
+              <Link
+                key={l.name}
+                to={l.action.to}
+                className="group bg-background/70 p-7 transition-colors hover:bg-card"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex size-6 items-center justify-center rounded-full bg-primary/15 font-mono text-[10px] text-primary">
+                    {l.n}
+                  </span>
+                  <span className="font-mono text-[12px] uppercase tracking-[0.18em] text-primary">
+                    {l.name}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-foreground">{l.tagline}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{l.body}</p>
+                <span className="mt-4 inline-block font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground group-hover:text-primary">
+                  {l.action.label} →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BENEFITS */}
       <section className="mx-auto max-w-6xl px-6 py-24">
-        <SectionLabel>Yetenekler</SectionLabel>
+        <SectionLabel>Neden Tedbirge</SectionLabel>
         <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-          Sahada kanıtlanmış altı çekirdek katman
+          Kurumsal ağ ekipleri için altı somut kazanım
         </h2>
 
         <div className="mt-12 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
+          {benefits.map((f) => (
             <article key={f.title} className="bg-card/60 p-7 transition-colors hover:bg-card">
               <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-primary">
                 {f.tag}
@@ -157,61 +202,63 @@ function Index() {
         </div>
       </section>
 
-      {/* MODULES */}
-      <section className="border-y border-border/60">
-        <div className="mx-auto max-w-6xl px-6 py-24">
-          <SectionLabel>Ürün ailesi</SectionLabel>
-          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-            Tedbirge Protokol&apos;ün üç modülü
-          </h2>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {[
-              {
-                name: "Tedbirge Gateway",
-                body: "Tünel proxy motoru ve exit node: AES-256-GCM chunk şifreleme, zero-knowledge ölçüm ve WAN köprüsü. Tek statik binary olarak çalışır.",
-              },
-              {
-                name: "Tedbirge Loop",
-                body: "Mesh yönlendirme ve gossip halkası: Dijkstra çok-sıçramalı yol seçimi, komşu keşfi, TTL ve loop-prevention.",
-              },
-              {
-                name: "Tedbirge Off-Grid",
-                body: "İnternetsiz muhasebe katmanı: Ed25519 imzalı fiş, relay credit, çift harcama koruması ve sonradan mahsuplaşma.",
-              },
-            ].map((m) => (
-              <div key={m.name} className="rounded-sm border border-border bg-card/50 p-7">
-                <h3 className="font-mono text-sm uppercase tracking-[0.15em] text-primary">
-                  {m.name}
-                </h3>
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-      {/* ARCHITECTURE */}
+      {/* HOW IT WORKS */}
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-24 lg:grid-cols-2 lg:items-center">
           <div>
-            <SectionLabel>Mimari</SectionLabel>
+            <SectionLabel>Nasıl çalışır</SectionLabel>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-              Tek binary, tam yığın
+              Üç adım, sıfır teknik bilgi
             </h2>
             <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-              Tünel proxy motoru, mesh router, güvenlik kalkanı, gossip keşfi, off-grid defter,
-              WAL ve yönetim paneli aynı çalıştırılabilir dosyada gelir. Cross-compilation CGO
-              gerektirmez; Linux (amd64/arm64), Windows ve macOS için statik çıktı üretilir.
+              Kurulum sihirbazı sizi üç adımda ağa alır. Güvenli kimlik oluşturma, cihaz doğrulama
+              ve şifreli bağlantı kurulumu arka planda otomatik tamamlanır.
             </p>
-            <ul className="mt-7 space-y-3 text-sm">
+            <ol className="mt-7 space-y-4 text-sm">
               {[
-                "Tünel Proxy Motoru — AES-256-GCM chunk, zero-knowledge ölçüm",
-                "Mesh Router — Dijkstra, TTL, taşıyıcı seçimi",
-                "Güvenlik Kalkanı — Ed25519 · PoW · replay penceresi",
-                "Gossip — merkezsiz keşif ve anti-entropy",
-                "Off-Grid Ledger — imzalı fiş / voucher",
-                "WAL — atomik-swap, çapraz platform",
+                ["1", "Ağı başlatın", "Tarayıcıda tek düğmeye basın; cihaz saniyeler içinde ağın parçası olur."],
+                ["2", "Cihaz ekleyin", "Bağlantıyı paylaşın veya karekodu okutun; karşı taraf tek dokunuşla katılır."],
+                ["3", "İzleyin", "Panelde bağlı cihazlar, gecikme ve uyarılar canlı görünür."],
+              ].map(([n, t, b]) => (
+                <li key={n} className="flex gap-4">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 font-mono text-[11px] text-primary">
+                    {n}
+                  </span>
+                  <span>
+                    <span className="block font-medium text-foreground">{t}</span>
+                    <span className="mt-1 block text-muted-foreground">{b}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/kur"
+                className="rounded-sm bg-primary px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+              >
+                Kurulum sihirbazı
+              </Link>
+              <Link
+                to="/demo"
+                className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-colors hover:bg-secondary"
+              >
+                Tarayıcıda dene
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-border bg-background/80 p-7">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              Arka planda otomatik
+            </p>
+            <ul className="mt-5 space-y-3 text-sm">
+              {[
+                "Güvenli cihaz kimliği ve doğrulanmış düğüm rozeti",
+                "Uçtan uca şifreleme ve sıfır-bilgi ölçüm",
+                "En iyi taşıyıcıya otomatik geçiş (failover)",
+                "Çevrimdışı kuyruk ve kayıpsız senkronizasyon",
+                "Yasal uyum: BTK yayın süresi sınırı, KVKK ve 5651 çerçevesi",
+                "Kurtarma anahtarıyla cihaz değişiminde kimlik taşıma",
               ].map((item) => (
                 <li key={item} className="flex gap-3 text-muted-foreground">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
@@ -219,28 +266,10 @@ function Index() {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="rounded-sm border border-border bg-background/80 p-6">
-            <div className="flex items-center gap-2 border-b border-border pb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              <span className="size-2 rounded-full bg-accent" />
-              off-grid deployment
-            </div>
-            <pre className="mt-5 overflow-x-auto font-mono text-[13px] leading-relaxed text-muted-foreground">
-              <code>{`# Düğüm A — sahra röle noktası
-TEDBIRGE_MESH=true \\
-TEDBIRGE_MESH_NODE_ID=saha-A \\
-TEDBIRGE_MESH_ADDR=:7946 tedbirge-gateway
-
-# Düğüm B — A'yı tohum komşu alır
-TEDBIRGE_MESH_SEEDS=10.0.0.1:7946 \\
-tedbirge-gateway
-
-# Doğrulama
-tedbirge-cli mesh-demo   # 3 düğüm, kayıpsız
-tedbirge-cli p2p-demo    # 0-WAN takas
-tedbirge-cli exit-demo   # WAN köprüsü`}</code>
-            </pre>
+            <p className="mt-6 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
+              Bu işlemler için ayar yapmanız, anahtar kopyalamanız veya komut çalıştırmanız
+              gerekmez. Panelde yalnızca sonuçları görürsünüz.
+            </p>
           </div>
         </div>
       </section>
@@ -275,34 +304,33 @@ tedbirge-cli exit-demo   # WAN köprüsü`}</code>
         </div>
       </section>
 
-
       {/* PROOF */}
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto max-w-6xl px-6 py-24">
           <SectionLabel>Doğrulanmış davranış</SectionLabel>
           <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
-            Referans yerine tekrarlanabilir test
+            Referans yerine kendi sahanızda ölçüm
           </h2>
           <p className="mt-5 max-w-2xl text-muted-foreground">
-            Henüz müşteri logosu göstermiyoruz. Onun yerine, iddialarımızı kendi cihazınızda
-            tekrar edebileceğiniz komutlarla kanıtlıyoruz — çıktılar sahada bizde de aynı.
+            Müşteri logosu göstermiyoruz. Onun yerine, iddialarımızı kendi cihazınızda
+            tekrarlayabileceğiniz üç testle kanıtlıyoruz.
           </p>
           <div className="mt-12 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-3">
             {[
               {
-                cmd: "tedbirge-cli mesh-demo",
-                result: "3 düğüm · kayıpsız aktarım",
-                note: "Çok-sıçramalı yol A → B → C üzerinden kurulur, bütünlük SHA-256 ile doğrulanır.",
+                cmd: "Çok düğümlü aktarım",
+                result: "3 cihaz · kayıpsız",
+                note: "Cihazlar birbirine doğrudan ulaşamasa bile veri komşu üzerinden eksiksiz iletilir.",
               },
               {
-                cmd: "tedbirge-cli p2p-demo",
-                result: "0-WAN dosya takası",
-                note: "İnternet tamamen kapalıyken iki düğüm arasında imzalı fişli aktarım.",
+                cmd: "İnternetsiz paylaşım",
+                result: "0 bağlantı · dosya takası",
+                note: "Hat tamamen kapalıyken iki cihaz arasında güvenli aktarım ve kayıt.",
               },
               {
-                cmd: "tedbirge-cli exit-demo",
-                result: "WAN köprüsü",
-                note: "WAN'ı olmayan düğüm, komşu exit düğüm üzerinden şifreli olarak çıkar.",
+                cmd: "Çıkış noktası köprüsü",
+                result: "komşu üzerinden internet",
+                note: "Bağlantısı olmayan cihaz, komşu çıkış noktası üzerinden şifreli olarak dışarı çıkar.",
               },
             ].map((t) => (
               <div key={t.cmd} className="bg-background/70 p-7">
@@ -319,13 +347,12 @@ tedbirge-cli exit-demo   # WAN köprüsü`}</code>
             >
               Tarayıcıda dene
             </Link>
-            <a
-              href="/tedbirge-teknik-ozet.md"
-              download
+            <Link
+              to="/fiyatlandirma"
               className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-colors hover:bg-secondary"
             >
-              Teknik özeti indir
-            </a>
+              RaaS paketleri
+            </Link>
             <Link
               to="/rehber"
               className="rounded-sm border border-border px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-colors hover:bg-secondary"
@@ -344,8 +371,8 @@ tedbirge-cli exit-demo   # WAN köprüsü`}</code>
               Kendi sahanızda 30 günlük pilot
             </h2>
             <p className="mt-3 max-w-xl text-muted-foreground">
-              Mühendislik ekibimizle birlikte üç düğümlük bir mesh kurun, kullanım sayacını
-              faturalama sisteminize bağlayın.
+              Mühendislik ekibimizle üç cihazlık bir ağ kurun, süreklilik ölçümlerini kendi
+              raporunuzla doğrulayın.
             </p>
           </div>
           <Link
