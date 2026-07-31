@@ -400,7 +400,7 @@ function AdminOfficialDrafts() {
           </article>
         ))}
       </div>
-    </section>
+    </div>
   );
 }
 
