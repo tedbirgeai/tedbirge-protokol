@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,24 +8,125 @@ import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
 import brandMark from "@/assets/tedbirge-mark.png.asset.json";
 
+const navGroups = [
+  {
+    label: "Keşif",
+    items: [
+      { to: "/", label: "Genel Bakış", hint: "Tedbirge Gateway'e giriş" },
+      { to: "/urun", label: "Ürün", hint: "Yetenekler ve mimari" },
+      { to: "/demo", label: "Demo", hint: "Tarayıcıda canlı mesh" },
+    ],
+  },
+  {
+    label: "Çözümler",
+    items: [
+      { to: "/tasiyicilar", label: "Taşıyıcılar", hint: "9 fiziksel taşıyıcı" },
+      { to: "/afet-kamu", label: "Afet & Kamu", hint: "Kriz haberleşmesi" },
+    ],
+  },
+  {
+    label: "Güven & Uyum",
+    items: [
+      { to: "/mevzuat", label: "Regülasyon", hint: "Spektrum ve yasal çerçeve" },
+      { to: "/guvenlik", label: "Güvenlik", hint: "Tehdit modeli" },
+    ],
+  },
+  {
+    label: "Başlangıç",
+    items: [
+      { to: "/kur", label: "Kolay Kurulum", hint: "3 adımda ağ" },
+      { to: "/saha", label: "Saha", hint: "Ücretsiz saha erişimi" },
+      { to: "/rehber", label: "Rehber", hint: "Mühendislik notları" },
+    ],
+  },
+  {
+    label: "Ticari",
+    items: [
+      { to: "/fiyatlandirma", label: "Fiyatlandırma", hint: "Community · Pro · Enterprise" },
+      { to: "/dokumanlar", label: "Dokümanlar", hint: "Teknik ve kurumsal belgeler" },
+    ],
+  },
+] as const;
 
-const nav = [
-  { to: "/", label: "Genel Bakış" },
-  { to: "/urun", label: "Ürün" },
-  { to: "/tasiyicilar", label: "Taşıyıcılar" },
-  { to: "/afet-kamu", label: "Afet & Kamu" },
-  { to: "/mevzuat", label: "Regülasyon" },
-  { to: "/guvenlik", label: "Güvenlik" },
-  { to: "/kur", label: "Kolay Kurulum" },
-  { to: "/demo", label: "Demo" },
-  { to: "/saha", label: "Saha" },
+type NavItem = (typeof navGroups)[number]["items"][number];
 
-  { to: "/fiyatlandirma", label: "Fiyatlandırma" },
-  { to: "/dokumanlar", label: "Dokümanlar" },
-  { to: "/rehber", label: "Rehber" },
-];
+function NavGroup({
+  label,
+  items,
+  activePath,
+}: {
+  label: string;
+  items: readonly NavItem[];
+  activePath: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const groupActive = items.some((i) =>
+    i.to === "/" ? activePath === "/" : activePath.startsWith(i.to),
+  );
 
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={`flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-[13px] font-medium transition-colors hover:text-primary ${
+          groupActive ? "text-primary" : "text-foreground"
+        }`}
+      >
+        {label}
+        <span aria-hidden className="text-[9px] leading-none opacity-70">
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-full z-50 w-64 overflow-hidden rounded-sm border border-border bg-background pt-1 shadow-xl"
+        >
+          {items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-3 text-foreground transition-colors hover:bg-secondary hover:text-primary"
+              activeProps={{ className: "block px-4 py-3 bg-secondary/60 text-primary" }}
+              activeOptions={{ exact: item.to === "/" }}
+            >
+              <span className="block text-sm font-medium">{item.label}</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">{item.hint}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function AuthAffordance() {
   const { user, loading } = useAuth();
@@ -38,7 +139,7 @@ function AuthAffordance() {
     return (
       <Link
         to="/giris"
-        className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+        className="hidden text-sm font-medium text-foreground transition-colors hover:text-primary sm:block"
       >
         Giriş
       </Link>
@@ -56,13 +157,14 @@ function AuthAffordance() {
     <div className="flex items-center gap-3">
       <Link
         to="/panel"
-        className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+        className="hidden text-sm font-medium text-foreground transition-colors hover:text-primary sm:block"
+        activeProps={{ className: "hidden text-sm font-medium text-primary sm:block" }}
       >
         Panel
       </Link>
       <button
         onClick={handleSignOut}
-        className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+        className="hidden text-sm font-medium text-foreground transition-colors hover:text-primary sm:block"
       >
         Çıkış
       </button>
@@ -70,10 +172,124 @@ function AuthAffordance() {
   );
 }
 
+function MobileMenu({ activePath }: { activePath: string }) {
+  const [open, setOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [activePath]);
+
+  async function handleSignOut() {
+    setOpen(false);
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/giris", replace: true });
+  }
+
+  return (
+    <div className="lg:hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label="Menüyü aç"
+        className="rounded-sm border border-border/70 px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-foreground transition-colors hover:border-primary hover:text-primary"
+      >
+        {open ? "Kapat" : "Menü"}
+      </button>
+
+      {open && (
+        <div className="absolute inset-x-0 top-16 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-background px-6 py-6 shadow-xl">
+          <div className="grid gap-6 sm:grid-cols-2">
+            {navGroups.map((group) => (
+              <div key={group.label}>
+                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-primary">
+                  {group.label}
+                </p>
+                <ul className="mt-3 space-y-1">
+                  {group.items.map((item) => (
+                    <li key={item.to}>
+                      <Link
+                        to={item.to}
+                        onClick={() => setOpen(false)}
+                        className="block rounded-sm px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary hover:text-primary"
+                        activeProps={{
+                          className:
+                            "block rounded-sm px-2 py-2 text-sm font-medium text-primary bg-secondary/60",
+                        }}
+                        activeOptions={{ exact: item.to === "/" }}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-primary">
+                Hesap
+              </p>
+              <ul className="mt-3 space-y-1">
+                {loading ? null : user ? (
+                  <>
+                    <li>
+                      <Link
+                        to="/panel"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-sm px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary hover:text-primary"
+                      >
+                        Panel
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full rounded-sm px-2 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-secondary hover:text-primary"
+                      >
+                        Çıkış
+                      </button>
+                    </li>
+                  </>
+                ) : (
+                  <li>
+                    <Link
+                      to="/giris"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-sm px-2 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary hover:text-primary"
+                    >
+                      Giriş
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+
+          <Link
+            to="/iletisim"
+            onClick={() => setOpen(false)}
+            className="mt-6 block rounded-sm bg-primary px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground"
+          >
+            Pilot Başlat
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SiteHeader() {
+  const activePath = useRouterState({ select: (s) => s.location.pathname });
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <img
             src={brandMark.url}
@@ -87,18 +303,14 @@ export function SiteHeader() {
           </span>
         </Link>
 
-
-        <nav className="hidden items-center gap-5 lg:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-[13px] text-foreground" }}
-              activeOptions={{ exact: item.to === "/" }}
-            >
-              {item.label}
-            </Link>
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Ana menü">
+          {navGroups.map((group) => (
+            <NavGroup
+              key={group.label}
+              label={group.label}
+              items={group.items}
+              activePath={activePath}
+            />
           ))}
         </nav>
 
@@ -109,15 +321,18 @@ export function SiteHeader() {
 
           <Link
             to="/iletisim"
-            className="rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
+            className="hidden rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90 sm:block"
           >
             Pilot Başlat
           </Link>
+
+          <MobileMenu activePath={activePath} />
         </div>
       </div>
     </header>
   );
 }
+
 
 export function SiteFooter() {
   return (
