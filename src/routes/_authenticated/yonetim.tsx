@@ -68,7 +68,7 @@ type AiLead = {
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -157,8 +157,13 @@ function Admin() {
       <section className="mx-auto max-w-6xl px-6 py-16">
         <SectionLabel>Yönetim</SectionLabel>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-          {tab === "pilot" ? "Pilot başvuruları" : "AI danışman talepleri"}
+          {tab === "pilot"
+            ? "Pilot başvuruları"
+            : tab === "ai"
+              ? "AI danışman talepleri"
+              : "İdari belgeler & dilekçeler"}
         </h1>
+
 
         <div className="mt-6 flex gap-2 border-b border-border/60 pb-4">
           <button
@@ -177,9 +182,19 @@ function Admin() {
           >
             AI talepleri ({leads.length})
           </button>
+          <button
+            onClick={() => setTab("docs")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "docs" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            İdari dilekçeler ({OFFICIAL_DRAFTS.length})
+          </button>
         </div>
 
-        {tab === "ai" ? (
+        {tab === "docs" ? (
+          <AdminOfficialDrafts />
+        ) : tab === "ai" ? (
           leads.length === 0 ? (
             <p className="mt-8 text-sm text-muted-foreground">
               Henüz AI danışman üzerinden gelen talep yok.
@@ -324,8 +339,6 @@ function Admin() {
         </>
         )}
       </section>
-
-      <AdminOfficialDrafts />
     </SitePage>
   );
 }
@@ -333,7 +346,8 @@ function Admin() {
 function AdminOfficialDrafts() {
   const [open, setOpen] = useState<string | null>(null);
   return (
-    <section className="mx-auto max-w-6xl border-t border-border/60 px-6 py-16">
+    <div className="mt-8">
+
       <SectionLabel>Yalnızca yönetici</SectionLabel>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight">
         İdari Belgeler &amp; Dilekçe Taslakları
@@ -386,7 +400,7 @@ function AdminOfficialDrafts() {
           </article>
         ))}
       </div>
-    </section>
+    </div>
   );
 }
 
