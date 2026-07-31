@@ -44,6 +44,9 @@ import {
   type Priority,
 } from "@/lib/store/idb";
 import { pruneOutbox } from "@/lib/store/pruning";
+import { observePeerKey, trustStatusOf, type TrustStatus } from "@/lib/peer-trust";
+import { getPeer } from "@/lib/store/idb";
+import { recordDrop, recordRelay, recordRtt, recordRx, recordTx } from "@/lib/diagnostics";
 
 const ID_KEY = "tedbirge.browser-node.id";
 const CHANNEL = "tedbirge-mesh-v1";
@@ -58,6 +61,9 @@ export type PeerInfo = {
   direct: boolean;
   fingerprint?: string;
   verified?: boolean;
+  /** Parmak izi güven durumu: unknown | auto | manual | changed. */
+  trust?: TrustStatus;
+  signPublic?: string;
 };
 
 /** Sinyalleşmenin hangi yoldan yürüdüğü: bulut → yerel LAN → eş rölesi. */
@@ -149,7 +155,10 @@ export class BrowserNode {
   private localSeen = new Map<string, number>();
   private localTimer: ReturnType<typeof setInterval> | null = null;
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
-  private peerKeys = new Map<string, { spk: string; bpk: string; fingerprint: string; verified: boolean }>();
+  private peerKeys = new Map<
+    string,
+    { spk: string; bpk: string; fingerprint: string; verified: boolean; trust: TrustStatus }
+  >();
   private timer: ReturnType<typeof setInterval> | null = null;
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
@@ -207,6 +216,8 @@ export class BrowserNode {
         direct: p.dc?.readyState === "open",
         fingerprint: keys?.fingerprint,
         verified: keys?.verified,
+        trust: keys?.trust,
+        signPublic: keys?.spk,
       };
     });
   }
@@ -462,19 +473,24 @@ export class BrowserNode {
       if (maybe?.t === "hello" && maybe.nodeId && maybe.spk && maybe.bpk) {
         const { fingerprintOfKey } = await import("@/lib/crypto/identity");
         const fingerprint = fingerprintOfKey(maybe.spk);
+        // TOFU: anahtar sabitlenir; değiştiyse "changed" uyarısı üretilir.
+        const trust = await observePeerKey({
+          peerId: maybe.nodeId,
+          signPublic: maybe.spk,
+          boxPublic: maybe.bpk,
+        });
+        if (trust === "changed") {
+          await appendEvent(
+            "security",
+            `Eş parmak izi DEĞİŞTİ (${maybe.nodeId}). Yeniden doğrulanana kadar güvenilmez.`,
+          );
+        }
         this.peerKeys.set(maybe.nodeId, {
           spk: maybe.spk,
           bpk: maybe.bpk,
           fingerprint,
-          verified: true,
-        });
-        await putPeer({
-          peerId: maybe.nodeId,
-          verifyKey: maybe.spk,
-          publicKey: maybe.bpk,
-          fingerprint,
-          verified: true,
-          lastSeen: Date.now(),
+          verified: trust === "manual",
+          trust,
         });
         this.emit({});
         void this.flushQueue();
@@ -489,6 +505,7 @@ export class BrowserNode {
     if (!env) return;
     if (!verifyEnvelope(env)) {
       this.emit({ droppedUnsigned: this.state.droppedUnsigned + 1 });
+      recordDrop();
       void appendEvent("security", `İmzası doğrulanamayan paket düşürüldü (${from}).`);
       return;
     }
@@ -496,6 +513,7 @@ export class BrowserNode {
     await markSeen(env.h.pktId);
     witnessClock(env.h.lamport);
 
+    recordRx(env.h.hops ?? 0);
     if (env.h.to === this.nodeId || env.h.to === "*") await this.handleForMe(env);
 
     // 3) Röle: gövde OPAKTIR, yalnız başlık güncellenir.
@@ -503,6 +521,7 @@ export class BrowserNode {
       const fwd = forwardEnvelope(env);
       if (fwd) {
         this.broadcastRaw(encodeEnvelope(fwd), from);
+        recordRelay();
         this.emit({ lastRelayAt: new Date().toISOString() });
       }
     }
@@ -521,7 +540,11 @@ export class BrowserNode {
       await this.send("pong", env.h.from, body, 1);
     } else if (env.h.kind === "pong") {
       const sentAt = Number((body as { at?: number })?.at ?? 0);
-      if (sentAt) this.emit({ rttMs: Date.now() - sentAt });
+      if (sentAt) {
+        const rtt = Date.now() - sentAt;
+        recordRtt(rtt);
+        this.emit({ rttMs: rtt });
+      }
     } else if (env.h.kind === "signal") {
       await this.onSignal({ from: env.h.from, to: this.nodeId, data: body as Record<string, unknown> });
     } else if (env.h.kind === "telemetry" && this.state.online) {
