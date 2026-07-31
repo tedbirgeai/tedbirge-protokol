@@ -92,7 +92,7 @@ export const rebuildLeadPlan = createServerFn({ method: "POST" })
       dugum: lead.node_count,
       aciliyet: lead.urgency,
     });
-    if (!plan) throw new Error("Plan üretilemedi, lütfen tekrar deneyin.");
+    
 
     await supabaseAdmin
       .from("ai_leads")

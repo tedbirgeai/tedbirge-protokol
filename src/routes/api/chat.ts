@@ -129,12 +129,10 @@ export const Route = createFileRoute("/api/chat")({
                 dugum: input.dugum_sayisi ?? null,
                 aciliyet: input.aciliyet ?? null,
               });
-              if (plan) {
-                await supabaseAdmin
-                  .from("ai_leads")
-                  .update({ plan: plan as unknown as never, proposal_ref: inserted.id })
-                  .eq("id", inserted.id);
-              }
+              await supabaseAdmin
+                .from("ai_leads")
+                .update({ plan: plan as unknown as never, proposal_ref: inserted.id })
+                .eq("id", inserted.id);
 
               const { notifyLeadStatus } = await import("@/lib/lead-notify.server");
               await notifyLeadStatus({
