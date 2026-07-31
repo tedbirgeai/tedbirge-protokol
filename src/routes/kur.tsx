@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { EasyConsole } from "@/components/site/EasyConsole";
 import { NextStep } from "@/components/site/NextStep";
+import { HybridAccessCard } from "@/components/site/HybridAccessCard";
 
 const TITLE = "Kolay Kurulum — Tedbirge Protokol Ağınızı 3 Adımda Kurun";
 const DESC =
@@ -55,6 +56,9 @@ function Setup() {
           </p>
           <div className="mt-6">
             <EasyConsole />
+          </div>
+          <div className="mt-6">
+            <HybridAccessCard />
           </div>
         </div>
       </section>
