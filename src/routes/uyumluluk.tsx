@@ -116,6 +116,23 @@ function Compliance() {
         </div>
       </section>
 
+      <section id="denetim" className="mx-auto max-w-6xl px-6 py-20">
+        <SectionLabel>KVKK & sıfır-bilgi denetimi</SectionLabel>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">
+          Uyumu iddia etmiyoruz — cihazınızda test ediyoruz
+        </h2>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          Aşağıdaki yedi test, anahtarların cihazdan çıkmadığını, mesaj gövdesinin ara rölelerce
+          okunamadığını ve kurcalanan paketlerin reddedildiğini canlı olarak kanıtlar. Sonuçlar
+          imzalı bir denetim raporu olarak yazdırılabilir veya PDF'e kaydedilebilir.
+        </p>
+        <div className="mt-10">
+          <ZeroKnowledgeAudit />
+        </div>
+      </section>
+
+
+
       <section className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-6 py-20 md:flex-row md:items-center">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
