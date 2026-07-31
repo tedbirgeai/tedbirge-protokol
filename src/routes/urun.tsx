@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { NextStep } from "@/components/site/NextStep";
 
 export const Route = createFileRoute("/urun")({
   head: () => ({
@@ -123,6 +124,7 @@ function Product() {
           </div>
         </div>
       </section>
+      <NextStep to="/demo" title="Ürünü canlı görün" description="Mesh yolunun bir röle düştüğünde nasıl yeniden kurulduğunu tarayıcıda test edin." />
     </SitePage>
   );
 }

@@ -4,6 +4,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import { PLANS, type PlanKey } from "@/lib/paddle-catalog";
 import { useAuth } from "@/hooks/useAuth";
+import { NextStep } from "@/components/site/NextStep";
 
 export const Route = createFileRoute("/fiyatlandirma")({
   head: () => ({
@@ -276,6 +277,7 @@ function Pricing() {
           </div>
         </div>
       </section>
+      <NextStep to="/kur" title="Ağınızı 3 adımda kurun" description="Terminal ya da anahtar yönetimi olmadan ilk düğümünüzü başlatın." />
     </SitePage>
   );
 }
