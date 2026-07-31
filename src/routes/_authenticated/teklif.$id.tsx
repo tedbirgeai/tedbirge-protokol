@@ -165,14 +165,14 @@ function Proposal() {
           <div className="flex items-start justify-between gap-6">
             <div>
               <p className="font-mono text-[13pt] font-semibold uppercase tracking-[0.18em]">
-                TEDBİRGE GATEWAY
+                TEDBİRGE PROTOCOL
               </p>
               <p className="font-mono text-[8pt] uppercase tracking-[0.14em]">
-                Mehmet DİNÇ · Türkiye · tedbirge34@gmail.com
+                Mehmet DİNÇ (Tedbirge Gateway) · Türkiye · tedbirge34@gmail.com
               </p>
             </div>
             <div className="text-right font-mono text-[8pt] uppercase tracking-[0.12em]">
-              <p>Pilot Teklif / Başvuru Paketi</p>
+              <p>Kurumsal Bağlantı Sürekliliği Teklifi</p>
               <p>Paket no {lead.id.slice(0, 8)}</p>
               <p>{new Date(lead.created_at).toLocaleDateString("tr-TR")}</p>
             </div>
@@ -180,8 +180,9 @@ function Proposal() {
         </div>
 
         <div className="print-hide">
-          <SectionLabel>Teklif / Başvuru paketi</SectionLabel>
+          <SectionLabel>Tedbirge Protocol — Kurumsal Bağlantı Sürekliliği Teklifi</SectionLabel>
         </div>
+
         <h1 className="mt-3 text-3xl font-semibold tracking-tight print:mt-0 print:text-[16pt]">
           {lead.organization ?? lead.contact_name ?? "Pilot talebi"}
         </h1>
