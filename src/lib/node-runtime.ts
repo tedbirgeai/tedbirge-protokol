@@ -95,6 +95,11 @@ export function broadcastAlert(text: string) {
   return node?.sendAlert(text) ?? Promise.resolve(false);
 }
 
+/** Eş parmak izi onayından sonra rozetleri tazeler. */
+export function refreshPeerTrust(peerId: string) {
+  return node?.refreshPeerTrust(peerId);
+}
+
 export function pingNodePeers() {
   node?.pingPeers();
 }

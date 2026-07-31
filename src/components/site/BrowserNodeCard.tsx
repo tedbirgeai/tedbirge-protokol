@@ -6,6 +6,7 @@ import {
   setNodeLicense,
   startNode,
   stopNode,
+  refreshPeerTrust,
   testFieldRoute,
   useNodeRuntime,
 } from "@/lib/node-runtime";
@@ -27,6 +28,7 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
   const [copied, setCopied] = useState(false);
   const [details, setDetails] = useState(false);
   const [routeTest, setRouteTest] = useState<{ ok: boolean; message: string } | null>(null);
+  const [verifyTarget, setVerifyTarget] = useState<PeerVerifyTarget | null>(null);
 
   useEffect(() => {
     setLink(`${window.location.origin}/saha`);
