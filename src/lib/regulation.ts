@@ -132,6 +132,65 @@ TEDBIRGE_REGION=EU        # TR | EU | US | UK | GCC | APAC
 TEDBIRGE_CARRIERS=eth,wifi,cellular,satellite
 TEDBIRGE_LORA_DUTY_CYCLE=0.01`;
 
+/**
+ * Çalışma zamanında YAZILIMSAL TAVAN olarak uygulanan sayısal spektrum
+ * sınırları. Paket zamanlayıcı (carrier-scheduler.ts) bu tabloyu okur;
+ * değerler hiçbir yerde sabit yazılmaz.
+ */
+export type SpectrumLimit = {
+  region: string;
+  /** Sub-GHz SRD görev döngüsü oranı (0.01 = %1). */
+  dutyCycle: number;
+  /** Azami e.r.p. (mW). */
+  maxErpMw: number;
+  /** Görev döngüsü penceresi (ms) — ETSI/BTK: 1 saat. */
+  windowMs: number;
+  /** Üretimde varsayılan kapalı taşıyıcılar. */
+  disabled: string[];
+  note: string;
+};
+
+export const SPECTRUM_LIMITS: Record<string, SpectrumLimit> = {
+  TR: {
+    region: "Türkiye (BTK KEGY)",
+    dutyCycle: 0.01,
+    maxErpMw: 25,
+    windowMs: 3_600_000,
+    disabled: ["halow", "tvws"],
+    note: "868 MHz SRD · 25 mW e.r.p. · %1 görev döngüsü (saatte azami 36 sn yayın).",
+  },
+  EU: {
+    region: "Avrupa Birliği (ETSI EN 300 220)",
+    dutyCycle: 0.01,
+    maxErpMw: 25,
+    windowMs: 3_600_000,
+    disabled: ["halow", "tvws"],
+    note: "863–870 MHz · alt banda göre %0,1–%1; muhafazakâr tavan %1 uygulanır.",
+  },
+  US: {
+    region: "ABD / Kanada (FCC Part 15.247)",
+    dutyCycle: 1,
+    maxErpMw: 1000,
+    windowMs: 3_600_000,
+    disabled: [],
+    note: "902–928 MHz frekans atlamalı · görev döngüsü sınırı yok, güç tavanı geçerlidir.",
+  },
+  UK: {
+    region: "Birleşik Krallık (Ofcom IR 2030)",
+    dutyCycle: 0.01,
+    maxErpMw: 25,
+    windowMs: 3_600_000,
+    disabled: ["halow"],
+    note: "863–870 MHz · %1 görev döngüsü.",
+  },
+};
+
+export const DEFAULT_REGION = "TR";
+
+export function spectrumLimitFor(region = DEFAULT_REGION): SpectrumLimit {
+  return SPECTRUM_LIMITS[region] ?? SPECTRUM_LIMITS[DEFAULT_REGION];
+}
+
 /** Regülasyon merkezinin altı sütunu. */
 export type Pillar = {
   no: string;
