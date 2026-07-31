@@ -33,7 +33,6 @@ import {
 import {
   alreadySeen,
   appendEvent,
-  countPackets,
   deletePacket,
   getPackets,
   markSeen,
