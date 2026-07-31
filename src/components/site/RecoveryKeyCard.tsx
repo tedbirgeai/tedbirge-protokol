@@ -27,7 +27,7 @@ export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
   useEffect(() => {
     if (!nodeId) return;
     void getRecoveryPhrase(nodeId).then(setPhrase);
-    void storageInfo().then((s) => setQuota({ usagePct: s.usagePct, persisted: s.persisted }));
+    void storageInfo().then((s) => setQuota({ usagePct: Math.round(s.ratio * 100), persisted: s.persisted }));
   }, [nodeId]);
 
   function startVerify() {
@@ -65,7 +65,7 @@ export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
   async function persist() {
     const ok = await requestPersistentStorage();
     const s = await storageInfo();
-    setQuota({ usagePct: s.usagePct, persisted: s.persisted });
+    setQuota({ usagePct: Math.round(s.ratio * 100), persisted: s.persisted });
     setMsg({
       ok,
       text: ok
