@@ -187,6 +187,12 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
                 ok={Boolean(state.lastHeartbeatAt)}
               />
               <Line k="Eş RTT" v={state.rttMs != null ? `${state.rttMs} ms` : "ölçülüyor…"} ok={state.rttMs != null} />
+              <Line k="Kimlik parmak izi" v={state.fingerprint || "…"} ok={Boolean(state.fingerprint)} />
+              <Line
+                k="İmzasız düşen paket"
+                v={String(state.droppedUnsigned)}
+                ok={state.droppedUnsigned === 0}
+              />
             </dl>
             <button
               onClick={pingNodePeers}
