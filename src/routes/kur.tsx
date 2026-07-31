@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { EasyConsole } from "@/components/site/EasyConsole";
+import { NextStep } from "@/components/site/NextStep";
 
 const TITLE = "Kolay Kurulum — Tedbirge Gateway Ağınızı 3 Adımda Kurun";
 const DESC =
@@ -80,6 +81,7 @@ function Setup() {
           inceleyin.
         </p>
       </section>
+      <NextStep to="/panel" title="Ağınızı yönetmeye geçin" description="Düğüm durumu, telemetri ve lisans olaylarını müşteri panelinden izleyin." />
     </SitePage>
   );
 }

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { NextStep } from "@/components/site/NextStep";
 
 type NodeId = "A" | "B" | "C";
 
@@ -264,6 +265,7 @@ export function MeshDemo() {
           </div>
         </div>
       </section>
+      <NextStep to="/fiyatlandirma" title="Hangi plan size uygun?" description="Community, Pro ve Enterprise düğüm limitlerini ve fiyatları karşılaştırın." />
     </SitePage>
   );
 }
