@@ -45,7 +45,8 @@ type Lead = {
 function buildMarkdown(lead: Lead): string {
   const p = lead.plan;
   const lines = [
-    `# Tedbirge Gateway — Pilot Teklif / Başvuru Paketi`,
+    `# Tedbirge Protocol — Kurumsal Bağlantı Sürekliliği Teklifi`,
+
     ``,
     `**Kurum:** ${lead.organization ?? "—"}`,
     `**İlgili kişi:** ${lead.contact_name ?? "—"}`,
@@ -77,11 +78,17 @@ function buildMarkdown(lead: Lead): string {
   }
   lines.push(
     ``,
+    `## Yasal uyum`,
+    `- BTK: 868 MHz bandında %1 yayın süresi (duty-cycle) sınırı yazılımsal olarak uygulanır.`,
+    `- KVKK: Trafik içeriği saklanmaz; veri uçtan uca şifreli taşınır, yalnızca hacim ölçülür.`,
+    `- 5651: Kamuya açık erişim noktalarında karşılama/kayıt akışı ve olay günlüğü sağlanır.`,
+    ``,
     `## Kanıt taşıma`,
-    `Belgelerin SHA-256 karmalarını Pilot Uyum Panosu üzerinden kayıt altına alın: https://tedbirge-gateway.lovable.app/pilot-panosu`,
+    `Belgelerin bütünlük kayıtlarını Pilot Uyum Panosu üzerinden alın: https://tedbirge-gateway.lovable.app/pilot-panosu`,
     ``,
     `Mehmet DİNÇ (Tedbirge Gateway) — Türkiye`,
   );
+
   return lines.join("\n");
 }
 
