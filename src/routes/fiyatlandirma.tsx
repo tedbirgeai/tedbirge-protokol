@@ -9,16 +9,16 @@ import { NextStep } from "@/components/site/NextStep";
 export const Route = createFileRoute("/fiyatlandirma")({
   head: () => ({
     meta: [
-      { title: "Fiyatlandırma — Tedbirge Protokol" },
+      { title: "Fiyatlandırma — Tedbirge Protocol Resilience-as-a-Service" },
       {
         name: "description",
         content:
-          "Tedbirge lisans paketleri: açık kaynak Community, düğüm başına Enterprise ve kullanım bazlı Operator modeli. Şeffaf fiyat, sahada pilot.",
+          "Resilience-as-a-Service (RaaS) paketleri: Freemium, Community, Enterprise ve Operator. Şeffaf düğüm başına fiyat, 30 gün koşulsuz iade.",
       },
-      { property: "og:title", content: "Tedbirge Fiyatlandırma" },
+      { property: "og:title", content: "Tedbirge Protocol — RaaS Fiyatlandırma" },
       {
         property: "og:description",
-        content: "Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı ücretlendirme.",
+        content: "Freemium, Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı abonelik.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/fiyatlandirma" },
@@ -31,26 +31,31 @@ export const Route = createFileRoute("/fiyatlandirma")({
 
 const faqs = [
   [
-    "Lisans modeli nedir?",
-    "Çekirdek protokol açık kaynaktır. Enterprise ve Operator paketleri; üretim modülleri, faturalama köprüsü, destek ve garanti içerir.",
+    "Resilience-as-a-Service (RaaS) nedir?",
+    "Bağlantı sürekliliğini donanım satın almadan, aylık abonelikle almanızdır. Cihazlarınız Tedbirge Protocol'e katılır; yedekleme, izleme ve raporlama hizmet olarak sunulur.",
+  ],
+  [
+    "Freemium ile Community farkı nedir?",
+    "Freemium tek kullanıcı ve 2 cihazla denemek içindir. Community, 5 düğüme kadar ücretsiz pilot kurulumu ve tüm taşıyıcı köprülerini kapsar.",
   ],
   [
     "Kullanım nasıl ölçülür?",
-    "Her düğüm taşınan bayt sayısını ve payload SHA-256 özetini kaydeder. İçerik asla saklanmaz; fatura yalnızca hacim ve düğüm sayısı üzerinden çıkar.",
+    "Yalnızca taşınan hacim ve aktif düğüm sayısı ölçülür. Trafiğinizin içeriği hiçbir noktada saklanmaz; fatura sade ve denetlenebilirdir.",
   ],
   [
-    "İnternet olmadan faturalama çalışır mı?",
-    "Evet. Röle düğümleri Ed25519 imzalı fiş üretir; bağlantı geri geldiğinde fişler merkezi deftere aktarılır ve mahsuplaşır.",
+    "İnternet olmadan da çalışır mı?",
+    "Evet. Bağlantı kesildiğinde kayıtlar cihazda güvenle bekler, hat geri geldiğinde kayıpsız biçimde merkeze aktarılır ve faturaya yansır.",
   ],
   [
     "Kendi sunucumuzda barındırabilir miyiz?",
-    "Tüm paketler self-hosted çalışır. Tek statik binary, systemd birimi ve docker-compose üretim dosyaları hazır gelir.",
+    "Evet. Enterprise ve Operator paketleri kendi altyapınızda çalışacak şekilde kurulabilir; kurulum ve devreye alma destek kapsamındadır.",
   ],
   [
     "İade mümkün mü?",
     "Evet, 30 gün içinde koşulsuz tam iade. Ödemeler kayıtlı satıcımız Paddle tarafından işlenir.",
   ],
 ];
+
 
 function Pricing() {
   const navigate = useNavigate();
@@ -88,33 +93,36 @@ function Pricing() {
     <SitePage>
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <SectionLabel>Fiyatlandırma</SectionLabel>
+          <SectionLabel>Resilience-as-a-Service</SectionLabel>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
-            Düğüm başına şeffaf, hacimle ölçeklenen
+            Bağlantı sürekliliği, abonelik olarak
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            Açık kaynakla değerlendirin, üretimde düğüm başına ödeyin, operatörseniz taşıdığınız
-            trafik üzerinden anlaşın.
+            Ücretsiz deneyin, kurumsal kullanımda düğüm başına ödeyin, operatörseniz taşıdığınız
+            trafik üzerinden anlaşın. Donanım yatırımı ve uzun kurulum süreci yok.
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Community */}
+          {/* Freemium + Community */}
           <div className="flex flex-col rounded-sm border border-border bg-card/40 p-8">
-            <h2 className="font-mono text-sm uppercase tracking-[0.2em]">Community</h2>
+            <h2 className="font-mono text-sm uppercase tracking-[0.2em]">Freemium & Community</h2>
             <div className="mt-6 text-4xl font-semibold tracking-tight">Ücretsiz</div>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">Açık kaynak</p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              Freemium 2 cihaz · Community 5 düğüm
+            </p>
             <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-              Değerlendirme, araştırma ve tekil saha denemeleri için.
+              Tek cihazla denemek, pilot kurmak ve saha testi yapmak için.
             </p>
             <ul className="mt-7 flex-1 space-y-3 text-sm">
               {[
-                "5 düğüme kadar ücretsiz kota",
-                "Mesh router, tünel motoru, CLI SDK",
-                "Topluluk desteği (GitHub Issues)",
-                "Gömülü /admin paneli",
+                "Freemium: 2 cihaza kadar tarayıcı düğümü",
+                "Community: 5 düğüme kadar ücretsiz kota",
+                "Tüm taşıyıcı köprüleri ve çevrimdışı kuyruk",
+                "Canlı gösterge paneli",
+                "Topluluk desteği",
               ].map((f) => (
                 <li key={f} className="flex gap-3 text-muted-foreground">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
@@ -129,6 +137,7 @@ function Pricing() {
               Ücretsiz başla
             </Link>
           </div>
+
 
           {/* Pro / Enterprise */}
           <div className="flex flex-col rounded-sm border border-primary/60 bg-card p-8 shadow-[0_0_60px_-20px_var(--color-primary)]">

@@ -781,16 +781,17 @@ function Panel() {
 
               <div className="rounded-sm border border-border bg-card/50 p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Kriptografi ve protokol detayı
+                  Güvenlik ve ağ durumu
                 </p>
                 <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <Row k="Uçtan uca tünel" v="AES-256-GCM" />
-                  <Row k="Kimlik / imza" v="Ed25519" />
-                  <Row k="Anahtar türetme" v="HKDF-SHA256" />
-                  <Row k="Anahtar rotasyonu" v="Güvenlik sekmesi" />
-                  <Row k="Kuyruk" v="store-and-forward" />
-                  <Row k="Taşıyıcı" v="PHY-agnostic (9 taşıyıcı)" />
+                  <Row k="Veri koruması" v="Uçtan uca şifreli (E2EE)" />
+                  <Row k="Cihaz kimliği" v="Doğrulanmış düğüm" />
+                  <Row k="Gizlilik" v="Sıfır-bilgi ölçüm" />
+                  <Row k="Anahtar yenileme" v="Otomatik · Güvenlik sekmesi" />
+                  <Row k="Çevrimdışı" v="Kuyruk aktif, kayıpsız" />
+                  <Row k="Taşıyıcı" v="9 taşıyıcı · otomatik seçim" />
                 </dl>
+
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                   Bu değerler protokol sabitleridir; günlük kullanımda müdahale gerektirmez ve arka planda
                   otonom uygulanır.

@@ -9,10 +9,11 @@ import {
 import { requestPersistentStorage, storageInfo } from "@/lib/store/idb";
 
 /**
- * Kurtarma anahtarı sihirbazı: 12 kelimelik ifade cihaz değişiminde
- * aynı düğüm kimliğini (Ed25519/X25519) geri getirir. Özel anahtarlar
- * cihazdan hiç çıkmaz; yalnızca bu ifade yedeklenir.
+ * Kurtarma anahtarı sihirbazı: 12 kelimelik ifade cihaz değişiminde aynı
+ * düğüm kimliğini geri getirir. Kimlik anahtarları cihazdan hiç çıkmaz;
+ * kullanıcıya yalnızca bu ifade gösterilir (arka plan kriptografisi gizlidir).
  */
+
 export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
   const [phrase, setPhrase] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -50,7 +51,7 @@ export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
   async function restore() {
     const p = normalizePhrase(restoreInput);
     if (!isValidPhrase(p)) {
-      setMsg({ ok: false, text: "Geçersiz kurtarma ifadesi (12 kelime, BIP-39 sözlüğü)." });
+      setMsg({ ok: false, text: "Geçersiz kurtarma ifadesi. 12 kelimeyi sırasıyla girin." });
       return;
     }
     try {
@@ -82,10 +83,11 @@ export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
         Kurtarma anahtarı · 12 kelime
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-        Özel anahtarlarınız bu cihazda şifreli saklanır ve dışa aktarılamaz. Cihaz değişimi veya
-        tarayıcı verisi silinmesi durumunda aynı düğüm kimliğini yalnızca bu 12 kelimelik ifade geri
+        Cihaz kimliğiniz bu cihazda şifreli saklanır ve dışa aktarılamaz. Cihaz değişimi veya
+        tarayıcı verisi silinmesi durumunda aynı düğümü yalnızca bu 12 kelimelik ifade geri
         getirir. Ekran görüntüsü almayın; kâğıda yazın.
       </p>
+
 
       {phrase ? (
         <>

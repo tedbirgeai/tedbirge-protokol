@@ -45,7 +45,8 @@ type Lead = {
 function buildMarkdown(lead: Lead): string {
   const p = lead.plan;
   const lines = [
-    `# Tedbirge Gateway — Pilot Teklif / Başvuru Paketi`,
+    `# Tedbirge Protocol — Kurumsal Bağlantı Sürekliliği Teklifi`,
+
     ``,
     `**Kurum:** ${lead.organization ?? "—"}`,
     `**İlgili kişi:** ${lead.contact_name ?? "—"}`,
@@ -77,11 +78,17 @@ function buildMarkdown(lead: Lead): string {
   }
   lines.push(
     ``,
+    `## Yasal uyum`,
+    `- BTK: 868 MHz bandında %1 yayın süresi (duty-cycle) sınırı yazılımsal olarak uygulanır.`,
+    `- KVKK: Trafik içeriği saklanmaz; veri uçtan uca şifreli taşınır, yalnızca hacim ölçülür.`,
+    `- 5651: Kamuya açık erişim noktalarında karşılama/kayıt akışı ve olay günlüğü sağlanır.`,
+    ``,
     `## Kanıt taşıma`,
-    `Belgelerin SHA-256 karmalarını Pilot Uyum Panosu üzerinden kayıt altına alın: https://tedbirge-gateway.lovable.app/pilot-panosu`,
+    `Belgelerin bütünlük kayıtlarını Pilot Uyum Panosu üzerinden alın: https://tedbirge-gateway.lovable.app/pilot-panosu`,
     ``,
     `Mehmet DİNÇ (Tedbirge Gateway) — Türkiye`,
   );
+
   return lines.join("\n");
 }
 
@@ -158,14 +165,14 @@ function Proposal() {
           <div className="flex items-start justify-between gap-6">
             <div>
               <p className="font-mono text-[13pt] font-semibold uppercase tracking-[0.18em]">
-                TEDBİRGE GATEWAY
+                TEDBİRGE PROTOCOL
               </p>
               <p className="font-mono text-[8pt] uppercase tracking-[0.14em]">
-                Mehmet DİNÇ · Türkiye · tedbirge34@gmail.com
+                Mehmet DİNÇ (Tedbirge Gateway) · Türkiye · tedbirge34@gmail.com
               </p>
             </div>
             <div className="text-right font-mono text-[8pt] uppercase tracking-[0.12em]">
-              <p>Pilot Teklif / Başvuru Paketi</p>
+              <p>Kurumsal Bağlantı Sürekliliği Teklifi</p>
               <p>Paket no {lead.id.slice(0, 8)}</p>
               <p>{new Date(lead.created_at).toLocaleDateString("tr-TR")}</p>
             </div>
@@ -173,8 +180,9 @@ function Proposal() {
         </div>
 
         <div className="print-hide">
-          <SectionLabel>Teklif / Başvuru paketi</SectionLabel>
+          <SectionLabel>Tedbirge Protocol — Kurumsal Bağlantı Sürekliliği Teklifi</SectionLabel>
         </div>
+
         <h1 className="mt-3 text-3xl font-semibold tracking-tight print:mt-0 print:text-[16pt]">
           {lead.organization ?? lead.contact_name ?? "Pilot talebi"}
         </h1>
@@ -296,8 +304,9 @@ function Proposal() {
                 <Link to="/pilot-panosu" className="text-primary underline">
                   Pilot Uyum Panosu
                 </Link>{" "}
-                üzerinden SHA-256 kanıt zinciri ile kayıt altına alın; dosyalar sunucuya yüklenmez.
+                üzerinden kanıt zinciri ile kayıt altına alın; dosyalar sunucuya yüklenmez.
               </p>
+
             </Block>
 
             {plan.riskler.length > 0 && (
@@ -312,11 +321,31 @@ function Proposal() {
           </>
         )}
 
+        <Block title="Yasal uyum beyanı">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>
+              <strong className="text-foreground">BTK:</strong> 868 MHz bandında %1 yayın süresi
+              (duty-cycle) sınırı yazılımsal olarak uygulanır; çıkış gücü ve kanal kullanımı
+              mevzuat sınırları içinde tutulur.
+            </li>
+            <li>
+              <strong className="text-foreground">KVKK:</strong> Trafik içeriği hiçbir noktada
+              saklanmaz. Veri uçtan uca şifreli taşınır; yalnızca hacim ve düğüm sayısı ölçülür.
+            </li>
+            <li>
+              <strong className="text-foreground">5651:</strong> Kamuya açık erişim noktalarında
+              karşılama/kayıt akışı ve olay günlüğü sağlanır; yükümlülükler işleten taraf ile
+              birlikte değerlendirilir.
+            </li>
+          </ul>
+        </Block>
+
         <p className="mt-10 border-t border-border/60 pt-4 text-xs text-muted-foreground">
           Bu paket AI Danışman görüşmesinden otomatik üretilmiştir; bağlayıcı teklif değildir.
           Nihai kapsam ve fiyat pilot değerlendirmesi sonrası netleşir. Mehmet DİNÇ (Tedbirge
           Gateway), Türkiye.
         </p>
+
       </section>
     </SitePage>
   );
