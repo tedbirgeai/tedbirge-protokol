@@ -93,33 +93,36 @@ function Pricing() {
     <SitePage>
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <SectionLabel>Fiyatlandırma</SectionLabel>
+          <SectionLabel>Resilience-as-a-Service</SectionLabel>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
-            Düğüm başına şeffaf, hacimle ölçeklenen
+            Bağlantı sürekliliği, abonelik olarak
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            Açık kaynakla değerlendirin, üretimde düğüm başına ödeyin, operatörseniz taşıdığınız
-            trafik üzerinden anlaşın.
+            Ücretsiz deneyin, kurumsal kullanımda düğüm başına ödeyin, operatörseniz taşıdığınız
+            trafik üzerinden anlaşın. Donanım yatırımı ve uzun kurulum süreci yok.
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Community */}
+          {/* Freemium + Community */}
           <div className="flex flex-col rounded-sm border border-border bg-card/40 p-8">
-            <h2 className="font-mono text-sm uppercase tracking-[0.2em]">Community</h2>
+            <h2 className="font-mono text-sm uppercase tracking-[0.2em]">Freemium & Community</h2>
             <div className="mt-6 text-4xl font-semibold tracking-tight">Ücretsiz</div>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">Açık kaynak</p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              Freemium 2 cihaz · Community 5 düğüm
+            </p>
             <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-              Değerlendirme, araştırma ve tekil saha denemeleri için.
+              Tek cihazla denemek, pilot kurmak ve saha testi yapmak için.
             </p>
             <ul className="mt-7 flex-1 space-y-3 text-sm">
               {[
-                "5 düğüme kadar ücretsiz kota",
-                "Mesh router, tünel motoru, CLI SDK",
-                "Topluluk desteği (GitHub Issues)",
-                "Gömülü /admin paneli",
+                "Freemium: 2 cihaza kadar tarayıcı düğümü",
+                "Community: 5 düğüme kadar ücretsiz kota",
+                "Tüm taşıyıcı köprüleri ve çevrimdışı kuyruk",
+                "Canlı gösterge paneli",
+                "Topluluk desteği",
               ].map((f) => (
                 <li key={f} className="flex gap-3 text-muted-foreground">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
@@ -134,6 +137,7 @@ function Pricing() {
               Ücretsiz başla
             </Link>
           </div>
+
 
           {/* Pro / Enterprise */}
           <div className="flex flex-col rounded-sm border border-primary/60 bg-card p-8 shadow-[0_0_60px_-20px_var(--color-primary)]">
