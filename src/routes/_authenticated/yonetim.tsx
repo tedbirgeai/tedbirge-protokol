@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
+import { OFFICIAL_DRAFTS } from "@/lib/regulation";
 
 
 export const Route = createFileRoute("/_authenticated/yonetim")({
