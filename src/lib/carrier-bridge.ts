@@ -348,6 +348,8 @@ export function sendOverCarrier(
   if (!h?.write) return { ok: false, frames: 0, airtimeMs: 0, reason: "Taşıyıcı bağlı değil." };
   if (!carrierAllowed(carrier))
     return { ok: false, frames: 0, airtimeMs: 0, reason: "Bu taşıyıcı bölge profilinde kapalı." };
+  if (!carrierAuthorized(carrier))
+    return { ok: false, frames: 0, airtimeMs: 0, reason: "Operatör abonelik beyanı yok." };
   const res = scheduleEnvelope({
     carrier,
     raw: rawEnvelope,
@@ -362,7 +364,7 @@ export function sendOverCarrier(
 
 /** Bu taşıyıcı gerçekten veri taşıyabiliyor mu (yazma kanalı var mı)? */
 export function dataPlaneReady(carrier: CarrierId) {
-  return Boolean(handles.get(carrier)?.write) && carrierAllowed(carrier);
+  return Boolean(handles.get(carrier)?.write) && carrierAllowed(carrier) && carrierAuthorized(carrier);
 }
 
 /** Görev döngüsü bütçesi — UI göstergesi için. */
@@ -370,6 +372,111 @@ export function dutyCycleStatus(carrier: CarrierId) {
   const snap = schedulerSnapshot();
   return { applies: dutyCycleApplies(carrier), ...snap };
 }
+
+/* ------------------- failover geçiş motoru (skorlama) ------------------- */
+
+export type CarrierScore = {
+  carrier: CarrierId;
+  name: string;
+  score: number;
+  ready: boolean;
+  reason: string;
+  costPerMb: number;
+  latencyMs: number;
+  linkQuality: number;
+};
+
+/**
+ * Maliyet ve gecikme farkındalıklı skor.
+ * Skor = bağlantı kalitesi × kapasite / (gecikme cezası × maliyet cezası)
+ * Acil trafik (öncelik 0) maliyeti yok sayar; telemetri (3) maliyete duyarlıdır.
+ */
+export function scoreCarrier(carrier: CarrierId, priority: Priority = 2): CarrierScore {
+  const def = BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)!;
+  const link = state.links[carrier];
+  const ready = dataPlaneReady(carrier);
+  const reason = !handles.get(carrier)?.write
+    ? "Bağlı değil"
+    : !carrierAllowed(carrier)
+      ? "Bölge profilinde kapalı"
+      : !carrierAuthorized(carrier)
+        ? "Abonelik beyanı yok"
+        : "Hazır";
+
+  // RSSI −120…−40 dBm aralığı 0…1'e eşlenir; ölçüm yoksa nötr 0.6.
+  const rssi = link?.rssi;
+  const linkQuality =
+    typeof rssi === "number" ? Math.max(0.05, Math.min(1, (rssi + 120) / 80)) : link ? 0.6 : 0.3;
+
+  const latency = link?.rttMs ?? def.typLatencyMs;
+  const latencyPenalty = 1 + latency / 200;
+  const costWeight = priority === 0 ? 0 : priority === 1 ? 0.2 : priority === 2 ? 0.6 : 1;
+  const costPenalty = 1 + def.costPerMb * costWeight;
+  const loss = 1 - Math.min(0.95, (link?.lossPct ?? 0) / 100);
+
+  const raw = (linkQuality * loss * Math.log10(def.capacityKbps + 10)) / (latencyPenalty * costPenalty);
+  return {
+    carrier,
+    name: def.name,
+    score: ready ? Number(raw.toFixed(4)) : 0,
+    ready,
+    reason,
+    costPerMb: def.costPerMb,
+    latencyMs: latency,
+    linkQuality: Number(linkQuality.toFixed(2)),
+  };
+}
+
+/** Tüm taşıyıcıların skor tablosu — panelde failover sıralaması olarak gösterilir. */
+export function carrierRanking(priority: Priority = 2): CarrierScore[] {
+  return BRIDGEABLE_CARRIERS.map((c) => scoreCarrier(c.id, priority)).sort((a, b) => b.score - a.score);
+}
+
+/** Geçiş histerezisi: mevcut taşıyıcı, adayın %20 altına düşmedikçe korunur. */
+const HYSTERESIS = 1.2;
+let activeCarrier: CarrierId | null = null;
+
+export function activeDataCarrier() {
+  return activeCarrier;
+}
+
+/**
+ * Failover geçiş motoru: en yüksek skorlu hazır taşıyıcıya yazar.
+ * Kararsız salınımı önlemek için histerezis uygulanır.
+ */
+export function sendOverBestCarrier(
+  rawEnvelope: string,
+  priority: Priority = 2,
+): { ok: boolean; carrier: CarrierId | null; frames: number; reason?: string } {
+  const ranked = carrierRanking(priority).filter((r) => r.ready && r.score > 0);
+  if (!ranked.length) return { ok: false, carrier: null, frames: 0, reason: "Hazır taşıyıcı yok." };
+
+  const current = activeCarrier ? ranked.find((r) => r.carrier === activeCarrier) : undefined;
+  const best = ranked[0];
+  const chosen = current && best.score < current.score * HYSTERESIS ? current : best;
+
+  const res = sendOverCarrier(chosen.carrier, rawEnvelope, priority);
+  if (res.ok) {
+    if (activeCarrier !== chosen.carrier) {
+      activeCarrier = chosen.carrier;
+      publish();
+    }
+    return { ok: true, carrier: chosen.carrier, frames: res.frames };
+  }
+
+  // Seçilen taşıyıcı yazamadı: sıradaki adaya düş.
+  for (const cand of ranked) {
+    if (cand.carrier === chosen.carrier) continue;
+    const fb = sendOverCarrier(cand.carrier, rawEnvelope, priority);
+    if (fb.ok) {
+      activeCarrier = cand.carrier;
+      publish();
+      return { ok: true, carrier: cand.carrier, frames: fb.frames };
+    }
+  }
+  return { ok: false, carrier: null, frames: 0, reason: res.reason };
+}
+
 
 /** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
 export async function connectSerialCarrier(carrier: CarrierId) {
