@@ -152,6 +152,8 @@ export class BrowserNode {
   private peerKeys = new Map<string, { spk: string; bpk: string; fingerprint: string; verified: boolean }>();
   private timer: ReturnType<typeof setInterval> | null = null;
   private identity: Identity | null = null;
+  /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
+  private carrierSend: ((raw: string, priority: Priority) => boolean) | null = null;
   private state: BrowserNodeState;
 
   constructor(licenseKey: string | undefined, onState: (s: BrowserNodeState) => void) {
