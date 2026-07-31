@@ -35,7 +35,7 @@ function GuidesIndex() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Kurulum, mimari ve güvenlik konularında uygulanabilir rehberler. Hepsi Tedbirge
-            Gateway&apos;in gerçek davranışından türetildi.
+            Tedbirge ProtokolGateway&apos;inapos;ün gerçek davranışından türetildi.
           </p>
           <a
             href="/tedbirge-teknik-ozet.md"

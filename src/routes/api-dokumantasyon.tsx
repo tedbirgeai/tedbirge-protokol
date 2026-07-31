@@ -53,7 +53,7 @@ function ApiDocs() {
             Telemetri API dokümantasyonu
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Gerçek Gateway düğümleri saha ölçümlerini bu uç noktaya bildirir. İçerik, hedef adres
+            Gerçek Tedbirge Protokol düğümleri saha ölçümlerini bu uç noktaya bildirir. İçerik, hedef adres
             veya kullanıcı verisi kabul edilmez — yalnızca RTT, hız, paket kaybı ve bayt sayacı.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

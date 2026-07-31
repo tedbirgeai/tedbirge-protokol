@@ -95,7 +95,7 @@ function Security() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Güvenlik iddiası, sınırları yazılı olmadıkça iddia değildir. Aşağıda Tedbirge
-            Gateway&apos;in kriptografik temelleri, kapsadığı saldırgan sınıfları ve açıkça
+            Tedbirge ProtokolGateway&apos;inapos;ün kriptografik temelleri, kapsadığı saldırgan sınıfları ve açıkça
             kapsam dışı bıraktığı alanlar yer alır.
           </p>
         </div>
