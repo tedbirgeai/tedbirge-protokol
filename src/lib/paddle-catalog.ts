@@ -42,7 +42,8 @@ export const PLANS: Record<PlanKey, PlanDefinition> = {
     minNodes: 6,
     maxNodes: 24,
     prices: { month: PRICES.proMonthly, year: PRICES.proYearly },
-    unitPrice: { month: 29, year: 290 },
+    // 12 €/düğüm/ay · yıllıkta 2 ay hediye (10 × 12 = 120)
+    unitPrice: { month: 12, year: 120 },
   },
   enterprise: {
     key: "enterprise",
@@ -51,9 +52,11 @@ export const PLANS: Record<PlanKey, PlanDefinition> = {
     minNodes: 25,
     maxNodes: 1000,
     prices: { month: PRICES.enterpriseMonthly, year: PRICES.enterpriseYearly },
-    unitPrice: { month: 49, year: 500 },
+    // Hacim indirimi: düğüm başı birim fiyat Pro'dan düşüktür.
+    unitPrice: { month: 8, year: 80 },
   },
 };
+
 
 /** Paddle product external_id -> plan tanımı */
 export function planByProductId(productId: string): PlanDefinition | undefined {
