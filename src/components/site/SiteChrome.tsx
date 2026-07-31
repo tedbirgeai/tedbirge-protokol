@@ -416,7 +416,7 @@ export function SiteFooter() {
               <li><Link to="/izinler" className={footerLinkClass}>Devlet izinleri</Link></li>
               <li><Link to="/pilot-panosu" className={footerLinkClass}>Pilot uyum panosu</Link></li>
               <li><Link to="/ihracat-uyum" className={footerLinkClass}>İhracat kontrolü</Link></li>
-              <li><Link to="/yasal" className={footerLinkClass}>Sözleşme ekleri &amp; dilekçeler</Link></li>
+              <li><Link to="/yasal" className={footerLinkClass}>Sözleşme ekleri (örnek şablon)</Link></li>
 
               <li><Link to="/guvenlik" className={footerLinkClass}>Güvenlik & tehdit modeli</Link></li>
             </ul>

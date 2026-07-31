@@ -3,15 +3,14 @@ import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import {
   CONTRACT_ANNEXES,
-  OFFICIAL_DRAFTS,
   REG_VERSION,
   REG_REVIEWED,
   REG_VENDOR,
 } from "@/lib/regulation";
 
-const TITLE = "Sözleşme Ekleri ve İdari Dilekçeler — Tedbirge Gateway";
+const TITLE = "Sözleşme Ekleri — Örnek Şablonlar | Tedbirge Gateway";
 const DESC =
-  "Ek-A spektrum taahhüdü, Ek-B 5651 log sorumluluğu, Ek-C ihracat kontrolü son kullanıcı beyanı ile BTK muafiyet dilekçesi ve valilik saha testi bilgilendirme yazısı taslakları.";
+  "Ek-A spektrum taahhüdü, Ek-B 5651 log sorumluluk devri ve Ek-C ihracat/yaptırım kontrolü son kullanıcı beyanı için kopyalanabilir örnek sözleşme eki şablonları.";
 const URL = "https://tedbirge-gateway.lovable.app/yasal";
 
 export const Route = createFileRoute("/yasal")({
@@ -69,14 +68,14 @@ function LegalPack() {
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="grid-bg absolute inset-0 opacity-60" aria-hidden />
         <div className="relative mx-auto max-w-6xl px-6 py-20">
-          <SectionLabel>Şirketleşme ve idari uyum paketi</SectionLabel>
+          <SectionLabel>Örnek şablon · Kurumsal sözleşme ekleri</SectionLabel>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">
-            Sözleşme ekleri ve resmî dilekçe taslakları
+            Sözleşme ekleri — örnek şablonlar
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Ek-A spektrum ve donanım taahhüdü, Ek-B 5651 sorumluluk devri, Ek-C ihracat kontrolü
-            son kullanıcı beyanı ile BTK ve mülki idareye sunulacak resmî yazı taslakları. Tüm
-            metinler kopyalanabilir; sözleşme dosyanıza olduğu gibi eklenebilir.
+            Ek-A spektrum ve donanım taahhüdü, Ek-B 5651 sorumluluk devri ve Ek-C ihracat
+            kontrolü son kullanıcı beyanı. Bu metinler müşteri sözleşmelerine eklenmek üzere
+            hazırlanmış örnek şablonlardır; kopyalanabilir ve PDF olarak indirilebilir.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
@@ -84,13 +83,7 @@ function LegalPack() {
               download
               className="rounded-sm bg-primary px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
             >
-              Tüm paketi PDF indir
-            </a>
-            <a
-              href="#dilekceler"
-              className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
-            >
-              Dilekçe taslakları
+              Sözleşme ekleri paketini indir
             </a>
           </div>
           <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
@@ -138,47 +131,6 @@ function LegalPack() {
             </footer>
           </article>
         ))}
-      </section>
-
-      <section id="dilekceler" className="border-y border-border/60 bg-card/30">
-        <div className="mx-auto max-w-6xl space-y-10 px-6 py-20">
-          <div>
-            <SectionLabel>İdari dilekçeler</SectionLabel>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-              Resmî başvuru ve bilgilendirme taslakları
-            </h2>
-            <p className="mt-4 max-w-2xl text-muted-foreground">
-              Kurum antetli kâğıdınıza yapıştırıp boş alanları doldurmanız yeterlidir.
-            </p>
-          </div>
-
-          {OFFICIAL_DRAFTS.map((d) => (
-            <article key={d.id} id={d.id} className="overflow-hidden rounded-sm border border-border">
-              <header className="flex flex-wrap items-start gap-4 border-b border-border bg-background/60 px-6 py-5">
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
-                    {d.label}
-                  </p>
-                  <h3 className="mt-2 text-xl font-semibold tracking-tight">{d.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.summary}</p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <a
-                    href={`/belgeler/tedbirge-${d.id}.pdf`}
-                    download
-                    className="rounded-sm bg-primary px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
-                  >
-                    PDF indir
-                  </a>
-                  <CopyButton text={d.body} label="Dilekçeyi kopyala" />
-                </div>
-              </header>
-              <pre className="overflow-x-auto whitespace-pre-wrap bg-background/70 px-6 py-6 font-mono text-[12px] leading-relaxed text-muted-foreground">
-                <code>{d.body}</code>
-              </pre>
-            </article>
-          ))}
-        </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-16">
