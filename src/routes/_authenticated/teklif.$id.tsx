@@ -304,8 +304,9 @@ function Proposal() {
                 <Link to="/pilot-panosu" className="text-primary underline">
                   Pilot Uyum Panosu
                 </Link>{" "}
-                üzerinden SHA-256 kanıt zinciri ile kayıt altına alın; dosyalar sunucuya yüklenmez.
+                üzerinden kanıt zinciri ile kayıt altına alın; dosyalar sunucuya yüklenmez.
               </p>
+
             </Block>
 
             {plan.riskler.length > 0 && (
@@ -320,11 +321,31 @@ function Proposal() {
           </>
         )}
 
+        <Block title="Yasal uyum beyanı">
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>
+              <strong className="text-foreground">BTK:</strong> 868 MHz bandında %1 yayın süresi
+              (duty-cycle) sınırı yazılımsal olarak uygulanır; çıkış gücü ve kanal kullanımı
+              mevzuat sınırları içinde tutulur.
+            </li>
+            <li>
+              <strong className="text-foreground">KVKK:</strong> Trafik içeriği hiçbir noktada
+              saklanmaz. Veri uçtan uca şifreli taşınır; yalnızca hacim ve düğüm sayısı ölçülür.
+            </li>
+            <li>
+              <strong className="text-foreground">5651:</strong> Kamuya açık erişim noktalarında
+              karşılama/kayıt akışı ve olay günlüğü sağlanır; yükümlülükler işleten taraf ile
+              birlikte değerlendirilir.
+            </li>
+          </ul>
+        </Block>
+
         <p className="mt-10 border-t border-border/60 pt-4 text-xs text-muted-foreground">
           Bu paket AI Danışman görüşmesinden otomatik üretilmiştir; bağlayıcı teklif değildir.
           Nihai kapsam ve fiyat pilot değerlendirmesi sonrası netleşir. Mehmet DİNÇ (Tedbirge
           Gateway), Türkiye.
         </p>
+
       </section>
     </SitePage>
   );
