@@ -157,9 +157,21 @@ export function parseCarrierLine(line: string): Partial<BridgeLink> {
 type Handle = {
   stop: () => Promise<void>;
   timer: ReturnType<typeof setInterval> | null;
+  /** Veri düzlemi yazıcısı — yoksa taşıyıcı yalnızca ölçüm okur. */
+  write?: (payload: string) => Promise<void>;
 };
 
 const handles = new Map<string, Handle>();
+/** Taşıyıcı başına parça birleştirici (LoRa MTU'su nedeniyle gerekir). */
+const reassemblers = new Map<string, Reassembler>();
+
+/** Gelen mesh zarfını işleyecek katman (browser-node tarafından bağlanır). */
+type EnvelopeSink = (raw: string, carrier: CarrierId) => void;
+let envelopeSink: EnvelopeSink | null = null;
+
+export function setCarrierEnvelopeSink(sink: EnvelopeSink | null) {
+  envelopeSink = sink;
+}
 
 function upsert(carrier: CarrierId, patch: Partial<BridgeLink>) {
   const prev = state.links[carrier];
@@ -175,7 +187,7 @@ async function postTelemetry(carrier: CarrierId) {
     node_id: `${getBrowserNodeId()}-${carrier}`,
     label: `${BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)?.name} köprüsü`,
     carrier,
-    firmware: `carrier-bridge-1.0/${link.transport}`,
+    firmware: `carrier-bridge-2.0/${link.transport}`,
     rtt_ms: link.rttMs ?? 0,
     packet_loss_pct: link.lossPct ?? 0,
     hops: 1,
@@ -207,6 +219,27 @@ function ingest(carrier: CarrierId, chunk: string) {
   const parsed = parseCarrierLine(chunk);
   const prev = state.links[carrier];
   if (!prev) return;
+
+  // Veri düzlemi: TBG2 çerçeveleri birleştirilip mesh katmanına verilir.
+  let rc = reassemblers.get(carrier);
+  if (!rc) {
+    rc = new Reassembler();
+    reassemblers.set(carrier, rc);
+  }
+  if (chunk.startsWith("TBG2|") || chunk.trimStart().startsWith('{"h":')) {
+    const complete = rc.push(chunk.trim());
+    if (complete && decodeEnvelope(complete)) {
+      envelopeSink?.(complete, carrier);
+      upsert(carrier, {
+        frames: prev.frames + 1,
+        lastFrameAt: Date.now(),
+        rxPackets: (prev.rxPackets ?? 0) + 1,
+        lastLine: `mesh-zarf · ${complete.length} bayt (gövde şifreli)`,
+      });
+      return;
+    }
+  }
+
   upsert(carrier, {
     ...parsed,
     rssi: parsed.rssi ?? prev.rssi,
@@ -217,6 +250,42 @@ function ingest(carrier: CarrierId, chunk: string) {
     lastFrameAt: Date.now(),
     lastLine: chunk.slice(0, 160),
   });
+}
+
+/**
+ * Veri düzlemi gönderimi: zarf, paket zamanlayıcı üzerinden taşıyıcıya
+ * yazılır. LoRa'da parçalama + %1 görev döngüsü tavanı zorunludur.
+ */
+export function sendOverCarrier(
+  carrier: CarrierId,
+  rawEnvelope: string,
+  priority: Priority = 2,
+): { ok: boolean; frames: number; airtimeMs: number; reason?: string } {
+  const h = handles.get(carrier);
+  if (!h?.write) return { ok: false, frames: 0, airtimeMs: 0, reason: "Taşıyıcı bağlı değil." };
+  if (!carrierAllowed(carrier))
+    return { ok: false, frames: 0, airtimeMs: 0, reason: "Bu taşıyıcı bölge profilinde kapalı." };
+  const res = scheduleEnvelope({
+    carrier,
+    raw: rawEnvelope,
+    priority,
+    send: async (payload) => {
+      await h.write!(`${payload}\n`);
+      upsert(carrier, { txPackets: (state.links[carrier]?.txPackets ?? 0) + 1 });
+    },
+  });
+  return { ok: true, ...res };
+}
+
+/** Bu taşıyıcı gerçekten veri taşıyabiliyor mu (yazma kanalı var mı)? */
+export function dataPlaneReady(carrier: CarrierId) {
+  return Boolean(handles.get(carrier)?.write) && carrierAllowed(carrier);
+}
+
+/** Görev döngüsü bütçesi — UI göstergesi için. */
+export function dutyCycleStatus(carrier: CarrierId) {
+  const snap = schedulerSnapshot();
+  return { applies: dutyCycleApplies(carrier), ...snap };
 }
 
 /** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
