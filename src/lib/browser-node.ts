@@ -38,7 +38,6 @@ import {
   markSeen,
   migrateLegacyQueue,
   putPacket,
-  putPeer,
   requestPersistentStorage,
   type Priority,
 } from "@/lib/store/idb";
