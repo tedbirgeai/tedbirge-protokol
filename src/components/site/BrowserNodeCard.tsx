@@ -9,6 +9,7 @@ import {
   testFieldRoute,
   useNodeRuntime,
 } from "@/lib/node-runtime";
+import { RecoveryKeyCard } from "@/components/site/RecoveryKeyCard";
 
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 
@@ -209,11 +210,13 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
             {state.error && <p className="mt-3 text-[11px] text-destructive">{state.error}</p>}
           </div>
 
+          <RecoveryKeyCard nodeId={state.nodeId} />
+
           <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-3">
             {[
               {
                 t: "Çevrimdışı kuyruk",
-                b: "Bağlantı koptuğunda paketler cihazda kalıcı saklanır (en fazla 200 kayıt) ve bağlantı dönünce sırayla iletilir.",
+                b: "Bağlantı koptuğunda paketler cihazda (IndexedDB) 30 güne kadar saklanır; alan dolarsa önce eski telemetri budanır, sistem/acil mesajlar korunur.",
               },
               {
                 t: "Sınırlamalar",
