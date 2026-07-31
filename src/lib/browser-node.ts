@@ -46,7 +46,14 @@ import {
 import { pruneOutbox } from "@/lib/store/pruning";
 import { observePeerKey, trustStatusOf, type TrustStatus } from "@/lib/peer-trust";
 import { getPeer } from "@/lib/store/idb";
-import { recordDrop, recordRelay, recordRtt, recordRx, recordTx } from "@/lib/diagnostics";
+import {
+  recordDrop,
+  recordQueue,
+  recordRelay,
+  recordRtt,
+  recordRx,
+  recordTx,
+} from "@/lib/diagnostics";
 
 const ID_KEY = "tedbirge.browser-node.id";
 const CHANNEL = "tedbirge-mesh-v1";
@@ -195,8 +202,10 @@ export class BrowserNode {
   }
 
   private async refreshQueueCount() {
-    const queued = await countPackets();
-    this.emit({ queued });
+    const rows = await getPackets();
+    const oldest = rows.reduce<number | null>((min, r) => (min === null || r.ts < min ? r.ts : min), null);
+    recordQueue(rows.length, oldest);
+    this.emit({ queued: rows.length });
   }
 
   private discoveryMode(): DiscoveryMode {
@@ -620,10 +629,12 @@ export class BrowserNode {
           if (this.carrierSend(encodeEnvelope(env), prio)) pushed = true;
         }
         if (pushed) {
+          recordTx(true);
           this.emit({});
           return true;
         }
       }
+      recordTx(false);
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
@@ -644,7 +655,9 @@ export class BrowserNode {
       const peer = this.peers.get(target);
       try {
         peer?.dc?.send(raw);
+        recordTx(true);
       } catch {
+        recordTx(false);
         await this.enqueue({ t: "fwd", env });
       }
     }
@@ -659,6 +672,16 @@ export class BrowserNode {
     await putPacket({ pktId, priority, ts: Date.now(), attempts: 0, env: item });
     await pruneOutbox();
     await this.refreshQueueCount();
+  }
+
+  /** IndexedDB'deki kalıcı güven kaydını okuyup eş rozetini tazeler. */
+  async refreshPeerTrust(peerId: string) {
+    const rec = await getPeer(peerId);
+    const status = trustStatusOf(rec);
+    const keys = this.peerKeys.get(peerId);
+    if (keys) this.peerKeys.set(peerId, { ...keys, trust: status, verified: status === "manual" });
+    this.emit({});
+    return status;
   }
 
   /** Kullanıcı testi: tüm eşlere ping atar, dönen pong ile RTT ölçülür. */
