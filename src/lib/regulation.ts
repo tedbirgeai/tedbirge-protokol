@@ -476,11 +476,8 @@ b) Telsiz kurma ve kullanma izni ile tip onayı yükümlülükleri bakımından,
 c) Varsa yerine getirilmesi gereken ilave bildirim, belge veya teknik dosya yükümlülükleri,
 hususlarında Kurumunuzun yazılı görüşünün tarafımıza bildirilmesini saygılarımla arz ederim.
 
-Ekler:
-Ek-1: Ürün teknik özeti ve mimari şeması
-Ek-2: Bölge profili (TR) spektrum parametre tablosu
-Ek-3: Tedarikçi uygunluk beyanı
-Ek-4: Sözleşme Ek-A / Ek-B / Ek-C metinleri
+Kurumunuzca talep edilmesi hâlinde ürün teknik özeti, bölge profili (TR) spektrum parametre tablosu ve ilgili sözleşme ek metinleri ayrıca sunulacaktır.
+
 
 Mehmet DİNÇ
 Tedbirge Gateway
