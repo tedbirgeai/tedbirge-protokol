@@ -93,6 +93,10 @@ export type BridgeLink = {
   frames: number;
   lastLine: string;
   uploaded: number;
+  /** Veri düzleminde bu taşıyıcıdan alınan mesh zarfı sayısı. */
+  rxPackets?: number;
+  /** Veri düzleminde bu taşıyıcıya yazılan çerçeve sayısı. */
+  txPackets?: number;
   error: string | null;
 };
 
