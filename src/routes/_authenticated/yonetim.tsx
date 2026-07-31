@@ -162,7 +162,9 @@ function Admin() {
             ? "Pilot başvuruları"
             : tab === "ai"
               ? "AI danışman talepleri"
-              : "İdari belgeler & dilekçeler"}
+              : tab === "plan"
+                ? "İş planı geliştirme rehberi"
+                : "İdari belgeler & dilekçeler"}
         </h1>
 
 
