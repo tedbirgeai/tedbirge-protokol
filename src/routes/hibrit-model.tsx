@@ -4,13 +4,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/hibrit-model")({
   head: () => ({
     meta: [
-      { title: "Hibrit Overlay Modeli — Tedbirge Gateway" },
+      { title: "Hibrit Overlay Modeli — Tedbirge Protokol" },
       {
         name: "description",
         content:
           "Tedbirge direk dikmez, kablo döşemez, uydu fırlatmaz. Mevcut internet ve mevcut modemler üzerine kurulan hibrit overlay ile veri taşıma maliyetini düşürür. Emsal firmalar ve gerçek ölçüm yöntemi.",
       },
-      { property: "og:title", content: "Hibrit Overlay Modeli — Tedbirge Gateway" },
+      { property: "og:title", content: "Hibrit Overlay Modeli — Tedbirge Protokol" },
       {
         property: "og:description",
         content:
@@ -154,7 +154,7 @@ function HybridModel() {
             Altyapıyı kurmayız; altyapının taşıdığı veriyi verimli taşırız
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground">
-            Tedbirge Gateway sermaye yoğun bir telekom değildir. Direk dikmez, kablo döşemez, uydu
+            Tedbirge Protokol sermaye yoğun bir telekom değildir. Direk dikmez, kablo döşemez, uydu
             fırlatmaz. Zaten var olan taşıyıcıların (fiber, hücresel, uydu, LoRa, HaLow, TVWS,
             WiGig, FSO) üzerinde çalışan taşıyıcı-bağımsız bir overlay katmanıdır: yolu kısaltır,
             tekrar eden veriyi eler, eşler arası dağıtır ve kopmada kuyruğa alır.

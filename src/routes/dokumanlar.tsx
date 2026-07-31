@@ -69,7 +69,7 @@ const docs: Doc[] = [
     entries: [
       {
         type: "text",
-        body: "Tedbirge Gateway ve Tedbirge CLI, CGO olmadan derlenen iki bağımsız uygulamadır. Linux amd64/arm64, Windows amd64 ve macOS amd64/arm64 hedefleri için toplam 10 binary üretilir.",
+        body: "Tedbirge Protokol ve Tedbirge CLI, CGO olmadan derlenen iki bağımsız uygulamadır. Linux amd64/arm64, Windows amd64 ve macOS amd64/arm64 hedefleri için toplam 10 binary üretilir.",
       },
       {
         type: "code",

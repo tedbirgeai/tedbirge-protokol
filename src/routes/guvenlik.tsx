@@ -3,7 +3,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 const TITLE = "Güvenlik & Tehdit Modeli — Sıfır-Bilgi Geçidin Sınırları";
 const DESC =
-  "Tedbirge Gateway'in tehdit modeli: kriptografik temeller, hangi saldırganlara karşı koruma sağlanır, sıfır-bilgi iddiasının kapsamı, bilinen sınırlar ve zafiyet bildirim süreci.";
+  "Tedbirge Protokol'in tehdit modeli: kriptografik temeller, hangi saldırganlara karşı koruma sağlanır, sıfır-bilgi iddiasının kapsamı, bilinen sınırlar ve zafiyet bildirim süreci.";
 const URL = "https://tedbirge-gateway.lovable.app/guvenlik";
 
 export const Route = createFileRoute("/guvenlik")({
@@ -95,7 +95,7 @@ function Security() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Güvenlik iddiası, sınırları yazılı olmadıkça iddia değildir. Aşağıda Tedbirge
-            Gateway&apos;in kriptografik temelleri, kapsadığı saldırgan sınıfları ve açıkça
+            Tedbirge ProtokolGateway&apos;inapos;ün kriptografik temelleri, kapsadığı saldırgan sınıfları ve açıkça
             kapsam dışı bıraktığı alanlar yer alır.
           </p>
         </div>

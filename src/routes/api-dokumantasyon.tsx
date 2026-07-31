@@ -3,9 +3,9 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { OPENAPI_SPEC, CURL_EXAMPLE, AGENT_SNIPPET, PY_SNIPPET } from "@/lib/api-spec";
 import { SITE_URL } from "@/lib/site";
 
-const TITLE = "Telemetri API Dokümantasyonu — Tedbirge Gateway";
+const TITLE = "Telemetri API Dokümantasyonu — Tedbirge Protokol";
 const DESC =
-  "Tedbirge Gateway saha düğümleri için telemetri API'si: kimlik doğrulama, istek şeması, hata kodları, curl/Python/bash örnekleri ve OpenAPI 3.1 tanımı.";
+  "Tedbirge Protokol saha düğümleri için telemetri API'si: kimlik doğrulama, istek şeması, hata kodları, curl/Python/bash örnekleri ve OpenAPI 3.1 tanımı.";
 const URL = `${SITE_URL}/api-dokumantasyon`;
 
 export const Route = createFileRoute("/api-dokumantasyon")({
@@ -53,7 +53,7 @@ function ApiDocs() {
             Telemetri API dokümantasyonu
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Gerçek Gateway düğümleri saha ölçümlerini bu uç noktaya bildirir. İçerik, hedef adres
+            Gerçek Tedbirge Protokol düğümleri saha ölçümlerini bu uç noktaya bildirir. İçerik, hedef adres
             veya kullanıcı verisi kabul edilmez — yalnızca RTT, hız, paket kaybı ve bayt sayacı.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

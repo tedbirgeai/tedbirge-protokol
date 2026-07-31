@@ -112,6 +112,6 @@ export async function sendTestWebhook(endpointId: string, userId: string) {
   return deliver(endpoint, "license_event", {
     test: true,
     event: "webhook_test",
-    detail: "Tedbirge Gateway test bildirimi",
+    detail: "Tedbirge Protokol test bildirimi",
   });
 }

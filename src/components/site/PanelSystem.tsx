@@ -416,7 +416,7 @@ export function CalibrationReports({ refreshKey }: { refreshKey: number }) {
       )
       .join("");
     w.document.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8">
-      <title>Tedbirge Gateway — Model Kalibrasyon Raporu</title>
+      <title>Tedbirge Protokol — Model Kalibrasyon Raporu</title>
       <style>
         body{font-family:ui-sans-serif,system-ui,sans-serif;margin:32px;color:#111}
         h1{font-size:20px;margin:0 0 4px}
@@ -426,13 +426,13 @@ export function CalibrationReports({ refreshKey }: { refreshKey: number }) {
         th{background:#f2f2f2;text-transform:uppercase;letter-spacing:.06em;font-size:10px}
         footer{margin-top:24px;font-size:10px;color:#666}
       </style></head><body>
-      <h1>Tedbirge Gateway — Model Kalibrasyon Raporu</h1>
+      <h1>Tedbirge Protokol — Model Kalibrasyon Raporu</h1>
       <p class="meta">Üretim: ${esc(new Date().toLocaleString("tr-TR"))} · Kayıt sayısı: ${rows.length} · Yöntem: leave-one-out çapraz doğrulama (gerçek saha ölçümleri)</p>
       <table><thead><tr>
         <th>Tarih</th><th>Taşıyıcı / arazi / anten</th><th>Ölçüm</th><th>Model km</th>
         <th>Kalibre km</th><th>MAE km</th><th>İsabet</th><th>Karar</th>
       </tr></thead><tbody>${trs || '<tr><td colspan="8">Kayıt yok</td></tr>'}</tbody></table>
-      <footer>Mehmet DİNÇ — Tedbirge Gateway · Bu rapor gerçek saha ölçümlerinden üretilmiştir.</footer>
+      <footer>Mehmet DİNÇ — Tedbirge Protokol · Bu rapor gerçek saha ölçümlerinden üretilmiştir.</footer>
       </body></html>`);
     w.document.close();
     w.focus();

@@ -8,7 +8,7 @@ import type { LeadPlan } from "@/lib/lead-plan";
 export const Route = createFileRoute("/_authenticated/teklif/$id")({
   head: () => ({
     meta: [
-      { title: "Teklif / Başvuru Paketi — Tedbirge Gateway" },
+      { title: "Teklif / Başvuru Paketi — Tedbirge Protokol" },
       {
         name: "description",
         content:
@@ -86,7 +86,7 @@ function buildMarkdown(lead: Lead): string {
     `## Kanıt taşıma`,
     `Belgelerin bütünlük kayıtlarını Pilot Uyum Panosu üzerinden alın: https://tedbirge-gateway.lovable.app/pilot-panosu`,
     ``,
-    `Mehmet DİNÇ (Tedbirge Gateway) — Türkiye`,
+    `Mehmet DİNÇ (Tedbirge Protokol) — Türkiye`,
   );
 
   return lines.join("\n");
@@ -168,7 +168,7 @@ function Proposal() {
                 TEDBİRGE PROTOCOL
               </p>
               <p className="font-mono text-[8pt] uppercase tracking-[0.14em]">
-                Mehmet DİNÇ (Tedbirge Gateway) · Türkiye · tedbirge34@gmail.com
+                Mehmet DİNÇ (Tedbirge Protokol) · Türkiye · tedbirge34@gmail.com
               </p>
             </div>
             <div className="text-right font-mono text-[8pt] uppercase tracking-[0.12em]">
@@ -188,7 +188,7 @@ function Proposal() {
         </h1>
         <p className="mt-2 font-mono text-xs text-muted-foreground print-hide">
           Paket no {lead.id.slice(0, 8)} · {new Date(lead.created_at).toLocaleString("tr-TR")} ·
-          Mehmet DİNÇ (Tedbirge Gateway)
+          Mehmet DİNÇ (Tedbirge Protokol)
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3 print-hide">
@@ -343,7 +343,7 @@ function Proposal() {
         <p className="mt-10 border-t border-border/60 pt-4 text-xs text-muted-foreground">
           Bu paket AI Danışman görüşmesinden otomatik üretilmiştir; bağlayıcı teklif değildir.
           Nihai kapsam ve fiyat pilot değerlendirmesi sonrası netleşir. Mehmet DİNÇ (Tedbirge
-          Gateway), Türkiye.
+          Protokol), Türkiye.
         </p>
 
       </section>

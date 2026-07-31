@@ -21,7 +21,7 @@ export const guides: Guide[] = [
       {
         heading: "1. Binary'yi sahaya taşıyın",
         body: [
-          "Tedbirge Gateway tek statik bir çalıştırılabilir dosyadır. Node.js, CDN veya paket yöneticisi gerektirmez; kurulum, dosyayı hedef cihaza kopyalamaktan ibarettir.",
+          "Tedbirge Protokol tek statik bir çalıştırılabilir dosyadır. Node.js, CDN veya paket yöneticisi gerektirmez; kurulum, dosyayı hedef cihaza kopyalamaktan ibarettir.",
           "Linux (amd64/arm64), Windows ve macOS için cross-compile çıktılar aynı sürümden üretilir. Saha cihazları çoğunlukla arm64 olduğundan, konuşlandırmadan önce mimariyi doğrulayın.",
         ],
         code: `# Hedef cihazda çalıştırma izni ver
@@ -115,7 +115,7 @@ tedbirge-cli exit-demo   # WAN köprüsü`,
       {
         heading: "Sıfır-bilgi tünelde ölçüm özet üzerinden yapılır",
         body: [
-          "Tedbirge Gateway, taşınan veriyi AES-256-GCM ile parça parça şifreler ve hiçbir parçayı kalıcılaştırmaz. Faturalama ve telemetri için yalnızca iki değer tutulur: SHA-256 bütünlük özeti ve taşınan bayt sayısı.",
+          "Tedbirge Protokol, taşınan veriyi AES-256-GCM ile parça parça şifreler ve hiçbir parçayı kalıcılaştırmaz. Faturalama ve telemetri için yalnızca iki değer tutulur: SHA-256 bütünlük özeti ve taşınan bayt sayısı.",
           "Bu sayede röle düğümü, ne taşıdığını bilmeden taşıdığını kanıtlayabilir. Off-grid defterdeki Ed25519 imzalı fişler de bu iki değer üzerine kuruludur.",
         ],
       },

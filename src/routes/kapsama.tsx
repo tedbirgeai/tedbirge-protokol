@@ -6,7 +6,7 @@ import { CARRIERS, TERRAIN, HEIGHTS, buildMeshPlan, agentSnippet, type Measureme
 import { saveFieldMeasurement, listFieldMeasurements } from "@/lib/mesh.functions";
 import { useAuth } from "@/hooks/useAuth";
 
-const TITLE = "Kapsama & Süreklilik Planlayıcı — Tedbirge Gateway";
+const TITLE = "Kapsama & Süreklilik Planlayıcı — Tedbirge Protokol";
 const DESC =
   "Evden uzaklaşınca bağlantı nasıl kopmaz? Taşıyıcı, arazi ve anten yüksekliğine göre atlama menzilini, gereken röle düğüm sayısını hesaplayın; gerçek saha ölçümü girip simülasyonu kalibre edin.";
 const URL = "https://tedbirge-gateway.lovable.app/kapsama";

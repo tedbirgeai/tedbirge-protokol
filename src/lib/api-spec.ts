@@ -1,14 +1,14 @@
 import { SITE_URL } from "@/lib/site";
 
-/** Tedbirge Gateway saha/telemetri API'si — OpenAPI 3.1 tanımı. */
+/** Tedbirge Protokol saha/telemetri API'si — OpenAPI 3.1 tanımı. */
 export const OPENAPI_SPEC = {
   openapi: "3.1.0",
   info: {
-    title: "Tedbirge Gateway Saha API",
+    title: "Tedbirge Protokol Saha API",
     version: "0.6a-turnkey",
     description:
-      "Gerçek Tedbirge Gateway düğümlerinin saha telemetrisini (RTT, throughput, paket kaybı) bildirdiği uç noktalar. İçerik veya kullanıcı verisi taşınmaz; yalnızca ölçüm metrikleri kabul edilir.",
-    contact: { name: "Mehmet DİNÇ (Tedbirge Gateway)", url: `${SITE_URL}/iletisim` },
+      "Gerçek Tedbirge Protokol düğümlerinin saha telemetrisini (RTT, throughput, paket kaybı) bildirdiği uç noktalar. İçerik veya kullanıcı verisi taşınmaz; yalnızca ölçüm metrikleri kabul edilir.",
+    contact: { name: "Mehmet DİNÇ (Tedbirge Protokol)", url: `${SITE_URL}/iletisim` },
     license: { name: "Ticari lisans", url: `${SITE_URL}/kosullar` },
   },
   servers: [{ url: SITE_URL, description: "Üretim" }],

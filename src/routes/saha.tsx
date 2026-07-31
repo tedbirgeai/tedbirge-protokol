@@ -7,9 +7,9 @@ import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 
-const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
+const TITLE = "Saha Erişimi — Tedbirge Protokol'e Ücretsiz Tarayıcı Erişimi";
 const DESC =
-  "Sahadaki ekipler Tedbirge Gateway'i kurulum yapmadan tarayıcıdan test etsin: ücretsiz erişim linki, QR kod ve telefon, tablet ya da bilgisayara uygulama olarak ekleme adımları.";
+  "Sahadaki ekipler Tedbirge Protokol'i kurulum yapmadan tarayıcıdan test etsin: ücretsiz erişim linki, QR kod ve telefon, tablet ya da bilgisayara uygulama olarak ekleme adımları.";
 const CANONICAL = "https://tedbirge-gateway.lovable.app/saha";
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 
@@ -119,7 +119,7 @@ function FieldAccess() {
             Ücretsiz, kurulumsuz erişim linki
           </h2>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Aşağıdaki linki paylaşın; Tedbirge Gateway saha arayüzü, canlı mesh simülasyonu ve
+            Aşağıdaki linki paylaşın; Tedbirge Protokol saha arayüzü, canlı mesh simülasyonu ve
             pilot uyum panosu anında açılır. Kayıt, ödeme veya abonelik yok.
           </p>
 
@@ -149,7 +149,7 @@ function FieldAccess() {
                   </button>
                 )}
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Tedbirge Gateway saha erişimi: ${link}`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Tedbirge Protokol saha erişimi: ${link}`)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="rounded-sm border border-border px-5 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
@@ -161,7 +161,7 @@ function FieldAccess() {
             {qr && (
               <img
                 src={qr}
-                alt="Tedbirge Gateway saha erişim linkinin QR kodu"
+                alt="Tedbirge Protokol saha erişim linkinin QR kodu"
                 width={200}
                 height={200}
                 loading="lazy"
@@ -179,7 +179,7 @@ function FieldAccess() {
           Telefon, tablet ve bilgisayara ücretsiz kurulum
         </h2>
         <p className="mt-4 max-w-2xl text-muted-foreground">
-          Tedbirge Gateway arayüzü bir web uygulamasıdır (PWA). Mağaza gerekmez, güncellemeler
+          Tedbirge Protokol arayüzü bir web uygulamasıdır (PWA). Mağaza gerekmez, güncellemeler
           otomatik gelir, simge ana ekranda durur.
         </p>
         <div className="mt-10 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2">

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/gizlilik")({
   component: Privacy,
 });
 
-const SELLER = "Mehmet DİNÇ (Tedbirge Gateway)";
+const SELLER = "Mehmet DİNÇ (Tedbirge Protokol)";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

@@ -3,9 +3,9 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { EasyConsole } from "@/components/site/EasyConsole";
 import { NextStep } from "@/components/site/NextStep";
 
-const TITLE = "Kolay Kurulum — Tedbirge Gateway Ağınızı 3 Adımda Kurun";
+const TITLE = "Kolay Kurulum — Tedbirge Protokol Ağınızı 3 Adımda Kurun";
 const DESC =
-  "Tedbirge Gateway kurulum sihirbazı: tek tıkla ağı başlatın, yeni düğüm ekleyin ve bağlantı durumunu yeşil/kırmızı göstergelerle izleyin. Kriptografi arka planda otomatik çalışır.";
+  "Tedbirge Protokol kurulum sihirbazı: tek tıkla ağı başlatın, yeni düğüm ekleyin ve bağlantı durumunu yeşil/kırmızı göstergelerle izleyin. Kriptografi arka planda otomatik çalışır.";
 const CANONICAL = "https://tedbirge-gateway.lovable.app/kur";
 
 export const Route = createFileRoute("/kur")({

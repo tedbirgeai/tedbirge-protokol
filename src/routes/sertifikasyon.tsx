@@ -3,7 +3,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 const TITLE = "Sertifikasyon & Test Matrisi — Taşıyıcı Bazlı Uygunluk";
 const DESC =
-  "Tedbirge Gateway taşıyıcılarının geçmesi gereken radyo, EMC, güvenlik ve kripto testleri; ülke bazlı onay rejimleri ve henüz kapsanmayan taşıyıcı boşlukları.";
+  "Tedbirge Protokol taşıyıcılarının geçmesi gereken radyo, EMC, güvenlik ve kripto testleri; ülke bazlı onay rejimleri ve henüz kapsanmayan taşıyıcı boşlukları.";
 const URL = "https://tedbirge-gateway.lovable.app/sertifikasyon";
 
 export const Route = createFileRoute("/sertifikasyon")({
@@ -153,7 +153,7 @@ const gaps = [
 ];
 
 const risks = [
-  "Sertifikasyon cihaz bazlıdır: Tedbirge yazılım olarak dağıtıldığında onay yükümlülüğü, radyoyu içeren donanımı piyasaya süren tarafa aittir. Referans donanım satılırsa yükümlülük Tedbirge Gateway'e geçer.",
+  "Sertifikasyon cihaz bazlıdır: Tedbirge yazılım olarak dağıtıldığında onay yükümlülüğü, radyoyu içeren donanımı piyasaya süren tarafa aittir. Referans donanım satılırsa yükümlülük Tedbirge Protokol'e geçer.",
   "Yazılım tanımlı radyo (SDR) kullanan bir çıktı, FCC/RED kapsamında 'yazılımla değiştirilebilir radyo' sayılır; güç ve frekans parametrelerinin son kullanıcı tarafından değiştirilememesi teknik olarak kanıtlanmalıdır.",
   "Şifreleme, Wassenaar Kategori 5 Bölüm 2 kapsamındadır; bazı ülkelerde (Çin, Hindistan, Rusya) ayrıca ithalat/kullanım bildirimi gerekir.",
   "Kamu ve afet ihalelerinde çoğunlukla MIL-STD-810H çevresel, IP66/67 ve IEC 61000-4 seri bağışıklık testleri şart koşulur; bunlar radyo onayının ötesindedir.",

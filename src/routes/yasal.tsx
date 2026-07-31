@@ -8,7 +8,7 @@ import {
   REG_VENDOR,
 } from "@/lib/regulation";
 
-const TITLE = "Sözleşme Ekleri — Örnek Şablonlar | Tedbirge Gateway";
+const TITLE = "Sözleşme Ekleri — Örnek Şablonlar | Tedbirge Protokol";
 const DESC =
   "Ek-A spektrum taahhüdü, Ek-B 5651 log sorumluluk devri ve Ek-C ihracat/yaptırım kontrolü son kullanıcı beyanı için kopyalanabilir örnek sözleşme eki şablonları.";
 const URL = "https://tedbirge-gateway.lovable.app/yasal";

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/kosullar")({
   component: Terms,
 });
 
-const SELLER = "Mehmet DİNÇ (Tedbirge Gateway)";
+const SELLER = "Mehmet DİNÇ (Tedbirge Protokol)";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -56,7 +56,7 @@ function Terms() {
 
         <Section title="2. Hizmet tanımı">
           <p>
-            Tedbirge Gateway, Tedbirge Loop ve Tedbirge Off-Grid; taşıyıcı-bağımsız mesh
+            Tedbirge Protokol, Tedbirge Loop ve Tedbirge Off-Grid; taşıyıcı-bağımsız mesh
             yönlendirme, şifreli tünel taşıma ve kullanım ölçüm bileşenlerinden oluşan yazılım
             ürünleridir. Community sürümü açık kaynak lisansıyla, Enterprise ve Operator
             paketleri ise abonelik karşılığı sunulur.

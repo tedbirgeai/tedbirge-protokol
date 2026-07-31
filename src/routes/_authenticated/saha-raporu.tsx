@@ -7,11 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/_authenticated/saha-raporu")({
   head: () => ({
     meta: [
-      { title: "Saha Test Raporu — Tedbirge Gateway Ölçümleri" },
+      { title: "Saha Test Raporu — Tedbirge Protokol Ölçümleri" },
       {
         name: "description",
         content:
-          "Sahadaki Tedbirge Gateway düğümlerinden gelen RTT, throughput ve paket kaybı ölçümlerini görün, yazdırılabilir saha test raporu üretin.",
+          "Sahadaki Tedbirge Protokol düğümlerinden gelen RTT, throughput ve paket kaybı ölçümlerini görün, yazdırılabilir saha test raporu üretin.",
       },
       { property: "og:title", content: "Tedbirge Saha Test Raporu" },
       { property: "og:description", content: "Düğüm bazlı gecikme, hız ve paket kaybı ölçümleri." },
@@ -248,7 +248,7 @@ function SahaRaporu() {
         </div>
 
         <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
-          Rapor sahibi: Mehmet DİNÇ (Tedbirge Gateway). Ölçümler yalnızca operatörün kendi
+          Rapor sahibi: Mehmet DİNÇ (Tedbirge Protokol). Ölçümler yalnızca operatörün kendi
           lisansına bağlı düğümlerinden gelir; TR profilinde 868 MHz / 25 mW e.r.p. / %1 görev
           döngüsü sınırları düğüm tarafında zorlanır.
         </p>

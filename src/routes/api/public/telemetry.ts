@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 /**
- * Gerçek Tedbirge Gateway düğümleri için telemetri/heartbeat alım uç noktası.
+ * Gerçek Tedbirge Protokol düğümleri için telemetri/heartbeat alım uç noktası.
  * Kimlik doğrulama: X-Tedbirge-License başlığındaki lisans anahtarı.
  * İçerik taşınmaz; yalnızca ölçüm metrikleri kabul edilir.
  */

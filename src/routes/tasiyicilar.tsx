@@ -182,7 +182,7 @@ function Carriers() {
             Dokuz taşıyıcı, tek yönlendirici
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
-            Tedbirge Gateway her bağlantıyı <span className="text-foreground">RTT × taşıyıcı ağırlığı</span>{" "}
+            Tedbirge Protokol her bağlantıyı <span className="text-foreground">RTT × taşıyıcı ağırlığı</span>{" "}
             maliyetiyle puanlar ve en ucuz yolu Dijkstra ile seçer. Bir taşıyıcı düşerse trafik
             kesintisiz olarak bir sonrakine devreder.
           </p>

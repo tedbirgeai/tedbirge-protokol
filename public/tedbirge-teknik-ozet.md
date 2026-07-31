@@ -1,16 +1,16 @@
-# Tedbirge Gateway — Teknik Özet (v0.6a turnkey)
+# Tedbirge Protokol — Teknik Özet (v0.6a turnkey)
 
 Satıcı: Mehmet DİNÇ (Tedbirge) · Türkiye · tedbirge34@gmail.com
 
 ## 1. Nedir
 
-Tedbirge Gateway; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
+Tedbirge Protokol; taşıyıcı-bağımsız (PHY-agnostic), sıfır-bilgi bir tünel geçidi ve mesh
 SDK'sıdır. Tek statik binary olarak çalışır; Node.js, CDN, harici veritabanı veya çalışma
 zamanı paket indirmesi gerektirmez.
 
 ## 2. Modüller
 
-- **Tedbirge Gateway** — Tünel proxy motoru ve exit node. AES-256-GCM chunk şifreleme,
+- **Tedbirge Protokol** — Tünel proxy motoru ve exit node. AES-256-GCM chunk şifreleme,
   zero-knowledge ölçüm, WAN köprüsü.
 - **Tedbirge Loop** — Mesh yönlendirme ve gossip halkası. Dijkstra çok-sıçramalı yol seçimi,
   komşu keşfi, TTL ve loop-prevention.
