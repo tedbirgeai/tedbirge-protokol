@@ -339,8 +339,6 @@ function Admin() {
         </>
         )}
       </section>
-
-      <AdminOfficialDrafts />
     </SitePage>
   );
 }
@@ -348,7 +346,8 @@ function Admin() {
 function AdminOfficialDrafts() {
   const [open, setOpen] = useState<string | null>(null);
   return (
-    <section className="mx-auto max-w-6xl border-t border-border/60 px-6 py-16">
+    <div className="mt-8">
+
       <SectionLabel>Yalnızca yönetici</SectionLabel>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight">
         İdari Belgeler &amp; Dilekçe Taslakları
