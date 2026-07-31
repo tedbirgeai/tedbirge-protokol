@@ -367,6 +367,7 @@ export async function connectSerialCarrier(carrier: CarrierId) {
 }
 
 const NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const NUS_RX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
 /** BLE modem (Meshtastic / Nordic UART): Web Bluetooth ile bağlanır. */
