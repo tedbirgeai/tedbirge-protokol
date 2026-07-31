@@ -46,9 +46,11 @@ export type PeerRecord = {
 
 export type KeyRecord = {
   nodeId: string;
-  signPrivate?: CryptoKey;
+  /** Cihaz anahtarı (KEK) — non-extractable, dışa aktarılamaz. */
+  kek?: CryptoKey;
+  /** KEK ile şifrelenmiş kök gizli (seed). */
+  sealedSeed?: { iv: string; ct: string };
   signPublic?: string;
-  boxPrivate?: CryptoKey;
   boxPublic?: string;
   alg: string;
   createdAt: number;
