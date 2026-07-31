@@ -1,37 +1,64 @@
 /**
- * Tarayıcı Düğümü (Browser Node)
+ * Tarayıcı Düğümü (Browser Node) — v2 mimarisi
  * ------------------------------------------------------------------
  * Cep telefonu / tablet / bilgisayarı fiziksel donanım kurmadan
  * gerçek bir Tedbirge düğümüne dönüştürür.
  *
- * Neyi gerçekten yapar:
- *  - Kalıcı düğüm kimliği üretir (localStorage) ve panele heartbeat gönderir.
- *  - Supabase Realtime üzerinden eşleri keşfeder, WebRTC DataChannel ile
- *    doğrudan cihaz-cihaz (P2P) bağlantı kurar. Aynı Wi-Fi/LAN'da bu trafik
- *    yerel ağda kalır, bulut üzerinden geçmez.
- *  - Çoklu atlama (TTL'li) mesaj rölesi: bir eş bulutu göremiyorsa, mesajı
- *    gören bir eş üzerinden iletir.
- *  - Bağlantı koptuğunda mesajları kalıcı kuyruğa yazar, dönünce sırayla iletir.
+ * v2 ile gelenler (mimari kararlar 5–11):
+ *  - Kalıcı kuyruk IndexedDB'de (30 gün off-grid hedefi, öncelikli budama)
+ *  - Her paket Ed25519 ile imzalanır; imzasız/bozuk paket röle EDİLMEZ
+ *  - Gövde X25519+AES-256-GCM ile uçtan uca şifrelidir; ara röleler
+ *    yalnızca yönlendirme başlığını görür
+ *  - Lamport mantıksal saati + SHA-256 pktId ile mükerrer paket engelleme
  *
- * Neyi yapamaz (tarayıcı sandbox sınırı):
- *  - LoRa/HaLow/TVWS/WiGig/FSO gibi lisanslı/özel radyoları süremez.
- *  - iOS'ta Wi-Fi ve hücresel tamamen kapalıyken hiçbir web uygulaması
- *    radyo açamaz; o durumda düğüm kuyruk moduna geçer.
+ * Tarayıcı sandbox sınırı: LoRa/HaLow gibi radyolar doğrudan sürülemez;
+ * bunlar Taşıyıcı Köprüsü (carrier-bridge.ts) üzerinden veri düzlemine
+ * bağlanır.
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { ensureIdentity, type Identity } from "@/lib/crypto/identity";
+import {
+  createEnvelope,
+  decodeEnvelope,
+  defaultPriority,
+  encodeEnvelope,
+  forwardEnvelope,
+  openEnvelope,
+  verifyEnvelope,
+  witnessClock,
+  type EnvelopeKind,
+  type MeshEnvelopeV2,
+} from "@/lib/mesh-envelope";
+import {
+  alreadySeen,
+  appendEvent,
+  countPackets,
+  deletePacket,
+  getPackets,
+  markSeen,
+  migrateLegacyQueue,
+  putPacket,
+  putPeer,
+  requestPersistentStorage,
+  type Priority,
+} from "@/lib/store/idb";
+import { pruneOutbox } from "@/lib/store/pruning";
 
 const ID_KEY = "tedbirge.browser-node.id";
-const QUEUE_KEY = "tedbirge.browser-node.queue";
 const CHANNEL = "tedbirge-mesh-v1";
 /** Yerel keşif kanalı: aynı cihaz/aynı origin üzerindeki sekme ve PWA örnekleri. */
 const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
-/** Yerel keşif duyuru aralığı (ms). */
 const LOCAL_ANNOUNCE_MS = 4_000;
 const MAX_TTL = 4;
-const MAX_QUEUE = 200;
 
-export type PeerInfo = { nodeId: string; state: RTCPeerConnectionState; direct: boolean };
+export type PeerInfo = {
+  nodeId: string;
+  state: RTCPeerConnectionState;
+  direct: boolean;
+  fingerprint?: string;
+  verified?: boolean;
+};
 
 /** Sinyalleşmenin hangi yoldan yürüdüğü: bulut → yerel LAN → eş rölesi. */
 export type DiscoveryMode = "cloud" | "local" | "relay" | "none";
@@ -46,20 +73,34 @@ export type BrowserNodeState = {
   lastRelayAt: string | null;
   rttMs: number | null;
   error: string | null;
-  /** Aktif keşif yolu — bulut düşerse otomatik yerel yedeğe geçer. */
   discovery: DiscoveryMode;
+  /** Ed25519 kimlik parmak izi — eş doğrulaması için. */
+  fingerprint: string;
+  /** İmzası doğrulanamadığı için düşürülen paket sayısı. */
+  droppedUnsigned: number;
 };
 
+/** Geriye dönük tip (v1 zarfı) — yalnızca eski istemcileri tanımak için. */
 export type MeshEnvelope = {
   id: string;
   from: string;
   to: string | "*";
   ttl: number;
-  kind: "ping" | "pong" | "telemetry" | "text" | "signal";
+  kind: string;
   body: unknown;
   at: number;
 };
 
+type Hello = { t: "hello"; nodeId: string; spk: string; bpk: string };
+type QueuedIntent = {
+  t: "intent";
+  kind: EnvelopeKind;
+  to: string | "*";
+  payload: unknown;
+  priority: Priority;
+};
+type QueuedForward = { t: "fwd"; env: MeshEnvelopeV2 };
+type QueuedItem = QueuedIntent | QueuedForward;
 
 function randomId(prefix: string) {
   const bytes = new Uint8Array(6);
@@ -77,27 +118,12 @@ export function getBrowserNodeId() {
   return id;
 }
 
-function readQueue(): MeshEnvelope[] {
-  try {
-    const raw = window.localStorage.getItem(QUEUE_KEY);
-    return raw ? (JSON.parse(raw) as MeshEnvelope[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeQueue(items: MeshEnvelope[]) {
-  window.localStorage.setItem(QUEUE_KEY, JSON.stringify(items.slice(-MAX_QUEUE)));
-}
-
 const ICE: RTCConfiguration = {
   iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
 };
 
 /**
  * Cihazın gerçekte kullandığı taşıyıcıyı raporlar (uydurma değer yok).
- * Network Information API yoksa "wifi" varsayılır; panelde taşıyıcı yalnızca
- * gerçek telemetri geldiğinde aktif görünür.
  */
 export function detectCarrier(): "wifi" | "cellular" | "ethernet" {
   const conn = (navigator as unknown as { connection?: { type?: string; effectiveType?: string } })
@@ -106,30 +132,28 @@ export function detectCarrier(): "wifi" | "cellular" | "ethernet" {
   if (type === "cellular") return "cellular";
   if (type === "ethernet") return "ethernet";
   if (type === "wifi") return "wifi";
-  // iOS/Safari: type yok. effectiveType 2g/3g genelde hücresel demektir.
   if (conn?.effectiveType && ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) return "cellular";
   return "wifi";
 }
 
-
 export class BrowserNode {
   readonly nodeId = getBrowserNodeId();
   private licenseKey: string;
-  /** Lisans yoksa düğüm "demo modu"nda çalışır: P2P + kuyruk var, bulut telemetrisi yok. */
   private get demoMode() {
     return !this.licenseKey;
   }
   private onState: (s: BrowserNodeState) => void;
   private channel: ReturnType<typeof supabase.channel> | null = null;
-  /** Bulut sinyalleşmesi gerçekten çalışıyor mu (SUBSCRIBED alındı mı). */
   private cloudUp = false;
-  /** Yerel keşif kanalı — internet yokken aynı origin/cihaz üzerindeki eşler. */
   private localBus: BroadcastChannel | null = null;
   private localSeen = new Map<string, number>();
   private localTimer: ReturnType<typeof setInterval> | null = null;
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
-  private seen = new Set<string>();
+  private peerKeys = new Map<string, { spk: string; bpk: string; fingerprint: string; verified: boolean }>();
   private timer: ReturnType<typeof setInterval> | null = null;
+  private identity: Identity | null = null;
+  /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
+  private carrierSend: ((raw: string, priority: Priority) => boolean) | null = null;
   private state: BrowserNodeState;
 
   constructor(licenseKey: string | undefined, onState: (s: BrowserNodeState) => void) {
@@ -140,12 +164,14 @@ export class BrowserNode {
       nodeId: this.nodeId,
       online: typeof navigator === "undefined" ? true : navigator.onLine,
       peers: [],
-      queued: readQueue().length,
+      queued: 0,
       lastHeartbeatAt: null,
       lastRelayAt: null,
       rttMs: null,
       error: null,
       discovery: "none",
+      fingerprint: "",
+      droppedUnsigned: 0,
     };
   }
 
@@ -154,13 +180,16 @@ export class BrowserNode {
       ...this.state,
       ...patch,
       peers: this.snapshotPeers(),
-      queued: readQueue().length,
       discovery: patch.discovery ?? this.discoveryMode(),
     };
     this.onState(this.state);
   }
 
-  /** Aktif keşif yolu: bulut > yerel yayın > eş rölesi > yok. */
+  private async refreshQueueCount() {
+    const queued = await countPackets();
+    this.emit({ queued });
+  }
+
   private discoveryMode(): DiscoveryMode {
     if (!this.state.running) return "none";
     if (this.cloudUp && this.state.online) return "cloud";
@@ -170,16 +199,28 @@ export class BrowserNode {
   }
 
   private snapshotPeers(): PeerInfo[] {
-    return Array.from(this.peers.entries()).map(([nodeId, p]) => ({
-      nodeId,
-      state: p.pc.connectionState,
-      direct: p.dc?.readyState === "open",
-    }));
+    return Array.from(this.peers.entries()).map(([nodeId, p]) => {
+      const keys = this.peerKeys.get(nodeId);
+      return {
+        nodeId,
+        state: p.pc.connectionState,
+        direct: p.dc?.readyState === "open",
+        fingerprint: keys?.fingerprint,
+        verified: keys?.verified,
+      };
+    });
   }
 
   async start() {
     if (this.state.running) return;
     this.emit({ running: true, error: null });
+
+    // Local-first temel: kalıcı depolama izni + eski kuyruğun göçü.
+    void requestPersistentStorage();
+    await migrateLegacyQueue();
+    this.identity = await ensureIdentity(this.nodeId);
+    this.emit({ fingerprint: this.identity.fingerprint });
+    void this.refreshQueueCount();
 
     window.addEventListener("online", this.handleOnline);
     window.addEventListener("offline", this.handleOffline);
@@ -200,7 +241,6 @@ export class BrowserNode {
           void this.dialNewPeers();
           this.emit({});
         } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
-          // Bulut sinyalleşmesi düştü: yerel keşif ve eş rölesi devreye girer.
           this.cloudUp = false;
           this.emit({});
         }
@@ -211,13 +251,9 @@ export class BrowserNode {
   }
 
   /**
-   * Yerel keşif düşüşü (local discovery fallback).
-   * Tarayıcı sandbox'ı ham mDNS soketi açamaz; en yakın eşdeğer, aynı origin
-   * altındaki tüm sekme/PWA örneklerini birbirine bağlayan BroadcastChannel'dır.
-   * Bu kanal internet olmadan da çalışır ve WebRTC teklif/yanıt/ICE paketlerini
-   * buluta hiç çıkmadan taşır. Buradan kurulan DataChannel'lar ayrıca eş rölesi
-   * olarak kullanılır: bulutu göremeyen bir düğüm, sinyalini gören bir eş
-   * üzerinden iletir (kind: "signal").
+   * Yerel keşif düşüşü: tarayıcı ham mDNS soketi açamaz; aynı origin
+   * altındaki tüm sekme/PWA örneklerini BroadcastChannel birbirine bağlar.
+   * Gerçek LAN keşfi için yerel ajan (install.sh) kullanılır.
    */
   private startLocalDiscovery() {
     if (this.localBus || typeof BroadcastChannel === "undefined") return;
@@ -241,20 +277,12 @@ export class BrowserNode {
   }
 
   private async onLocalMessage(raw: unknown) {
-    const msg = raw as {
-      kind?: string;
-      from?: string;
-      to?: string;
-      data?: Record<string, unknown>;
-    };
+    const msg = raw as { kind?: string; from?: string; to?: string; data?: Record<string, unknown> };
     if (!msg?.from || msg.from === this.nodeId) return;
 
     if (msg.kind === "announce") {
       this.localSeen.set(msg.from, Date.now());
-      // Çift teklifi önlemek için yalnızca kimliği "küçük" olan taraf arar.
-      if (!this.peers.has(msg.from) && this.nodeId < msg.from) {
-        await this.createOffer(msg.from);
-      }
+      if (!this.peers.has(msg.from) && this.nodeId < msg.from) await this.createOffer(msg.from);
       this.emit({});
       return;
     }
@@ -263,7 +291,6 @@ export class BrowserNode {
       await this.onSignal({ from: msg.from, to: msg.to, data: msg.data });
     }
   }
-
 
   stop() {
     this.timer && clearInterval(this.timer);
@@ -289,19 +316,21 @@ export class BrowserNode {
 
   private handleOnline = () => {
     this.emit({ online: true });
+    void appendEvent("uplink", "İnternet geri geldi — kuyruk boşaltılıyor.");
     void this.flushQueue();
     void this.heartbeat();
   };
 
-  private handleOffline = () => this.emit({ online: false });
+  private handleOffline = () => {
+    this.emit({ online: false });
+    void appendEvent("uplink", "İnternet koptu — yerel kuyruk devrede.");
+  };
 
-  /** Presence listesindeki, henüz bağlanmadığımız eşlere teklif gönderir. */
   private async dialNewPeers() {
     const presence = this.channel?.presenceState() ?? {};
     const ids = Object.keys(presence).filter((id) => id && id !== this.nodeId);
     for (const id of ids) {
       if (this.peers.has(id)) continue;
-      // Çift teklif olmaması için yalnızca kimliği "küçük" olan taraf arar.
       if (this.nodeId > id) continue;
       await this.createOffer(id);
     }
@@ -331,11 +360,28 @@ export class BrowserNode {
     const entry = this.peers.get(remote);
     if (entry) entry.dc = dc;
     dc.onopen = () => {
+      this.sendHello(dc);
       this.emit({});
       void this.flushQueue();
     };
     dc.onclose = () => this.emit({});
-    dc.onmessage = (e) => this.onMeshMessage(String(e.data));
+    dc.onmessage = (e) => void this.onMeshMessage(String(e.data), remote);
+  }
+
+  /** Kimlik el sıkışması: genel anahtarlar takas edilir (gizli anahtar asla). */
+  private sendHello(dc: RTCDataChannel) {
+    if (!this.identity || dc.readyState !== "open") return;
+    const hello: Hello = {
+      t: "hello",
+      nodeId: this.nodeId,
+      spk: this.identity.signPublic,
+      bpk: this.identity.boxPublic,
+    };
+    try {
+      dc.send(JSON.stringify(hello));
+    } catch {
+      /* kanal kapandı */
+    }
   }
 
   private async createOffer(remote: string) {
@@ -348,11 +394,9 @@ export class BrowserNode {
   }
 
   /**
-   * Sinyal gönderimi üç katmanlı yedeklidir:
-   *  1) Bulut (Supabase Realtime) — internet varsa.
-   *  2) Yerel yayın (BroadcastChannel) — internet yokken aynı origin/cihaz.
-   *  3) Eş rölesi — açık DataChannel'lar üzerinden TTL'li "signal" zarfı.
-   * Hiçbiri yoksa hata verilmez; duyurular periyodik olarak yeniden denenir.
+   * Sinyal gönderimi üç katmanlı yedeklidir: bulut → yerel yayın → eş rölesi.
+   * TURN kullanılmaz; simetrik NAT'ta kamuya açık IP'li Tedbirge düğümleri
+   * dağıtık röle görevi görür (Karar 4).
    */
   private async signal(to: string, data: Record<string, unknown>) {
     const payload = { from: this.nodeId, to, data };
@@ -376,18 +420,8 @@ export class BrowserNode {
       }
     }
 
-    // Son çare: açık bir eş varsa sinyal onun üzerinden taşınır.
-    // Sinyaller kısa ömürlüdür; eş yoksa kuyruğa yazılmaz, duyuruyla yeniden denenir.
     if (!delivered && this.snapshotPeers().some((p) => p.direct)) {
-      this.sendEnvelope({
-        id: randomId("pkt"),
-        from: this.nodeId,
-        to,
-        ttl: MAX_TTL,
-        kind: "signal",
-        body: data,
-        at: Date.now(),
-      });
+      await this.send("signal", to, data, 1);
     }
 
     this.emit({});
@@ -419,96 +453,223 @@ export class BrowserNode {
     }
   }
 
-  /** Eşten gelen paket: bize aitse işlenir, değilse TTL azaltılarak röle edilir. */
-  private onMeshMessage(raw: string) {
-    let env: MeshEnvelope;
+  /* --------------------------- mesaj işleme --------------------------- */
+
+  private async onMeshMessage(raw: string, from: string) {
+    // 1) Kimlik el sıkışması (şifrelenmez: yalnızca genel anahtar taşır).
     try {
-      env = JSON.parse(raw) as MeshEnvelope;
+      const maybe = JSON.parse(raw) as Partial<Hello>;
+      if (maybe?.t === "hello" && maybe.nodeId && maybe.spk && maybe.bpk) {
+        const { fingerprintOfKey } = await import("@/lib/crypto/identity");
+        const fingerprint = fingerprintOfKey(maybe.spk);
+        this.peerKeys.set(maybe.nodeId, {
+          spk: maybe.spk,
+          bpk: maybe.bpk,
+          fingerprint,
+          verified: true,
+        });
+        await putPeer({
+          peerId: maybe.nodeId,
+          verifyKey: maybe.spk,
+          publicKey: maybe.bpk,
+          fingerprint,
+          verified: true,
+          lastSeen: Date.now(),
+        });
+        this.emit({});
+        void this.flushQueue();
+        return;
+      }
     } catch {
+      /* zarf olabilir */
+    }
+
+    // 2) MeshEnvelope v2 — imza doğrulanmadan hiçbir işlem yapılmaz.
+    const env = decodeEnvelope(raw);
+    if (!env) return;
+    if (!verifyEnvelope(env)) {
+      this.emit({ droppedUnsigned: this.state.droppedUnsigned + 1 });
+      void appendEvent("security", `İmzası doğrulanamayan paket düşürüldü (${from}).`);
       return;
     }
-    if (this.seen.has(env.id)) return;
-    this.seen.add(env.id);
-    if (this.seen.size > 500) this.seen = new Set(Array.from(this.seen).slice(-250));
+    if (await alreadySeen(env.h.pktId)) return;
+    await markSeen(env.h.pktId);
+    witnessClock(env.h.lamport);
 
-    if (env.to === this.nodeId || env.to === "*") {
-      if (env.kind === "ping") {
-        this.sendEnvelope({
-          id: randomId("pkt"),
-          from: this.nodeId,
-          to: env.from,
-          ttl: MAX_TTL,
-          kind: "pong",
-          body: env.body,
-          at: Date.now(),
-        });
-      } else if (env.kind === "pong") {
-        const sentAt = Number((env.body as { at?: number })?.at ?? 0);
-        if (sentAt) this.emit({ rttMs: Date.now() - sentAt });
-      } else if (env.kind === "signal") {
-        // Eş rölesiyle taşınan WebRTC sinyali: bize aitse doğrudan işlenir.
-        void this.onSignal({
-          from: env.from,
-          to: this.nodeId,
-          data: env.body as Record<string, unknown>,
-        });
-      } else if (env.kind === "telemetry" && this.state.online) {
-        // Bulutu görebilen düğüm, göremeyen eşin heartbeat'ini onun adına iletir.
-        void this.postTelemetry(env.body as Record<string, unknown>);
+    if (env.h.to === this.nodeId || env.h.to === "*") await this.handleForMe(env);
+
+    // 3) Röle: gövde OPAKTIR, yalnız başlık güncellenir.
+    if (env.h.to !== this.nodeId) {
+      const fwd = forwardEnvelope(env);
+      if (fwd) {
+        this.broadcastRaw(encodeEnvelope(fwd), from);
         this.emit({ lastRelayAt: new Date().toISOString() });
       }
     }
+  }
 
-    if (env.to !== this.nodeId && env.ttl > 1) {
-      this.sendEnvelope({ ...env, ttl: env.ttl - 1 }, env.from);
+  private async handleForMe(env: MeshEnvelopeV2) {
+    let body: unknown;
+    try {
+      body = await openEnvelope(this.nodeId, env);
+    } catch {
+      // Bize şifrelenmemiş yayın paketi: içerik okunamaz, yalnız röle edilir.
+      return;
+    }
+
+    if (env.h.kind === "ping") {
+      await this.send("pong", env.h.from, body, 1);
+    } else if (env.h.kind === "pong") {
+      const sentAt = Number((body as { at?: number })?.at ?? 0);
+      if (sentAt) this.emit({ rttMs: Date.now() - sentAt });
+    } else if (env.h.kind === "signal") {
+      await this.onSignal({ from: env.h.from, to: this.nodeId, data: body as Record<string, unknown> });
+    } else if (env.h.kind === "telemetry" && this.state.online) {
+      await this.postTelemetry(body as Record<string, unknown>);
       this.emit({ lastRelayAt: new Date().toISOString() });
     }
   }
 
-  /** Paketi açık tüm DataChannel'lara yazar; hiç eş yoksa kuyruğa alır. */
-  sendEnvelope(env: MeshEnvelope, exclude?: string) {
-    const open = Array.from(this.peers.entries()).filter(
+  /* ---------------------------- gönderim ---------------------------- */
+
+  private openPeers(exclude?: string) {
+    return Array.from(this.peers.entries()).filter(
       ([id, p]) => id !== exclude && p.dc?.readyState === "open",
     );
-    if (!open.length) {
-      writeQueue([...readQueue(), env]);
-      this.emit({});
+  }
+
+  /**
+   * IP taşıyıcısı (WebRTC) ile yayın. Hiç eş yoksa PHY veri düzlemi
+   * (LoRa/HaLow köprüsü) devreye girer — gövde yine şifrelidir.
+   */
+  private broadcastRaw(raw: string, exclude?: string, priority: Priority = 2) {
+    const open = this.openPeers(exclude);
+    open.forEach(([, p]) => {
+      try {
+        p.dc?.send(raw);
+      } catch {
+        /* kanal kapandı */
+      }
+    });
+    if (open.length) return true;
+    return this.carrierSend ? this.carrierSend(raw, priority) : false;
+  }
+
+  /** PHY veri düzlemi köprüsünü bağlar (carrier-bridge tarafından ayarlanır). */
+  setCarrierTransport(fn: ((raw: string, priority: Priority) => boolean) | null) {
+    this.carrierSend = fn;
+  }
+
+  /** Taşıyıcı köprüsünden gelen ham zarfı mesh katmanına verir. */
+  ingestCarrierEnvelope(raw: string, carrier: string) {
+    void this.onMeshMessage(raw, `phy:${carrier}`);
+  }
+
+  /**
+   * Uçtan uca şifreli gönderim. Hedef başına ayrı zarf üretilir:
+   * yalnızca alıcı gövdeyi açabilir. Eş yoksa niyet kuyruğa yazılır.
+   */
+  async send(kind: EnvelopeKind, to: string | "*", payload: unknown, priority?: Priority) {
+    const prio = priority ?? defaultPriority(kind);
+    if (!this.identity) this.identity = await ensureIdentity(this.nodeId);
+
+    const targets = this.openPeers()
+      .map(([id]) => id)
+      .filter((id) => (to === "*" ? true : id === to))
+      .filter((id) => this.peerKeys.has(id));
+
+    if (!targets.length) {
+      // IP yok: bilinen eşler için PHY veri düzlemini (LoRa/HaLow) dene.
+      if (this.carrierSend) {
+        const known = Array.from(this.peerKeys.entries()).filter(([id]) => to === "*" || id === to);
+        let pushed = false;
+        for (const [, keys] of known) {
+          const env = await createEnvelope({
+            from: this.nodeId,
+            to,
+            kind,
+            payload,
+            peerBoxPublic: keys.bpk,
+            senderSignPublic: this.identity.signPublic,
+            priority: prio,
+            ttl: MAX_TTL,
+          });
+          if (this.carrierSend(encodeEnvelope(env), prio)) pushed = true;
+        }
+        if (pushed) {
+          this.emit({});
+          return true;
+        }
+      }
+      await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
-    const raw = JSON.stringify(env);
-    open.forEach(([, p]) => p.dc?.send(raw));
+
+    for (const target of targets) {
+      const keys = this.peerKeys.get(target)!;
+      const env = await createEnvelope({
+        from: this.nodeId,
+        to,
+        kind,
+        payload,
+        peerBoxPublic: keys.bpk,
+        senderSignPublic: this.identity.signPublic,
+        priority: prio,
+        ttl: MAX_TTL,
+      });
+      const raw = encodeEnvelope(env);
+      const peer = this.peers.get(target);
+      try {
+        peer?.dc?.send(raw);
+      } catch {
+        await this.enqueue({ t: "fwd", env });
+      }
+    }
     this.emit({});
     return true;
   }
 
+  private async enqueue(item: QueuedItem) {
+    const pktId =
+      item.t === "fwd" ? item.env.h.pktId : `intent-${randomId("q").slice(2)}-${Date.now().toString(36)}`;
+    const priority = item.t === "fwd" ? item.env.h.priority : item.priority;
+    await putPacket({ pktId, priority, ts: Date.now(), attempts: 0, env: item });
+    await pruneOutbox();
+    await this.refreshQueueCount();
+  }
+
   /** Kullanıcı testi: tüm eşlere ping atar, dönen pong ile RTT ölçülür. */
   pingPeers() {
-    return this.sendEnvelope({
-      id: randomId("pkt"),
-      from: this.nodeId,
-      to: "*",
-      ttl: MAX_TTL,
-      kind: "ping",
-      body: { at: Date.now() },
-      at: Date.now(),
-    });
+    return this.send("ping", "*", { at: Date.now() }, 1);
+  }
+
+  /** Acil durum yayını — öncelik 0, kuyrukta asla budanmaz. */
+  sendAlert(text: string) {
+    return this.send("alert", "*", { text, at: Date.now() }, 0);
   }
 
   private async flushQueue() {
-    const items = readQueue();
-    if (!items.length) return;
-    const remaining: MeshEnvelope[] = [];
-    for (const env of items) {
-      if (env.kind === "telemetry" && this.state.online) {
-        const ok = await this.postTelemetry(env.body as Record<string, unknown>);
-        if (!ok) remaining.push(env);
+    const rows = await getPackets();
+    if (!rows.length) return;
+    for (const row of rows) {
+      const item = row.env as QueuedItem;
+      if (!item || typeof item !== "object") {
+        await deletePacket(row.pktId);
         continue;
       }
-      const sent = this.sendEnvelope(env);
-      if (!sent) remaining.push(env);
+      if (item.t === "fwd") {
+        if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
+        continue;
+      }
+      if (item.kind === "telemetry" && this.state.online) {
+        const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
+        if (ok) await deletePacket(row.pktId);
+        continue;
+      }
+      const sent = await this.send(item.kind, item.to, item.payload, item.priority);
+      if (sent) await deletePacket(row.pktId);
     }
-    writeQueue(remaining);
-    this.emit({});
+    await this.refreshQueueCount();
   }
 
   private async postTelemetry(body: Record<string, unknown>) {
@@ -532,7 +693,7 @@ export class BrowserNode {
       node_id: this.nodeId,
       label: "Tarayıcı düğümü (mobil/masaüstü)",
       carrier: detectCarrier(),
-      firmware: "browser-node-1.0",
+      firmware: "browser-node-2.0",
       hops: directPeers ? 1 : 0,
       packet_loss_pct: this.state.online ? 0 : 100,
       rtt_ms: this.state.rttMs ?? 0,
@@ -541,23 +702,13 @@ export class BrowserNode {
     };
 
     if (this.demoMode) {
-      // Demo modu: buluta yazmadan eşlerle P2P ve kuyruk çalışmaya devam eder.
       this.emit({ lastHeartbeatAt: new Date().toISOString(), error: null });
       return;
     }
 
     if (!this.state.online) {
-      // Bulut yok: kuyruğa al ve eşler üzerinden röle etmeyi dene.
-      const env: MeshEnvelope = {
-        id: randomId("pkt"),
-        from: this.nodeId,
-        to: "*",
-        ttl: MAX_TTL,
-        kind: "telemetry",
-        body,
-        at: Date.now(),
-      };
-      const relayed = this.sendEnvelope(env);
+      // Bulut yok: eşler üzerinden röle dene, olmazsa kalıcı kuyruğa yaz.
+      const relayed = await this.send("telemetry", "*", body, 3);
       this.emit({ lastHeartbeatAt: relayed ? new Date().toISOString() : this.state.lastHeartbeatAt });
       return;
     }

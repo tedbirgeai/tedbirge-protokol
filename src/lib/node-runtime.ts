@@ -8,6 +8,14 @@
 
 import { useSyncExternalStore } from "react";
 import { BrowserNode, getBrowserNodeId, type BrowserNodeState } from "@/lib/browser-node";
+import {
+  BRIDGEABLE_CARRIERS,
+  dataPlaneReady,
+  sendOverCarrier,
+  setCarrierEnvelopeSink,
+} from "@/lib/carrier-bridge";
+import { pruneSeen } from "@/lib/store/idb";
+import type { Priority } from "@/lib/store/idb";
 
 const AUTO_KEY = "tedbirge.browser-node.auto";
 const GUIDE_KEY = "tedbirge.browser-node.guide-seen";
@@ -27,6 +35,8 @@ let snapshot: BrowserNodeState = {
   rttMs: null,
   error: null,
   discovery: "none",
+  fingerprint: "",
+  droppedUnsigned: 0,
 };
 
 const listeners = new Set<() => void>();
@@ -49,7 +59,21 @@ export function setNodeLicense(key?: string) {
 export async function startNode() {
   if (node) return;
   node = new BrowserNode(license, publish);
+
+  // PHY veri düzlemi: IP koptuğunda zarflar bağlı LoRa/HaLow modemine yazılır.
+  node.setCarrierTransport((raw: string, priority: Priority) => {
+    let ok = false;
+    for (const c of BRIDGEABLE_CARRIERS) {
+      if (!dataPlaneReady(c.id)) continue;
+      const res = sendOverCarrier(c.id, raw, priority);
+      if (res.ok) ok = true;
+    }
+    return ok;
+  });
+  setCarrierEnvelopeSink((raw, carrier) => node?.ingestCarrierEnvelope(raw, carrier));
+
   await node.start();
+  void pruneSeen();
   try {
     window.localStorage.setItem(AUTO_KEY, "1");
   } catch {
@@ -63,6 +87,7 @@ export async function startNode() {
 
 export function stopNode() {
   node?.stop();
+  setCarrierEnvelopeSink(null);
   node = null;
   if (pingTimer) {
     clearInterval(pingTimer);
@@ -74,6 +99,11 @@ export function stopNode() {
     /* private mode */
   }
   publish({ ...snapshot, running: false, peers: [], rttMs: null, discovery: "none" });
+}
+
+/** Acil durum yayını (öncelik 0 — kuyrukta asla budanmaz). */
+export function broadcastAlert(text: string) {
+  return node?.sendAlert(text) ?? Promise.resolve(false);
 }
 
 export function pingNodePeers() {

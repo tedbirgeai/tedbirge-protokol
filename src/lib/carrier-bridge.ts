@@ -16,6 +16,15 @@
 
 import { useSyncExternalStore } from "react";
 import { getBrowserNodeId } from "@/lib/browser-node";
+import {
+  Reassembler,
+  carrierAllowed,
+  dutyCycleApplies,
+  scheduleEnvelope,
+  schedulerSnapshot,
+} from "@/lib/carrier-scheduler";
+import { decodeEnvelope } from "@/lib/mesh-envelope";
+import type { Priority } from "@/lib/store/idb";
 
 export type CarrierId = "lora" | "halow" | "tvws" | "wigig" | "fso" | "satellite";
 
@@ -84,6 +93,10 @@ export type BridgeLink = {
   frames: number;
   lastLine: string;
   uploaded: number;
+  /** Veri düzleminde bu taşıyıcıdan alınan mesh zarfı sayısı. */
+  rxPackets?: number;
+  /** Veri düzleminde bu taşıyıcıya yazılan çerçeve sayısı. */
+  txPackets?: number;
   error: string | null;
 };
 
@@ -148,9 +161,21 @@ export function parseCarrierLine(line: string): Partial<BridgeLink> {
 type Handle = {
   stop: () => Promise<void>;
   timer: ReturnType<typeof setInterval> | null;
+  /** Veri düzlemi yazıcısı — yoksa taşıyıcı yalnızca ölçüm okur. */
+  write?: (payload: string) => Promise<void>;
 };
 
 const handles = new Map<string, Handle>();
+/** Taşıyıcı başına parça birleştirici (LoRa MTU'su nedeniyle gerekir). */
+const reassemblers = new Map<string, Reassembler>();
+
+/** Gelen mesh zarfını işleyecek katman (browser-node tarafından bağlanır). */
+type EnvelopeSink = (raw: string, carrier: CarrierId) => void;
+let envelopeSink: EnvelopeSink | null = null;
+
+export function setCarrierEnvelopeSink(sink: EnvelopeSink | null) {
+  envelopeSink = sink;
+}
 
 function upsert(carrier: CarrierId, patch: Partial<BridgeLink>) {
   const prev = state.links[carrier];
@@ -166,7 +191,7 @@ async function postTelemetry(carrier: CarrierId) {
     node_id: `${getBrowserNodeId()}-${carrier}`,
     label: `${BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)?.name} köprüsü`,
     carrier,
-    firmware: `carrier-bridge-1.0/${link.transport}`,
+    firmware: `carrier-bridge-2.0/${link.transport}`,
     rtt_ms: link.rttMs ?? 0,
     packet_loss_pct: link.lossPct ?? 0,
     hops: 1,
@@ -198,6 +223,27 @@ function ingest(carrier: CarrierId, chunk: string) {
   const parsed = parseCarrierLine(chunk);
   const prev = state.links[carrier];
   if (!prev) return;
+
+  // Veri düzlemi: TBG2 çerçeveleri birleştirilip mesh katmanına verilir.
+  let rc = reassemblers.get(carrier);
+  if (!rc) {
+    rc = new Reassembler();
+    reassemblers.set(carrier, rc);
+  }
+  if (chunk.startsWith("TBG2|") || chunk.trimStart().startsWith('{"h":')) {
+    const complete = rc.push(chunk.trim());
+    if (complete && decodeEnvelope(complete)) {
+      envelopeSink?.(complete, carrier);
+      upsert(carrier, {
+        frames: prev.frames + 1,
+        lastFrameAt: Date.now(),
+        rxPackets: (prev.rxPackets ?? 0) + 1,
+        lastLine: `mesh-zarf · ${complete.length} bayt (gövde şifreli)`,
+      });
+      return;
+    }
+  }
+
   upsert(carrier, {
     ...parsed,
     rssi: parsed.rssi ?? prev.rssi,
@@ -208,6 +254,42 @@ function ingest(carrier: CarrierId, chunk: string) {
     lastFrameAt: Date.now(),
     lastLine: chunk.slice(0, 160),
   });
+}
+
+/**
+ * Veri düzlemi gönderimi: zarf, paket zamanlayıcı üzerinden taşıyıcıya
+ * yazılır. LoRa'da parçalama + %1 görev döngüsü tavanı zorunludur.
+ */
+export function sendOverCarrier(
+  carrier: CarrierId,
+  rawEnvelope: string,
+  priority: Priority = 2,
+): { ok: boolean; frames: number; airtimeMs: number; reason?: string } {
+  const h = handles.get(carrier);
+  if (!h?.write) return { ok: false, frames: 0, airtimeMs: 0, reason: "Taşıyıcı bağlı değil." };
+  if (!carrierAllowed(carrier))
+    return { ok: false, frames: 0, airtimeMs: 0, reason: "Bu taşıyıcı bölge profilinde kapalı." };
+  const res = scheduleEnvelope({
+    carrier,
+    raw: rawEnvelope,
+    priority,
+    send: async (payload) => {
+      await h.write!(`${payload}\n`);
+      upsert(carrier, { txPackets: (state.links[carrier]?.txPackets ?? 0) + 1 });
+    },
+  });
+  return { ok: true, ...res };
+}
+
+/** Bu taşıyıcı gerçekten veri taşıyabiliyor mu (yazma kanalı var mı)? */
+export function dataPlaneReady(carrier: CarrierId) {
+  return Boolean(handles.get(carrier)?.write) && carrierAllowed(carrier);
+}
+
+/** Görev döngüsü bütçesi — UI göstergesi için. */
+export function dutyCycleStatus(carrier: CarrierId) {
+  const snap = schedulerSnapshot();
+  return { applies: dutyCycleApplies(carrier), ...snap };
 }
 
 /** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
@@ -251,10 +333,24 @@ export async function connectSerialCarrier(carrier: CarrierId) {
     }
   })().catch((e) => upsert(carrier, { error: e instanceof Error ? e.message : "seri okuma hatası" }));
 
+  // Veri düzlemi yazıcısı: zarf çerçeveleri modeme bu kanaldan yazılır.
+  const encoderStream = new TextEncoderStream();
+  const writeClosed = encoderStream.readable.pipeTo(port.writable).catch(() => undefined);
+  const writer = encoderStream.writable.getWriter();
+
   handles.set(carrier, {
     timer: null,
+    write: async (payload: string) => {
+      await writer.write(payload);
+    },
     stop: async () => {
       stopped = true;
+      try {
+        await writer.close();
+        await writeClosed;
+      } catch {
+        /* yok say */
+      }
       try {
         await reader.cancel();
       } catch {
@@ -271,6 +367,7 @@ export async function connectSerialCarrier(carrier: CarrierId) {
 }
 
 const NUS_SERVICE = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const NUS_RX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
 /** BLE modem (Meshtastic / Nordic UART): Web Bluetooth ile bağlanır. */
@@ -284,6 +381,7 @@ export async function connectBluetoothCarrier(carrier: CarrierId) {
   const server = await device.gatt.connect();
   const service = await server.getPrimaryService(NUS_SERVICE);
   const tx = await service.getCharacteristic(NUS_TX);
+  const rx = await service.getCharacteristic(NUS_RX).catch(() => null);
 
   state.links[carrier] = {
     carrier,
@@ -312,8 +410,18 @@ export async function connectBluetoothCarrier(carrier: CarrierId) {
   tx.addEventListener("characteristicvaluechanged", onValue);
   await tx.startNotifications();
 
+  const bleEncoder = new TextEncoder();
   handles.set(carrier, {
     timer: null,
+    // BLE GATT yazma sınırı ~20 bayt; çerçeve parçalar hâlinde yazılır.
+    write: rx
+      ? async (payload: string) => {
+          const bytes = bleEncoder.encode(payload);
+          for (let i = 0; i < bytes.length; i += 20) {
+            await rx.writeValueWithoutResponse(bytes.slice(i, i + 20));
+          }
+        }
+      : undefined,
     stop: async () => {
       try {
         await tx.stopNotifications();
