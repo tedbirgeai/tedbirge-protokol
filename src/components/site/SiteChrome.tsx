@@ -302,8 +302,9 @@ export function SiteHeader() {
             className="size-8 shrink-0 rounded-full object-cover shadow-[0_0_18px_-4px_var(--color-primary)]"
           />
           <span className="whitespace-nowrap font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
-            TEDBİRGE GATEWAY
+            TEDBİRGE PROTOCOL
           </span>
+
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Ana menü">
@@ -354,17 +355,20 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-6 py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBİRGE GATEWAY</p>
+            <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBİRGE PROTOCOL</p>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Tek statik binary,
-              dış bağımlılık yok, off-grid çalışır.
+              Kurumsal bağlantı sürekliliği platformu: uçtan uca şifreli, kurulum gerektirmeyen,
+              internet kesildiğinde de çalışan yedi katmanlı mimari.
             </p>
+
           </div>
 
           <div className="min-w-0">
-            <FooterHeading>Ürün</FooterHeading>
+            <FooterHeading>Protokol</FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/protokol" className={footerLinkClass}>7 katmanlı mimari</Link></li>
               <li><Link to="/urun" className={footerLinkClass}>Yetenekler</Link></li>
+
               <li><Link to="/hibrit-model" className={footerLinkClass}>Hibrit model</Link></li>
               <li><Link to="/tasiyicilar" className={footerLinkClass}>Taşıyıcılar</Link></li>
               <li><Link to="/afet-kamu" className={footerLinkClass}>Afet & Kamu</Link></li>
@@ -446,8 +450,9 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-5 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Tedbirge Protokol · Mehmet DİNÇ (Tedbirge Gateway)</span>
-          <span>v0.6a-turnkey · Ed25519 · AES-256-GCM</span>
+          <span>© {new Date().getFullYear()} Tedbirge Protocol · Mehmet DİNÇ (Tedbirge Gateway)</span>
+          <span>Uçtan uca şifreli · Sıfır-bilgi · Doğrulanmış düğüm</span>
+
         </div>
       </div>
     </footer>
