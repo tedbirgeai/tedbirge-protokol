@@ -30,7 +30,7 @@ export const Route = createFileRoute("/hakkimizda")({
           email: "tedbirge34@gmail.com",
           address: { "@type": "PostalAddress", addressCountry: "TR" },
           founder: { "@type": "Person", name: "Mehmet DİNÇ" },
-          sameAs: ["https://github.com/tedbirgeai/aetheris"],
+          sameAs: ["https://github.com/tedbirgeai/project-to-product-f1ac88d6"],
           description: DESC,
         }),
       },

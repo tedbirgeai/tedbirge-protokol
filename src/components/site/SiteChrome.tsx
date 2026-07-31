@@ -402,7 +402,7 @@ export function SiteFooter() {
               <li><a href="/tedbirge-teknik-ozet.md" download className={footerLinkClass}>Teknik özet (.md)</a></li>
               <li>
                 <a
-                  href="https://github.com/tedbirgeai/aetheris"
+                  href="https://github.com/tedbirgeai/project-to-product-f1ac88d6"
                   target="_blank"
                   rel="noreferrer"
                   className={footerLinkClass}
