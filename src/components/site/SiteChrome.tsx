@@ -12,7 +12,9 @@ const navGroups = [
   {
     label: "Protokol",
     items: [
+      { to: "/", label: "Genel Bakış", hint: "Tedbirge Protocol'e giriş" },
       { to: "/protokol", label: "7 Katmanlı Mimari", hint: "Trust · Edge · Loop · Off-Grid · Sense · Console · Relay" },
+
       { to: "/urun", label: "Ürün", hint: "Yetenekler ve mimari" },
       { to: "/demo", label: "Demo", hint: "Tarayıcıda canlı ağ" },
     ],
