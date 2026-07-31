@@ -78,6 +78,21 @@ function LegalPack() {
             son kullanıcı beyanı ile BTK ve mülki idareye sunulacak resmî yazı taslakları. Tüm
             metinler kopyalanabilir; sözleşme dosyanıza olduğu gibi eklenebilir.
           </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/belgeler/tedbirge-uyum-paketi.pdf"
+              download
+              className="rounded-sm bg-primary px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+            >
+              Tüm paketi PDF indir
+            </a>
+            <a
+              href="#dilekceler"
+              className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              Dilekçe taslakları
+            </a>
+          </div>
           <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
             Sürüm {REG_VERSION} · Gözden geçirme {REG_REVIEWED} · {REG_VENDOR}
           </p>
@@ -112,6 +127,13 @@ function LegalPack() {
             </ol>
             <footer className="flex flex-wrap items-center gap-3 border-t border-border bg-card/40 px-6 py-5">
               <p className="flex-1 text-xs leading-relaxed text-muted-foreground">{a.signature}</p>
+              <a
+                href={`/belgeler/tedbirge-${a.id}.pdf`}
+                download
+                className="rounded-sm bg-primary px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+              >
+                {a.code} PDF indir
+              </a>
               <CopyButton text={annexToText(i)} label={`${a.code} metnini kopyala`} />
             </footer>
           </article>
@@ -140,7 +162,16 @@ function LegalPack() {
                   <h3 className="mt-2 text-xl font-semibold tracking-tight">{d.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.summary}</p>
                 </div>
-                <CopyButton text={d.body} label="Dilekçeyi kopyala" />
+                <div className="flex flex-wrap gap-3">
+                  <a
+                    href={`/belgeler/tedbirge-${d.id}.pdf`}
+                    download
+                    className="rounded-sm bg-primary px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+                  >
+                    PDF indir
+                  </a>
+                  <CopyButton text={d.body} label="Dilekçeyi kopyala" />
+                </div>
               </header>
               <pre className="overflow-x-auto whitespace-pre-wrap bg-background/70 px-6 py-6 font-mono text-[12px] leading-relaxed text-muted-foreground">
                 <code>{d.body}</code>
