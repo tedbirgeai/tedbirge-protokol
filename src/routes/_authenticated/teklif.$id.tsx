@@ -343,7 +343,7 @@ function Proposal() {
         <p className="mt-10 border-t border-border/60 pt-4 text-xs text-muted-foreground">
           Bu paket AI Danışman görüşmesinden otomatik üretilmiştir; bağlayıcı teklif değildir.
           Nihai kapsam ve fiyat pilot değerlendirmesi sonrası netleşir. Mehmet DİNÇ (Tedbirge
-          Gateway), Türkiye.
+          Protokol), Türkiye.
         </p>
 
       </section>
