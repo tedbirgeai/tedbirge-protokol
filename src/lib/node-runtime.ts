@@ -27,6 +27,8 @@ let snapshot: BrowserNodeState = {
   rttMs: null,
   error: null,
   discovery: "none",
+  fingerprint: "",
+  droppedUnsigned: 0,
 };
 
 const listeners = new Set<() => void>();
