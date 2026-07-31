@@ -480,6 +480,8 @@ export function sendOverBestCarrier(
 
 /** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
 export async function connectSerialCarrier(carrier: CarrierId) {
+  if (!carrierAuthorized(carrier))
+    throw new Error("Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.");
   const nav = navigator as unknown as { serial?: { requestPort: () => Promise<any> } };
   if (!nav.serial) throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
   const def = BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)!;
@@ -558,6 +560,8 @@ const NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
 /** BLE modem (Meshtastic / Nordic UART): Web Bluetooth ile bağlanır. */
 export async function connectBluetoothCarrier(carrier: CarrierId) {
+  if (!carrierAuthorized(carrier))
+    throw new Error("Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.");
   const nav = navigator as unknown as { bluetooth?: any };
   if (!nav.bluetooth) throw new Error("Bu tarayıcı Web Bluetooth desteklemiyor.");
   const device = await nav.bluetooth.requestDevice({
