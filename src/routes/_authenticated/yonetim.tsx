@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
+import { OFFICIAL_DRAFTS } from "@/lib/regulation";
 
 
 export const Route = createFileRoute("/_authenticated/yonetim")({
@@ -324,6 +325,68 @@ function Admin() {
         )}
       </section>
 
+      <AdminOfficialDrafts />
     </SitePage>
   );
 }
+
+function AdminOfficialDrafts() {
+  const [open, setOpen] = useState<string | null>(null);
+  return (
+    <section className="mx-auto max-w-6xl border-t border-border/60 px-6 py-16">
+      <SectionLabel>Yalnızca yönetici</SectionLabel>
+      <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+        İdari Belgeler &amp; Dilekçe Taslakları
+      </h2>
+      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        Bu taslaklar kamuya açık sayfalarda yayınlanmaz. Kurum antetli kâğıdınıza yapıştırıp boş
+        alanları doldurduktan sonra ilgili kuruma sunulmak üzere hazırlanmıştır.
+      </p>
+
+      <div className="mt-8 space-y-6">
+        {OFFICIAL_DRAFTS.map((d) => (
+          <article key={d.id} className="overflow-hidden rounded-sm border border-border">
+            <header className="flex flex-wrap items-start gap-4 border-b border-border bg-card/50 px-5 py-4">
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                  {d.label}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight">{d.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.summary}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`/belgeler/tedbirge-${d.id}.pdf`}
+                  download
+                  className="rounded-sm bg-primary px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
+                >
+                  PDF indir
+                </a>
+                <button
+                  type="button"
+                  onClick={() => void navigator.clipboard.writeText(d.body).catch(() => {})}
+                  className="rounded-sm border border-border px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+                >
+                  Kopyala
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(open === d.id ? null : d.id)}
+                  className="rounded-sm border border-border px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+                >
+                  {open === d.id ? "Gizle" : "Metni gör"}
+                </button>
+              </div>
+            </header>
+            {open === d.id && (
+              <pre className="overflow-x-auto whitespace-pre-wrap bg-background/70 px-5 py-5 font-mono text-[12px] leading-relaxed text-muted-foreground">
+                <code>{d.body}</code>
+              </pre>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
