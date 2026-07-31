@@ -6,10 +6,12 @@ import {
   setNodeLicense,
   startNode,
   stopNode,
+  refreshPeerTrust,
   testFieldRoute,
   useNodeRuntime,
 } from "@/lib/node-runtime";
 import { RecoveryKeyCard } from "@/components/site/RecoveryKeyCard";
+import { PeerVerifyDialog, TrustBadge, type PeerVerifyTarget } from "@/components/site/PeerVerifyDialog";
 
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 
@@ -26,6 +28,7 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
   const [copied, setCopied] = useState(false);
   const [details, setDetails] = useState(false);
   const [routeTest, setRouteTest] = useState<{ ok: boolean; message: string } | null>(null);
+  const [verifyTarget, setVerifyTarget] = useState<PeerVerifyTarget | null>(null);
 
   useEffect(() => {
     setLink(`${window.location.origin}/saha`);
@@ -238,14 +241,41 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {state.peers.map((p) => (
                 <div key={p.nodeId} className="rounded-sm border border-border bg-background/60 p-3">
-                  <p className="font-mono text-[11px] text-foreground">{p.nodeId}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-mono text-[11px] text-foreground">{p.nodeId}</p>
+                    <TrustBadge trust={p.trust} />
+                  </div>
                   <p className={`mt-1 font-mono text-[11px] ${p.direct ? "text-primary" : "text-muted-foreground"}`}>
                     ● {p.direct ? "doğrudan P2P" : p.state}
                   </p>
+                  {p.fingerprint && (
+                    <p className="mt-1 font-mono text-[10px] text-muted-foreground">{p.fingerprint}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVerifyTarget({
+                        peerId: p.nodeId,
+                        signPublic: p.signPublic,
+                        fingerprint: p.fingerprint,
+                        trust: p.trust,
+                      })
+                    }
+                    className="mt-2 text-[11px] font-medium text-primary underline underline-offset-2"
+                  >
+                    Parmak izini doğrula
+                  </button>
                 </div>
               ))}
             </div>
           )}
+
+          <PeerVerifyDialog
+            target={verifyTarget}
+            open={Boolean(verifyTarget)}
+            onOpenChange={(v) => !v && setVerifyTarget(null)}
+            onChanged={(peerId) => void refreshPeerTrust(peerId)}
+          />
         </div>
       )}
     </div>

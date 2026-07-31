@@ -10,7 +10,7 @@ import {
   type CarrierId,
 } from "@/lib/carrier-bridge";
 import { useCarrierScheduler, schedulerRegion } from "@/lib/carrier-scheduler";
-import { dataPlaneReady } from "@/lib/carrier-bridge";
+import { carrierSubscribed, dataPlaneReady, setCarrierSubscription } from "@/lib/carrier-bridge";
 
 const box = "rounded-sm border border-border bg-card/60 p-5";
 const label = "font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground";
@@ -114,6 +114,23 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                 </span>
               </div>
               <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{c.hint}</p>
+
+              {c.requiresSubscription && (
+                <label className="mt-3 flex items-start gap-2 rounded-sm border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] leading-relaxed">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={carrierSubscribed(c.id)}
+                    onChange={(e) => setCarrierSubscription(c.id, e.target.checked)}
+                  />
+                  <span className="text-muted-foreground">
+                    Bu taşıyıcı için geçerli bir <strong>operatör hattı/aboneliğim</strong> olduğunu ve
+                    kullanımın ilgili operatör sözleşmesine uygun olduğunu beyan ederim. Beyan
+                    işaretlenmeden veri düzlemi açılmaz.
+                    {c.costPerMb > 0 && ` Yaklaşık taşıma maliyeti: ${c.costPerMb} ₺/MB.`}
+                  </span>
+                </label>
+              )}
 
               {live && (
                 <dl className="mt-3 grid grid-cols-2 gap-1 font-mono text-[11px]">

@@ -8,12 +8,7 @@
 
 import { useSyncExternalStore } from "react";
 import { BrowserNode, getBrowserNodeId, type BrowserNodeState } from "@/lib/browser-node";
-import {
-  BRIDGEABLE_CARRIERS,
-  dataPlaneReady,
-  sendOverCarrier,
-  setCarrierEnvelopeSink,
-} from "@/lib/carrier-bridge";
+import { sendOverBestCarrier, setCarrierEnvelopeSink } from "@/lib/carrier-bridge";
 import { pruneSeen } from "@/lib/store/idb";
 import type { Priority } from "@/lib/store/idb";
 
@@ -61,15 +56,9 @@ export async function startNode() {
   node = new BrowserNode(license, publish);
 
   // PHY veri düzlemi: IP koptuğunda zarflar bağlı LoRa/HaLow modemine yazılır.
-  node.setCarrierTransport((raw: string, priority: Priority) => {
-    let ok = false;
-    for (const c of BRIDGEABLE_CARRIERS) {
-      if (!dataPlaneReady(c.id)) continue;
-      const res = sendOverCarrier(c.id, raw, priority);
-      if (res.ok) ok = true;
-    }
-    return ok;
-  });
+  // Skor tabanlı failover motoru: kalite/gecikme/maliyete göre en uygun
+  // taşıyıcı seçilir, başarısız olursa sıradakine otomatik düşülür.
+  node.setCarrierTransport((raw: string, priority: Priority) => sendOverBestCarrier(raw, priority).ok);
   setCarrierEnvelopeSink((raw, carrier) => node?.ingestCarrierEnvelope(raw, carrier));
 
   await node.start();
@@ -104,6 +93,11 @@ export function stopNode() {
 /** Acil durum yayını (öncelik 0 — kuyrukta asla budanmaz). */
 export function broadcastAlert(text: string) {
   return node?.sendAlert(text) ?? Promise.resolve(false);
+}
+
+/** Eş parmak izi onayından sonra rozetleri tazeler. */
+export function refreshPeerTrust(peerId: string) {
+  return node?.refreshPeerTrust(peerId);
 }
 
 export function pingNodePeers() {

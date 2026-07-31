@@ -41,6 +41,12 @@ export type PeerRecord = {
   publicKey?: string;
   fingerprint?: string;
   verified?: boolean;
+  /** Kullanıcının parmak izini elle onayladığı an (epoch ms). */
+  verifiedAt?: number;
+  /** İlk görüldüğünde kaydedilen Ed25519 anahtarı — TOFU sabitlemesi. */
+  knownSignPublic?: string;
+  /** Anahtar değişimi tespit edildiği an (epoch ms). */
+  keyChangedAt?: number;
   lastSeen: number;
 };
 

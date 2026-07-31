@@ -26,6 +26,7 @@ import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 import { PanelNetworkMap } from "@/components/site/PanelNetworkMap";
 import { PanelAi } from "@/components/site/PanelAi";
 import { PanelCommerce } from "@/components/site/PanelCommerce";
+import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 
 
 export const Route = createFileRoute("/_authenticated/panel")({
@@ -93,6 +94,7 @@ type TabId =
   | "yapayzeka"
   | "canli"
   | "mesh"
+  | "tanilama"
   | "kalibrasyon"
   | "guvenlik"
   | "yonetim"
@@ -105,6 +107,7 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "yapayzeka", label: "Yapay zeka" },
   { id: "canli", label: "Canlı akış" },
   { id: "mesh", label: "Mesh & kurulum", needs: "operate" },
+  { id: "tanilama", label: "Tanılama" },
   { id: "kalibrasyon", label: "Kalibrasyon" },
   { id: "guvenlik", label: "Güvenlik" },
   { id: "yonetim", label: "Yönetim", needs: "manage" },
@@ -665,6 +668,13 @@ function Panel() {
               <RelayChainWizard licenses={keyedLicenses} devices={devices} onProvisioned={reloadDevices} />
               <FailoverSettings devices={devices} onUpdated={reloadDevices} />
             </>
+          )}
+
+          {tab === "tanilama" && (
+            <section className="space-y-4">
+              <SectionLabel>Ağ sağlığı ve spektrum tanılaması</SectionLabel>
+              <DiagnosticsPanel />
+            </section>
           )}
 
           {tab === "kalibrasyon" && (

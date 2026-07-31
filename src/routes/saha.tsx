@@ -5,6 +5,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
+import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 
 const TITLE = "Saha Erişimi — Tedbirge Gateway'e Ücretsiz Tarayıcı Erişimi";
 const DESC =
@@ -188,6 +189,19 @@ function FieldAccess() {
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.b}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="border-t border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <SectionLabel>Ağ sağlığı</SectionLabel>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight">Saha tanılaması</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            Bu ölçümler cihazınızda üretilir; hiçbir mesaj içeriği kaydedilmez veya gönderilmez.
+          </p>
+          <div className="mt-8">
+            <DiagnosticsPanel compact />
+          </div>
         </div>
       </section>
 
