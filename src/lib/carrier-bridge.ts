@@ -333,10 +333,24 @@ export async function connectSerialCarrier(carrier: CarrierId) {
     }
   })().catch((e) => upsert(carrier, { error: e instanceof Error ? e.message : "seri okuma hatası" }));
 
+  // Veri düzlemi yazıcısı: zarf çerçeveleri modeme bu kanaldan yazılır.
+  const encoderStream = new TextEncoderStream();
+  const writeClosed = encoderStream.readable.pipeTo(port.writable).catch(() => undefined);
+  const writer = encoderStream.writable.getWriter();
+
   handles.set(carrier, {
     timer: null,
+    write: async (payload: string) => {
+      await writer.write(payload);
+    },
     stop: async () => {
       stopped = true;
+      try {
+        await writer.close();
+        await writeClosed;
+      } catch {
+        /* yok say */
+      }
       try {
         await reader.cancel();
       } catch {
