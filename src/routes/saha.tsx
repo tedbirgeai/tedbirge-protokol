@@ -6,6 +6,7 @@ import { BrowserNodeCard } from "@/components/site/BrowserNodeCard";
 import { EasyConsole } from "@/components/site/EasyConsole";
 import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
+import { HybridAccessCard } from "@/components/site/HybridAccessCard";
 
 const TITLE = "Saha Erişimi — Tedbirge Protokol'e Ücretsiz Tarayıcı Erişimi";
 const DESC =
@@ -102,6 +103,9 @@ function FieldAccess() {
           </p>
           <div className="mt-6">
             <EasyConsole />
+          </div>
+          <div className="mt-6">
+            <HybridAccessCard />
           </div>
           <div className="mt-6">
             <BrowserNodeCard />

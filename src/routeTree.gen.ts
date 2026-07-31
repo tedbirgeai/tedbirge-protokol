@@ -51,6 +51,7 @@ import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
+import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicEnrollRouteImport } from './routes/api/public/enroll'
@@ -267,6 +268,11 @@ const ApiPublicQueueRoute = ApiPublicQueueRouteImport.update({
   path: '/api/public/queue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPingRoute = ApiPublicPingRouteImport.update({
+  id: '/api/public/ping',
+  path: '/api/public/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOpenapiDotjsonRoute = ApiPublicOpenapiDotjsonRouteImport.update({
   id: '/api/public/openapi.json',
   path: '/api/public/openapi.json',
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByTo {
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
@@ -444,6 +452,7 @@ export interface FileRoutesById {
   '/api/public/enroll': typeof ApiPublicEnrollRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
+  '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
@@ -495,6 +504,7 @@ export interface FileRouteTypes {
     | '/api/public/enroll'
     | '/api/public/health'
     | '/api/public/openapi.json'
+    | '/api/public/ping'
     | '/api/public/queue'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
@@ -544,6 +554,7 @@ export interface FileRouteTypes {
     | '/api/public/enroll'
     | '/api/public/health'
     | '/api/public/openapi.json'
+    | '/api/public/ping'
     | '/api/public/queue'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
@@ -594,6 +605,7 @@ export interface FileRouteTypes {
     | '/api/public/enroll'
     | '/api/public/health'
     | '/api/public/openapi.json'
+    | '/api/public/ping'
     | '/api/public/queue'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
@@ -641,6 +653,7 @@ export interface RootRouteChildren {
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
+  ApiPublicPingRoute: typeof ApiPublicPingRoute
   ApiPublicQueueRoute: typeof ApiPublicQueueRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
@@ -943,6 +956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ping': {
+      id: '/api/public/ping'
+      path: '/api/public/ping'
+      fullPath: '/api/public/ping'
+      preLoaderRoute: typeof ApiPublicPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/openapi.json': {
       id: '/api/public/openapi.json'
       path: '/api/public/openapi.json'
@@ -1046,6 +1066,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
+  ApiPublicPingRoute: ApiPublicPingRoute,
   ApiPublicQueueRoute: ApiPublicQueueRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
@@ -1054,13 +1075,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

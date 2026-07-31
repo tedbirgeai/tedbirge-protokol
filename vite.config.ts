@@ -26,8 +26,9 @@ export default defineConfig({
         outDir: "dist/client",
 
         workbox: {
-          globPatterns: ["**/*.{js,css,woff,woff2,svg,png,ico}"],
+          globPatterns: ["**/*.{js,css,html,woff,woff2,ttf,svg,png,ico,webmanifest,json,txt}"],
           navigateFallback: "/cevrimdisi",
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           navigateFallbackDenylist: [/^\/api\//, /^\/~oauth/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,

@@ -17,7 +17,7 @@
  */
 
 export const DB_NAME = "tedbirge";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 /** 0 = acil/güvenlik, 1 = kontrol, 2 = kullanıcı mesajı, 3 = telemetri. */
 export type Priority = 0 | 1 | 2 | 3;
@@ -62,6 +62,20 @@ export type KeyRecord = {
   createdAt: number;
 };
 
+/** Ed25519 imzalı çevrimdışı lisans belirteci (afet anında yerel doğrulama). */
+export type OfflineLicenseRecord = {
+  /** Lisans anahtarı ya da "local" varsayılan kaydı. */
+  id: string;
+  /** İmzalı yük (JSON, base64 kodlu). */
+  payload: string;
+  /** Ed25519 imzası (base64). */
+  signature: string;
+  /** İmzalayan düğümün doğrulama anahtarı (base64). */
+  signPublic: string;
+  issuedAt: number;
+  expiresAt: number;
+};
+
 export type EventRecord = {
   id?: number;
   ts: number;
@@ -95,6 +109,7 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("peers")) db.createObjectStore("peers", { keyPath: "peerId" });
       if (!db.objectStoreNames.contains("events"))
         db.createObjectStore("events", { keyPath: "id", autoIncrement: true });
+      if (!db.objectStoreNames.contains("licenses")) db.createObjectStore("licenses", { keyPath: "id" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error ?? new Error("IndexedDB açılamadı"));
@@ -200,6 +215,31 @@ export function getKeyRecord(nodeId: string): Promise<KeyRecord | undefined> {
   return safe(
     tx<KeyRecord | undefined>("keys", "readonly", (s) => s.get(nodeId) as IDBRequest<KeyRecord | undefined>),
     undefined,
+  );
+}
+
+/* -------------------- çevrimdışı lisans belirteçleri -------------------- */
+
+export function putOfflineLicense(rec: OfflineLicenseRecord) {
+  return safe(
+    tx<IDBValidKey>("licenses", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    false,
+  );
+}
+
+export function getOfflineLicense(id: string): Promise<OfflineLicenseRecord | undefined> {
+  return safe(
+    tx<OfflineLicenseRecord | undefined>("licenses", "readonly", (s) =>
+      s.get(id) as IDBRequest<OfflineLicenseRecord | undefined>,
+    ),
+    undefined,
+  );
+}
+
+export function listOfflineLicenses(): Promise<OfflineLicenseRecord[]> {
+  return safe(
+    tx<OfflineLicenseRecord[]>("licenses", "readonly", (s) => s.getAll() as IDBRequest<OfflineLicenseRecord[]>),
+    [],
   );
 }
 
