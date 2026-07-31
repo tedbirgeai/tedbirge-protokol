@@ -334,72 +334,109 @@ export function SiteHeader() {
 }
 
 
+function FooterHeading({ children }: { children: ReactNode }) {
+  return (
+    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+      {children}
+    </p>
+  );
+}
+
+const footerLinkClass =
+  "block text-foreground/85 transition-colors hover:text-primary focus-visible:text-primary";
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 bg-card/30">
-      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-4">
-        <div>
-          <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBİRGE GATEWAY</p>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Tek statik binary,
-            dış bağımlılık yok, off-grid çalışır.
-          </p>
-        </div>
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Ürün</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li><Link to="/urun" className="text-muted-foreground hover:text-foreground">Yetenekler</Link></li>
-            <li><Link to="/hibrit-model" className="text-muted-foreground hover:text-foreground">Hibrit model</Link></li>
-            <li><Link to="/tasiyicilar" className="text-muted-foreground hover:text-foreground">Taşıyıcılar</Link></li>
-            <li><Link to="/afet-kamu" className="text-muted-foreground hover:text-foreground">Afet & Kamu</Link></li>
-            <li><Link to="/karsilastirma" className="text-muted-foreground hover:text-foreground">Karşılaştırma</Link></li>
-            <li><Link to="/fiyatlandirma" className="text-muted-foreground hover:text-foreground">Fiyatlandırma</Link></li>
-            <li><Link to="/dokumanlar" className="text-muted-foreground hover:text-foreground">Dokümanlar</Link></li>
-            <li><Link to="/kapsama" className="text-muted-foreground hover:text-foreground">Kapsama planlayıcı</Link></li>
-            <li><Link to="/demo" className="text-muted-foreground hover:text-foreground">Canlı demo</Link></li>
-            <li><Link to="/saha" className="text-muted-foreground hover:text-foreground">Saha erişimi (ücretsiz)</Link></li>
-            <li><Link to="/kur" className="text-muted-foreground hover:text-foreground">Kolay kurulum sihirbazı</Link></li>
-            <li><Link to="/katil" className="text-muted-foreground hover:text-foreground">Ağa katıl (karşılama)</Link></li>
-            <li><Link to="/rehber" className="text-muted-foreground hover:text-foreground">Rehber</Link></li>
-            <li><Link to="/api-dokumantasyon" className="text-muted-foreground hover:text-foreground">Telemetri API'si</Link></li>
-            <li><Link to="/saha-raporu" className="text-muted-foreground hover:text-foreground">Saha test raporu</Link></li>
-            <li><a href="/tedbirge-teknik-ozet.md" download className="text-muted-foreground hover:text-foreground">Teknik özet (.md)</a></li>
+      <div className="mx-auto max-w-6xl px-6 py-14">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
+          <div className="lg:col-span-1">
+            <p className="font-mono text-sm font-semibold tracking-[0.2em]">TEDBİRGE GATEWAY</p>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Tek statik binary,
+              dış bağımlılık yok, off-grid çalışır.
+            </p>
+          </div>
 
+          <div className="min-w-0">
+            <FooterHeading>Ürün</FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/urun" className={footerLinkClass}>Yetenekler</Link></li>
+              <li><Link to="/hibrit-model" className={footerLinkClass}>Hibrit model</Link></li>
+              <li><Link to="/tasiyicilar" className={footerLinkClass}>Taşıyıcılar</Link></li>
+              <li><Link to="/afet-kamu" className={footerLinkClass}>Afet & Kamu</Link></li>
+              <li><Link to="/karsilastirma" className={footerLinkClass}>Karşılaştırma</Link></li>
+              <li><Link to="/demo" className={footerLinkClass}>Canlı demo</Link></li>
+            </ul>
+            <FooterHeading>
+              <span className="mt-6 block">Ticari</span>
+            </FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/fiyatlandirma" className={footerLinkClass}>Fiyatlandırma</Link></li>
+              <li><Link to="/dokumanlar" className={footerLinkClass}>Dokümanlar</Link></li>
+            </ul>
+          </div>
 
-          </ul>
-        </div>
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Şirket & uyum</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li><Link to="/hakkimizda" className="text-muted-foreground hover:text-foreground">Hakkımızda</Link></li>
-            <li><Link to="/mevzuat" className="text-muted-foreground hover:text-foreground">Regülasyon merkezi</Link></li>
-            <li><Link to="/uyumluluk" className="text-muted-foreground hover:text-foreground">Spektrum & uyum</Link></li>
-            <li><Link to="/sertifikasyon" className="text-muted-foreground hover:text-foreground">Sertifikasyon & test</Link></li>
-            <li><Link to="/turkiye-mevzuat" className="text-muted-foreground hover:text-foreground">Türkiye mevzuatı</Link></li>
-            <li><Link to="/izinler" className="text-muted-foreground hover:text-foreground">Devlet izinleri</Link></li>
-            <li><Link to="/pilot-panosu" className="text-muted-foreground hover:text-foreground">Pilot uyum panosu</Link></li>
+          <div className="min-w-0">
+            <FooterHeading>Başlangıç & Saha</FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/kur" className={footerLinkClass}>Kolay kurulum sihirbazı</Link></li>
+              <li><Link to="/katil" className={footerLinkClass}>Ağa katıl (karşılama)</Link></li>
+              <li><Link to="/saha" className={footerLinkClass}>Saha erişimi (ücretsiz)</Link></li>
+              <li><Link to="/kapsama" className={footerLinkClass}>Kapsama planlayıcı</Link></li>
+              <li><Link to="/saha-raporu" className={footerLinkClass}>Saha test raporu</Link></li>
+            </ul>
+            <FooterHeading>
+              <span className="mt-6 block">Geliştirici</span>
+            </FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/rehber" className={footerLinkClass}>Rehber</Link></li>
+              <li><Link to="/api-dokumantasyon" className={footerLinkClass}>Telemetri API'si</Link></li>
+              <li><a href="/tedbirge-teknik-ozet.md" download className={footerLinkClass}>Teknik özet (.md)</a></li>
+              <li>
+                <a
+                  href="https://github.com/tedbirgeai/aetheris"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={footerLinkClass}
+                >
+                  Kaynak kod
+                </a>
+              </li>
+            </ul>
+          </div>
 
-            <li><Link to="/ihracat-uyum" className="text-muted-foreground hover:text-foreground">İhracat kontrolü</Link></li>
-            <li><Link to="/guvenlik" className="text-muted-foreground hover:text-foreground">Güvenlik & tehdit modeli</Link></li>
-            <li><Link to="/en" className="text-muted-foreground hover:text-foreground">English overview</Link></li>
+          <div className="min-w-0">
+            <FooterHeading>Uyum & Regülasyon</FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/mevzuat" className={footerLinkClass}>Regülasyon merkezi</Link></li>
+              <li><Link to="/uyumluluk" className={footerLinkClass}>Spektrum & uyum</Link></li>
+              <li><Link to="/sertifikasyon" className={footerLinkClass}>Sertifikasyon & test</Link></li>
+              <li><Link to="/turkiye-mevzuat" className={footerLinkClass}>Türkiye mevzuatı</Link></li>
+              <li><Link to="/izinler" className={footerLinkClass}>Devlet izinleri</Link></li>
+              <li><Link to="/pilot-panosu" className={footerLinkClass}>Pilot uyum panosu</Link></li>
+              <li><Link to="/ihracat-uyum" className={footerLinkClass}>İhracat kontrolü</Link></li>
+              <li><Link to="/guvenlik" className={footerLinkClass}>Güvenlik & tehdit modeli</Link></li>
+            </ul>
+          </div>
 
-            <li><Link to="/iletisim" className="text-muted-foreground hover:text-foreground">İletişim</Link></li>
-            <li><Link to="/panel" className="text-muted-foreground hover:text-foreground">Müşteri paneli</Link></li>
-
-            <li>
-              <a href="https://github.com/tedbirgeai/aetheris" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">
-                Kaynak kod
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Yasal</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li><Link to="/kosullar" className="text-muted-foreground hover:text-foreground">Kullanım Koşulları</Link></li>
-            <li><Link to="/gizlilik" className="text-muted-foreground hover:text-foreground">Gizlilik Bildirimi</Link></li>
-            <li><Link to="/iade" className="text-muted-foreground hover:text-foreground">İade Politikası</Link></li>
-          </ul>
+          <div className="min-w-0">
+            <FooterHeading>Kurumsal</FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/hakkimizda" className={footerLinkClass}>Hakkımızda</Link></li>
+              <li><Link to="/iletisim" className={footerLinkClass}>İletişim</Link></li>
+              <li><Link to="/panel" className={footerLinkClass}>Müşteri paneli</Link></li>
+              <li><Link to="/en" className={footerLinkClass}>English overview</Link></li>
+            </ul>
+            <FooterHeading>
+              <span className="mt-6 block">Yasal</span>
+            </FooterHeading>
+            <ul className="mt-4 space-y-2 text-sm">
+              <li><Link to="/kosullar" className={footerLinkClass}>Kullanım Koşulları</Link></li>
+              <li><Link to="/gizlilik" className={footerLinkClass}>Gizlilik Bildirimi</Link></li>
+              <li><Link to="/iade" className={footerLinkClass}>İade Politikası</Link></li>
+            </ul>
+          </div>
         </div>
       </div>
       <div className="border-t border-border/60">
@@ -411,6 +448,7 @@ export function SiteFooter() {
     </footer>
   );
 }
+
 
 export function SitePage({ children }: { children: ReactNode }) {
   return (
