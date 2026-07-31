@@ -335,8 +335,8 @@ function Field({ label, value }: { label: string; value: string | null }) {
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mt-10">
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">{title}</h2>
+    <div className="print-block mt-10 print:mt-5">
+      <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary print:text-[9pt]">{title}</h2>
       <div className="mt-3 text-sm leading-relaxed">{children}</div>
     </div>
   );
