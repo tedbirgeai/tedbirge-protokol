@@ -68,6 +68,13 @@ function RegulationHub() {
             >
               Bölge matrisi
             </a>
+            <Link
+              to="/yasal"
+              className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+            >
+              Sözleşme ekleri &amp; dilekçeler
+            </Link>
+
           </div>
         </div>
       </section>

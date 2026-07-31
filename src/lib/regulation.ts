@@ -273,3 +273,264 @@ export const PRIVACY_NOTICE = {
   note:
     "Bu metin taslaktır ve hukuki görüş yerine geçmez. Kurumsal konuşlanmadan önce kendi veri envanteriniz ve VERBİS yükümlülüğünüz doğrultusunda hukuk müşavirinizle nihai hâline getirilmelidir.",
 };
+
+/* ------------------------------------------------------------------ *
+ * Şirketleşme ve idari uyum paketi — sözleşmesel ekler (Ek-A/B/C)
+ * ------------------------------------------------------------------ */
+
+export type ContractAnnex = {
+  id: "ek-a" | "ek-b" | "ek-c";
+  code: string;
+  title: string;
+  scope: string;
+  refs: string;
+  clauses: Array<{ n: string; h: string; p: string }>;
+  signature: string;
+};
+
+export const CONTRACT_ANNEXES: ContractAnnex[] = [
+  {
+    id: "ek-a",
+    code: "EK-A",
+    title: "Spektrum ve Donanım Kullanım Taahhüdü",
+    scope:
+      "Bu ek, Tedbirge Gateway yazılımını işleten Müşteri/İşleten ile Tedbirge (Mehmet DİNÇ) arasındaki lisans sözleşmesinin ayrılmaz parçasıdır ve radyo spektrumu kullanımına ilişkin yükümlülükleri düzenler.",
+    refs: "5809 s. Elektronik Haberleşme Kanunu · BTK KEGY · Milli Frekans Planı · ETSI EN 300 220 · RED 2014/53/AB Md. 3(3)(i)",
+    clauses: [
+      {
+        n: "A.1",
+        h: "Bant ve güç tavanlarına uyum",
+        p: "İşleten, Türkiye Cumhuriyeti sınırları içinde yürüttüğü tüm konuşlanmalarda 863–870 MHz SRD bandı için BTK Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği'nde (KEGY) öngörülen 25 mW e.r.p. azami iletim gücü ve %1 azami görev döngüsü (duty cycle) tavanlarına uyacağını kabul, beyan ve taahhüt eder. Anten kazancı dâhil edilerek hesaplanan efektif yayılan gücün bu tavanı aşmaması İşleten'in sorumluluğundadır.",
+      },
+      {
+        n: "A.2",
+        h: "Bölge kilitlerinin tahrif edilmemesi",
+        p: "Yazılımda TEDBIRGE_REGION bölge profili ile zorlanan frekans planı, iletim gücü tavanı ve görev döngüsü bütçesi; tersine mühendislik, yama, bellek müdahalesi, yapılandırma manipülasyonu veya benzeri hiçbir yöntemle devre dışı bırakılamaz, aşılamaz veya değiştirilemez. Türkiye'de TR profilinde varsayılan olarak kapalı gelen Wi-Fi HaLow (900 MHz) ve TVWS (470–790 MHz) taşıyıcıları açılamaz.",
+      },
+      {
+        n: "A.3",
+        h: "Yalnızca tip onaylı donanım",
+        p: "İşleten, yazılımla birlikte yalnızca ilgili ulusal düzenleyici tarafından tip onayı verilmiş, CE/RED veya eşdeğer uygunluk işareti taşıyan ve üretici firmware'i değiştirilmemiş radyo donanımı kullanacağını taahhüt eder. Üretici dışı, değiştirilmiş veya özel (custom) firmware yüklenmesi hâlinde uygunluk beyanı ve garanti kendiliğinden sona erer.",
+      },
+      {
+        n: "A.4",
+        h: "Yurt dışı konuşlanma",
+        p: "Türkiye dışındaki konuşlanmalarda İşleten, konuşlanma yapılacak ülkenin yürürlükteki spektrum düzenlemesine uygun bölge profilini seçmek ve gerekli yerel kayıt/izin işlemlerini tamamlamakla yükümlüdür. Tedbirge'nin yayımladığı bölge matrisi bilgilendirme amaçlıdır; yetkili makam metni esastır.",
+      },
+      {
+        n: "A.5",
+        h: "Sorumluluk ve rücu",
+        p: "A.1–A.4 maddelerine aykırılıktan doğan her türlü idari para cezası, cihaz el koyma, faaliyet durdurma ve üçüncü kişi zararları münhasıran İşleten'e aittir. Tedbirge'ye bu nedenle bir yaptırım uygulanması hâlinde Tedbirge, ödediği tutarlar için İşleten'e rücu eder.",
+      },
+      {
+        n: "A.6",
+        h: "Denetim ve kayıt",
+        p: "İşleten, kullandığı donanımın marka/model/tip onay numarasını ve seçtiği bölge profilini kayıt altında tutar; Tedbirge'nin yazılı talebi hâlinde bu kayıtları 10 iş günü içinde sunar.",
+      },
+    ],
+    signature:
+      "İşleten (unvan / ad-soyad, tarih, imza) — Tedbirge: Mehmet DİNÇ (Tedbirge Gateway), Türkiye",
+  },
+  {
+    id: "ek-b",
+    code: "EK-B",
+    title: "5651 Sorumluluk Devri ve Log Yükümlülüğü Beyanı",
+    scope:
+      "Bu ek, Tedbirge Gateway düğümü üzerinden genel internete çıkış (exit node) etkinleştirilmesi hâlinde doğan yükümlülüklerin taraflar arasındaki dağılımını düzenler.",
+    refs: "5651 s. Kanun md. 2/1-(e), 5, 7 · İnternet Toplu Kullanım Sağlayıcıları Hakkında Yönetmelik · 6698 s. KVKK",
+    clauses: [
+      {
+        n: "B.1",
+        h: "Varsayılan izole ağ statüsü",
+        p: "Tedbirge Gateway varsayılan yapılandırmasında kapalı devre, izole bir haberleşme ortamı kurar ve genel internet erişimi dağıtmaz. Bu yapılandırmada düğüm sahibi, 5651 sayılı Kanun anlamında erişim sağlayıcı veya toplu kullanım sağlayıcı sıfatını kendiliğinden kazanmaz.",
+      },
+      {
+        n: "B.2",
+        h: "Exit node ile sıfat değişikliği",
+        p: "Düğüm sahibinin ağı bir işyeri, kamu kurumu, kamp alanı, etkinlik alanı veya benzeri bir mekânda üçüncü kişilerin kullanımına açması ve genel internete çıkışı (exit node) etkinleştirmesi hâlinde, 5651 sayılı Kanun'un 7. maddesi uyarınca 'toplu kullanım sağlayıcı' sıfatı münhasıran düğüm sahibinde doğar.",
+      },
+      {
+        n: "B.3",
+        h: "Adli log yükümlülüğünün münhasırlığı",
+        p: "B.2 hâlinde iç IP dağıtım kayıtlarının (kaynak IP, atanan IP, MAC adresi, port bilgisi, oturum başlangıç/bitiş zaman damgası) elektronik ortamda kendi sisteminde tutulması, doğruluğunun ve bütünlüğünün korunması, yetkisiz erişime karşı güvenliğinin sağlanması ve mevzuatın öngördüğü süre boyunca saklanması yükümlülüğü münhasıran Müşteri'ye/düğüm sahibine aittir.",
+      },
+      {
+        n: "B.4",
+        h: "Zaman damgası ve bütünlük",
+        p: "Müşteri, log kayıtlarının NTP ile senkronize saat kaynağı kullanılarak üretilmesini ve kayıt bütünlüğünün özet (hash) veya nitelikli elektronik zaman damgası ile doğrulanabilir olmasını sağlar. Tedbirge opsiyonel bir log modülü sağlar; modülün varlığı yükümlülüğü Tedbirge'ye devretmez.",
+      },
+      {
+        n: "B.5",
+        h: "Tedbirge'nin teknik erişimsizliği",
+        p: "Ağ üzerinden taşınan yük uçtan uca AES-256-GCM ile şifrelenir ve özel anahtar kullanıcı cihazından çıkmaz. Tedbirge; içerik verisine, log kayıtlarına veya abone bilgisine teknik olarak erişemez, kopyasını tutmaz ve yetkili makam taleplerinde Müşteri'nin yerine geçemez. Tedbirge'ye ulaşan talepler gecikmeksizin Müşteri'ye yönlendirilir.",
+      },
+      {
+        n: "B.6",
+        h: "Bildirim ve belge yükümlülükleri",
+        p: "Müşteri, ticari amaçla toplu kullanım sağlayıcılığı yapması hâlinde mülki idare amirliğinden izin belgesi alınması ve BTK'ya yapılması gereken bildirimler dâhil tüm idari yükümlülükleri bağımsız hukuki danışmanlıkla değerlendirip yerine getirir.",
+      },
+      {
+        n: "B.7",
+        h: "Tazmin",
+        p: "Bu ekte tanımlı yükümlülüklerin ihlalinden doğan idari, hukuki ve cezai sorumluluk ile üçüncü kişi talepleri Müşteri'ye aittir; Müşteri, Tedbirge'yi bu taleplerden ari tutmayı kabul eder.",
+      },
+    ],
+    signature:
+      "Müşteri / düğüm sahibi (unvan, ad-soyad, tarih, imza) — Tedbirge: Mehmet DİNÇ (Tedbirge Gateway)",
+  },
+  {
+    id: "ek-c",
+    code: "EK-C",
+    title: "İhracat Kontrolü, Çift Kullanım ve Yaptırım Taraması — Son Kullanıcı Beyanı",
+    scope:
+      "Bu ek, güçlü kriptografi (AES-256-GCM, Ed25519, ECDH P-256) içeren Tedbirge yazılımının uluslararası ihracat kontrol rejimleri ve yaptırım programları ile uyumlu kullanımına ilişkin son kullanıcı beyanıdır.",
+    refs: "Wassenaar Düzenlemesi Kat. 5 Böl. 2 · (AB) 2021/821 · 5A002/5D002 · ABD EAR (EAR99/5D002 analojisi) · BM/AB/OFAC yaptırım listeleri",
+    clauses: [
+      {
+        n: "C.1",
+        h: "Sınıflandırma bilgisi",
+        p: "Son Kullanıcı, yazılımın simetrik 256 bit ve asimetrik eliptik eğri kriptografi içerdiğini ve bu nedenle çift kullanımlı ürün sınıflandırması kapsamına girebileceğini bildiğini beyan eder. Yazılım salt yazılım olarak sevk edilir; hiçbir şifreleme donanımı, verici veya anten teslim edilmez.",
+      },
+      {
+        n: "C.2",
+        h: "Son kullanım beyanı",
+        p: "Son Kullanıcı, yazılımı yalnızca beyan ettiği meşru sivil/kurumsal haberleşme süreklilik amaçlarıyla kullanacağını; nükleer, kimyasal, biyolojik silah veya füze teknolojisi geliştirme faaliyetlerinde, hukuka aykırı kitlesel gözetim sistemlerinde veya insan hakları ihlaline yol açacak uygulamalarda kullanmayacağını taahhüt eder.",
+      },
+      {
+        n: "C.3",
+        h: "Yaptırım taraması",
+        p: "Son Kullanıcı; kendisinin, hâkim ortaklarının ve nihai yararlanıcılarının BM Güvenlik Konseyi, Avrupa Birliği konsolide yaptırım listesi, ABD OFAC SDN listesi ve Türkiye'nin taraf olduğu yaptırım rejimlerinde yer almadığını beyan eder. Statüsünde değişiklik olması hâlinde derhal Tedbirge'yi bilgilendirir.",
+      },
+      {
+        n: "C.4",
+        h: "Yeniden ihracat yasağı",
+        p: "Yazılımın, lisansı olmayan üçüncü kişilere devri, alt lisanslanması, yeniden ihracı veya ambargo/yaptırım uygulanan ülke ya da kişilere doğrudan veya dolaylı olarak erişilebilir kılınması yasaktır.",
+      },
+      {
+        n: "C.5",
+        h: "Kayıt ve denetim",
+        p: "Son Kullanıcı, dağıtım ve kurulum kayıtlarını en az 5 yıl saklar; yetkili ihracat kontrol makamının veya Tedbirge'nin yazılı talebi hâlinde bu kayıtları sunar.",
+      },
+      {
+        n: "C.6",
+        h: "İhlalin sonucu",
+        p: "Bu ekin ihlali hâlinde lisans, ihbara gerek olmaksızın derhal sona erer; doğan tüm idari ve cezai sorumluluk Son Kullanıcı'ya aittir.",
+      },
+    ],
+    signature:
+      "Son Kullanıcı (kurum unvanı, yetkili ad-soyad, ülke, tarih, imza) — Tedbirge: Mehmet DİNÇ (Tedbirge Gateway)",
+  },
+];
+
+/* ------------------------------------------------------------------ *
+ * İdari ve resmî dilekçe taslakları
+ * ------------------------------------------------------------------ */
+
+export type OfficialDraft = {
+  id: "btk-muafiyet" | "valilik-saha-testi";
+  label: string;
+  title: string;
+  summary: string;
+  body: string;
+};
+
+export const OFFICIAL_DRAFTS: OfficialDraft[] = [
+  {
+    id: "btk-muafiyet",
+    label: "BTK",
+    title: "BTK Resmî Muafiyet ve Bilgilendirme Dilekçesi (Taslak)",
+    summary:
+      "Ürünün verici içermeyen, lisanssız ISM bandında çalışan salt yazılım olduğunu belgeleyen; lisans/bildirim muafiyeti hakkında yazılı görüş talep eden idari başvuru metni.",
+    body: `BİLGİ TEKNOLOJİLERİ VE İLETİŞİM KURUMU BAŞKANLIĞI'NA
+ANKARA
+
+Konu: Verici içermeyen, lisanssız (ISM/SRD) bantları yöneten salt yazılım ürünü hakkında lisans/bildirim muafiyeti değerlendirmesi ve yazılı görüş talebi.
+
+Tarih: ..../..../20....
+
+1. BAŞVURU SAHİBİ
+Unvan: Mehmet DİNÇ (Tedbirge Gateway)
+Vergi dairesi / VKN-TCKN: ...............................
+Adres: ...............................
+E-posta: tedbirge34@gmail.com · Telefon: ...............................
+
+2. ÜRÜNÜN TANIMI
+"Tedbirge Gateway", tek statik çalıştırılabilir dosya (binary) olarak dağıtılan salt yazılım bir haberleşme tünelleme ve yönlendirme katmanıdır. Ürün kapsamında:
+a) Hiçbir radyo vericisi, alıcı, anten veya RF güç katı üretilmemekte, ithal edilmemekte ve satılmamaktadır.
+b) Yazılım, kullanıcının hâlihazırda sahip olduğu ve ilgili mevzuata göre tip onaylı/CE işaretli donanımın (Ethernet, Wi-Fi 2.4/5/6 GHz, 60 GHz, sub-GHz SRD modülleri, hücresel modem, uydu terminali, optik/FSO bağlantı) üzerinde çalışır.
+c) Hücresel ve uydu taşıyıcılar, kullanıcının yetkilendirilmiş işletmeciyle mevcut abonelik ilişkisi üzerinden kullanılır; Tedbirge elektronik haberleşme hizmeti sunmamakta, altyapı işletmemekte ve abonelik ilişkisi kurmamaktadır.
+
+3. SPEKTRUM KULLANIMI VE YAZILIMSAL SINIRLAMALAR
+Ürünün Türkiye (TR) bölge profili, Kurumunuzun Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği ve Milli Frekans Planı hükümleri esas alınarak yapılandırılmıştır:
+- Sub-GHz SRD: 863–870 MHz, azami 25 mW e.r.p., azami %1 görev döngüsü — yazılımsal olarak zorlanmakta, bütçe dolduğunda paketler kuyruğa alınmaktadır.
+- Wi-Fi HaLow (902–928 MHz) ve TVWS (470–790 MHz) taşıyıcıları TR profilinde varsayılan ve zorunlu olarak KAPALI gelmekte, kullanıcı tarafından açılamamaktadır.
+- Yapılandırılabilir radyonun mevzuata aykırı parametrelere zorlanmasını engelleyen bölge kilidi mekanizması, RED 2014/53/AB Md. 3(3)(i) ilkesiyle uyumlu olarak uygulanmaktadır.
+
+4. VERİ VE İÇERİK BOYUTU
+Taşınan yük uçtan uca AES-256-GCM ile şifrelenir; anahtarlar kullanıcı cihazında üretilir ve cihazdan çıkmaz. Başvuru sahibi içerik verisine teknik olarak erişememektedir. Varsayılan yapılandırma kapalı devre olup genel internet erişimi dağıtmamaktadır; kullanıcının genel internete çıkış (exit node) özelliğini etkinleştirmesi hâlinde 5651 sayılı Kanun kapsamındaki yükümlülüklerin kullanıcıya ait olduğu sözleşme ekleriyle (Ek-B) açıkça düzenlenmiştir.
+
+5. TALEP
+Yukarıda nitelikleri açıklanan ürünün;
+a) 5809 sayılı Elektronik Haberleşme Kanunu kapsamında yetkilendirme (bildirim/kullanım hakkı) gerektirip gerektirmediği,
+b) Telsiz kurma ve kullanma izni ile tip onayı yükümlülükleri bakımından, verici içermeyen salt yazılım niteliği nedeniyle muafiyet kapsamında değerlendirilip değerlendirilmeyeceği,
+c) Varsa yerine getirilmesi gereken ilave bildirim, belge veya teknik dosya yükümlülükleri,
+hususlarında Kurumunuzun yazılı görüşünün tarafımıza bildirilmesini saygılarımla arz ederim.
+
+Ekler:
+Ek-1: Ürün teknik özeti ve mimari şeması
+Ek-2: Bölge profili (TR) spektrum parametre tablosu
+Ek-3: Tedarikçi uygunluk beyanı
+Ek-4: Sözleşme Ek-A / Ek-B / Ek-C metinleri
+
+Mehmet DİNÇ
+Tedbirge Gateway
+İmza: ...............................`,
+  },
+  {
+    id: "valilik-saha-testi",
+    label: "Valilik",
+    title: "Sakarya Valiliği / İl Telekomünikasyon Saha Testi Bilgilendirme Yazısı (Taslak)",
+    summary:
+      "Pilot saha testi öncesinde mülki idareye sunulacak, test yeri-zamanı, spektrum parametreleri ve güvenlik tedbirlerini bildiren resmî bilgilendirme metni.",
+    body: `SAKARYA VALİLİĞİ'NE
+(İl Yazı İşleri Müdürlüğü / İl Afet ve Acil Durum Müdürlüğü / İlgili İl Telekomünikasyon Birimi)
+
+Konu: Lisanssız ISM/SRD bandında yürütülecek haberleşme süreklilik saha testi hakkında bilgilendirme.
+
+Tarih: ..../..../20....
+
+1. BİLGİLENDİRMEDE BULUNAN
+Unvan: Mehmet DİNÇ (Tedbirge Gateway)
+Adres: ............................... · E-posta: tedbirge34@gmail.com · Telefon: ...............................
+
+2. TESTİN AMACI
+İnternet altyapısının kesintiye uğradığı afet ve acil durum senaryolarında, mevcut ve tip onaylı kullanıcı donanımları üzerinde çalışan salt yazılım tabanlı bir mesh haberleşme katmanının menzil, gecikme, paket kaybı ve süreklilik performansının ölçülmesidir. Test, kamu düzenini etkilemeyen, ticari hizmet sunumu içermeyen teknik bir ölçüm faaliyetidir.
+
+3. TESTİN YERİ, TARİHİ VE KAPSAMI
+Yer / koordinatlar: ...............................
+Tarih ve saat aralığı: ..../..../20.... — ..:.. – ..:..
+Katılımcı sayısı: ....... kişi · Kullanılacak düğüm sayısı: ....... adet
+Kurulacak bağlantı: sabit/mobil, nokta-nokta ve mesh; kalıcı yapı, direk, kule veya kazı işi yapılmayacaktır.
+
+4. SPEKTRUM VE DONANIM
+- Kullanılacak bantlar: 863–870 MHz SRD (azami 25 mW e.r.p., azami %1 görev döngüsü), Wi-Fi 2,4/5 GHz ve 60 GHz lisanssız bantlar.
+- Tüm donanım CE/RED işaretli ve tip onaylıdır; üretici firmware'i değiştirilmemiştir.
+- Wi-Fi HaLow ve TVWS taşıyıcıları yazılım tarafından kapalı tutulmaktadır.
+- Kullanılan bantlar lisanssız olup, mevcut mevzuata göre ayrıca telsiz kurma ve kullanma izni gerektirmemektedir. Faaliyet, yetkilendirilmiş işletmecilerin spektrumuna müdahale etmemekte, kamuya elektronik haberleşme hizmeti sunulmamaktadır.
+
+5. GÜVENLİK VE ÇEVRE TEDBİRLERİ
+- İnsan maruziyeti EN 62311 sınırlarının altındadır; optik (FSO) bağlantı kullanılması hâlinde IEC 60825-1 Class 1M göz güvenliği sınıfı geçerlidir.
+- Test alanı görevli personel tarafından denetlenecek, acil durum irtibat numarası bulundurulacaktır.
+- Test sırasında genel internete çıkış (exit node) etkinleştirilmeyecek, ağ izole çalışacaktır; bu nedenle 5651 sayılı Kanun kapsamında toplu kullanım sağlayıcılığı doğmayacaktır.
+
+6. VERİ İŞLEME
+Test kapsamında yalnızca teknik telemetri (düğüm kimliği, sinyal seviyesi, gecikme, paket kaybı, zaman damgası) kaydedilecek olup, katılımcılara ait kişisel veri veya haberleşme içeriği işlenmeyecektir. 6698 sayılı KVKK kapsamında aydınlatma metni katılımcılara sunulacaktır.
+
+7. TALEP
+Yukarıda ayrıntıları verilen saha testi faaliyeti hakkında Valiliğinizin bilgilendirilmesini, uygun görülmesi hâlinde ilgili birimlerin haberdar edilmesini ve varsa yerine getirmemiz gereken ilave tedbir/izin hususlarının tarafımıza bildirilmesini saygılarımla arz ederim.
+
+Mehmet DİNÇ
+Tedbirge Gateway
+İmza: ...............................`,
+  },
+];

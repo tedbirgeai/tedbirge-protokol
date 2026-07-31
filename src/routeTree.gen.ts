@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as YasalRouteImport } from './routes/yasal'
 import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
@@ -56,6 +57,11 @@ import { Route as AuthenticatedTeklifIdRouteImport } from './routes/_authenticat
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicCronOfflineCheckRouteImport } from './routes/api/public/cron/offline-check'
 
+const YasalRoute = YasalRouteImport.update({
+  id: '/yasal',
+  path: '/yasal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UyumlulukRoute = UyumlulukRouteImport.update({
   id: '/uyumluluk',
   path: '/uyumluluk',
@@ -320,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
+  '/yasal': typeof YasalRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
@@ -367,6 +374,7 @@ export interface FileRoutesByTo {
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
+  '/yasal': typeof YasalRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
@@ -416,6 +424,7 @@ export interface FileRoutesById {
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
   '/uyumluluk': typeof UyumlulukRoute
+  '/yasal': typeof YasalRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
@@ -465,6 +474,7 @@ export interface FileRouteTypes {
     | '/turkiye-mevzuat'
     | '/urun'
     | '/uyumluluk'
+    | '/yasal'
     | '/panel'
     | '/saha-raporu'
     | '/yonetim'
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/turkiye-mevzuat'
     | '/urun'
     | '/uyumluluk'
+    | '/yasal'
     | '/panel'
     | '/saha-raporu'
     | '/yonetim'
@@ -560,6 +571,7 @@ export interface FileRouteTypes {
     | '/turkiye-mevzuat'
     | '/urun'
     | '/uyumluluk'
+    | '/yasal'
     | '/_authenticated/panel'
     | '/_authenticated/saha-raporu'
     | '/_authenticated/yonetim'
@@ -609,6 +621,7 @@ export interface RootRouteChildren {
   TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
   UrunRoute: typeof UrunRoute
   UyumlulukRoute: typeof UyumlulukRoute
+  YasalRoute: typeof YasalRoute
   ApiChatRoute: typeof ApiChatRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
@@ -623,6 +636,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/yasal': {
+      id: '/yasal'
+      path: '/yasal'
+      fullPath: '/yasal'
+      preLoaderRoute: typeof YasalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/uyumluluk': {
       id: '/uyumluluk'
       path: '/uyumluluk'
@@ -998,6 +1018,7 @@ const rootRouteChildren: RootRouteChildren = {
   TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
   UrunRoute: UrunRoute,
   UyumlulukRoute: UyumlulukRoute,
+  YasalRoute: YasalRoute,
   ApiChatRoute: ApiChatRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
