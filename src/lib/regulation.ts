@@ -479,7 +479,6 @@ hususlarında Kurumunuzun yazılı görüşünün tarafımıza bildirilmesini sa
 Kurumunuzca talep edilmesi hâlinde ürün teknik özeti, bölge profili (TR) spektrum parametre tablosu ve ilgili sözleşme ek metinleri ayrıca sunulacaktır.
 
 
-
 Mehmet DİNÇ
 Tedbirge Gateway
 İmza: ...............................`,
