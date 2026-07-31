@@ -8,6 +8,14 @@
 
 import { useSyncExternalStore } from "react";
 import { BrowserNode, getBrowserNodeId, type BrowserNodeState } from "@/lib/browser-node";
+import {
+  BRIDGEABLE_CARRIERS,
+  dataPlaneReady,
+  sendOverCarrier,
+  setCarrierEnvelopeSink,
+} from "@/lib/carrier-bridge";
+import { pruneSeen } from "@/lib/store/idb";
+import type { Priority } from "@/lib/store/idb";
 
 const AUTO_KEY = "tedbirge.browser-node.auto";
 const GUIDE_KEY = "tedbirge.browser-node.guide-seen";
