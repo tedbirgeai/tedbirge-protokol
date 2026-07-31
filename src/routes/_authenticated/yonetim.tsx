@@ -6,6 +6,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
 import { OFFICIAL_DRAFTS } from "@/lib/regulation";
+import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
 
 
 export const Route = createFileRoute("/_authenticated/yonetim")({
@@ -68,7 +69,7 @@ type AiLead = {
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai" | "docs">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "plan">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -161,7 +162,9 @@ function Admin() {
             ? "Pilot başvuruları"
             : tab === "ai"
               ? "AI danışman talepleri"
-              : "İdari belgeler & dilekçeler"}
+              : tab === "plan"
+                ? "İş planı geliştirme rehberi"
+                : "İdari belgeler & dilekçeler"}
         </h1>
 
 
@@ -190,9 +193,19 @@ function Admin() {
           >
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
           </button>
+          <button
+            onClick={() => setTab("plan")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "plan" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            İş planı
+          </button>
         </div>
 
-        {tab === "docs" ? (
+        {tab === "plan" ? (
+          <AdminBusinessPlan />
+        ) : tab === "docs" ? (
           <AdminOfficialDrafts />
         ) : tab === "ai" ? (
           leads.length === 0 ? (
