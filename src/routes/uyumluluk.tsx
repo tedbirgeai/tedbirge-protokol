@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { ZeroKnowledgeAudit } from "@/components/site/ZeroKnowledgeAudit";
 import {
   REGION_MATRIX,
   MATRIX_NOTE,
@@ -7,6 +8,7 @@ import {
   RUNTIME_RULES,
   REGION_PROFILE_SNIPPET,
 } from "@/lib/regulation";
+
 
 const TITLE = "Spektrum & Uyum Matrisi — Ülke Bazlı Taşıyıcı Kuralları";
 const DESC =
@@ -113,6 +115,23 @@ function Compliance() {
           </pre>
         </div>
       </section>
+
+      <section id="denetim" className="mx-auto max-w-6xl px-6 py-20">
+        <SectionLabel>KVKK & sıfır-bilgi denetimi</SectionLabel>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">
+          Uyumu iddia etmiyoruz — cihazınızda test ediyoruz
+        </h2>
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          Aşağıdaki yedi test, anahtarların cihazdan çıkmadığını, mesaj gövdesinin ara rölelerce
+          okunamadığını ve kurcalanan paketlerin reddedildiğini canlı olarak kanıtlar. Sonuçlar
+          imzalı bir denetim raporu olarak yazdırılabilir veya PDF'e kaydedilebilir.
+        </p>
+        <div className="mt-10">
+          <ZeroKnowledgeAudit />
+        </div>
+      </section>
+
+
 
       <section className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-6 py-20 md:flex-row md:items-center">
         <div>
