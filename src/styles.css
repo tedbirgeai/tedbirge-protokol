@@ -163,30 +163,68 @@
   background-size: 56px 56px;
 }
 
+@page {
+  size: A4 portrait;
+  margin: 12mm 15mm;
+}
+
 @media print {
   header,
   footer,
-  .print-hide {
+  nav,
+  button,
+  .print-hide,
+  [data-print-hide] {
     display: none !important;
+  }
+  .print-only {
+    display: block !important;
   }
   :root,
   html,
   body {
     background: #fff !important;
     color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   * {
     color: #000 !important;
     border-color: #999 !important;
     box-shadow: none !important;
+    background-image: none !important;
+  }
+  body {
+    font-size: 10.5pt;
+    line-height: 1.45;
   }
   input,
   textarea,
   select {
     background: transparent !important;
   }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  li,
+  tr,
+  table,
+  .print-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
   article,
   section {
-    break-inside: avoid;
+    break-inside: auto;
   }
+  a[href]::after {
+    content: "";
+  }
+}
+
+.print-only {
+  display: none;
 }
