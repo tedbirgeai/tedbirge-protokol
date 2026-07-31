@@ -191,7 +191,7 @@ function Pricing() {
             <input
               type="range"
               min={plan.minNodes}
-              max={planKey === "pro" ? plan.maxNodes : 500}
+              max={plan.maxNodes}
               step={1}
               value={nodes}
               onChange={(e) => setNodes(Number(e.target.value))}
