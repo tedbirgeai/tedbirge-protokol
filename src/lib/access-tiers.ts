@@ -28,7 +28,7 @@ export type AccessState = {
 };
 
 const STORAGE_KEY = "tedbirge.access.local-endpoint";
-const PROBE_PATH = "/api/public/health";
+const PROBE_PATH = "/api/public/ping";
 const PROBE_TIMEOUT_MS = 1500;
 const CHECK_INTERVAL_MS = 20_000;
 
