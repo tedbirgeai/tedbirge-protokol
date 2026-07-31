@@ -410,8 +410,18 @@ export async function connectBluetoothCarrier(carrier: CarrierId) {
   tx.addEventListener("characteristicvaluechanged", onValue);
   await tx.startNotifications();
 
+  const bleEncoder = new TextEncoder();
   handles.set(carrier, {
     timer: null,
+    // BLE GATT yazma sınırı ~20 bayt; çerçeve parçalar hâlinde yazılır.
+    write: rx
+      ? async (payload: string) => {
+          const bytes = bleEncoder.encode(payload);
+          for (let i = 0; i < bytes.length; i += 20) {
+            await rx.writeValueWithoutResponse(bytes.slice(i, i + 20));
+          }
+        }
+      : undefined,
     stop: async () => {
       try {
         await tx.stopNotifications();
