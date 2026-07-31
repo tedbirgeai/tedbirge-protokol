@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 export const Route = createFileRoute("/cevrimdisi")({
   head: () => ({
     meta: [
-      { title: "Çevrimdışı mod — Tedbirge Gateway" },
+      { title: "Çevrimdışı mod — Tedbirge Protokol" },
       {
         name: "description",
         content:
-          "Bağlantı yokken Tedbirge Gateway önbellekten açılır. Saha modunda ne çalışır, ne çalışmaz burada.",
+          "Bağlantı yokken Tedbirge Protokol önbellekten açılır. Saha modunda ne çalışır, ne çalışmaz burada.",
       },
-      { property: "og:title", content: "Çevrimdışı mod — Tedbirge Gateway" },
+      { property: "og:title", content: "Çevrimdışı mod — Tedbirge Protokol" },
       {
         property: "og:description",
         content: "İnternet kesildiğinde uygulama açık kalır; veriler bağlantı dönünce eşitlenir.",
@@ -40,7 +40,7 @@ function OfflinePage() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-5 py-16">
       <div>
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          Tedbirge Gateway
+          Tedbirge Protokol
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
           {online ? "Bağlantı geri geldi" : "Çevrimdışı moddasınız"}

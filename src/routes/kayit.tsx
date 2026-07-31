@@ -5,13 +5,13 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 export const Route = createFileRoute("/kayit")({
   head: () => ({
     meta: [
-      { title: "Düğüm Kaydı (QR) — Tedbirge Gateway" },
+      { title: "Düğüm Kaydı (QR) — Tedbirge Protokol" },
       {
         name: "description",
         content:
-          "QR kodu okutarak saha düğümünüzü Tedbirge Gateway ağına kaydedin; şifreleme anahtarı cihazınızda üretilir.",
+          "QR kodu okutarak saha düğümünüzü Tedbirge Protokol ağına kaydedin; şifreleme anahtarı cihazınızda üretilir.",
       },
-      { property: "og:title", content: "Tedbirge Gateway düğüm kaydı" },
+      { property: "og:title", content: "Tedbirge Protokol düğüm kaydı" },
       { property: "og:description", content: "QR ile tek adımda güvenli düğüm kaydı." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

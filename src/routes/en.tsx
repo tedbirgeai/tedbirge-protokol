@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Tedbirge Gateway — Carrier-Agnostic Zero-Knowledge Mesh Transport";
+const TITLE = "Tedbirge Protocol — Carrier-Agnostic Zero-Knowledge Mesh Transport";
 const DESC =
-  "Tedbirge Gateway is a single-binary, carrier-agnostic zero-knowledge tunnel gateway and mesh SDK. Nine physical transports, AES-256-GCM, Ed25519, works fully off-grid.";
+  "Tedbirge Protocol is a single-binary, carrier-agnostic zero-knowledge tunnel gateway and mesh SDK. Nine physical transports, AES-256-GCM, Ed25519, works fully off-grid.";
 const URL = "https://tedbirge-gateway.lovable.app/en";
 
 export const Route = createFileRoute("/en")({
@@ -28,13 +28,13 @@ export const Route = createFileRoute("/en")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "Tedbirge Gateway",
+          name: "Tedbirge Protocol",
           applicationCategory: "NetworkApplication",
           operatingSystem: "Linux, Windows, macOS",
           description: DESC,
           url: URL,
           offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-          publisher: { "@type": "Organization", name: "Mehmet DİNÇ (Tedbirge Gateway)" },
+          publisher: { "@type": "Organization", name: "Mehmet DİNÇ (Tedbirge Protocol)" },
         }),
       },
     ],
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/en")({
 
 const modules = [
   {
-    name: "Tedbirge Gateway",
+    name: "Tedbirge Protocol",
     body: "Tunnel proxy engine and exit node. AES-256-GCM chunk encryption, zero-knowledge accounting, WAN bridging.",
   },
   {
@@ -96,7 +96,7 @@ function EnglishOverview() {
             Network infrastructure that keeps working when the internet does not
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Gateway is a carrier-agnostic, zero-knowledge tunnel gateway and mesh SDK.
+            Tedbirge Protocol is a carrier-agnostic, zero-knowledge tunnel gateway and mesh SDK.
             It runs as a single static binary on hardware you already own, across nine physical
             transports, with no cloud dependency.
           </p>
@@ -249,7 +249,7 @@ tedbirge-cli exit-demo   # WAN bridge`}</code>
           </Link>
         </div>
         <p className="mt-10 text-sm text-muted-foreground">
-          Vendor: Mehmet DİNÇ (Tedbirge Gateway), Türkiye · tedbirge34@gmail.com ·{" "}
+          Vendor: Mehmet DİNÇ (Tedbirge Protocol), Türkiye · tedbirge34@gmail.com ·{" "}
           <Link to="/" className="text-foreground underline underline-offset-4">
             Türkçe sürüm
           </Link>

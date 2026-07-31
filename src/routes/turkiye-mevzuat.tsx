@@ -3,7 +3,7 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
 const TITLE = "Türkiye Mevzuat Uyumu — BTK, KVKK, TSE ve Kamu Kuralları";
 const DESC =
-  "Tedbirge Gateway'in Türkiye'deki yasal çerçeveye tam uyumu: 5809 sayılı Elektronik Haberleşme Kanunu, BTK telsiz ve KEGY kuralları, TDDY/EMC/LVD işaretlemesi, KVKK 6698, 5651, 6563 ve kamu alım gereklilikleri.";
+  "Tedbirge Protokol'in Türkiye'deki yasal çerçeveye tam uyumu: 5809 sayılı Elektronik Haberleşme Kanunu, BTK telsiz ve KEGY kuralları, TDDY/EMC/LVD işaretlemesi, KVKK 6698, 5651, 6563 ve kamu alım gereklilikleri.";
 const URL = "https://tedbirge-gateway.lovable.app/turkiye-mevzuat";
 
 export const Route = createFileRoute("/turkiye-mevzuat")({
@@ -111,7 +111,7 @@ const framework: Item[] = [
     scope: "Ticari elektronik ileti, ön bilgilendirme, cayma hakkı, satıcı künyesi.",
     status: "Uyumlu",
     action:
-      "Satıcı künyesi (Mehmet DİNÇ — Tedbirge Gateway), kullanım koşulları, gizlilik bildirimi ve iade politikası sitede yayımlanmıştır; dijital içerikte cayma hakkı istisnası ayrıca bildirilir.",
+      "Satıcı künyesi (Mehmet DİNÇ — Tedbirge Protokol), kullanım koşulları, gizlilik bildirimi ve iade politikası sitede yayımlanmıştır; dijital içerikte cayma hakkı istisnası ayrıca bildirilir.",
   },
   {
     law: "Çift Kullanımlı Malzeme ve Teknoloji İhracat Kontrolü",
@@ -209,7 +209,7 @@ function TurkeyRegulation() {
             Pilot ülkemiz Türkiye — mevzuat madde madde karşılanmıştır
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Gateway'in ilk konuşlanma alanı Türkiye'dir. Aşağıda BTK, Sanayi ve
+            Tedbirge Protokol'in ilk konuşlanma alanı Türkiye'dir. Aşağıda BTK, Sanayi ve
             Teknoloji Bakanlığı, KVKK Kurumu, Ticaret Bakanlığı ve AFAD çerçevesindeki
             yükümlülükler; her biri için ürünün konumu ve alınan aksiyon listelenmiştir.
           </p>

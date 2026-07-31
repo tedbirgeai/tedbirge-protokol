@@ -18,7 +18,7 @@ import {
 
 const TITLE = "Regülasyon Merkezi — Spektrum, Sertifikasyon, Mevzuat ve İhracat";
 const DESC =
-  "Tedbirge Gateway'in tüm uyum çerçevesi tek sayfada: altı regülasyon sütunu, ülke bazlı spektrum matrisi, test standartları, Türkiye mevzuatı, ihracat kontrolü ve indirilebilir uyum beyanı.";
+  "Tedbirge Protokol'in tüm uyum çerçevesi tek sayfada: altı regülasyon sütunu, ülke bazlı spektrum matrisi, test standartları, Türkiye mevzuatı, ihracat kontrolü ve indirilebilir uyum beyanı.";
 const URL = "https://tedbirge-gateway.lovable.app/mevzuat";
 
 export const Route = createFileRoute("/mevzuat")({
@@ -226,7 +226,7 @@ function RegulationHub() {
         <div className="mt-10 overflow-hidden rounded-sm border border-border print:mt-0 print:border-0">
           <div className="border-b border-border bg-card/60 px-6 py-5 print:bg-transparent">
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
-              Tedbirge Gateway — Uyum Beyanı
+              Tedbirge Protokol — Uyum Beyanı
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               Sürüm {REG_VERSION} · Gözden geçirme {REG_REVIEWED}

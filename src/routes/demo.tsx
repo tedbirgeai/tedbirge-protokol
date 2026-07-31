@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MeshDemo } from "@/components/site/MeshDemo";
 
-const TITLE = "Canlı Mesh Demosu — Tedbirge Gateway Simülasyonu";
+const TITLE = "Canlı Mesh Demosu — Tedbirge Protokol Simülasyonu";
 const DESC =
   "Tarayıcıda çalışan üç düğümlü Tedbirge mesh simülasyonu: röle düğümü kapatın, yolun yeniden kurulmasını ve şifreli paket akışını canlı izleyin.";
 const URL = "https://tedbirge-gateway.lovable.app/demo";

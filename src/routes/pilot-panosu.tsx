@@ -5,7 +5,7 @@ import { pilotChecklist, pilotGroups, type PilotCheckItem } from "@/lib/pilot-ch
 
 const TITLE = "Pilot Uyum Panosu — Kontrol Listesi, Kanıt Zinciri ve PDF Raporu";
 const DESC =
-  "Tedbirge Gateway pilot kurulumları için takip panosu: 23 maddelik uyum kontrol listesi, dosya karması ile kanıt taşıma zinciri, ilerleme takibi ve tek tıkla PDF uyum raporu.";
+  "Tedbirge Protokol pilot kurulumları için takip panosu: 23 maddelik uyum kontrol listesi, dosya karması ile kanıt taşıma zinciri, ilerleme takibi ve tek tıkla PDF uyum raporu.";
 const URL = "https://tedbirge-gateway.lovable.app/pilot-panosu";
 
 export const Route = createFileRoute("/pilot-panosu")({

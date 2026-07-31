@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-const TITLE = "Devlet İzinleri ve Ruhsatlar — Tedbirge Gateway Çalışma İzni";
+const TITLE = "Devlet İzinleri ve Ruhsatlar — Tedbirge Protokol Çalışma İzni";
 const DESC =
-  "Tedbirge Gateway'i Türkiye'de aktif çalıştırmak için hangi kurumdan hangi izin, belge veya bildirim gerekir? BTK yetkilendirme, telsiz kurma izni, frekans tahsisi, KVKK VERBİS, ETBİS, ihracat kontrolü ve kamu alım belgeleri madde madde.";
+  "Tedbirge Protokol'i Türkiye'de aktif çalıştırmak için hangi kurumdan hangi izin, belge veya bildirim gerekir? BTK yetkilendirme, telsiz kurma izni, frekans tahsisi, KVKK VERBİS, ETBİS, ihracat kontrolü ve kamu alım belgeleri madde madde.";
 const URL = "https://tedbirge-gateway.lovable.app/izinler";
 
 export const Route = createFileRoute("/izinler")({

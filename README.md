@@ -1,8 +1,8 @@
-# Tedbirge Gateway
+# Tedbirge Protokol
 
-**Altyapıdan bağımsız bağlantı.** Tedbirge Gateway; Ethernet, Wi-Fi, hücresel, uydu, WiGig, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa olmak üzere dokuz fiziksel taşıyıcıyı tek bir güvenli ağ geçidi altında birleştiren, kesinti anında otomatik devreye giren bağımsız bir mesh iletişim platformudur.
+**Altyapıdan bağımsız bağlantı.** Tedbirge Protokol; Ethernet, Wi-Fi, hücresel, uydu, WiGig, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa olmak üzere dokuz fiziksel taşıyıcıyı tek bir güvenli ağ geçidi altında birleştiren, kesinti anında otomatik devreye giren bağımsız bir mesh iletişim platformudur.
 
-Üretici / satıcı: **Mehmet DİNÇ (Tedbirge Gateway)** — Türkiye
+Üretici / satıcı: **Mehmet DİNÇ (Tedbirge Protokol)** — Türkiye
 Canlı sürüm: <https://tedbirge-gateway.lovable.app>
 
 ---
@@ -11,7 +11,7 @@ Canlı sürüm: <https://tedbirge-gateway.lovable.app>
 
 | Modül | İşlev |
 | --- | --- |
-| **Tedbirge Gateway** | Çok taşıyıcılı ağ geçidi; taşıyıcı seçimi, sağlık ölçümü ve otomatik yedekleme (failover). |
+| **Tedbirge Protokol** | Çok taşıyıcılı ağ geçidi; taşıyıcı seçimi, sağlık ölçümü ve otomatik yedekleme (failover). |
 | **Tedbirge Loop** | Düğümler arası mesh yönlendirme, çoklu atlama (multi-hop) ve topoloji keşfi. |
 | **Tedbirge Off-Grid** | Bağlantı yokken mesajları kuyruklayıp bağlantı geri geldiğinde teslim eden kopukluğa dayanıklı katman. |
 
@@ -51,9 +51,9 @@ npm run dev
 
 ## Kurucu
 
-**Mehmet DİNÇ** — Kurucu, Tedbirge Gateway
+**Mehmet DİNÇ** — Kurucu, Tedbirge Protokol
 
-Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği üzerine çalışan, afet ve kamu güvenliği senaryolarına odaklanmış bir teknoloji girişimcisidir. Tedbirge Gateway'i, tek bir operatöre, tek bir frekansa veya tek bir omurgaya bağımlı kalmadan çalışan bağımsız bir iletişim katmanı ihtiyacından yola çıkarak kurmuştur.
+Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği üzerine çalışan, afet ve kamu güvenliği senaryolarına odaklanmış bir teknoloji girişimcisidir. Tedbirge Protokol'i, tek bir operatöre, tek bir frekansa veya tek bir omurgaya bağımlı kalmadan çalışan bağımsız bir iletişim katmanı ihtiyacından yola çıkarak kurmuştur.
 
 Çalışmalarının merkezinde üç ilke yer alır: **bağımsızlık** (hiçbir tekil altyapıya bağımlı olmamak), **yasallık** (her bölgede lisanssız bant kurallarına ve veri koruma mevzuatına tam uyum) ve **sadelik** (sahadaki ekibin eğitim gerektirmeden kurup çalıştırabileceği bir sistem). Pilot uygulama alanı Türkiye/Sakarya olup, platform yasal sınırlar dahilinde küresel kullanım için tasarlanmıştır.
 
@@ -61,4 +61,4 @@ Mehmet DİNÇ; kritik altyapı kesintilerinde iletişimin sürdürülebilirliği
 
 ---
 
-© Mehmet DİNÇ (Tedbirge Gateway). Tüm hakları saklıdır.
+© Mehmet DİNÇ (Tedbirge Protokol). Tüm hakları saklıdır.

@@ -296,7 +296,7 @@ export function SiteHeader() {
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <img
             src={brandMark.url}
-            alt="Tedbirge Gateway logosu"
+            alt="Tedbirge Protokol logosu"
             width={32}
             height={32}
             className="size-8 shrink-0 rounded-full object-cover shadow-[0_0_18px_-4px_var(--color-primary)]"
@@ -450,7 +450,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-5 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Tedbirge Protocol · Mehmet DİNÇ (Tedbirge Gateway)</span>
+          <span>© {new Date().getFullYear()} Tedbirge Protocol · Mehmet DİNÇ (Tedbirge Protokol)</span>
           <span>Uçtan uca şifreli · Sıfır-bilgi · Doğrulanmış düğüm</span>
 
         </div>
