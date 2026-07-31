@@ -536,7 +536,11 @@ export class BrowserNode {
     );
   }
 
-  private broadcastRaw(raw: string, exclude?: string) {
+  /**
+   * IP taşıyıcısı (WebRTC) ile yayın. Hiç eş yoksa PHY veri düzlemi
+   * (LoRa/HaLow köprüsü) devreye girer — gövde yine şifrelidir.
+   */
+  private broadcastRaw(raw: string, exclude?: string, priority: Priority = 2) {
     const open = this.openPeers(exclude);
     open.forEach(([, p]) => {
       try {
@@ -545,7 +549,18 @@ export class BrowserNode {
         /* kanal kapandı */
       }
     });
-    return open.length > 0;
+    if (open.length) return true;
+    return this.carrierSend ? this.carrierSend(raw, priority) : false;
+  }
+
+  /** PHY veri düzlemi köprüsünü bağlar (carrier-bridge tarafından ayarlanır). */
+  setCarrierTransport(fn: ((raw: string, priority: Priority) => boolean) | null) {
+    this.carrierSend = fn;
+  }
+
+  /** Taşıyıcı köprüsünden gelen ham zarfı mesh katmanına verir. */
+  ingestCarrierEnvelope(raw: string, carrier: string) {
+    void this.onMeshMessage(raw, `phy:${carrier}`);
   }
 
   /**
