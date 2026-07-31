@@ -10,11 +10,11 @@ import brandMark from "@/assets/tedbirge-mark.png.asset.json";
 
 const navGroups = [
   {
-    label: "Keşif",
+    label: "Protokol",
     items: [
-      { to: "/", label: "Genel Bakış", hint: "Tedbirge Gateway'e giriş" },
+      { to: "/protokol", label: "7 Katmanlı Mimari", hint: "Trust · Edge · Loop · Off-Grid · Sense · Console · Relay" },
       { to: "/urun", label: "Ürün", hint: "Yetenekler ve mimari" },
-      { to: "/demo", label: "Demo", hint: "Tarayıcıda canlı mesh" },
+      { to: "/demo", label: "Demo", hint: "Tarayıcıda canlı ağ" },
     ],
   },
   {
@@ -28,13 +28,13 @@ const navGroups = [
     label: "Güven & Uyum",
     items: [
       { to: "/mevzuat", label: "Regülasyon", hint: "Spektrum ve yasal çerçeve" },
-      { to: "/guvenlik", label: "Güvenlik", hint: "Tehdit modeli" },
+      { to: "/guvenlik", label: "Güvenlik", hint: "Uçtan uca şifreleme ve sıfır-bilgi" },
     ],
   },
   {
     label: "Başlangıç",
     items: [
-      { to: "/kur", label: "Kolay Kurulum", hint: "3 adımda ağ" },
+      { to: "/kur", label: "Kolay Kurulum", hint: "2 tıkla ağa katıl" },
       { to: "/saha", label: "Saha", hint: "Ücretsiz saha erişimi" },
       { to: "/rehber", label: "Rehber", hint: "Mühendislik notları" },
     ],
@@ -42,11 +42,12 @@ const navGroups = [
   {
     label: "Ticari",
     items: [
-      { to: "/fiyatlandirma", label: "Fiyatlandırma", hint: "Community · Pro · Enterprise" },
+      { to: "/fiyatlandirma", label: "Fiyatlandırma", hint: "Resilience-as-a-Service paketleri" },
       { to: "/dokumanlar", label: "Dokümanlar", hint: "Teknik ve kurumsal belgeler" },
     ],
   },
 ] as const;
+
 
 type NavItem = (typeof navGroups)[number]["items"][number];
 

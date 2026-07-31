@@ -16,6 +16,7 @@ import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
 import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
 import { Route as SahaRouteImport } from './routes/saha'
+import { Route as ProtokolRouteImport } from './routes/protokol'
 import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
 import { Route as MevzuatRouteImport } from './routes/mevzuat'
 import { Route as KurRouteImport } from './routes/kur'
@@ -90,6 +91,11 @@ const SertifikasyonRoute = SertifikasyonRouteImport.update({
 const SahaRoute = SahaRouteImport.update({
   id: '/saha',
   path: '/saha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProtokolRoute = ProtokolRouteImport.update({
+  id: '/protokol',
+  path: '/protokol',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PilotPanosuRoute = PilotPanosuRouteImport.update({
@@ -320,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/kur': typeof KurRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
+  '/protokol': typeof ProtokolRoute
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/kur': typeof KurRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
+  '/protokol': typeof ProtokolRoute
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
@@ -418,6 +426,7 @@ export interface FileRoutesById {
   '/kur': typeof KurRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
+  '/protokol': typeof ProtokolRoute
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/tasiyicilar': typeof TasiyicilarRoute
@@ -468,6 +477,7 @@ export interface FileRouteTypes {
     | '/kur'
     | '/mevzuat'
     | '/pilot-panosu'
+    | '/protokol'
     | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
@@ -516,6 +526,7 @@ export interface FileRouteTypes {
     | '/kur'
     | '/mevzuat'
     | '/pilot-panosu'
+    | '/protokol'
     | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
@@ -565,6 +576,7 @@ export interface FileRouteTypes {
     | '/kur'
     | '/mevzuat'
     | '/pilot-panosu'
+    | '/protokol'
     | '/saha'
     | '/sertifikasyon'
     | '/tasiyicilar'
@@ -615,6 +627,7 @@ export interface RootRouteChildren {
   KurRoute: typeof KurRoute
   MevzuatRoute: typeof MevzuatRoute
   PilotPanosuRoute: typeof PilotPanosuRoute
+  ProtokolRoute: typeof ProtokolRoute
   SahaRoute: typeof SahaRoute
   SertifikasyonRoute: typeof SertifikasyonRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
@@ -683,6 +696,13 @@ declare module '@tanstack/react-router' {
       path: '/saha'
       fullPath: '/saha'
       preLoaderRoute: typeof SahaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/protokol': {
+      id: '/protokol'
+      path: '/protokol'
+      fullPath: '/protokol'
+      preLoaderRoute: typeof ProtokolRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pilot-panosu': {
@@ -1012,6 +1032,7 @@ const rootRouteChildren: RootRouteChildren = {
   KurRoute: KurRoute,
   MevzuatRoute: MevzuatRoute,
   PilotPanosuRoute: PilotPanosuRoute,
+  ProtokolRoute: ProtokolRoute,
   SahaRoute: SahaRoute,
   SertifikasyonRoute: SertifikasyonRoute,
   TasiyicilarRoute: TasiyicilarRoute,
@@ -1033,3 +1054,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
