@@ -579,6 +579,28 @@ export class BrowserNode {
       .filter((id) => this.peerKeys.has(id));
 
     if (!targets.length) {
+      // IP yok: bilinen eşler için PHY veri düzlemini (LoRa/HaLow) dene.
+      if (this.carrierSend) {
+        const known = Array.from(this.peerKeys.entries()).filter(([id]) => to === "*" || id === to);
+        let pushed = false;
+        for (const [, keys] of known) {
+          const env = await createEnvelope({
+            from: this.nodeId,
+            to,
+            kind,
+            payload,
+            peerBoxPublic: keys.bpk,
+            senderSignPublic: this.identity.signPublic,
+            priority: prio,
+            ttl: MAX_TTL,
+          });
+          if (this.carrierSend(encodeEnvelope(env), prio)) pushed = true;
+        }
+        if (pushed) {
+          this.emit({});
+          return true;
+        }
+      }
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
