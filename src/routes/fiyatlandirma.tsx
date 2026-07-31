@@ -9,16 +9,16 @@ import { NextStep } from "@/components/site/NextStep";
 export const Route = createFileRoute("/fiyatlandirma")({
   head: () => ({
     meta: [
-      { title: "Fiyatlandırma — Tedbirge Protokol" },
+      { title: "Fiyatlandırma — Tedbirge Protocol Resilience-as-a-Service" },
       {
         name: "description",
         content:
-          "Tedbirge lisans paketleri: açık kaynak Community, düğüm başına Enterprise ve kullanım bazlı Operator modeli. Şeffaf fiyat, sahada pilot.",
+          "Resilience-as-a-Service (RaaS) paketleri: Freemium, Community, Enterprise ve Operator. Şeffaf düğüm başına fiyat, 30 gün koşulsuz iade.",
       },
-      { property: "og:title", content: "Tedbirge Fiyatlandırma" },
+      { property: "og:title", content: "Tedbirge Protocol — RaaS Fiyatlandırma" },
       {
         property: "og:description",
-        content: "Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı ücretlendirme.",
+        content: "Freemium, Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı abonelik.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/fiyatlandirma" },
@@ -31,26 +31,31 @@ export const Route = createFileRoute("/fiyatlandirma")({
 
 const faqs = [
   [
-    "Lisans modeli nedir?",
-    "Çekirdek protokol açık kaynaktır. Enterprise ve Operator paketleri; üretim modülleri, faturalama köprüsü, destek ve garanti içerir.",
+    "Resilience-as-a-Service (RaaS) nedir?",
+    "Bağlantı sürekliliğini donanım satın almadan, aylık abonelikle almanızdır. Cihazlarınız Tedbirge Protocol'e katılır; yedekleme, izleme ve raporlama hizmet olarak sunulur.",
+  ],
+  [
+    "Freemium ile Community farkı nedir?",
+    "Freemium tek kullanıcı ve 2 cihazla denemek içindir. Community, 5 düğüme kadar ücretsiz pilot kurulumu ve tüm taşıyıcı köprülerini kapsar.",
   ],
   [
     "Kullanım nasıl ölçülür?",
-    "Her düğüm taşınan bayt sayısını ve payload SHA-256 özetini kaydeder. İçerik asla saklanmaz; fatura yalnızca hacim ve düğüm sayısı üzerinden çıkar.",
+    "Yalnızca taşınan hacim ve aktif düğüm sayısı ölçülür. Trafiğinizin içeriği hiçbir noktada saklanmaz; fatura sade ve denetlenebilirdir.",
   ],
   [
-    "İnternet olmadan faturalama çalışır mı?",
-    "Evet. Röle düğümleri Ed25519 imzalı fiş üretir; bağlantı geri geldiğinde fişler merkezi deftere aktarılır ve mahsuplaşır.",
+    "İnternet olmadan da çalışır mı?",
+    "Evet. Bağlantı kesildiğinde kayıtlar cihazda güvenle bekler, hat geri geldiğinde kayıpsız biçimde merkeze aktarılır ve faturaya yansır.",
   ],
   [
     "Kendi sunucumuzda barındırabilir miyiz?",
-    "Tüm paketler self-hosted çalışır. Tek statik binary, systemd birimi ve docker-compose üretim dosyaları hazır gelir.",
+    "Evet. Enterprise ve Operator paketleri kendi altyapınızda çalışacak şekilde kurulabilir; kurulum ve devreye alma destek kapsamındadır.",
   ],
   [
     "İade mümkün mü?",
     "Evet, 30 gün içinde koşulsuz tam iade. Ödemeler kayıtlı satıcımız Paddle tarafından işlenir.",
   ],
 ];
+
 
 function Pricing() {
   const navigate = useNavigate();
