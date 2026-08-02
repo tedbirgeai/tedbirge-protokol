@@ -354,46 +354,67 @@ export class BrowserNode {
   }
 
   /**
-   * Katman B — yerel ajan üzerinden bulutsuz sinyalleşme.
-   * Aynı Wi-Fi/hotspot ağındaki iki cihaz, internet olmadan
-   * ws://tedbirge-gateway.local:8787 üzerinden el sıkışır.
-   * Ajan yoksa sessizce yok sayılır (kullanıcıya hata gösterilmez).
+   * Katman B — yerel ağ (Wi-Fi / hotspot) üzerinden bulutsuz sinyalleşme.
+   * Bluetooth ve internet kapalıyken bile aynı modeme bağlı iki cihaz,
+   * yerel ajan/geçit adaylarından ilk yanıt vereni kullanarak WebRTC
+   * el sıkışmasını tamamlar. Ajan yoksa sessizce yok sayılır.
    */
   private startLanSignaling() {
     if (typeof WebSocket === "undefined") return;
+    const announce = (ws: WebSocket) => {
+      try {
+        ws.send(JSON.stringify({ kind: "announce", from: this.nodeId, at: Date.now() }));
+      } catch {
+        /* kapanmış olabilir */
+      }
+    };
     const tryConnect = () => {
       if (this.lanSocket && this.lanSocket.readyState <= WebSocket.OPEN) return;
-      for (const url of LAN_SIGNAL_URLS) {
+      // Tüm adaylar aynı anda denenir; ilk açılan kazanır, diğerleri kapanır.
+      for (const url of lanSignalUrls()) {
+        let ws: WebSocket;
         try {
-          const ws = new WebSocket(url);
-          ws.onopen = () => {
-            this.lanSocket = ws;
-            try {
-              ws.send(JSON.stringify({ kind: "announce", from: this.nodeId, at: Date.now() }));
-            } catch {
-              /* kapanmış olabilir */
-            }
-            this.emit({});
-          };
-          ws.onmessage = (e) => void this.onLanMessage(String(e.data));
-          ws.onclose = () => {
-            if (this.lanSocket === ws) this.lanSocket = null;
-          };
-          ws.onerror = () => {
+          ws = new WebSocket(url);
+        } catch {
+          continue;
+        }
+        ws.onopen = () => {
+          if (this.lanSocket && this.lanSocket !== ws && this.lanSocket.readyState === WebSocket.OPEN) {
             try {
               ws.close();
             } catch {
               /* yoksay */
             }
-          };
-        } catch {
-          /* ajan yok */
-        }
+            return;
+          }
+          this.lanSocket = ws;
+          announce(ws);
+          this.emit({});
+        };
+        ws.onmessage = (e) => void this.onLanMessage(String(e.data));
+        ws.onclose = () => {
+          if (this.lanSocket === ws) {
+            this.lanSocket = null;
+            this.emit({});
+          }
+        };
+        ws.onerror = () => {
+          try {
+            ws.close();
+          } catch {
+            /* yoksay */
+          }
+        };
       }
     };
     tryConnect();
-    this.lanTimer = setInterval(tryConnect, LAN_RETRY_MS);
+    this.lanTimer = setInterval(() => {
+      tryConnect();
+      // Bağlıyken düzenli varlık duyurusu: yeni katılan cihaz 3 sn içinde bulunur.
+      if (this.lanSocket?.readyState === WebSocket.OPEN) announce(this.lanSocket);
+    }, Math.min(LAN_RETRY_MS, LAN_ANNOUNCE_MS));
   }
+
 
   private async onLanMessage(raw: string) {
     let msg: { kind?: string; from?: string; to?: string; data?: Record<string, unknown> };
