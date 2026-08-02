@@ -377,7 +377,7 @@ async function onMedia(from: string, raw: unknown) {
   const { [p.mid]: _x, ...rest } = state.transfers;
   publish({ transfers: rest });
 
-  const group = Boolean(p.group);
+  const group = Boolean((raw as { group?: boolean }).group);
   const convId = group ? result.convId : directConvId(getBrowserNodeId(), from);
   let conv = await getConversation(convId);
   if (!conv) {
