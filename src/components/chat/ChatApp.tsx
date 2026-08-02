@@ -6,6 +6,7 @@ import {
   CheckCheck,
   Clock,
   Globe,
+  Home,
   Lock,
   Paperclip,
   Phone,
