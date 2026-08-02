@@ -203,21 +203,22 @@ export function ChatApp() {
             </p>
           </div>
           <Link
-            to="/kurumsal"
-            className="rounded-full p-2 hover:bg-black/5"
+            to="/"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-medium hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
-            aria-label="Hakkında"
-            title="Hakkında"
+            aria-label="Web sitesine dön"
+            title="Web sitesine dön"
           >
             <Home className="h-[18px] w-[18px]" />
+            <span className="hidden sm:inline">Web sitesi</span>
           </Link>
 
           <Link
             to="/kurumsal"
             className="rounded-full p-2 hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
-            aria-label="Kurumsal siteye dön"
-            title="Kurumsal site / mod değiştir"
+            aria-label="Hakkında"
+            title="Hakkında"
           >
             <Globe className="h-[18px] w-[18px]" />
           </Link>
