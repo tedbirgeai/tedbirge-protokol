@@ -28,6 +28,7 @@ import { getAlias } from "@/lib/chat/profile";
 import { collectChunk, fileToDataUrl, isMediaChunk, splitMedia, MAX_MEDIA_BYTES } from "@/lib/chat/media";
 import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/chat/merkle";
 import { getBrowserNodeId } from "@/lib/browser-node";
+import { bootPairing, isTrusted } from "@/lib/chat/pairing";
 
 export type ChatState = {
   conversations: Conversation[];
@@ -269,7 +270,8 @@ export async function markRead(convId: string) {
 /* ------------------------------ gönderim ------------------------------ */
 
 async function targetsOf(conv: Conversation) {
-  return Array.from(new Set(conv.members));
+  // Güven sınırı: yalnızca eşleşmiş (PIN/QR doğrulanmış) cihazlara gönderilir.
+  return Array.from(new Set(conv.members)).filter((m) => isTrusted(m));
 }
 
 async function appendLocal(conv: Conversation, msg: ChatMessage) {
@@ -605,6 +607,7 @@ export async function bootChat() {
   if (booted || typeof window === "undefined") return;
   booted = true;
   bootMeshBus();
+  await bootPairing();
   publish({ aliases: loadAliases() });
   onMesh("chat", (from, body) => void onChat(from, body));
   onMesh("text", (from, body) => void onChat(from, body));

@@ -32,6 +32,8 @@ import {
   useConversationMessages,
 } from "@/lib/chat/engine";
 import { startCall } from "@/lib/call/engine";
+import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
+import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { humanSize } from "@/lib/chat/media";
 import { useNodeRuntime } from "@/lib/node-runtime";
@@ -161,7 +163,9 @@ export function ChatApp() {
     if (activeId) void markRead(activeId);
   }, [activeId, messages.length]);
 
-  const conversations = useMemo(() => {
+  const pairing = usePairing();
+
+  const allConversations = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("tr");
     const rows = q
       ? chat.conversations.filter(
@@ -171,18 +175,35 @@ export function ChatApp() {
     return [...rows].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs);
   }, [chat.conversations, query]);
 
+  /** Doğrulanmış: grup ya da en az bir eşleşmiş üye içeren sohbetler. */
+  const conversations = useMemo(
+    () => allConversations.filter((c) => c.group || c.members.some((m) => pairing.trusted[m])),
+    [allConversations, pairing.trusted],
+  );
+  const unpairedConversations = useMemo(
+    () => allConversations.filter((c) => !c.group && !c.members.some((m) => pairing.trusted[m])),
+    [allConversations, pairing.trusted],
+  );
+
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   const me = getAlias() || "Ben";
   const activeName = active ? displayName(active.title) : "";
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
+  const activeTrusted = Boolean(active?.group || active?.members.some((m) => pairing.trusted[m]));
+
+  /** Yakında görünen ama henüz eşleşmemiş cihazlar. */
+  const unpairedPeers = peers.filter((p) => !pairing.trusted[p.nodeId]);
+  const nameOf = (id: string) => displayName(id, chat.aliases[id]);
 
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   return (
     <div className="wa flex h-[100dvh] w-full overflow-hidden" style={{ background: "var(--wa-panel-soft)" }}>
       <CallOverlay />
+      <PairingDialog nameOf={nameOf} />
+
 
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
@@ -260,25 +281,33 @@ export function ChatApp() {
                   Henüz yakında cihaz yok — karekod ile davet edin.
                 </p>
               )}
-              {peers.map((p) => (
-                <button
-                  key={p.nodeId}
-                  type="button"
-                  onClick={() =>
-                    void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
-                      setActiveId(c.id);
-                      setGroupMode(false);
-                    })
-                  }
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
-                  style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-                >
-                  <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
-                  <span className="text-[11px]" style={{ color: "var(--wa-accent)" }}>
-                    çevrimiçi
-                  </span>
-                </button>
-              ))}
+              {peers.map((p) => {
+                const paired = Boolean(pairing.trusted[p.nodeId]);
+                return (
+                  <button
+                    key={p.nodeId}
+                    type="button"
+                    onClick={() => {
+                      if (!paired) {
+                        void beginPairing(p.nodeId, chat.aliases[p.nodeId]);
+                        return;
+                      }
+                      void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
+                        setActiveId(c.id);
+                        setGroupMode(false);
+                      });
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                    style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+                  >
+                    <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
+                    <span className="text-[11px]" style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}>
+                      {paired ? "çevrimiçi" : "Eşleştir"}
+                    </span>
+                  </button>
+                );
+              })}
+
             </div>
             <div className="mt-3 flex gap-2">
               <input
@@ -314,6 +343,31 @@ export function ChatApp() {
         )}
 
         <ul className="flex-1 overflow-y-auto">
+          {pairing.incoming.map((req) => (
+            <li key={`req_${req.nodeId}`} className="px-4 py-3" style={{ background: "var(--wa-panel-soft)" }}>
+              <p className="text-[13px] font-medium" style={{ color: "var(--wa-text)" }}>
+                {nameOf(req.nodeId)} eşleşmek istiyor
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => acceptPairing(req.nodeId, chat.aliases[req.nodeId])}
+                  className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
+                  style={{ background: "var(--wa-accent)" }}
+                >
+                  Kod gir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dismissPairing(req.nodeId)}
+                  className="rounded-full px-3 py-1.5 text-[12px]"
+                  style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
+                >
+                  Yoksay
+                </button>
+              </div>
+            </li>
+          ))}
           {conversations.map((c) => {
             const name = displayName(c.title);
             return (
@@ -355,10 +409,68 @@ export function ChatApp() {
           })}
           {ready && conversations.length === 0 && (
             <li className="px-4 py-6 text-sm" style={{ color: "var(--wa-muted)" }}>
-              Sohbet yok. Artı düğmesiyle yakındaki bir cihazla konuşmaya başlayın.
+              Henüz doğrulanmış kişi yok. Aşağıdaki cihazlardan birini eşleştirin.
             </li>
           )}
+
+          {(unpairedPeers.length > 0 || unpairedConversations.length > 0) && (
+            <li
+              className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              Yakındaki eşleşmemiş cihazlar
+            </li>
+          )}
+          {unpairedPeers.map((p) => (
+            <li key={`np_${p.nodeId}`} style={{ borderBottom: "1px solid var(--wa-border)" }}>
+              <div className="flex items-center gap-3 px-4 py-3">
+                <Avatar name={nameOf(p.nodeId)} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
+                    {nameOf(p.nodeId)}
+                  </p>
+                  <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                    Eşleşme bekliyor · mesaj gönderilemez
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void beginPairing(p.nodeId, chat.aliases[p.nodeId])}
+                  className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
+                  style={{ background: "var(--wa-accent)" }}
+                >
+                  Eşleştir
+                </button>
+              </div>
+            </li>
+          ))}
+          {unpairedConversations
+            .filter((c) => !unpairedPeers.some((p) => c.members.includes(p.nodeId)))
+            .map((c) => (
+              <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <Avatar name={displayName(c.title)} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
+                      {displayName(c.title)}
+                    </p>
+                    <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                      Eşleşme bekliyor
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => c.members[0] && void beginPairing(c.members[0], c.title)}
+                    className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
+                    style={{ background: "var(--wa-accent)" }}
+                  >
+                    Eşleştir
+                  </button>
+                </div>
+              </li>
+            ))}
         </ul>
+
 
         <div
           className="flex items-center gap-2 px-4 py-2 text-[11px]"
@@ -411,7 +523,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => peerId && void startCall(peerId, false, activeName)}
-                disabled={active.group || !peerId}
+                disabled={active.group || !peerId || !activeTrusted}
                 className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
@@ -421,7 +533,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => peerId && void startCall(peerId, true, activeName)}
-                disabled={active.group || !peerId}
+                disabled={active.group || !peerId || !activeTrusted}
                 className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
@@ -498,6 +610,24 @@ export function ChatApp() {
               </p>
             )}
 
+            {!activeTrusted ? (
+              <div
+                className="flex flex-wrap items-center justify-between gap-3 p-4"
+                style={{ background: "var(--wa-panel-soft)", borderTop: "1px solid var(--wa-border)" }}
+              >
+                <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
+                  Bu cihaz henüz eşleşmedi. Mesaj ve arama kanalı, PIN veya karekod doğrulanana kadar kapalıdır.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => peerId && void beginPairing(peerId, active.title)}
+                  className="rounded-full px-4 py-2 text-[12px] font-semibold text-white"
+                  style={{ background: "var(--wa-accent)" }}
+                >
+                  Cihazı Eşleştir
+                </button>
+              </div>
+            ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -546,6 +676,7 @@ export function ChatApp() {
                 <Send className="h-4 w-4" />
               </button>
             </form>
+            )}
           </>
         )}
       </section>

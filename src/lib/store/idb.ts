@@ -17,7 +17,7 @@
  */
 
 export const DB_NAME = "tedbirge";
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 /** 0 = acil/güvenlik, 1 = kontrol, 2 = kullanıcı mesajı, 3 = telemetri. */
 export type Priority = 0 | 1 | 2 | 3;
@@ -107,6 +107,8 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains("keys")) db.createObjectStore("keys", { keyPath: "nodeId" });
       if (!db.objectStoreNames.contains("peers")) db.createObjectStore("peers", { keyPath: "peerId" });
+      if (!db.objectStoreNames.contains("trusted_nodes"))
+        db.createObjectStore("trusted_nodes", { keyPath: "nodeId" });
       if (!db.objectStoreNames.contains("events"))
         db.createObjectStore("events", { keyPath: "id", autoIncrement: true });
       if (!db.objectStoreNames.contains("licenses")) db.createObjectStore("licenses", { keyPath: "id" });
@@ -268,6 +270,50 @@ export function getPeer(peerId: string): Promise<PeerRecord | undefined> {
 
 export function listPeers(): Promise<PeerRecord[]> {
   return safe(tx<PeerRecord[]>("peers", "readonly", (s) => s.getAll() as IDBRequest<PeerRecord[]>), []);
+}
+
+/* -------------------------- güvenilir cihazlar -------------------------- */
+
+/** PIN / QR ile el sıkışması tamamlanmış cihaz (Model A güven sınırı). */
+export type TrustedNode = {
+  nodeId: string;
+  alias?: string;
+  /** Eşleşme anındaki genel anahtar (varsa) — değişirse güven düşer. */
+  publicKey?: string;
+  method: "pin" | "qr";
+  pairedAt: number;
+};
+
+export function putTrustedNode(rec: TrustedNode) {
+  return safe(
+    tx<IDBValidKey>("trusted_nodes", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    false,
+  );
+}
+
+export function getTrustedNode(nodeId: string): Promise<TrustedNode | undefined> {
+  return safe(
+    tx<TrustedNode | undefined>("trusted_nodes", "readonly", (s) =>
+      s.get(nodeId) as IDBRequest<TrustedNode | undefined>,
+    ),
+    undefined,
+  );
+}
+
+export function listTrustedNodes(): Promise<TrustedNode[]> {
+  return safe(
+    tx<TrustedNode[]>("trusted_nodes", "readonly", (s) => s.getAll() as IDBRequest<TrustedNode[]>),
+    [],
+  );
+}
+
+export function deleteTrustedNode(nodeId: string) {
+  return safe(
+    tx<undefined>("trusted_nodes", "readwrite", (s) => s.delete(nodeId) as IDBRequest<undefined>).then(
+      () => true,
+    ),
+    false,
+  );
 }
 
 /* ------------------------------ events ------------------------------ */
