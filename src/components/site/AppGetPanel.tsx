@@ -87,7 +87,7 @@ export function AppGetPanel() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              to="/sohbet"
+              to="/chat"
               className="inline-flex items-center gap-2 rounded-sm bg-primary px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
             >
               <MessageSquare className="h-4 w-4" /> Tedbirge Web’i aç

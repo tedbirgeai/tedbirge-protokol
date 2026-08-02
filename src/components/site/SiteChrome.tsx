@@ -36,7 +36,7 @@ const navGroups = [
   {
     label: "Başlangıç",
     items: [
-      { to: "/sohbet", label: "Sohbet & Görüşme", hint: "Mesaj, dosya, sesli ve görüntülü arama" },
+      { to: "/chat", label: "Sohbet & Görüşme", hint: "Mesaj, dosya, sesli ve görüntülü arama" },
       { to: "/kur", label: "Kolay Kurulum", hint: "2 tıkla ağa katıl" },
       { to: "/saha", label: "Saha", hint: "Ücretsiz saha erişimi" },
       { to: "/rehber", label: "Rehber", hint: "Mühendislik notları" },
