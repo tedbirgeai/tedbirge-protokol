@@ -110,6 +110,13 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains("events"))
         db.createObjectStore("events", { keyPath: "id", autoIncrement: true });
       if (!db.objectStoreNames.contains("licenses")) db.createObjectStore("licenses", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("conversations"))
+        db.createObjectStore("conversations", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("messages")) {
+        const s = db.createObjectStore("messages", { keyPath: "id" });
+        s.createIndex("convId_ts", ["convId", "ts"]);
+        s.createIndex("ts", "ts");
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error ?? new Error("IndexedDB açılamadı"));
