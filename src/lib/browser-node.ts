@@ -59,9 +59,33 @@ const CHANNEL = "tedbirge-mesh-v1";
 const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
 const LOCAL_ANNOUNCE_MS = 4_000;
 const MAX_TTL = 4;
-/** Bulutsuz (Katman B) el sıkışma için yerel ajan WebSocket sinyalleşme adresi. */
-const LAN_SIGNAL_URLS = ["ws://tedbirge-gateway.local:8787", "ws://192.168.4.1:8787"];
-const LAN_RETRY_MS = 15_000;
+/** Bulutsuz (Katman B) el sıkışma için yerel ajan WebSocket sinyalleşme adresleri. */
+const LAN_SIGNAL_PORT = 8787;
+const LAN_RETRY_MS = 6_000;
+const LAN_ANNOUNCE_MS = 3_000;
+
+/**
+ * Aynı Wi-Fi / hotspot ağındaki saha geçidini bulmak için denenecek adresler.
+ * Bluetooth ve internet kapalı olsa da bu adreslerden biri açıksa cihazlar
+ * saniyeler içinde birbirini bulur. Ajan yoksa denemeler sessizce düşer.
+ */
+function lanSignalUrls(): string[] {
+  const urls = new Set<string>();
+  const host = typeof location !== "undefined" ? location.hostname : "";
+  // 1) Sayfanın servis edildiği yerel adres (saha AP / yerel ajan aynı makinede).
+  if (host && !/^(localhost|127\.0\.0\.1)$/.test(host) && !host.includes("lovable")) {
+    urls.add(`ws://${host}:${LAN_SIGNAL_PORT}`);
+  }
+  // 2) Yerel ajan aynı cihazda çalışıyorsa.
+  urls.add(`ws://localhost:${LAN_SIGNAL_PORT}`);
+  // 3) mDNS adı ve yaygın yönlendirici/hotspot geçit adresleri.
+  urls.add(`ws://tedbirge-gateway.local:${LAN_SIGNAL_PORT}`);
+  for (const gw of ["192.168.4.1", "192.168.43.1", "172.20.10.1", "192.168.1.1", "192.168.0.1"]) {
+    urls.add(`ws://${gw}:${LAN_SIGNAL_PORT}`);
+  }
+  return Array.from(urls);
+}
+
 
 /** Uygulama katmanı (sohbet, arama, eşitleme) paket dinleyicisi. */
 export type MeshAppHandler = (kind: EnvelopeKind, from: string, body: unknown) => void;
