@@ -92,6 +92,11 @@ export function describeTier(s: AccessState): { label: string; message: string; 
 }
 
 async function probe(origin: string): Promise<boolean> {
+  // HTTPS sayfasından düz http:// yoklaması karma içerik sayılır ve tarayıcı
+  // adres çubuğunda "güvenli değil" uyarısı doğar; bu istekler hiç atılmaz.
+  if (typeof window !== "undefined" && window.location.protocol === "https:" && origin.startsWith("http://")) {
+    return false;
+  }
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
