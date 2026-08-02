@@ -611,6 +611,8 @@ export async function bootChat() {
   onMesh("receipt", (from, body) => void onReceipt(from, body));
   onMesh("media", (from, body) => void onMedia(from, body));
   onMesh("sync", (from, body) => void onSync(from, body));
+  // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
+  await cleanDuplicateConversations();
   await refreshConversations();
   await startNode();
   // Eşler tanışınca eksik mesajlar arka planda eşitlenir.
