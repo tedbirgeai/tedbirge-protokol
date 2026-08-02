@@ -35,7 +35,7 @@ export function AppGetPanel() {
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
     if (window.matchMedia?.("(display-mode: standalone)").matches) setInstalled(true);
-    setShareUrl(`${window.location.origin}/sohbet`);
+    setShareUrl(`${window.location.origin}/chat`);
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
@@ -61,7 +61,7 @@ export function AppGetPanel() {
     setQrOpen(true);
     if (qrData) return;
     try {
-      const url = `${window.location.origin}/sohbet`;
+      const url = `${window.location.origin}/chat`;
       setQrData(
         await QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#0b1020", light: "#ffffff" } }),
       );
