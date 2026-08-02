@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
   Check,
   CheckCheck,
   Clock,
+  Lock,
   Paperclip,
   Phone,
   Pin,
@@ -39,6 +41,24 @@ function timeOf(ts: number) {
   return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
 
+/** Ham cihaz kimliklerini gizler; kullanıcıya okunabilir bir ad gösterir. */
+function displayName(value: string, alias?: string) {
+  if (alias && alias.trim()) return alias;
+  const looksLikeId = /^[a-z]{2,6}-[0-9a-f]{6,}$/i.test(value) || /^[0-9a-f-]{16,}$/i.test(value);
+  if (!looksLikeId) return value;
+  const tail = value.replace(/[^0-9a-z]/gi, "").slice(-4).toUpperCase();
+  return `Cihaz ${tail}`;
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
 function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
   if (msg.status === "pending") return <Clock className="h-3.5 w-3.5 opacity-70" aria-label="Bekliyor" />;
@@ -50,30 +70,32 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   return (
-    <div className="mx-auto max-w-md rounded-sm border border-border bg-card/60 p-8">
-      <h2 className="text-xl font-semibold text-foreground">Sohbete başlayın</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Yalnızca görünen adınızı yazın. Telefon numarası, e-posta ya da hesap gerekmez; güvenlik anahtarlarınız
-        cihazınızda otomatik oluşturulur ve hiçbir sunucuya gönderilmez.
-      </p>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Adınız (ör. Saha Ekibi 1)"
-        className="mt-5 w-full rounded-sm border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
-      />
-      <button
-        type="button"
-        disabled={!name.trim()}
-        onClick={() => {
-          setAlias(name);
-          void requestNotificationPermission();
-          onDone();
-        }}
-        className="mt-4 w-full rounded-sm bg-primary px-4 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground disabled:opacity-50"
-      >
-        Devam et
-      </button>
+    <div className="flex h-full items-center justify-center p-6">
+      <div className="w-full max-w-md rounded-sm border border-border bg-card/60 p-8">
+        <h2 className="text-xl font-semibold text-foreground">Sohbete başlayın</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Yalnızca görünen adınızı yazın. Telefon numarası, e-posta ya da hesap gerekmez; güvenlik anahtarlarınız
+          cihazınızda otomatik oluşturulur ve hiçbir sunucuya gönderilmez.
+        </p>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Adınız (ör. Saha Ekibi 1)"
+          className="mt-5 w-full rounded-sm border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+        />
+        <button
+          type="button"
+          disabled={!name.trim()}
+          onClick={() => {
+            setAlias(name);
+            void requestNotificationPermission();
+            onDone();
+          }}
+          className="mt-4 w-full rounded-sm bg-primary px-4 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground disabled:opacity-50"
+        >
+          Devam et
+        </button>
+      </div>
     </div>
   );
 }
@@ -121,44 +143,59 @@ export function ChatApp() {
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
+  const me = getAlias() || "Ben";
+  const activeName = active ? displayName(active.title) : "";
+  const peerId = active?.members[0];
+  const peerOnline = Boolean(peerId && peers.some((p) => p.nodeId === peerId));
 
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-background">
       <CallOverlay />
 
-      {/* Konuşma listesi */}
-      <aside className="rounded-sm border border-border bg-card/40">
-        <div className="border-b border-border p-4">
-          <div className="flex items-center justify-between">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              {getAlias()} · {tier.label}
-            </p>
-            <button
-              type="button"
-              onClick={() => setGroupMode((v) => !v)}
-              className="rounded-sm border border-border p-1.5 text-foreground hover:bg-accent"
-              aria-label="Yeni sohbet veya grup"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+      {/* Sol panel — profil, arama, konuşma listesi */}
+      <aside
+        className={`flex h-full w-full shrink-0 flex-col border-r border-border bg-card/30 md:w-[340px] ${
+          activeId ? "hidden md:flex" : "flex"
+        }`}
+      >
+        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 font-mono text-sm text-primary">
+            {initials(me)}
           </div>
-          <div className="mt-3 flex items-center gap-2 rounded-sm border border-border bg-background px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">{me}</p>
+            <p className="truncate font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {tier.label}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGroupMode((v) => !v)}
+            className="rounded-full border border-border p-2 text-foreground hover:bg-accent"
+            aria-label="Yeni sohbet veya grup"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-3 py-2">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2">
             <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sohbetlerde ara"
+              placeholder="Ara"
               className="w-full bg-transparent text-sm text-foreground outline-none"
             />
           </div>
         </div>
 
         {groupMode && (
-          <div className="border-b border-border p-4">
+          <div className="border-y border-border p-4">
             <p className="text-xs text-muted-foreground">
-              Yakındaki cihazlar otomatik listelenir. Kimlik girmeden dokunarak sohbet açabilirsiniz.
+              Yakındaki cihazlar otomatik listelenir. Dokunarak sohbet açabilirsiniz.
             </p>
             <div className="mt-3 space-y-2">
               {peers.length === 0 && (
@@ -176,8 +213,8 @@ export function ChatApp() {
                   }
                   className="flex w-full items-center justify-between rounded-sm border border-border px-3 py-2 text-left text-sm hover:bg-accent"
                 >
-                  <span className="truncate">{chat.aliases[p.nodeId] ?? p.nodeId}</span>
-                  <span className="font-mono text-[10px] uppercase text-muted-foreground">bağlı</span>
+                  <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
+                  <span className="font-mono text-[10px] uppercase text-emerald-500">çevrimiçi</span>
                 </button>
               ))}
             </div>
@@ -185,7 +222,7 @@ export function ChatApp() {
               <input
                 value={newPeer}
                 onChange={(e) => setNewPeer(e.target.value)}
-                placeholder="Cihaz kimliği veya grup adı"
+                placeholder="Grup adı veya davet kodu"
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground outline-none"
               />
               <button
@@ -204,6 +241,7 @@ export function ChatApp() {
                   });
                 }}
                 className="rounded-sm bg-primary px-3 py-2 text-xs font-semibold uppercase text-primary-foreground"
+                aria-label="Grup oluştur"
               >
                 <Users className="h-4 w-4" />
               </button>
@@ -211,46 +249,59 @@ export function ChatApp() {
           </div>
         )}
 
-        <ul className="max-h-[60vh] divide-y divide-border overflow-y-auto">
-          {conversations.map((c) => (
-            <li key={c.id}>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setActiveId(c.id)}
-                onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
-                className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-accent ${
-                  activeId === c.id ? "bg-accent" : ""
-                }`}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background font-mono text-xs text-foreground">
-                  {c.title.slice(0, 2).toUpperCase()}
+        <ul className="flex-1 divide-y divide-border overflow-y-auto">
+          {conversations.map((c) => {
+            const name = displayName(c.title);
+            return (
+              <li key={c.id}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveId(c.id)}
+                  onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
+                  className={`flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-accent ${
+                    activeId === c.id ? "bg-accent" : ""
+                  }`}
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs text-foreground">
+                    {initials(name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {c.pinned && <Pin className="mr-1 inline h-3 w-3 text-primary" aria-hidden />}
+                        {name}
+                      </p>
+                      <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                        {c.lastTs ? timeOf(c.lastTs) : ""}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">{c.lastText || "Henüz mesaj yok"}</p>
+                  </div>
+                  {c.unread > 0 && (
+                    <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[10px] text-primary-foreground">
+                      {c.unread}
+                    </span>
+                  )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {c.pinned && <Pin className="mr-1 inline h-3 w-3 text-primary" aria-hidden />}
-                    {c.title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{c.lastText || "Henüz mesaj yok"}</p>
-                </div>
-                {c.unread > 0 && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[10px] text-primary-foreground">
-                    {c.unread}
-                  </span>
-                )}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
           {ready && conversations.length === 0 && (
             <li className="px-4 py-6 text-sm text-muted-foreground">
               Sohbet yok. Artı düğmesiyle yakındaki bir cihazla konuşmaya başlayın.
             </li>
           )}
         </ul>
+
+        <div className="flex items-center gap-2 border-t border-border px-4 py-2 text-[10px] text-muted-foreground">
+          <Lock className="h-3 w-3" aria-hidden />
+          <span>Uçtan uca şifreli · {tier.message}</span>
+        </div>
       </aside>
 
-      {/* Mesaj alanı */}
-      <section className="flex min-h-[70vh] flex-col rounded-sm border border-border bg-card/40">
+      {/* Sağ panel — aktif sohbet */}
+      <section className={`flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
         {!active ? (
           <div className="flex flex-1 items-center justify-center p-10 text-center text-sm text-muted-foreground">
             Bir sohbet seçin. Mesajlarınız internet varken bulut üzerinden, internet yokken yakındaki cihazlar
@@ -258,62 +309,74 @@ export function ChatApp() {
           </div>
         ) : (
           <>
-            <header className="flex items-center justify-between border-b border-border px-5 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{active.title}</p>
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                  {tier.message}
+            <header className="flex items-center gap-3 border-b border-border bg-card/40 px-4 py-2.5">
+              <button
+                type="button"
+                onClick={() => setActiveId(null)}
+                className="rounded-full p-2 text-foreground hover:bg-accent md:hidden"
+                aria-label="Listeye dön"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs text-foreground">
+                {initials(activeName)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-foreground">{activeName}</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {active.group ? "Grup" : peerOnline ? "çevrimiçi" : "bağlantı bekleniyor"}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => active.members[0] && void startCall(active.members[0], false, active.title)}
-                  disabled={active.group || !active.members[0]}
-                  className="rounded-sm border border-border p-2 text-foreground hover:bg-accent disabled:opacity-40"
-                  aria-label="Sesli ara"
-                >
-                  <Phone className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => active.members[0] && void startCall(active.members[0], true, active.title)}
-                  disabled={active.group || !active.members[0]}
-                  className="rounded-sm border border-border p-2 text-foreground hover:bg-accent disabled:opacity-40"
-                  aria-label="Görüntülü ara"
-                >
-                  <Video className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void togglePin(active.id)}
-                  className="rounded-sm border border-border p-2 text-foreground hover:bg-accent"
-                  aria-label="Sabitle"
-                >
-                  <Pin className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void removeConversation(active.id);
-                    setActiveId(null);
-                  }}
-                  className="rounded-sm border border-border p-2 text-foreground hover:bg-accent"
-                  aria-label="Sohbeti sil"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+              <span className="hidden items-center gap-1 rounded-full border border-border px-2 py-1 text-[10px] text-muted-foreground sm:flex">
+                <Lock className="h-3 w-3" aria-hidden /> Uçtan uca şifreli
+              </span>
+              <button
+                type="button"
+                onClick={() => peerId && void startCall(peerId, false, activeName)}
+                disabled={active.group || !peerId}
+                className="rounded-full p-2 text-foreground hover:bg-accent disabled:opacity-40"
+                aria-label="Sesli ara"
+              >
+                <Phone className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => peerId && void startCall(peerId, true, activeName)}
+                disabled={active.group || !peerId}
+                className="rounded-full p-2 text-foreground hover:bg-accent disabled:opacity-40"
+                aria-label="Görüntülü ara"
+              >
+                <Video className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => void togglePin(active.id)}
+                className="rounded-full p-2 text-foreground hover:bg-accent"
+                aria-label="Sabitle"
+              >
+                <Pin className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void removeConversation(active.id);
+                  setActiveId(null);
+                }}
+                className="rounded-full p-2 text-foreground hover:bg-accent"
+                aria-label="Sohbeti sil"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </header>
 
-            <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4">
+            <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4 md:px-8">
               {messages.map((m) => (
                 <div key={m.id} className={`flex ${m.outgoing ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[78%] rounded-sm px-3 py-2 text-sm ${
+                    className={`max-w-[78%] rounded-lg px-3 py-2 text-sm ${
                       m.outgoing
                         ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-background text-foreground"
+                        : "border border-border bg-card text-foreground"
                     }`}
                   >
                     {m.kind === "media" && m.media ? (
@@ -351,7 +414,7 @@ export function ChatApp() {
                 void sendText(active.id, draft);
                 setDraft("");
               }}
-              className="flex items-center gap-2 border-t border-border p-3"
+              className="flex items-center gap-2 border-t border-border bg-card/40 p-3"
             >
               <input
                 ref={fileRef}
@@ -368,7 +431,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="rounded-sm border border-border p-2.5 text-foreground hover:bg-accent"
+                className="rounded-full p-2.5 text-foreground hover:bg-accent"
                 aria-label="Dosya ekle"
               >
                 <Paperclip className="h-4 w-4" />
@@ -377,11 +440,11 @@ export function ChatApp() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="Mesaj yazın"
-                className="flex-1 rounded-sm border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+                className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary"
               />
               <button
                 type="submit"
-                className="rounded-sm bg-primary p-2.5 text-primary-foreground disabled:opacity-50"
+                className="rounded-full bg-primary p-2.5 text-primary-foreground disabled:opacity-50"
                 disabled={!draft.trim()}
                 aria-label="Gönder"
               >
