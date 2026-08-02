@@ -85,6 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
+      { httpEquiv: "Content-Security-Policy", content: "upgrade-insecure-requests" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
       { name: "description", content: "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı." },
