@@ -1,21 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChatApp } from "@/components/chat/ChatApp";
+import { MarketingHome } from "@/components/site/MarketingHome";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
   head: () => ({
     meta: [
-      { title: "Tedbirge Protocol — Kesintisiz Sohbet ve Görüşme" },
+      { title: "Tedbirge Protocol — İnternet Kesilse de Çalışan Ağ" },
       {
         name: "description",
         content:
-          "İnternet varken bulut, kesildiğinde yakındaki cihazlar üzerinden çalışan uçtan uca şifreli mesajlaşma, sesli ve görüntülü görüşme.",
+          "İnternet kesildiğinde de çalışmaya devam eden kurumsal ağ altyapısı: uçtan uca şifreli mesh haberleşme, 9 taşıyıcı ve Resilience-as-a-Service abonelik modeli.",
       },
-      { property: "og:title", content: "Tedbirge Protocol — Kesintisiz Sohbet ve Görüşme" },
+      { property: "og:title", content: "Tedbirge Protocol — İnternet Kesilse de Çalışan Ağ" },
       {
         property: "og:description",
         content:
-          "Kesintide bile duran mesajlaşma: uçtan uca şifreli sohbet, dosya paylaşımı, sesli ve görüntülü arama.",
+          "Kesintisiz bağlantı, otomatik yedekleme ve çevrimdışı veri güvenliği. Tarayıcıdan 2 tıkla kurulan kurumsal ağ platformu.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -26,10 +25,5 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  return (
-    <main className="fixed inset-0 z-40 bg-background">
-      <h1 className="sr-only">Tedbirge Sohbet ve Görüşme</h1>
-      <ChatApp />
-    </main>
-  );
+  return <MarketingHome />;
 }
