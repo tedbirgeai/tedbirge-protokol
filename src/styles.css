@@ -228,3 +228,31 @@
 .print-only {
   display: none;
 }
+
+/* ------------------------------------------------------------------
+ * Sohbet kabuğu (WhatsApp Web benzeri açık tema) renk değişkenleri.
+ * Yalnızca /sohbet ve ana sohbet ekranında kullanılır.
+ * ---------------------------------------------------------------- */
+.wa {
+  --wa-panel: #ffffff;
+  --wa-panel-soft: #f0f2f5;
+  --wa-border: #e9edef;
+  --wa-text: #111b21;
+  --wa-muted: #667781;
+  --wa-accent: #008069;
+  --wa-accent-soft: #d9fdd3;
+  --wa-bubble-in: #ffffff;
+  --wa-bubble-out: #d9fdd3;
+  --wa-chat-bg: #efeae2;
+  --wa-tick: #667781;
+  --wa-tick-read: #53bdeb;
+  color: var(--wa-text);
+}
+
+.wa-chat-bg {
+  background-color: var(--wa-chat-bg);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.035) 1px, transparent 1.6px),
+    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.03) 1px, transparent 1.6px);
+  background-size: 28px 28px, 44px 44px;
+}
