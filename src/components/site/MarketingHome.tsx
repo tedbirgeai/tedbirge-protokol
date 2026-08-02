@@ -121,6 +121,8 @@ export function MarketingHome() {
         </div>
       </section>
 
+      <AppGetPanel />
+
       {/* 7 LAYERS */}
       <section className="border-b border-border/60 bg-card/30">
         <div className="mx-auto max-w-6xl px-6 py-24">
