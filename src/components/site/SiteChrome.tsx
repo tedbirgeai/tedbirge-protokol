@@ -36,7 +36,7 @@ const navGroups = [
   {
     label: "Başlangıç",
     items: [
-      { to: "/sohbet", label: "Sohbet & Görüşme", hint: "Mesaj, dosya, sesli ve görüntülü arama" },
+      { to: "/chat", label: "Sohbet & Görüşme", hint: "Mesaj, dosya, sesli ve görüntülü arama" },
       { to: "/kur", label: "Kolay Kurulum", hint: "2 tıkla ağa katıl" },
       { to: "/saha", label: "Saha", hint: "Ücretsiz saha erişimi" },
       { to: "/rehber", label: "Rehber", hint: "Mühendislik notları" },
@@ -325,8 +325,15 @@ export function SiteHeader() {
           <LanguageSwitcher />
 
           <Link
-            to="/iletisim"
+            to="/chat"
             className="hidden rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90 sm:block"
+          >
+            Sohbete Katıl
+          </Link>
+
+          <Link
+            to="/iletisim"
+            className="hidden rounded-sm border border-border px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary lg:block"
           >
             Pilot Başlat
           </Link>

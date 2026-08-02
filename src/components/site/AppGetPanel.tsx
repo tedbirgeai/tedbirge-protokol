@@ -35,7 +35,7 @@ export function AppGetPanel() {
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
     if (window.matchMedia?.("(display-mode: standalone)").matches) setInstalled(true);
-    setShareUrl(`${window.location.origin}/sohbet`);
+    setShareUrl(`${window.location.origin}/chat`);
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
@@ -61,7 +61,7 @@ export function AppGetPanel() {
     setQrOpen(true);
     if (qrData) return;
     try {
-      const url = `${window.location.origin}/sohbet`;
+      const url = `${window.location.origin}/chat`;
       setQrData(
         await QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#0b1020", light: "#ffffff" } }),
       );
@@ -87,7 +87,7 @@ export function AppGetPanel() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              to="/sohbet"
+              to="/chat"
               className="inline-flex items-center gap-2 rounded-sm bg-primary px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
             >
               <MessageSquare className="h-4 w-4" /> Tedbirge Web’i aç

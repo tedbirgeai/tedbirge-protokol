@@ -40,6 +40,7 @@ import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
 import { Route as ApiDokumantasyonRouteImport } from './routes/api-dokumantasyon'
 import { Route as AfetKamuRouteImport } from './routes/afet-kamu'
@@ -216,6 +217,11 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CevrimdisiRoute = CevrimdisiRouteImport.update({
   id: '/cevrimdisi',
   path: '/cevrimdisi',
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/afet-kamu': typeof AfetKamuRoute
   '/api-dokumantasyon': typeof ApiDokumantasyonRoute
   '/cevrimdisi': typeof CevrimdisiRoute
+  '/chat': typeof ChatRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -375,6 +382,7 @@ export interface FileRoutesByTo {
   '/afet-kamu': typeof AfetKamuRoute
   '/api-dokumantasyon': typeof ApiDokumantasyonRoute
   '/cevrimdisi': typeof CevrimdisiRoute
+  '/chat': typeof ChatRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   '/afet-kamu': typeof AfetKamuRoute
   '/api-dokumantasyon': typeof ApiDokumantasyonRoute
   '/cevrimdisi': typeof CevrimdisiRoute
+  '/chat': typeof ChatRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -483,6 +492,7 @@ export interface FileRouteTypes {
     | '/afet-kamu'
     | '/api-dokumantasyon'
     | '/cevrimdisi'
+    | '/chat'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -535,6 +545,7 @@ export interface FileRouteTypes {
     | '/afet-kamu'
     | '/api-dokumantasyon'
     | '/cevrimdisi'
+    | '/chat'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -588,6 +599,7 @@ export interface FileRouteTypes {
     | '/afet-kamu'
     | '/api-dokumantasyon'
     | '/cevrimdisi'
+    | '/chat'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -642,6 +654,7 @@ export interface RootRouteChildren {
   AfetKamuRoute: typeof AfetKamuRoute
   ApiDokumantasyonRoute: typeof ApiDokumantasyonRoute
   CevrimdisiRoute: typeof CevrimdisiRoute
+  ChatRoute: typeof ChatRoute
   DemoRoute: typeof DemoRoute
   DokumanlarRoute: typeof DokumanlarRoute
   EnRoute: typeof EnRoute
@@ -905,6 +918,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cevrimdisi': {
       id: '/cevrimdisi'
       path: '/cevrimdisi'
@@ -1071,6 +1091,7 @@ const rootRouteChildren: RootRouteChildren = {
   AfetKamuRoute: AfetKamuRoute,
   ApiDokumantasyonRoute: ApiDokumantasyonRoute,
   CevrimdisiRoute: CevrimdisiRoute,
+  ChatRoute: ChatRoute,
   DemoRoute: DemoRoute,
   DokumanlarRoute: DokumanlarRoute,
   EnRoute: EnRoute,
