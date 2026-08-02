@@ -69,8 +69,86 @@ function saveAliases(map: Record<string, string>) {
   }
 }
 
+/**
+ * Aynı kişinin (aynı takma ad / kimlik) farklı cihaz veya taşıyıcı üzerinden
+ * gelen sinyalleri yüzünden listede birden çok kez görünmesini engeller.
+ * Kopya konuşmaların mesajları hayatta kalan konuşmaya taşınır, kimlikleri
+ * üye listesine eklenir; böylece hiçbir mesaj kaybolmaz.
+ */
+function identityKey(c: Conversation): string {
+  const peer = c.members[0] ?? "";
+  const name = (state.aliases[peer] || c.title || peer).trim().toLocaleLowerCase("tr");
+  return name || peer;
+}
+
+async function mergeDuplicates(rows: Conversation[]): Promise<Conversation[]> {
+  const keep = new Map<string, Conversation>();
+  const pairs: Array<{ survivor: Conversation; drop: Conversation }> = [];
+  for (const c of rows) {
+    if (c.group) continue;
+    const key = identityKey(c);
+    const prev = keep.get(key);
+    if (!prev) {
+      keep.set(key, c);
+      continue;
+    }
+    const survivor = prev.lastTs >= c.lastTs ? prev : c;
+    const drop = survivor === prev ? c : prev;
+    keep.set(key, survivor);
+    pairs.push({ survivor, drop });
+  }
+  if (!pairs.length) return rows;
+  for (const { survivor, drop } of pairs) {
+    for (const m of await listMessages(drop.id)) await putMessage({ ...m, convId: survivor.id });
+    await putConversation({
+      ...survivor,
+      members: Array.from(new Set([...survivor.members, ...drop.members])),
+      unread: survivor.unread + drop.unread,
+      lastTs: Math.max(survivor.lastTs, drop.lastTs),
+      lastText: survivor.lastTs >= drop.lastTs ? survivor.lastText : drop.lastText,
+      pinned: survivor.pinned || drop.pinned,
+    });
+    await idbDeleteConversation(drop.id);
+  }
+  return await listConversations();
+}
+
 async function refreshConversations() {
-  publish({ conversations: await listConversations() });
+  const rows = await mergeDuplicates(await listConversations());
+  publish({ conversations: rows });
+}
+
+/**
+ * Gelen bir eş için doğru konuşmayı bulur: kimlik yeni olsa bile aynı takma
+ * ada sahip mevcut konuşma varsa ona bağlanır (yeni kişi oluşturulmaz).
+ */
+async function resolveDirectConversation(from: string, alias?: string): Promise<Conversation> {
+  const id = directConvId(getBrowserNodeId(), from);
+  const direct = await getConversation(id);
+  if (direct) return direct;
+  const name = (alias ?? state.aliases[from] ?? "").trim().toLocaleLowerCase("tr");
+  if (name) {
+    const match = (await listConversations()).find(
+      (c) => !c.group && identityKey(c) === name && !c.members.includes(from),
+    );
+    if (match) {
+      const merged = { ...match, members: Array.from(new Set([...match.members, from])) };
+      await putConversation(merged);
+      return merged;
+    }
+  }
+  const conv: Conversation = {
+    id,
+    title: alias ?? state.aliases[from] ?? from,
+    members: [from],
+    group: false,
+    lastTs: Date.now(),
+    lastText: "",
+    unread: 0,
+    pinned: false,
+  };
+  await putConversation(conv);
+  return conv;
 }
 
 async function refreshMessages(convId: string) {
@@ -167,7 +245,7 @@ export async function markRead(convId: string) {
 /* ------------------------------ gönderim ------------------------------ */
 
 async function targetsOf(conv: Conversation) {
-  return conv.group ? conv.members : conv.members.slice(0, 1);
+  return Array.from(new Set(conv.members));
 }
 
 async function appendLocal(conv: Conversation, msg: ChatMessage) {
@@ -324,21 +402,23 @@ async function onChat(from: string, raw: unknown) {
   }
 
   if (p.t !== "text" || !p.id || !p.text) return;
-  const convId = p.group && p.convId ? p.convId : directConvId(getBrowserNodeId(), from);
-  let conv = await getConversation(convId);
-  if (!conv) {
-    conv = {
-      id: convId,
-      title: p.group ? (p.groupTitle ?? "Grup") : (p.alias ?? from),
-      members: p.group ? (p.members ?? [from]).filter((m) => m !== getBrowserNodeId()) : [from],
-      group: Boolean(p.group),
+  let conv: Conversation;
+  if (p.group && p.convId) {
+    conv = (await getConversation(p.convId)) ?? {
+      id: p.convId,
+      title: p.groupTitle ?? "Grup",
+      members: (p.members ?? [from]).filter((m) => m !== getBrowserNodeId()),
+      group: true,
       lastTs: p.ts ?? Date.now(),
       lastText: "",
       unread: 0,
       pinned: false,
     };
     await putConversation(conv);
+  } else {
+    conv = await resolveDirectConversation(from, p.alias);
   }
+  const convId = conv.id;
   if (await getMessage(p.id)) return;
 
   const msg: ChatMessage = {
@@ -378,21 +458,23 @@ async function onMedia(from: string, raw: unknown) {
   publish({ transfers: rest });
 
   const group = Boolean((raw as { group?: boolean }).group);
-  const convId = group ? result.convId : directConvId(getBrowserNodeId(), from);
-  let conv = await getConversation(convId);
-  if (!conv) {
-    conv = {
-      id: convId,
-      title: state.aliases[from] ?? from,
+  let conv: Conversation;
+  if (group) {
+    conv = (await getConversation(result.convId)) ?? {
+      id: result.convId,
+      title: state.aliases[from] ?? "Grup",
       members: [from],
-      group,
+      group: true,
       lastTs: Date.now(),
       lastText: "",
       unread: 0,
       pinned: false,
     };
     await putConversation(conv);
+  } else {
+    conv = await resolveDirectConversation(from);
   }
+  const convId = conv.id;
   if (await getMessage(result.mid)) return;
   await appendLocal(conv, {
     id: result.mid,

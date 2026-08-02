@@ -20,6 +20,7 @@ import { Route as SahaRouteImport } from './routes/saha'
 import { Route as ProtokolRouteImport } from './routes/protokol'
 import { Route as PilotPanosuRouteImport } from './routes/pilot-panosu'
 import { Route as MevzuatRouteImport } from './routes/mevzuat'
+import { Route as KurumsalRouteImport } from './routes/kurumsal'
 import { Route as KurRouteImport } from './routes/kur'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KayitRouteImport } from './routes/kayit'
@@ -113,6 +114,11 @@ const PilotPanosuRoute = PilotPanosuRouteImport.update({
 const MevzuatRoute = MevzuatRouteImport.update({
   id: '/mevzuat',
   path: '/mevzuat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KurumsalRoute = KurumsalRouteImport.update({
+  id: '/kurumsal',
+  path: '/kurumsal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KurRoute = KurRouteImport.update({
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
   '/kur': typeof KurRoute
+  '/kurumsal': typeof KurumsalRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
   '/protokol': typeof ProtokolRoute
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
   '/kur': typeof KurRoute
+  '/kurumsal': typeof KurumsalRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
   '/protokol': typeof ProtokolRoute
@@ -440,6 +448,7 @@ export interface FileRoutesById {
   '/kayit': typeof KayitRoute
   '/kosullar': typeof KosullarRoute
   '/kur': typeof KurRoute
+  '/kurumsal': typeof KurumsalRoute
   '/mevzuat': typeof MevzuatRoute
   '/pilot-panosu': typeof PilotPanosuRoute
   '/protokol': typeof ProtokolRoute
@@ -493,6 +502,7 @@ export interface FileRouteTypes {
     | '/kayit'
     | '/kosullar'
     | '/kur'
+    | '/kurumsal'
     | '/mevzuat'
     | '/pilot-panosu'
     | '/protokol'
@@ -544,6 +554,7 @@ export interface FileRouteTypes {
     | '/kayit'
     | '/kosullar'
     | '/kur'
+    | '/kurumsal'
     | '/mevzuat'
     | '/pilot-panosu'
     | '/protokol'
@@ -596,6 +607,7 @@ export interface FileRouteTypes {
     | '/kayit'
     | '/kosullar'
     | '/kur'
+    | '/kurumsal'
     | '/mevzuat'
     | '/pilot-panosu'
     | '/protokol'
@@ -649,6 +661,7 @@ export interface RootRouteChildren {
   KayitRoute: typeof KayitRoute
   KosullarRoute: typeof KosullarRoute
   KurRoute: typeof KurRoute
+  KurumsalRoute: typeof KurumsalRoute
   MevzuatRoute: typeof MevzuatRoute
   PilotPanosuRoute: typeof PilotPanosuRoute
   ProtokolRoute: typeof ProtokolRoute
@@ -750,6 +763,13 @@ declare module '@tanstack/react-router' {
       path: '/mevzuat'
       fullPath: '/mevzuat'
       preLoaderRoute: typeof MevzuatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kurumsal': {
+      id: '/kurumsal'
+      path: '/kurumsal'
+      fullPath: '/kurumsal'
+      preLoaderRoute: typeof KurumsalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kur': {
@@ -1070,6 +1090,7 @@ const rootRouteChildren: RootRouteChildren = {
   KayitRoute: KayitRoute,
   KosullarRoute: KosullarRoute,
   KurRoute: KurRoute,
+  KurumsalRoute: KurumsalRoute,
   MevzuatRoute: MevzuatRoute,
   PilotPanosuRoute: PilotPanosuRoute,
   ProtokolRoute: ProtokolRoute,

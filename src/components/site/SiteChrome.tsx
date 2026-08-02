@@ -294,7 +294,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" className="flex shrink-0 items-center gap-2.5">
+        <Link to="/kurumsal" className="flex shrink-0 items-center gap-2.5">
           <img
             src={brandMark.url}
             alt="Tedbirge Protokol logosu"

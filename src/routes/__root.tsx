@@ -143,7 +143,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Gömülü uygulama kabuğu (sohbet): kurumsal şerit ve dok gizlenir.
-  const embedded = pathname.startsWith("/sohbet");
+  const embedded = pathname === "/" || pathname.startsWith("/sohbet");
 
   useEffect(() => {
     setupOfflineSupport();
