@@ -4,6 +4,8 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
+
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -139,6 +141,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Gömülü uygulama kabuğu (sohbet): kurumsal şerit ve dok gizlenir.
+  const embedded = pathname.startsWith("/sohbet");
 
   useEffect(() => {
     setupOfflineSupport();
@@ -149,10 +154,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <OfflineBanner />
-      <NodeDock />
+      {!embedded && <OfflineBanner />}
+      {!embedded && <NodeDock />}
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
 }
+

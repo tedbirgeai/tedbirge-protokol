@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatApp } from "@/components/chat/ChatApp";
-import { SitePage } from "@/components/site/SiteChrome";
 
 export const Route = createFileRoute("/sohbet")({
   ssr: false,
@@ -25,19 +24,12 @@ export const Route = createFileRoute("/sohbet")({
   component: SohbetPage,
 });
 
+/** Gömülü uygulama kabuğu: kurumsal site başlık/menüleri olmadan tam ekran. */
 function SohbetPage() {
   return (
-    <SitePage>
-      <main className="mx-auto w-full max-w-6xl px-4 py-8">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Sohbet ve görüşme</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Günlük kullanımda tanıdık bir mesajlaşma deneyimi; bağlantı koptuğunda mesajlarınız yakındaki
-            cihazlar üzerinden iletilmeye devam eder. Tüm içerik yalnızca cihazlarda çözülür.
-          </p>
-        </header>
-        <ChatApp />
-      </main>
-    </SitePage>
+    <main className="fixed inset-0 z-40 bg-background">
+      <h1 className="sr-only">Tedbirge Sohbet ve Görüşme</h1>
+      <ChatApp />
+    </main>
   );
 }

@@ -180,6 +180,34 @@ export function toggleCamera() {
   publish({ cameraOff: next });
 }
 
+let facing: "user" | "environment" = "user";
+
+/** Ön / arka kamera değişimi — görüşme kesilmeden akış değiştirilir. */
+export async function switchCamera() {
+  if (!pc || !state.video) return;
+  facing = facing === "user" ? "environment" : "user";
+  try {
+    const fresh = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facing, width: { ideal: 960 } },
+      audio: false,
+    });
+    const track = fresh.getVideoTracks()[0];
+    if (!track) return;
+    const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+    await sender?.replaceTrack(track);
+    localStream?.getVideoTracks().forEach((t) => {
+      t.stop();
+      localStream?.removeTrack(t);
+    });
+    localStream?.addTrack(track);
+    track.enabled = !state.cameraOff;
+    listeners.forEach((l) => l());
+  } catch {
+    publish({ error: "Kamera değiştirilemedi." });
+  }
+}
+
+
 /* ------------------------------ sinyalleşme ------------------------------ */
 
 type CallSignal = {
