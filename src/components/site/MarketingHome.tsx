@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { PROTOCOL_LAYERS } from "@/lib/protocol-layers";
+import { AppGetPanel } from "@/components/site/AppGetPanel";
 
 /** Kurumsal tanıtım sayfası gövdesi — hem "/" hem "/kurumsal" tarafından kullanılır. */
 const stats = [
