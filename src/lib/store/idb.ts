@@ -17,7 +17,7 @@
  */
 
 export const DB_NAME = "tedbirge";
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 /** 0 = acil/güvenlik, 1 = kontrol, 2 = kullanıcı mesajı, 3 = telemetri. */
 export type Priority = 0 | 1 | 2 | 3;
