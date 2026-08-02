@@ -25,7 +25,19 @@ import type { Priority } from "@/lib/store/idb";
 export const ENVELOPE_VERSION = 2 as const;
 export const DEFAULT_TTL = 4;
 
-export type EnvelopeKind = "ping" | "pong" | "telemetry" | "text" | "signal" | "alert";
+export type EnvelopeKind =
+  | "ping"
+  | "pong"
+  | "telemetry"
+  | "text"
+  | "signal"
+  | "alert"
+  | "chat"
+  | "receipt"
+  | "call"
+  | "media"
+  | "sync"
+  | "presence";
 
 export type MeshHeader = {
   v: 2;
@@ -158,8 +170,8 @@ export async function createEnvelope(input: CreateInput): Promise<MeshEnvelopeV2
 
 export function defaultPriority(kind: EnvelopeKind): Priority {
   if (kind === "alert") return 0;
-  if (kind === "signal" || kind === "ping" || kind === "pong") return 1;
-  if (kind === "text") return 2;
+  if (kind === "signal" || kind === "ping" || kind === "pong" || kind === "call") return 1;
+  if (kind === "text" || kind === "chat" || kind === "media" || kind === "receipt") return 2;
   return 3;
 }
 
