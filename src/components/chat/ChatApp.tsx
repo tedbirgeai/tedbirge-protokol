@@ -166,17 +166,17 @@ export function ChatApp() {
               )}
               {peers.map((p) => (
                 <button
-                  key={p.id}
+                  key={p.nodeId}
                   type="button"
                   onClick={() =>
-                    void ensureDirectConversation(p.id, chat.aliases[p.id]).then((c) => {
+                    void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
                       setActiveId(c.id);
                       setGroupMode(false);
                     })
                   }
                   className="flex w-full items-center justify-between rounded-sm border border-border px-3 py-2 text-left text-sm hover:bg-accent"
                 >
-                  <span className="truncate">{chat.aliases[p.id] ?? p.id}</span>
+                  <span className="truncate">{chat.aliases[p.nodeId] ?? p.nodeId}</span>
                   <span className="font-mono text-[10px] uppercase text-muted-foreground">bağlı</span>
                 </button>
               ))}
@@ -193,10 +193,10 @@ export function ChatApp() {
                 onClick={() => {
                   const value = newPeer.trim();
                   if (!value) return;
-                  const known = peers.some((p) => p.id === value);
+                  const known = peers.some((p) => p.nodeId === value);
                   const task = known
                     ? ensureDirectConversation(value)
-                    : createGroup(value, peers.map((p: PeerInfo) => p.id));
+                    : createGroup(value, peers.map((p: PeerInfo) => p.nodeId));
                   void task.then((c) => {
                     setActiveId(c.id);
                     setNewPeer("");

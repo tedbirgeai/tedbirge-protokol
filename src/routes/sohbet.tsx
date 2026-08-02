@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatApp } from "@/components/chat/ChatApp";
-import { SiteChrome } from "@/components/site/SiteChrome";
+import { SitePage } from "@/components/site/SiteChrome";
 
 export const Route = createFileRoute("/sohbet")({
   ssr: false,
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/sohbet")({
 
 function SohbetPage() {
   return (
-    <SiteChrome>
+    <SitePage>
       <main className="mx-auto w-full max-w-6xl px-4 py-8">
         <header className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">Sohbet ve görüşme</h1>
@@ -38,6 +38,6 @@ function SohbetPage() {
         </header>
         <ChatApp />
       </main>
-    </SiteChrome>
+    </SitePage>
   );
 }
