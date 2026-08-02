@@ -361,3 +361,95 @@ export async function migrateLegacyQueue(): Promise<number> {
   }
   return moved;
 }
+
+/* --------------------- sohbet: konuşmalar ve mesajlar --------------------- */
+
+export type MessageStatus = "pending" | "sent" | "delivered" | "read";
+export type MessageKind = "text" | "media" | "system" | "call";
+
+export type ChatMessage = {
+  /** Küresel benzersiz mesaj kimliği (gönderende üretilir, uçtan uca korunur). */
+  id: string;
+  convId: string;
+  from: string;
+  /** Hedef düğüm ya da grup kimliği. */
+  to: string;
+  kind: MessageKind;
+  text: string;
+  ts: number;
+  outgoing: boolean;
+  status: MessageStatus;
+  /** Medya eki (şifreli parçalardan yeniden birleştirilmiş data URL). */
+  media?: { name: string; mime: string; size: number; dataUrl: string };
+};
+
+export type Conversation = {
+  id: string;
+  title: string;
+  /** Grup ise üye düğüm kimlikleri; birebir ise tek eş. */
+  members: string[];
+  group: boolean;
+  lastTs: number;
+  lastText: string;
+  unread: number;
+  pinned: boolean;
+};
+
+export function putConversation(rec: Conversation) {
+  return safe(
+    tx<IDBValidKey>("conversations", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    false,
+  );
+}
+
+export function getConversation(id: string): Promise<Conversation | undefined> {
+  return safe(
+    tx<Conversation | undefined>("conversations", "readonly", (s) =>
+      s.get(id) as IDBRequest<Conversation | undefined>,
+    ),
+    undefined,
+  );
+}
+
+export function listConversations(): Promise<Conversation[]> {
+  return safe(
+    tx<Conversation[]>("conversations", "readonly", (s) => s.getAll() as IDBRequest<Conversation[]>).then((rows) =>
+      rows.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs),
+    ),
+    [],
+  );
+}
+
+export function deleteConversation(id: string) {
+  return safe(
+    tx<undefined>("conversations", "readwrite", (s) => s.delete(id) as IDBRequest<undefined>).then(() => true),
+    false,
+  );
+}
+
+export function putMessage(rec: ChatMessage) {
+  return safe(
+    tx<IDBValidKey>("messages", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    false,
+  );
+}
+
+export function getMessage(id: string): Promise<ChatMessage | undefined> {
+  return safe(
+    tx<ChatMessage | undefined>("messages", "readonly", (s) => s.get(id) as IDBRequest<ChatMessage | undefined>),
+    undefined,
+  );
+}
+
+export function listMessages(convId: string): Promise<ChatMessage[]> {
+  return safe(
+    tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>).then((rows) =>
+      rows.filter((m) => m.convId === convId).sort((a, b) => a.ts - b.ts),
+    ),
+    [],
+  );
+}
+
+export function listAllMessages(): Promise<ChatMessage[]> {
+  return safe(tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>), []);
+}
