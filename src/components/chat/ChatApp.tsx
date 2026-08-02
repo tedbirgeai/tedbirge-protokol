@@ -29,7 +29,8 @@ import {
 import { startCall } from "@/lib/call/engine";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { humanSize } from "@/lib/chat/media";
-import { useNode } from "@/lib/node-runtime";
+import { useNodeRuntime } from "@/lib/node-runtime";
+import type { PeerInfo } from "@/lib/browser-node";
 import { describeTier, useAccessTier } from "@/lib/access-tiers";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import type { ChatMessage } from "@/lib/store/idb";
@@ -90,7 +91,7 @@ export function ChatApp() {
   const endRef = useRef<HTMLDivElement>(null);
 
   const chat = useChat();
-  const node = useNode();
+  const node = useNodeRuntime();
   const access = useAccessTier();
   const tier = describeTier(access);
   const messages = useConversationMessages(activeId);
@@ -119,7 +120,7 @@ export function ChatApp() {
   }, [chat.conversations, query]);
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
-  const peers = node.peers ?? [];
+  const peers: PeerInfo[] = node.peers ?? [];
 
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
@@ -195,7 +196,7 @@ export function ChatApp() {
                   const known = peers.some((p) => p.id === value);
                   const task = known
                     ? ensureDirectConversation(value)
-                    : createGroup(value, peers.map((p) => p.id));
+                    : createGroup(value, peers.map((p: PeerInfo) => p.id));
                   void task.then((c) => {
                     setActiveId(c.id);
                     setNewPeer("");
