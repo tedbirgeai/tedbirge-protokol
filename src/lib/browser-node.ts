@@ -69,19 +69,32 @@ const LAN_ANNOUNCE_MS = 3_000;
  * Bluetooth ve internet kapalı olsa da bu adreslerden biri açıksa cihazlar
  * saniyeler içinde birbirini bulur. Ajan yoksa denemeler sessizce düşer.
  */
+/** Sayfa HTTPS ile servis ediliyorsa karma içerik hatasını önlemek için wss kullanılır. */
+function wsScheme(): "ws" | "wss" {
+  return typeof location !== "undefined" && location.protocol === "https:" ? "wss" : "ws";
+}
+
 function lanSignalUrls(): string[] {
   const urls = new Set<string>();
+  const ws = wsScheme();
   const host = typeof location !== "undefined" ? location.hostname : "";
+  // HTTPS sayfasından düz ws:// bağlantısı tarayıcı tarafından engellenir ve
+  // adres çubuğunda "güvenli değil" uyarısı doğurur; bu durumda yalnızca
+  // sayfanın kendi origin'i üzerinden güvenli sinyalleşme denenir.
+  if (ws === "wss") {
+    if (host) urls.add(`wss://${host}:${LAN_SIGNAL_PORT}`);
+    return Array.from(urls);
+  }
   // 1) Sayfanın servis edildiği yerel adres (saha AP / yerel ajan aynı makinede).
   if (host && !/^(localhost|127\.0\.0\.1)$/.test(host) && !host.includes("lovable")) {
-    urls.add(`ws://${host}:${LAN_SIGNAL_PORT}`);
+    urls.add(`${ws}://${host}:${LAN_SIGNAL_PORT}`);
   }
   // 2) Yerel ajan aynı cihazda çalışıyorsa.
-  urls.add(`ws://localhost:${LAN_SIGNAL_PORT}`);
+  urls.add(`${ws}://localhost:${LAN_SIGNAL_PORT}`);
   // 3) mDNS adı ve yaygın yönlendirici/hotspot geçit adresleri.
-  urls.add(`ws://tedbirge-gateway.local:${LAN_SIGNAL_PORT}`);
+  urls.add(`${ws}://tedbirge-gateway.local:${LAN_SIGNAL_PORT}`);
   for (const gw of ["192.168.4.1", "192.168.43.1", "172.20.10.1", "192.168.1.1", "192.168.0.1"]) {
-    urls.add(`ws://${gw}:${LAN_SIGNAL_PORT}`);
+    urls.add(`${ws}://${gw}:${LAN_SIGNAL_PORT}`);
   }
   return Array.from(urls);
 }
