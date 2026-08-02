@@ -11,6 +11,7 @@ import { BrowserNode, getBrowserNodeId, type BrowserNodeState } from "@/lib/brow
 import { sendOverBestCarrier, setCarrierEnvelopeSink } from "@/lib/carrier-bridge";
 import { pruneSeen } from "@/lib/store/idb";
 import type { Priority } from "@/lib/store/idb";
+import type { EnvelopeKind as MeshKind } from "@/lib/mesh-envelope";
 
 const AUTO_KEY = "tedbirge.browser-node.auto";
 const GUIDE_KEY = "tedbirge.browser-node.guide-seen";
@@ -88,6 +89,25 @@ export function stopNode() {
     /* private mode */
   }
   publish({ ...snapshot, running: false, peers: [], rttMs: null, discovery: "none" });
+}
+
+/**
+ * Uygulama katmanı gönderimi (sohbet, arama sinyali, eşitleme).
+ * Düğüm kapalıysa otomatik başlatılır — kullanıcı hiçbir ayar yapmaz.
+ */
+export async function sendMesh(
+  kind: MeshKind,
+  to: string | "*",
+  payload: unknown,
+  priority?: Priority,
+): Promise<boolean> {
+  if (!node) await startNode();
+  return (await node?.send(kind, to, payload, priority)) ?? false;
+}
+
+/** Anahtar değişimi tamamlanmış eşler (mesaj gönderilebilir). */
+export function knownPeerIds(): string[] {
+  return node?.knownPeerIds() ?? [];
 }
 
 /** Acil durum yayını (öncelik 0 — kuyrukta asla budanmaz). */

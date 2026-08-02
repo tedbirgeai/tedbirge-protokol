@@ -14,6 +14,7 @@ import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
+import { Route as SohbetRouteImport } from './routes/sohbet'
 import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
 import { Route as SahaRouteImport } from './routes/saha'
 import { Route as ProtokolRouteImport } from './routes/protokol'
@@ -82,6 +83,11 @@ const TurkiyeMevzuatRoute = TurkiyeMevzuatRouteImport.update({
 const TasiyicilarRoute = TasiyicilarRouteImport.update({
   id: '/tasiyicilar',
   path: '/tasiyicilar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SohbetRoute = SohbetRouteImport.update({
+  id: '/sohbet',
+  path: '/sohbet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SertifikasyonRoute = SertifikasyonRouteImport.update({
@@ -335,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/protokol': typeof ProtokolRoute
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
+  '/sohbet': typeof SohbetRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/protokol': typeof ProtokolRoute
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
+  '/sohbet': typeof SohbetRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/protokol': typeof ProtokolRoute
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
+  '/sohbet': typeof SohbetRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/protokol'
     | '/saha'
     | '/sertifikasyon'
+    | '/sohbet'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
     | '/urun'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/protokol'
     | '/saha'
     | '/sertifikasyon'
+    | '/sohbet'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
     | '/urun'
@@ -590,6 +601,7 @@ export interface FileRouteTypes {
     | '/protokol'
     | '/saha'
     | '/sertifikasyon'
+    | '/sohbet'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
     | '/urun'
@@ -642,6 +654,7 @@ export interface RootRouteChildren {
   ProtokolRoute: typeof ProtokolRoute
   SahaRoute: typeof SahaRoute
   SertifikasyonRoute: typeof SertifikasyonRoute
+  SohbetRoute: typeof SohbetRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
   UrunRoute: typeof UrunRoute
@@ -695,6 +708,13 @@ declare module '@tanstack/react-router' {
       path: '/tasiyicilar'
       fullPath: '/tasiyicilar'
       preLoaderRoute: typeof TasiyicilarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sohbet': {
+      id: '/sohbet'
+      path: '/sohbet'
+      fullPath: '/sohbet'
+      preLoaderRoute: typeof SohbetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sertifikasyon': {
@@ -1055,6 +1075,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProtokolRoute: ProtokolRoute,
   SahaRoute: SahaRoute,
   SertifikasyonRoute: SertifikasyonRoute,
+  SohbetRoute: SohbetRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
   UrunRoute: UrunRoute,
@@ -1075,13 +1096,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

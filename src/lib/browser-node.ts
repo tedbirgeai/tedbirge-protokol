@@ -59,6 +59,22 @@ const CHANNEL = "tedbirge-mesh-v1";
 const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
 const LOCAL_ANNOUNCE_MS = 4_000;
 const MAX_TTL = 4;
+/** Bulutsuz (Katman B) el sıkışma için yerel ajan WebSocket sinyalleşme adresi. */
+const LAN_SIGNAL_URLS = ["ws://tedbirge-gateway.local:8787", "ws://192.168.4.1:8787"];
+const LAN_RETRY_MS = 15_000;
+
+/** Uygulama katmanı (sohbet, arama, eşitleme) paket dinleyicisi. */
+export type MeshAppHandler = (kind: EnvelopeKind, from: string, body: unknown) => void;
+
+let appHandler: MeshAppHandler | null = null;
+
+/** Sohbet/arama motorları bu kancayla mesh veri düzlemine bağlanır. */
+export function setMeshAppHandler(fn: MeshAppHandler | null) {
+  appHandler = fn;
+}
+
+/** Uygulama katmanına iletilecek paket türleri. */
+const APP_KINDS: EnvelopeKind[] = ["chat", "receipt", "call", "media", "sync", "presence", "text", "alert"];
 
 export type PeerInfo = {
   nodeId: string;
@@ -159,6 +175,8 @@ export class BrowserNode {
   private localBus: BroadcastChannel | null = null;
   private localSeen = new Map<string, number>();
   private localTimer: ReturnType<typeof setInterval> | null = null;
+  private lanSocket: WebSocket | null = null;
+  private lanTimer: ReturnType<typeof setInterval> | null = null;
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
   private peerKeys = new Map<
     string,
@@ -244,6 +262,7 @@ export class BrowserNode {
     window.addEventListener("offline", this.handleOffline);
 
     this.startLocalDiscovery();
+    this.startLanSignaling();
 
     this.channel = supabase.channel(CHANNEL, {
       config: { broadcast: { self: false }, presence: { key: this.nodeId } },
@@ -310,11 +329,83 @@ export class BrowserNode {
     }
   }
 
+  /**
+   * Katman B — yerel ajan üzerinden bulutsuz sinyalleşme.
+   * Aynı Wi-Fi/hotspot ağındaki iki cihaz, internet olmadan
+   * ws://tedbirge-gateway.local:8787 üzerinden el sıkışır.
+   * Ajan yoksa sessizce yok sayılır (kullanıcıya hata gösterilmez).
+   */
+  private startLanSignaling() {
+    if (typeof WebSocket === "undefined") return;
+    const tryConnect = () => {
+      if (this.lanSocket && this.lanSocket.readyState <= WebSocket.OPEN) return;
+      for (const url of LAN_SIGNAL_URLS) {
+        try {
+          const ws = new WebSocket(url);
+          ws.onopen = () => {
+            this.lanSocket = ws;
+            try {
+              ws.send(JSON.stringify({ kind: "announce", from: this.nodeId, at: Date.now() }));
+            } catch {
+              /* kapanmış olabilir */
+            }
+            this.emit({});
+          };
+          ws.onmessage = (e) => void this.onLanMessage(String(e.data));
+          ws.onclose = () => {
+            if (this.lanSocket === ws) this.lanSocket = null;
+          };
+          ws.onerror = () => {
+            try {
+              ws.close();
+            } catch {
+              /* yoksay */
+            }
+          };
+        } catch {
+          /* ajan yok */
+        }
+      }
+    };
+    tryConnect();
+    this.lanTimer = setInterval(tryConnect, LAN_RETRY_MS);
+  }
+
+  private async onLanMessage(raw: string) {
+    let msg: { kind?: string; from?: string; to?: string; data?: Record<string, unknown> };
+    try {
+      msg = JSON.parse(raw) as typeof msg;
+    } catch {
+      return;
+    }
+    if (!msg?.from || msg.from === this.nodeId) return;
+    if (msg.kind === "announce") {
+      if (!this.peers.has(msg.from) && this.nodeId < msg.from) await this.createOffer(msg.from);
+      this.emit({});
+      return;
+    }
+    if (msg.kind === "signal" && msg.to === this.nodeId && msg.data) {
+      await this.onSignal({ from: msg.from, to: msg.to, data: msg.data });
+    }
+  }
+
+  private lanReady() {
+    return this.lanSocket?.readyState === WebSocket.OPEN;
+  }
+
   stop() {
     this.timer && clearInterval(this.timer);
     this.timer = null;
     if (this.localTimer) clearInterval(this.localTimer);
     this.localTimer = null;
+    if (this.lanTimer) clearInterval(this.lanTimer);
+    this.lanTimer = null;
+    try {
+      this.lanSocket?.close();
+    } catch {
+      /* zaten kapalı */
+    }
+    this.lanSocket = null;
     window.removeEventListener("online", this.handleOnline);
     window.removeEventListener("offline", this.handleOffline);
     this.peers.forEach((p) => p.pc.close());
@@ -426,6 +517,15 @@ export class BrowserNode {
         delivered = true;
       } catch {
         this.cloudUp = false;
+      }
+    }
+
+    if (!delivered && this.lanReady()) {
+      try {
+        this.lanSocket?.send(JSON.stringify({ kind: "signal", ...payload }));
+        delivered = true;
+      } catch {
+        /* soket kapandı */
       }
     }
 
@@ -554,6 +654,9 @@ export class BrowserNode {
       }
     } else if (env.h.kind === "signal") {
       await this.onSignal({ from: env.h.from, to: this.nodeId, data: body as Record<string, unknown> });
+    } else if (APP_KINDS.includes(env.h.kind)) {
+      appHandler?.(env.h.kind, env.h.from, body);
+      if (env.h.kind === "telemetry") return;
     } else if (env.h.kind === "telemetry" && this.state.online) {
       await this.postTelemetry(body as Record<string, unknown>);
       this.emit({ lastRelayAt: new Date().toISOString() });
@@ -680,6 +783,11 @@ export class BrowserNode {
     if (keys) this.peerKeys.set(peerId, { ...keys, trust: status, verified: status === "manual" });
     this.emit({});
     return status;
+  }
+
+  /** Anahtar değişimi tamamlanmış (mesaj gönderilebilir) eşlerin kimlikleri. */
+  knownPeerIds(): string[] {
+    return Array.from(this.peerKeys.keys());
   }
 
   /** Kullanıcı testi: tüm eşlere ping atar, dönen pong ile RTT ölçülür. */
