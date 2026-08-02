@@ -6,6 +6,7 @@ import {
   CheckCheck,
   Clock,
   Globe,
+  Home,
   Lock,
   Paperclip,
   Phone,
@@ -201,6 +202,15 @@ export function ChatApp() {
               {tier.label}
             </p>
           </div>
+          <Link
+            to="/"
+            className="rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label="Ana sayfaya dön"
+            title="Ana sayfaya dön"
+          >
+            <Home className="h-[18px] w-[18px]" />
+          </Link>
           <Link
             to="/kurumsal"
             className="rounded-full p-2 hover:bg-black/5"
