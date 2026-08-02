@@ -202,32 +202,17 @@ export function directConvId(a: string, b: string) {
 }
 
 export async function ensureDirectConversation(peerId: string, title?: string): Promise<Conversation> {
-  const me = getBrowserNodeId();
-  const id = directConvId(me, peerId);
-  const existing = await getConversation(id);
-  if (existing) {
-    if (title && existing.title !== title) {
-      const updated = { ...existing, title };
-      await putConversation(updated);
-      await refreshConversations();
-      return updated;
-    }
-    return existing;
+  const conv = await resolveDirectConversation(peerId, title);
+  if (title && conv.title !== title) {
+    const updated = { ...conv, title };
+    await putConversation(updated);
+    await refreshConversations();
+    return updated;
   }
-  const conv: Conversation = {
-    id,
-    title: title ?? state.aliases[peerId] ?? peerId,
-    members: [peerId],
-    group: false,
-    lastTs: Date.now(),
-    lastText: "",
-    unread: 0,
-    pinned: false,
-  };
-  await putConversation(conv);
   await refreshConversations();
   return conv;
 }
+
 
 export async function createGroup(title: string, members: string[]): Promise<Conversation> {
   const conv: Conversation = {
