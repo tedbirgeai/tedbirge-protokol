@@ -81,36 +81,72 @@ function identityKey(c: Conversation): string {
   return name || peer;
 }
 
+/** İki konuşma aynı kişiye mi ait? (ortak cihaz kimliği ya da aynı ad) */
+function sameIdentity(a: Conversation, b: Conversation): boolean {
+  if (a.group || b.group) return false;
+  if (a.members.some((m) => b.members.includes(m))) return true;
+  return identityKey(a) === identityKey(b);
+}
+
+function fold(survivor: Conversation, drop: Conversation): Conversation {
+  const newer = survivor.lastTs >= drop.lastTs ? survivor : drop;
+  return {
+    ...survivor,
+    title: newer.title || survivor.title,
+    members: Array.from(new Set([...survivor.members, ...drop.members])),
+    unread: survivor.unread + drop.unread,
+    lastTs: Math.max(survivor.lastTs, drop.lastTs),
+    lastText: newer.lastText,
+    pinned: survivor.pinned || drop.pinned,
+  };
+}
+
+/**
+ * Aynı kişinin (aynı kimlik / takma ad) farklı oturum ya da taşıyıcı üzerinden
+ * gelen sinyalleri yüzünden listede birden çok kez görünmesini engeller.
+ * Kopya konuşmaların mesajları hayatta kalan konuşmaya taşınır, cihaz kimlikleri
+ * üye listesinde birleşir; böylece hiçbir mesaj kaybolmaz.
+ */
 async function mergeDuplicates(rows: Conversation[]): Promise<Conversation[]> {
-  const keep = new Map<string, Conversation>();
-  const pairs: Array<{ survivor: Conversation; drop: Conversation }> = [];
+  const survivors: Conversation[] = [];
+  const dropped: Array<{ survivorIndex: number; drop: Conversation }> = [];
   for (const c of rows) {
-    if (c.group) continue;
-    const key = identityKey(c);
-    const prev = keep.get(key);
-    if (!prev) {
-      keep.set(key, c);
+    if (c.group) {
+      survivors.push(c);
       continue;
     }
-    const survivor = prev.lastTs >= c.lastTs ? prev : c;
-    const drop = survivor === prev ? c : prev;
-    keep.set(key, survivor);
-    pairs.push({ survivor, drop });
+    const idx = survivors.findIndex((s) => !s.group && sameIdentity(s, c));
+    if (idx < 0) {
+      survivors.push(c);
+      continue;
+    }
+    survivors[idx] = fold(survivors[idx]!, c);
+    dropped.push({ survivorIndex: idx, drop: c });
   }
-  if (!pairs.length) return rows;
-  for (const { survivor, drop } of pairs) {
+  if (!dropped.length) return rows;
+  for (const { survivorIndex, drop } of dropped) {
+    const survivor = survivors[survivorIndex]!;
     for (const m of await listMessages(drop.id)) await putMessage({ ...m, convId: survivor.id });
-    await putConversation({
-      ...survivor,
-      members: Array.from(new Set([...survivor.members, ...drop.members])),
-      unread: survivor.unread + drop.unread,
-      lastTs: Math.max(survivor.lastTs, drop.lastTs),
-      lastText: survivor.lastTs >= drop.lastTs ? survivor.lastText : drop.lastText,
-      pinned: survivor.pinned || drop.pinned,
-    });
     await idbDeleteConversation(drop.id);
   }
+  for (const { survivorIndex } of dropped) await putConversation(survivors[survivorIndex]!);
   return await listConversations();
+}
+
+/**
+ * Tek seferlik temizlik: IndexedDB'de biriken mükerrer kişileri tek satıra indirir.
+ * Yakınsayana kadar (en fazla 5 tur) yeniden çalışır.
+ */
+export async function cleanDuplicateConversations(): Promise<number> {
+  let before = (await listConversations()).length;
+  const initial = before;
+  for (let i = 0; i < 5; i += 1) {
+    const rows = await mergeDuplicates(await listConversations());
+    if (rows.length === before) break;
+    before = rows.length;
+  }
+  publish({ conversations: await listConversations() });
+  return initial - before;
 }
 
 async function refreshConversations() {
@@ -120,17 +156,19 @@ async function refreshConversations() {
 
 /**
  * Gelen bir eş için doğru konuşmayı bulur: kimlik yeni olsa bile aynı takma
- * ada sahip mevcut konuşma varsa ona bağlanır (yeni kişi oluşturulmaz).
+ * ada ya da ortak cihaz kimliğine sahip mevcut konuşma varsa ona bağlanır
+ * (asla yeni bir liste elemanı oluşturulmaz).
  */
 async function resolveDirectConversation(from: string, alias?: string): Promise<Conversation> {
   const id = directConvId(getBrowserNodeId(), from);
   const direct = await getConversation(id);
   if (direct) return direct;
+  const rows = await listConversations();
+  const byMember = rows.find((c) => !c.group && c.members.includes(from));
+  if (byMember) return byMember;
   const name = (alias ?? state.aliases[from] ?? "").trim().toLocaleLowerCase("tr");
   if (name) {
-    const match = (await listConversations()).find(
-      (c) => !c.group && identityKey(c) === name && !c.members.includes(from),
-    );
+    const match = rows.find((c) => !c.group && identityKey(c) === name);
     if (match) {
       const merged = { ...match, members: Array.from(new Set([...match.members, from])) };
       await putConversation(merged);
@@ -151,6 +189,7 @@ async function resolveDirectConversation(from: string, alias?: string): Promise<
   return conv;
 }
 
+
 async function refreshMessages(convId: string) {
   const rows = await listMessages(convId);
   publish({ messages: { ...state.messages, [convId]: rows } });
@@ -163,32 +202,17 @@ export function directConvId(a: string, b: string) {
 }
 
 export async function ensureDirectConversation(peerId: string, title?: string): Promise<Conversation> {
-  const me = getBrowserNodeId();
-  const id = directConvId(me, peerId);
-  const existing = await getConversation(id);
-  if (existing) {
-    if (title && existing.title !== title) {
-      const updated = { ...existing, title };
-      await putConversation(updated);
-      await refreshConversations();
-      return updated;
-    }
-    return existing;
+  const conv = await resolveDirectConversation(peerId, title);
+  if (title && conv.title !== title) {
+    const updated = { ...conv, title };
+    await putConversation(updated);
+    await refreshConversations();
+    return updated;
   }
-  const conv: Conversation = {
-    id,
-    title: title ?? state.aliases[peerId] ?? peerId,
-    members: [peerId],
-    group: false,
-    lastTs: Date.now(),
-    lastText: "",
-    unread: 0,
-    pinned: false,
-  };
-  await putConversation(conv);
   await refreshConversations();
   return conv;
 }
+
 
 export async function createGroup(title: string, members: string[]): Promise<Conversation> {
   const conv: Conversation = {
@@ -587,6 +611,8 @@ export async function bootChat() {
   onMesh("receipt", (from, body) => void onReceipt(from, body));
   onMesh("media", (from, body) => void onMedia(from, body));
   onMesh("sync", (from, body) => void onSync(from, body));
+  // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
+  await cleanDuplicateConversations();
   await refreshConversations();
   await startNode();
   // Eşler tanışınca eksik mesajlar arka planda eşitlenir.
