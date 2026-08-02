@@ -1,34 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChatApp } from "@/components/chat/ChatApp";
+import { MarketingHome } from "@/components/site/MarketingHome";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
   head: () => ({
     meta: [
-      { title: "Tedbirge — Kesintisiz Mesajlaşma ve Görüşme" },
+      { title: "Tedbirge Protocol — Kesintisiz Bağlantı Platformu" },
       {
         name: "description",
         content:
-          "İnternet varken bulut, kesildiğinde yakındaki cihazlar üzerinden çalışan uçtan uca şifreli mesajlaşma, sesli ve görüntülü görüşme.",
+          "İnternet kesildiğinde de çalışan kurumsal ağ altyapısı. Uçtan uca şifreli, kurulum gerektirmeyen, 7 katmanlı Tedbirge Protocol ve Resilience-as-a-Service modeli.",
       },
-      { property: "og:title", content: "Tedbirge — Kesintisiz Mesajlaşma ve Görüşme" },
+      { property: "og:title", content: "Tedbirge Protocol — Kesintisiz Bağlantı Platformu" },
       {
         property: "og:description",
-        content: "Kesintide bile duran mesajlaşma: uçtan uca şifreli sohbet, dosya, sesli ve görüntülü arama.",
+        content:
+          "Kesintisiz bağlantı, otomatik yedekleme ve çevrimdışı veri güvenliği. 2 tıkla kurulan kurumsal ağ platformu.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app" }],
+    links: [{ rel: "canonical", href: "https://tedbirge-gateway.lovable.app/" }],
   }),
-  component: HomeChat,
+  component: HomePage,
 });
 
-function HomeChat() {
-  return (
-    <main className="fixed inset-0 z-40 bg-background">
-      <h1 className="sr-only">Tedbirge Sohbet ve Görüşme</h1>
-      <ChatApp />
-    </main>
-  );
+function HomePage() {
+  return <MarketingHome />;
 }
