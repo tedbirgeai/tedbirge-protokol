@@ -1,25 +1,39 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Check,
   CheckCheck,
+  ChevronDown,
   Clock,
+  Copy,
   Globe,
   Home,
   Lock,
+  Mic,
   Paperclip,
   Phone,
   Pin,
   Plus,
+  Reply,
   Search,
   Send,
+  Smile,
+  Square,
+  Star,
   Trash2,
   Users,
   Video,
+  Volume2,
+  VolumeX,
+  X,
 } from "lucide-react";
 import {
   bootChat,
+  deleteMessage,
+  reactToMessage,
+  sendTyping,
+  toggleStar,
   createGroup,
   ensureDirectConversation,
   markRead,
@@ -36,6 +50,13 @@ import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/c
 import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { humanSize } from "@/lib/chat/media";
+import {
+  isSoundMuted,
+  pressFeedback,
+  setSoundMuted,
+  unlockAudio,
+  vibrate,
+} from "@/lib/chat/sounds";
 import { useNodeRuntime } from "@/lib/node-runtime";
 import type { PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
@@ -43,6 +64,25 @@ import type { ChatMessage } from "@/lib/store/idb";
 
 function timeOf(ts: number) {
   return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+}
+
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+
+const EMOJIS = [
+  "😀","😃","😄","😁","😆","😅","😂","🤣","😊","🙂","😉","😍","😘","😗","🤗","🤔",
+  "😐","😴","😷","🤒","😎","🥳","😢","😭","😡","👍","👎","👏","🙏","💪","🤝","✌️",
+  "❤️","💔","🔥","⭐","✅","❌","⚠️","📍","📞","📷","🎉","☕","🍽️","🚗","🏠","🔋",
+];
+
+/** Gün ayırıcı etiketi — bugün / dün / tarih. */
+function dayLabel(ts: number) {
+  const d = new Date(ts);
+  const today = new Date();
+  const yest = new Date(today.getTime() - 86_400_000);
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (same(d, today)) return "Bugün";
+  if (same(d, yest)) return "Dün";
+  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 /** Ham cihaz kimliklerini gizler; kullanıcıya okunabilir bir ad gösterir. */
@@ -94,6 +134,203 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
   return <Check className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="Gönderildi" />;
 }
 
+
+/** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
+function MessageRow({
+  msg,
+  authorName,
+  showAuthor,
+  progress,
+  onReply,
+  onImage,
+}: {
+  msg: ChatMessage;
+  authorName: string;
+  showAuthor: boolean;
+  progress?: number;
+  onReply: (m: ChatMessage) => void;
+  onImage: (src: string) => void;
+}) {
+  const [menu, setMenu] = useState(false);
+  const reactions = Object.values(msg.reactions ?? {});
+
+  function quickReact(emoji: string) {
+    pressFeedback();
+    void reactToMessage(msg.id, emoji);
+    setMenu(false);
+  }
+
+  return (
+    <div className={`group flex ${msg.outgoing ? "justify-end" : "justify-start"}`}>
+      <div className="relative max-w-[80%]">
+        <div
+          className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
+          style={{
+            background: msg.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
+            color: "var(--wa-text)",
+          }}
+          onDoubleClick={() => quickReact("👍")}
+        >
+          {showAuthor && !msg.outgoing && (
+            <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
+              {authorName}
+            </p>
+          )}
+
+          {msg.replyTo && (
+            <div
+              className="mb-1 rounded-md border-l-[3px] px-2 py-1 text-[12.5px]"
+              style={{ borderColor: "var(--wa-accent)", background: "rgba(0,0,0,0.05)", color: "var(--wa-muted)" }}
+            >
+              <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                {msg.replyTo.author}
+              </span>
+              <span className="line-clamp-2 break-words">{msg.replyTo.text || "Ek"}</span>
+            </div>
+          )}
+
+          {msg.deleted ? (
+            <p className="italic" style={{ color: "var(--wa-muted)" }}>
+              Bu mesaj silindi
+            </p>
+          ) : msg.kind === "media" && msg.media ? (
+            msg.media.mime.startsWith("image/") ? (
+              <img
+                src={msg.media.dataUrl}
+                alt={msg.media.name}
+                onClick={() => onImage(msg.media!.dataUrl)}
+                className="max-h-64 cursor-zoom-in rounded-md"
+              />
+            ) : msg.media.mime.startsWith("audio/") ? (
+              <audio controls src={msg.media.dataUrl} className="w-56" />
+            ) : (
+              <a href={msg.media.dataUrl} download={msg.media.name} className="underline">
+                {msg.media.name} · {humanSize(msg.media.size)}
+              </a>
+            )
+          ) : (
+            <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+          )}
+
+          <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+            {msg.starred && <Star className="h-3 w-3 fill-current" aria-label="Yıldızlı" />}
+            <span>{timeOf(msg.ts)}</span>
+            <StatusIcon msg={msg} />
+          </div>
+
+          {progress !== undefined && (
+            <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              Aktarılıyor · %{progress}
+            </p>
+          )}
+
+          {reactions.length > 0 && (
+            <div
+              className="wa-pop absolute -bottom-3 right-2 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-[12px] shadow"
+              aria-label="Tepkiler"
+            >
+              {Array.from(new Set(reactions)).slice(0, 3).map((e) => (
+                <span key={e}>{e}</span>
+              ))}
+              {reactions.length > 1 && (
+                <span className="text-[10px]" style={{ color: "var(--wa-muted)" }}>
+                  {reactions.length}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Hızlı eylemler */}
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            setMenu((v) => !v);
+          }}
+          className={`wa-press absolute top-1 ${msg.outgoing ? "-left-7" : "-right-7"} rounded-full p-1 opacity-0 group-hover:opacity-100 focus:opacity-100`}
+          style={{ color: "var(--wa-muted)" }}
+          aria-label="Mesaj seçenekleri"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+
+        {menu && (
+          <div
+            className="wa-pop absolute z-20 mt-1 w-max rounded-xl bg-white p-1.5 shadow-lg"
+            style={{ [msg.outgoing ? "right" : "left"]: 0, top: "100%" }}
+          >
+            <div className="flex gap-1 px-1 pb-1.5">
+              {QUICK_REACTIONS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => quickReact(e)}
+                  className="wa-press rounded-full px-1 text-lg"
+                  aria-label={`Tepki ${e}`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            <MenuItem
+              icon={<Reply className="h-4 w-4" />}
+              label="Yanıtla"
+              onClick={() => {
+                onReply(msg);
+                setMenu(false);
+              }}
+            />
+            {msg.kind === "text" && !msg.deleted && (
+              <MenuItem
+                icon={<Copy className="h-4 w-4" />}
+                label="Kopyala"
+                onClick={() => {
+                  void navigator.clipboard.writeText(msg.text).catch(() => undefined);
+                  setMenu(false);
+                }}
+              />
+            )}
+            <MenuItem
+              icon={<Star className="h-4 w-4" />}
+              label={msg.starred ? "Yıldızı kaldır" : "Yıldızla"}
+              onClick={() => {
+                void toggleStar(msg.id);
+                setMenu(false);
+              }}
+            />
+            <MenuItem
+              icon={<Trash2 className="h-4 w-4" />}
+              label="Sil"
+              onClick={() => {
+                void deleteMessage(msg.id, msg.outgoing);
+                setMenu(false);
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MenuItem({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        pressFeedback();
+        onClick();
+      }}
+      className="wa-press flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-black/5"
+      style={{ color: "var(--wa-text)" }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   return (
@@ -121,7 +358,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
             void requestNotificationPermission();
             onDone();
           }}
-          className="mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="wa-press mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
           style={{ background: "var(--wa-accent)" }}
         >
           Devam et
@@ -140,8 +377,18 @@ export function ChatApp() {
   const [newPeer, setNewPeer] = useState("");
   const [groupMode, setGroupMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [atBottom, setAtBottom] = useState(true);
+  const [recording, setRecording] = useState(false);
+  const [recSecs, setRecSecs] = useState(0);
+  const [soundOff, setSoundOff] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; timer: ReturnType<typeof setInterval> } | null>(null);
 
   const chat = useChat();
   const node = useNodeRuntime();
@@ -150,11 +397,26 @@ export function ChatApp() {
   useEffect(() => {
     setOnboarded(isOnboarded());
     void bootChat().then(() => setReady(true));
+    const unlock = () => unlockAudio();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    setSoundOff(isSoundMuted());
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
   }, []);
 
+  // Sohbet değişince yazma alanına odaklan, yanıt/emoji durumunu sıfırla.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, activeId]);
+    setReplyTo(null);
+    setEmojiOpen(false);
+    inputRef.current?.focus();
+  }, [activeId]);
+
+  useEffect(() => {
+    if (atBottom) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [messages.length, activeId, atBottom]);
 
   useEffect(() => {
     if (activeId) void markRead(activeId);
@@ -182,12 +444,64 @@ export function ChatApp() {
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   const nameOf = (id: string) => displayName(id, chat.aliases[id]);
+  const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
 
   /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
   const pendingCount = useMemo(
     () => Object.values(chat.messages).flat().filter((m) => m.outgoing && m.status === "pending").length,
     [chat.messages],
   );
+
+  function submitDraft() {
+    if (!active || !draft.trim()) return;
+    pressFeedback();
+    void sendText(active.id, draft, replyTo
+      ? {
+          id: replyTo.id,
+          text: replyTo.deleted ? "Silinen mesaj" : replyTo.text || replyTo.media?.name || "Ek",
+          author: replyTo.outgoing ? me : displayName(active.title),
+        }
+      : undefined);
+    setDraft("");
+    setReplyTo(null);
+    setEmojiOpen(false);
+    void sendTyping(active.id, false);
+    inputRef.current?.focus();
+  }
+
+  /** Sesli not — basılı tutmadan tek dokunuşla başlat/bitir. */
+  async function toggleRecording() {
+    if (!active) return;
+    pressFeedback();
+    if (recRef.current) {
+      recRef.current.rec.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (recRef.current) clearInterval(recRef.current.timer);
+        recRef.current = null;
+        setRecording(false);
+        setRecSecs(0);
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 800) return;
+        const file = new File([blob], `sesli-not-${Date.now()}.webm`, { type: blob.type });
+        void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
+      };
+      const timer = setInterval(() => setRecSecs((v) => v + 1), 1000);
+      recRef.current = { rec, chunks, timer };
+      rec.start();
+      setRecording(true);
+      vibrate(20);
+    } catch {
+      setError("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
+    }
+  }
 
   async function shareInvite() {
     const url = `${window.location.origin}/chat`;
@@ -239,7 +553,7 @@ export function ChatApp() {
 
           <Link
             to="/kurumsal"
-            className="rounded-full p-2 hover:bg-black/5"
+            className="wa-press rounded-full p-2 hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Hakkında"
             title="Hakkında"
@@ -248,8 +562,26 @@ export function ChatApp() {
           </Link>
           <button
             type="button"
-            onClick={() => setGroupMode((v) => !v)}
-            className="rounded-full p-2 hover:bg-black/5"
+            onClick={() => {
+              const next = !soundOff;
+              setSoundMuted(next);
+              setSoundOff(next);
+              if (!next) pressFeedback();
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label={soundOff ? "Sesleri aç" : "Sesleri kapat"}
+            title={soundOff ? "Sesleri aç" : "Sesleri kapat"}
+          >
+            {soundOff ? <VolumeX className="h-[18px] w-[18px]" /> : <Volume2 className="h-[18px] w-[18px]" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setGroupMode((v) => !v);
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Yeni sohbet veya grup"
           >
@@ -296,7 +628,7 @@ export function ChatApp() {
                         setGroupMode(false);
                       });
                     }}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                    className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
                     style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                   >
                     <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
@@ -376,7 +708,7 @@ export function ChatApp() {
                   tabIndex={0}
                   onClick={() => setActiveId(c.id)}
                   onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
-                  className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-black/[0.03]"
+                  className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
                   <Avatar name={name} />
@@ -414,7 +746,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => void shareInvite()}
-                className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
+                className="wa-press mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
                 style={{ background: "var(--wa-accent)" }}
               >
                 Davet linki paylaş
@@ -434,7 +766,7 @@ export function ChatApp() {
       </aside>
 
       {/* Sağ panel — aktif sohbet */}
-      <section className={`flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
+      <section className={`relative flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
         {!active ? (
           <div
             className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center"
@@ -469,14 +801,17 @@ export function ChatApp() {
                   {activeName}
                 </p>
                 <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  {active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
+                  {peerTyping ? "yazıyor…" : active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => peerId && void startCall(peerId, false, activeName)}
+                onClick={() => {
+                  pressFeedback();
+                  if (peerId) void startCall(peerId, false, activeName);
+                }}
                 disabled={active.group || !peerId}
-                className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
+                className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
               >
@@ -484,9 +819,12 @@ export function ChatApp() {
               </button>
               <button
                 type="button"
-                onClick={() => peerId && void startCall(peerId, true, activeName)}
+                onClick={() => {
+                  pressFeedback();
+                  if (peerId) void startCall(peerId, true, activeName);
+                }}
                 disabled={active.group || !peerId}
-                className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
+                className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
               >
@@ -495,7 +833,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => void togglePin(active.id)}
-                className="rounded-full p-2 hover:bg-black/5"
+                className="wa-press rounded-full p-2 hover:bg-black/5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sabitle"
               >
@@ -507,7 +845,7 @@ export function ChatApp() {
                   void removeConversation(active.id);
                   setActiveId(null);
                 }}
-                className="rounded-full p-2 hover:bg-black/5"
+                className="wa-press rounded-full p-2 hover:bg-black/5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sohbeti sil"
               >
@@ -515,46 +853,73 @@ export function ChatApp() {
               </button>
             </header>
 
-            <div className="wa-chat-bg flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12">
+            <div
+              ref={scrollRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+              }}
+              className="wa-chat-bg relative flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12"
+            >
               <div className="mx-auto mb-3 w-fit rounded-md bg-white/70 px-3 py-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
                 <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
               </div>
-              {messages.map((m) => (
-                <div key={m.id} className={`flex ${m.outgoing ? "justify-end" : "justify-start"}`}>
+              {messages.map((m, i) => {
+                const prev = messages[i - 1];
+                const newDay = !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
+                return (
+                  <div key={m.id} className="space-y-1.5">
+                    {newDay && (
+                      <div
+                        className="mx-auto w-fit rounded-md bg-white/80 px-3 py-1 text-[11px] font-medium"
+                        style={{ color: "var(--wa-muted)" }}
+                      >
+                        {dayLabel(m.ts)}
+                      </div>
+                    )}
+                    <MessageRow
+                      msg={m}
+                      authorName={nameOf(m.from)}
+                      showAuthor={Boolean(active.group)}
+                      progress={chat.transfers[m.id]}
+                      onReply={setReplyTo}
+                      onImage={setLightbox}
+                    />
+                  </div>
+                );
+              })}
+              {peerTyping && (
+                <div className="flex justify-start">
                   <div
-                    className="max-w-[78%] rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
-                    style={{
-                      background: m.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
-                      color: "var(--wa-text)",
-                    }}
+                    className="wa-bubble rounded-lg px-3 py-2 shadow-sm"
+                    style={{ background: "var(--wa-bubble-in)", color: "var(--wa-muted)" }}
                   >
-                    {m.kind === "media" && m.media ? (
-                      m.media.mime.startsWith("image/") ? (
-                        <img src={m.media.dataUrl} alt={m.media.name} className="max-h-64 rounded-md" />
-                      ) : m.media.mime.startsWith("audio/") ? (
-                        <audio controls src={m.media.dataUrl} className="w-56" />
-                      ) : (
-                        <a href={m.media.dataUrl} download={m.media.name} className="underline">
-                          {m.media.name} · {humanSize(m.media.size)}
-                        </a>
-                      )
-                    ) : (
-                      <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                    )}
-                    <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                      <span>{timeOf(m.ts)}</span>
-                      <StatusIcon msg={m} />
-                    </div>
-                    {chat.transfers[m.id] !== undefined && (
-                      <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                        Aktarılıyor · %{chat.transfers[m.id]}
-                      </p>
-                    )}
+                    <span className="wa-typing inline-flex items-center">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
                   </div>
                 </div>
-              ))}
+              )}
               <div ref={endRef} />
             </div>
+
+            {!atBottom && (
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setAtBottom(true);
+                  endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+                }}
+                className="wa-press absolute bottom-24 right-6 z-10 rounded-full bg-white p-2.5 shadow-lg"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="En alta git"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            )}
 
             {error && (
               <p className="px-5 pb-2 text-xs" style={{ color: "#c0392b" }}>
@@ -562,14 +927,63 @@ export function ChatApp() {
               </p>
             )}
 
+            {replyTo && (
+              <div
+                className="wa-pop flex items-start gap-2 px-3 pt-2"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                <div
+                  className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
+                  style={{ borderColor: "var(--wa-accent)", background: "var(--wa-panel)", color: "var(--wa-muted)" }}
+                >
+                  <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                    {replyTo.outgoing ? me : activeName}
+                  </span>
+                  <span className="line-clamp-1 break-words">
+                    {replyTo.text || replyTo.media?.name || "Ek"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyTo(null)}
+                  className="wa-press rounded-full p-2 hover:bg-black/5"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="Yanıtı iptal et"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {emojiOpen && (
+              <div
+                className="wa-pop grid max-h-44 grid-cols-8 gap-1 overflow-y-auto px-3 pt-2 sm:grid-cols-12"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                {EMOJIS.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => {
+                      vibrate(8);
+                      setDraft((d) => d + e);
+                      inputRef.current?.focus();
+                    }}
+                    className="wa-press rounded-md py-1 text-xl hover:bg-black/5"
+                    aria-label={`Emoji ${e}`}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!draft.trim()) return;
-                void sendText(active.id, draft);
-                setDraft("");
+                submitDraft();
               }}
-              className="flex items-center gap-2 p-2.5"
+              className="flex items-center gap-1.5 p-2.5"
               style={{ background: "var(--wa-panel-soft)", borderTop: "1px solid var(--wa-border)" }}
             >
               <input
@@ -586,30 +1000,83 @@ export function ChatApp() {
               />
               <button
                 type="button"
-                onClick={() => fileRef.current?.click()}
-                className="rounded-full p-2.5 hover:bg-black/5"
+                onClick={() => {
+                  pressFeedback();
+                  setEmojiOpen((v) => !v);
+                }}
+                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                style={{ color: emojiOpen ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                aria-label="Emoji ekle"
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  fileRef.current?.click();
+                }}
+                className="wa-press rounded-full p-2.5 hover:bg-black/5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Dosya ekle"
               >
                 <Paperclip className="h-5 w-5" />
               </button>
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Bir mesaj yazın"
-                className="flex-1 rounded-lg px-4 py-2.5 text-sm outline-none"
-                style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
-              />
-              <button
-                type="submit"
-                className="rounded-full p-2.5 text-white disabled:opacity-50"
-                style={{ background: "var(--wa-accent)" }}
-                disabled={!draft.trim()}
-                aria-label="Gönder"
-              >
-                <Send className="h-4 w-4" />
-              </button>
+              {recording ? (
+                <div
+                  className="flex flex-1 items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
+                  style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+                >
+                  <span className="wa-rec h-2.5 w-2.5 rounded-full" style={{ background: "#e03131" }} aria-hidden />
+                  <span>
+                    Ses kaydediliyor · {String(Math.floor(recSecs / 60)).padStart(2, "0")}:
+                    {String(recSecs % 60).padStart(2, "0")}
+                  </span>
+                </div>
+              ) : (
+                <input
+                  ref={inputRef}
+                  value={draft}
+                  onChange={(e) => {
+                    setDraft(e.target.value);
+                    if (active) void sendTyping(active.id, e.target.value.length > 0);
+                  }}
+                  placeholder="Bir mesaj yazın"
+                  className="flex-1 rounded-lg px-4 py-2.5 text-sm outline-none"
+                  style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+                />
+              )}
+              {draft.trim() ? (
+                <button
+                  type="submit"
+                  className="wa-press rounded-full p-2.5 text-white"
+                  style={{ background: "var(--wa-accent)" }}
+                  aria-label="Gönder"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void toggleRecording()}
+                  className={`wa-press rounded-full p-2.5 text-white ${recording ? "wa-ring" : ""}`}
+                  style={{ background: recording ? "#e03131" : "var(--wa-accent)" }}
+                  aria-label={recording ? "Kaydı bitir ve gönder" : "Sesli not kaydet"}
+                >
+                  {recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+              )}
             </form>
+
+            {lightbox && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6"
+                onClick={() => setLightbox(null)}
+                role="presentation"
+              >
+                <img src={lightbox} alt="Büyütülmüş görsel" className="max-h-full max-w-full rounded-md" />
+              </div>
+            )}
           </>
         )}
       </section>

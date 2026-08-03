@@ -20,6 +20,7 @@ import {
   toggleMute,
   useCall,
 } from "@/lib/call/engine";
+import { callEndSound, pressFeedback, startRingback, startRingtone, stopRing } from "@/lib/chat/sounds";
 
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
@@ -53,6 +54,17 @@ export function CallOverlay() {
     void el.setSinkId?.(speaker ? "default" : "communications").catch(() => undefined);
   }, [speaker, call.phase]);
 
+  /** Zil / çalıyor tonu — geleneksel telefon deneyimi. */
+  useEffect(() => {
+    if (call.phase === "ringing") startRingtone();
+    else if (call.phase === "outgoing") startRingback();
+    else {
+      stopRing();
+      if (call.phase === "ended") callEndSound();
+    }
+    return () => stopRing();
+  }, [call.phase]);
+
   if (call.phase === "idle") return null;
 
   const label =
@@ -67,7 +79,7 @@ export function CallOverlay() {
             : elapsed || "Görüşme sürüyor";
 
   const ctlBase =
-    "flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-accent";
+    "wa-press flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground hover:bg-accent";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur">
@@ -110,16 +122,22 @@ export function CallOverlay() {
           <>
             <button
               type="button"
-              onClick={() => void acceptCall()}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"
+              onClick={() => {
+                pressFeedback();
+                void acceptCall();
+              }}
+              className="wa-press wa-ring flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"
               aria-label="Aramayı kabul et"
             >
               <PhoneIncoming className="h-6 w-6" />
             </button>
             <button
               type="button"
-              onClick={() => endCall()}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              onClick={() => {
+                pressFeedback();
+                endCall();
+              }}
+              className="wa-press flex h-14 w-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
               aria-label="Aramayı reddet"
             >
               <PhoneOff className="h-6 w-6" />
@@ -129,7 +147,10 @@ export function CallOverlay() {
           <>
             <button
               type="button"
-              onClick={toggleMute}
+              onClick={() => {
+                pressFeedback();
+                toggleMute();
+              }}
               className={ctlBase}
               aria-label={call.muted ? "Mikrofonu aç" : "Mikrofonu kapat"}
             >
@@ -137,7 +158,10 @@ export function CallOverlay() {
             </button>
             <button
               type="button"
-              onClick={() => setSpeaker((v) => !v)}
+              onClick={() => {
+                pressFeedback();
+                setSpeaker((v) => !v);
+              }}
               className={ctlBase}
               aria-label={speaker ? "Hoparlörü kapat" : "Hoparlörü aç"}
             >
@@ -147,7 +171,10 @@ export function CallOverlay() {
               <>
                 <button
                   type="button"
-                  onClick={toggleCamera}
+                  onClick={() => {
+                    pressFeedback();
+                    toggleCamera();
+                  }}
                   className={ctlBase}
                   aria-label={call.cameraOff ? "Kamerayı aç" : "Kamerayı kapat"}
                 >
@@ -165,8 +192,11 @@ export function CallOverlay() {
             )}
             <button
               type="button"
-              onClick={() => endCall()}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              onClick={() => {
+                pressFeedback();
+                endCall();
+              }}
+              className="wa-press flex h-14 w-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
               aria-label="Görüşmeyi bitir"
             >
               <PhoneOff className="h-6 w-6" />
