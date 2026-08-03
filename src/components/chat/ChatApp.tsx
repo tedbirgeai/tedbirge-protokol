@@ -425,71 +425,14 @@ export function ChatApp() {
             </li>
           )}
 
-          {(unpairedPeers.length > 0 || unpairedConversations.length > 0) && (
-            <li
-              className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: "var(--wa-muted)" }}
-            >
-              Yakındaki eşleşmemiş cihazlar
-            </li>
-          )}
-          {unpairedPeers.map((p) => (
-            <li key={`np_${p.nodeId}`} style={{ borderBottom: "1px solid var(--wa-border)" }}>
-              <div className="flex items-center gap-3 px-4 py-3">
-                <Avatar name={nameOf(p.nodeId)} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
-                    {nameOf(p.nodeId)}
-                  </p>
-                  <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                    Eşleşme bekliyor · mesaj gönderilemez
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void beginPairing(p.nodeId, chat.aliases[p.nodeId])}
-                  className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
-                  style={{ background: "var(--wa-accent)" }}
-                >
-                  Eşleştir
-                </button>
-              </div>
-            </li>
-          ))}
-          {unpairedConversations
-            .filter((c) => !unpairedPeers.some((p) => c.members.includes(p.nodeId)))
-            .map((c) => (
-              <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <Avatar name={displayName(c.title)} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
-                      {displayName(c.title)}
-                    </p>
-                    <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                      Eşleşme bekliyor
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => c.members[0] && void beginPairing(c.members[0], c.title)}
-                    className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
-                    style={{ background: "var(--wa-accent)" }}
-                  >
-                    Eşleştir
-                  </button>
-                </div>
-              </li>
-            ))}
         </ul>
-
 
         <div
           className="flex items-center gap-2 px-4 py-2 text-[11px]"
           style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
         >
           <Lock className="h-3 w-3" aria-hidden />
-          <span>Uçtan uca şifreli · {tier.message}</span>
+          <span>{pendingCount > 0 ? `Çevrimdışı — ${pendingCount} mesaj bekliyor` : "Bağlı · uçtan uca şifreli"}</span>
         </div>
       </aside>
 
