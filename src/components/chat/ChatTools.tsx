@@ -21,6 +21,9 @@ import { TTL_OPTIONS, setTtl, ttlOf } from "@/lib/chat/ephemeral";
 import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
+import { NotificationHealth } from "@/components/chat/NotificationHealth";
+import { useChatSkin } from "@/lib/chat/skin";
+
 
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
 
