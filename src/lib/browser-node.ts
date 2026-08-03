@@ -990,7 +990,13 @@ export class BrowserNode {
    * Uçtan uca şifreli gönderim. Hedef başına ayrı zarf üretilir:
    * yalnızca alıcı gövdeyi açabilir. Eş yoksa niyet kuyruğa yazılır.
    */
-  async send(kind: EnvelopeKind, to: string | "*", payload: unknown, priority?: Priority) {
+  async send(
+    kind: EnvelopeKind,
+    to: string | "*",
+    payload: unknown,
+    priority?: Priority,
+    allowEnqueue = true,
+  ) {
     const prio = priority ?? defaultPriority(kind);
     if (!this.identity) this.identity = await ensureIdentity(this.nodeId);
 
@@ -1040,6 +1046,9 @@ export class BrowserNode {
         this.emit({});
         return true;
       }
+      // flushQueue mevcut bir niyeti yeniden denerken ikinci bir kuyruk kaydı
+      // üretmemelidir. Aksi halde her başarısız tur kuyruğu katlayarak büyütür.
+      if (!allowEnqueue) return false;
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
@@ -1111,6 +1120,8 @@ export class BrowserNode {
     try {
       const rows = await getPackets();
       if (!rows.length) return;
+      const durable: typeof rows = [];
+      const uniqueIntents = new Set<string>();
       for (const row of rows) {
         const item = row.env as QueuedItem;
         if (!item || typeof item !== "object") {
@@ -1124,6 +1135,24 @@ export class BrowserNode {
           await deletePacket(row.pktId);
           continue;
         }
+        if (item.t === "intent") {
+          const payloadId = (item.payload as { id?: unknown } | null)?.id;
+          if (typeof payloadId === "string") {
+            const key = `${item.kind}:${item.to}:${payloadId}`;
+            if (uniqueIntents.has(key)) {
+              await deletePacket(row.pktId);
+              continue;
+            }
+            uniqueIntents.add(key);
+          }
+        }
+        durable.push(row);
+      }
+
+      // Tek turda sınırlı sayıda kalıcı öğe gönderilir; büyük eski kuyruklar
+      // API'yi tekrar 429'a sürüklemeden kontrollü biçimde boşalır.
+      for (const row of durable.slice(0, 100)) {
+        const item = row.env as QueuedItem;
         if (item.t === "fwd") {
           if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
           continue;
@@ -1134,7 +1163,7 @@ export class BrowserNode {
           if (ok) await deletePacket(row.pktId);
           continue;
         }
-        const sent = await this.send(item.kind, item.to, item.payload, item.priority);
+        const sent = await this.send(item.kind, item.to, item.payload, item.priority, false);
         if (sent) {
           await deletePacket(row.pktId);
           const messageId = (item.payload as { id?: unknown } | null)?.id;
