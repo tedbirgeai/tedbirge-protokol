@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useChatSkin } from "@/lib/chat/skin";
 
 import {
   Archive,
@@ -32,9 +31,7 @@ import {
   Square,
   Star,
   Trash2,
-  Palette,
   Settings,
-
   Radio,
   Users,
   Video,
