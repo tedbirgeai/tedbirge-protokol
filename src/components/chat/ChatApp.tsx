@@ -914,6 +914,19 @@ export function ChatApp() {
     >
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
+      <ForwardDialog
+        message={forwardMsg}
+        conversations={chat.conversations as Conversation[]}
+        titleOf={titleOf}
+        authorName={forwardMsg?.outgoing ? me : nameOf(forwardMsg?.from ?? "")}
+        onClose={() => setForwardMsg(null)}
+      />
+      <EmergencyDialog
+        open={emergencyOpen}
+        convId={activeId}
+        onClose={() => setEmergencyOpen(false)}
+      />
+
       <ChatSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
