@@ -819,6 +819,16 @@ export function ChatApp() {
   function submitDraft() {
     if (!active || !draft.trim()) return;
     pressFeedback();
+    // Düzenleme modunda mesaj yerinde güncellenir, yeni mesaj oluşmaz.
+    if (editing) {
+      const target = editing;
+      const text = draft;
+      setDraft("");
+      setEditing(null);
+      void editMessage(target.id, text).catch((err: Error) => setError(err.message));
+      inputRef.current?.focus();
+      return;
+    }
     void sendText(
       active.id,
       draft,
@@ -849,6 +859,8 @@ export function ChatApp() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
       const chunks: Blob[] = [];
+      // Transkript kayıtla eş zamanlı, tamamen cihazda üretilir.
+      transcriptRef.current = startTranscript("tr-TR");
       rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -856,10 +868,19 @@ export function ChatApp() {
         recRef.current = null;
         setRecording(false);
         setRecSecs(0);
+        const session = transcriptRef.current;
+        transcriptRef.current = null;
         const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
-        if (blob.size < 800) return;
+        if (blob.size < 800) {
+          void session?.stop();
+          return;
+        }
         const file = new File([blob], `sesli-not-${Date.now()}.webm`, { type: blob.type });
-        void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
+        const finish = session ? session.stop() : Promise.resolve("");
+        void finish
+          .catch(() => "")
+          .then((text) => sendVoiceFile(active.id, file, text?.trim() || undefined))
+          .catch((err: Error) => setError(err.message));
       };
       const timer = setInterval(() => setRecSecs((v) => v + 1), 1000);
       recRef.current = { rec, chunks, timer };
@@ -870,6 +891,7 @@ export function ChatApp() {
       setError("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
     }
   }
+
 
   async function shareInvite() {
     const url = `${window.location.origin}/chat`;
