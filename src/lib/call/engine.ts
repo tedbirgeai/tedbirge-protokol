@@ -90,11 +90,15 @@ async function tuneSenders(pc: RTCPeerConnection) {
       const params = sender.getParameters();
       if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
       if (sender.track.kind === "video") {
+        // Ayrıntı korunur, ağ zayıflarsa önce kare hızı düşer.
+        sender.track.contentHint = "motion";
         params.degradationPreference = "balanced";
-        params.encodings[0].maxBitrate = 1_200_000;
+        params.encodings[0].maxBitrate = 2_500_000;
         params.encodings[0].maxFramerate = 30;
+        delete params.encodings[0].scaleResolutionDownBy;
       } else {
-        params.encodings[0].maxBitrate = 48_000;
+        sender.track.contentHint = "speech";
+        params.encodings[0].maxBitrate = 64_000;
       }
       await sender.setParameters(params);
     } catch {
@@ -102,6 +106,7 @@ async function tuneSenders(pc: RTCPeerConnection) {
     }
   }
 }
+
 
 
 const IDLE_QUALITY: CallQuality = {
@@ -178,11 +183,13 @@ export function getPeerStream(peerId: string) {
 async function ensureMedia(video: boolean) {
   if (localStream) return localStream;
   const videoConstraints: MediaTrackConstraints = {
-    width: { ideal: 1280, max: 1280 },
-    height: { ideal: 720, max: 720 },
+    width: { ideal: 1280, max: 1920 },
+    height: { ideal: 720, max: 1080 },
     frameRate: { ideal: 30, max: 30 },
+    aspectRatio: { ideal: 16 / 9 },
     facingMode: "user",
   };
+
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
@@ -389,8 +396,12 @@ async function dial(peerId: string, alias: string, video: boolean) {
     alias: getAlias(),
     at: Date.now(),
   });
+  // Karşı cihaz kapalı/arka planda olabilir: telefonu çaldırmak için
+  // uyandırma bildirimi yollanır (içerik gönderilmez).
+  void import("@/lib/chat/webpush").then((m) => m.wakePeer(peerId, "call")).catch(() => {});
   if (!sent) throw new Error("peer-unavailable");
 }
+
 
 export async function startCall(peerId: string, video: boolean, alias?: string) {
   bootCalls();

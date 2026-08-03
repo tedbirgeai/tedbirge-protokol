@@ -14,6 +14,9 @@ import {
   notificationsAllowed,
   notificationsBlocked,
 } from "@/lib/chat/push";
+import { disableWebPush, enableWebPush } from "@/lib/chat/webpush";
+import { getBrowserNodeId } from "@/lib/browser-node";
+
 import { TTL_OPTIONS, setTtl, ttlOf } from "@/lib/chat/ephemeral";
 import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
@@ -229,23 +232,43 @@ export function ChatSettingsDialog({
             <Bell className="h-4 w-4" aria-hidden /> Bildirimler
           </h3>
           <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Uygulama arka plandayken mesaj ve arama bildirimi alırsınız. Bildirim metni cihazınızda
-            üretilir.
+            Uygulama kapalıyken bile mesaj ve arama bildirimi alırsınız. Sunucu yalnızca
+            &quot;uyandırma&quot; sinyali yollar; mesaj içeriği ve rehberiniz cihazınızdan çıkmaz.
           </p>
-          <button
-            type="button"
-            disabled={notify || notificationsBlocked()}
-            onClick={() => void ensureNotificationPermission().then((ok) => setNotify(ok))}
-            className="wa-press mt-2 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
-            style={{ background: "var(--wa-accent)" }}
-          >
-            {notify
-              ? "Bildirimler açık"
-              : notificationsBlocked()
-                ? "Tarayıcı engelledi"
-                : "Bildirimlere izin ver"}
-          </button>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={notify || notificationsBlocked()}
+              onClick={() =>
+                void ensureNotificationPermission().then(async (ok) => {
+                  setNotify(ok);
+                  if (ok) await enableWebPush(getBrowserNodeId());
+                })
+              }
+              className="wa-press rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+              style={{ background: "var(--wa-accent)" }}
+            >
+              {notify
+                ? "Bildirimler açık"
+                : notificationsBlocked()
+                  ? "Tarayıcı engelledi"
+                  : "Bildirimlere izin ver"}
+            </button>
+            {notify && (
+              <button
+                type="button"
+                onClick={() =>
+                  void disableWebPush().then(() => setNotify(notificationsAllowed()))
+                }
+                className="wa-press rounded-full border px-4 py-2 text-[13px] font-semibold"
+                style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+              >
+                Bu cihazda kapat
+              </button>
+            )}
+          </div>
         </section>
+
 
         {/* Uygulamayı yükle */}
         <section className="mt-6">

@@ -1181,6 +1181,23 @@ export async function bootChat() {
   bootMeshBus();
   await bootPairing();
   publish({ aliases: loadAliases() });
+  // Web Push: izin verilmişse cihaz aboneliği tazelenir (uç adresi süresi dolabilir).
+  void import("@/lib/chat/webpush")
+    .then(async (m) => {
+      const { getBrowserNodeId } = await import("@/lib/browser-node");
+      await m.syncWebPush(getBrowserNodeId());
+    })
+    .catch(() => {});
+  // Bildirim geldiğinde bekleyen şifreli zarflar hemen çekilsin.
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      const type = (event.data as { type?: string } | null)?.type;
+      if (type === "tedbirge-push" || type === "tedbirge-push-open") {
+        window.dispatchEvent(new CustomEvent("tedbirge:relay-poll-now"));
+      }
+    });
+  }
+
   onMesh("chat", (from, body) => void onChat(from, body));
   onMesh("text", (from, body) => void onChat(from, body));
   onMesh("receipt", (from, body) => void onReceipt(from, body));

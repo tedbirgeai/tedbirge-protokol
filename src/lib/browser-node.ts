@@ -370,6 +370,8 @@ export class BrowserNode {
 
     window.addEventListener("online", this.handleOnline);
     window.addEventListener("offline", this.handleOffline);
+    // Bildirim (Web Push) geldiğinde bekleyen zarfları anında çek.
+    window.addEventListener("tedbirge:relay-poll-now", () => void this.pollRelay());
 
     this.startLocalDiscovery();
     this.startLanSignaling();
