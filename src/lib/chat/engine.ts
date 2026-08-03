@@ -29,6 +29,7 @@ import { collectChunk, fileToDataUrl, isMediaChunk, splitMedia, MAX_MEDIA_BYTES 
 import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/chat/merkle";
 import { getBrowserNodeId } from "@/lib/browser-node";
 import { bootPairing, isTrusted } from "@/lib/chat/pairing";
+import { receivedSound, sentSound, vibrate } from "@/lib/chat/sounds";
 
 export type ChatState = {
   conversations: Conversation[];
@@ -37,9 +38,11 @@ export type ChatState = {
   aliases: Record<string, string>;
   /** Devam eden medya aktarımı: mesaj kimliği → yüzde. */
   transfers: Record<string, number>;
+  /** Karşı taraf yazıyor: konuşma kimliği → son sinyal zamanı. */
+  typing: Record<string, number>;
 };
 
-let state: ChatState = { conversations: [], messages: {}, aliases: {}, transfers: {} };
+let state: ChatState = { conversations: [], messages: {}, aliases: {}, transfers: {}, typing: {} };
 const listeners = new Set<() => void>();
 let booted = false;
 
@@ -319,7 +322,11 @@ async function appendLocal(conv: Conversation, msg: ChatMessage) {
   await refreshMessages(conv.id);
 }
 
-export async function sendText(convId: string, text: string): Promise<void> {
+export async function sendText(
+  convId: string,
+  text: string,
+  replyTo?: { id: string; text: string; author: string },
+): Promise<void> {
   const conv = await getConversation(convId);
   if (!conv || !text.trim()) return;
   const me = getBrowserNodeId();
@@ -333,8 +340,10 @@ export async function sendText(convId: string, text: string): Promise<void> {
     ts: Date.now(),
     outgoing: true,
     status: "pending",
-    };
+    ...(replyTo ? { replyTo } : {}),
+  };
   await appendLocal(conv, msg);
+  sentSound();
 
   let delivered = false;
   for (const peer of await targetsOf(conv)) {
@@ -348,6 +357,7 @@ export async function sendText(convId: string, text: string): Promise<void> {
       text: msg.text,
       ts: msg.ts,
       alias: getAlias(),
+      replyTo,
     });
     delivered = delivered || ok;
   }
@@ -405,6 +415,71 @@ async function setStatus(id: string, status: MessageStatus) {
   await refreshMessages(msg.convId);
 }
 
+function clearTyping(convId: string) {
+  if (state.typing[convId] === undefined) return;
+  const { [convId]: _drop, ...rest } = state.typing;
+  publish({ typing: rest });
+}
+
+/** Karşı tarafa "yazıyor…" sinyali gönderir (kısıtlı sıklıkta). */
+let lastTypingSent = 0;
+export async function sendTyping(convId: string, active = true) {
+  const now = Date.now();
+  if (active && now - lastTypingSent < 2200) return;
+  lastTypingSent = active ? now : 0;
+  const conv = await getConversation(convId);
+  if (!conv) return;
+  for (const peer of await targetsOf(conv)) {
+    void sendMesh("chat", peer, {
+      t: active ? "typing" : "stop-typing",
+      convId,
+      group: conv.group,
+      alias: getAlias(),
+    });
+  }
+}
+
+/** Mesaja emoji tepkisi ekler/kaldırır. */
+export async function reactToMessage(messageId: string, emoji: string) {
+  const msg = await getMessage(messageId);
+  if (!msg) return;
+  const me = getBrowserNodeId();
+  const reactions = { ...(msg.reactions ?? {}) };
+  const next = reactions[me] === emoji ? "" : emoji;
+  if (next) reactions[me] = next;
+  else delete reactions[me];
+  await putMessage({ ...msg, reactions });
+  await refreshMessages(msg.convId);
+  const conv = await getConversation(msg.convId);
+  if (!conv) return;
+  for (const peer of await targetsOf(conv)) {
+    void sendMesh("chat", peer, { t: "react", id: messageId, emoji: next, convId: msg.convId, alias: getAlias() });
+  }
+}
+
+/** Mesajı herkes için siler (WhatsApp "herkesten sil" davranışı). */
+export async function deleteMessage(messageId: string, forEveryone = true) {
+  const msg = await getMessage(messageId);
+  if (!msg) return;
+  await putMessage({ ...msg, deleted: true, text: "", media: undefined });
+  await refreshMessages(msg.convId);
+  await refreshConversations();
+  if (!forEveryone) return;
+  const conv = await getConversation(msg.convId);
+  if (!conv) return;
+  for (const peer of await targetsOf(conv)) {
+    void sendMesh("chat", peer, { t: "delete", id: messageId, convId: msg.convId, alias: getAlias() });
+  }
+}
+
+/** Mesajı yıldızlar (yalnızca bu cihazda saklanır). */
+export async function toggleStar(messageId: string) {
+  const msg = await getMessage(messageId);
+  if (!msg) return;
+  await putMessage({ ...msg, starred: !msg.starred });
+  await refreshMessages(msg.convId);
+}
+
 /* ------------------------------ alım ------------------------------ */
 
 function rememberAlias(peerId: string, alias?: string) {
@@ -435,12 +510,47 @@ type ChatPayload = {
   ts?: number;
   alias?: string;
   title?: string;
+  replyTo?: { id: string; text: string; author: string };
+  emoji?: string;
 };
 
 async function onChat(from: string, raw: unknown) {
   const p = raw as ChatPayload;
   if (!p || typeof p !== "object") return;
   rememberAlias(from, p.alias);
+
+  if (p.t === "typing" || p.t === "stop-typing") {
+    const conv = p.group && p.convId ? await getConversation(p.convId) : await resolveDirectConversation(from, p.alias);
+    if (!conv) return;
+    if (p.t === "stop-typing") clearTyping(conv.id);
+    else {
+      publish({ typing: { ...state.typing, [conv.id]: Date.now() } });
+      setTimeout(() => {
+        if (Date.now() - (state.typing[conv.id] ?? 0) >= 4500) clearTyping(conv.id);
+      }, 5000);
+    }
+    return;
+  }
+
+  if (p.t === "react" && p.id && p.emoji !== undefined) {
+    const msg = await getMessage(p.id);
+    if (!msg) return;
+    const reactions = { ...(msg.reactions ?? {}) };
+    if (p.emoji) reactions[from] = p.emoji;
+    else delete reactions[from];
+    await putMessage({ ...msg, reactions });
+    await refreshMessages(msg.convId);
+    return;
+  }
+
+  if (p.t === "delete" && p.id) {
+    const msg = await getMessage(p.id);
+    if (!msg) return;
+    await putMessage({ ...msg, deleted: true, text: "", media: undefined });
+    await refreshMessages(msg.convId);
+    await refreshConversations();
+    return;
+  }
 
   if (p.t === "group-invite" && p.convId) {
     const exists = await getConversation(p.convId);
@@ -490,8 +600,12 @@ async function onChat(from: string, raw: unknown) {
     ts: p.ts ?? Date.now(),
     outgoing: false,
     status: "delivered",
+    ...(p.replyTo ? { replyTo: p.replyTo } : {}),
   };
   await appendLocal(conv, msg);
+  clearTyping(convId);
+  receivedSound();
+  vibrate(14);
   void sendMesh("receipt", from, { t: "receipt", id: msg.id, status: "delivered", convId });
   notify(conv.title, p.text);
 }
@@ -548,6 +662,7 @@ async function onMedia(from: string, raw: unknown) {
     media: { name: result.name, mime: result.mime, size: result.size, dataUrl: result.dataUrl },
   });
   void sendMesh("receipt", from, { t: "receipt", id: result.mid, status: "delivered", convId });
+  receivedSound();
   notify(conv.title, `📎 ${result.name}`);
 }
 
