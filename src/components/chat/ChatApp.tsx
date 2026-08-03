@@ -478,7 +478,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => peerId && void startCall(peerId, false, activeName)}
-                disabled={active.group || !peerId || !activeTrusted}
+                disabled={active.group || !peerId}
                 className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
@@ -488,7 +488,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => peerId && void startCall(peerId, true, activeName)}
-                disabled={active.group || !peerId || !activeTrusted}
+                disabled={active.group || !peerId}
                 className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
@@ -565,24 +565,6 @@ export function ChatApp() {
               </p>
             )}
 
-            {!activeTrusted ? (
-              <div
-                className="flex flex-wrap items-center justify-between gap-3 p-4"
-                style={{ background: "var(--wa-panel-soft)", borderTop: "1px solid var(--wa-border)" }}
-              >
-                <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
-                  Bu cihaz henüz eşleşmedi. Mesaj ve arama kanalı, PIN veya karekod doğrulanana kadar kapalıdır.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => peerId && void beginPairing(peerId, active.title)}
-                  className="rounded-full px-4 py-2 text-[12px] font-semibold text-white"
-                  style={{ background: "var(--wa-accent)" }}
-                >
-                  Cihazı Eşleştir
-                </button>
-              </div>
-            ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -631,7 +613,6 @@ export function ChatApp() {
                 <Send className="h-4 w-4" />
               </button>
             </form>
-            )}
           </>
         )}
       </section>
