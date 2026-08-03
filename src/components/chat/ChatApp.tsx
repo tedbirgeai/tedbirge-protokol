@@ -46,7 +46,7 @@ import {
   useChat,
   useConversationMessages,
 } from "@/lib/chat/engine";
-import { startCall } from "@/lib/call/engine";
+import { bootCalls, startCall } from "@/lib/call/engine";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
@@ -482,6 +482,8 @@ export function ChatApp() {
   useEffect(() => {
     setOnboarded(isOnboarded());
     void bootChat().then(() => setReady(true));
+    // Gelen aramaların duyulabilmesi için sinyal dinleyicisi açılışta kurulur.
+    bootCalls();
     const unlock = () => unlockAudio();
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
