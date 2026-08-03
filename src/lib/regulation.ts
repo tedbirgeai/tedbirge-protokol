@@ -522,28 +522,35 @@ Tebligata esas e-posta / KEP: ...............................
 Telefon: ...............................
 
 2. ÜRÜNÜN TANIMI
-"Tedbirge Protokol", tek statik çalıştırılabilir dosya (binary) olarak dağıtılan salt yazılım nitelikli bir haberleşme tünelleme ve yönlendirme katmanıdır. Ürün kapsamında:
+"Tedbirge Protokol", tek statik çalıştırılabilir dosya (binary) ve buna eşdeğer, kurulum gerektirmeyen tarayıcı uygulaması (PWA) biçiminde dağıtılan salt yazılım nitelikli bir haberleşme tünelleme ve yönlendirme katmanıdır. Ürün kapsamında:
 a) Hiçbir radyo vericisi, alıcı, anten veya RF güç katı üretilmemekte, ithal edilmemekte ve satılmamaktadır; ürün 5809 sayılı Kanun'un 3'üncü maddesi anlamında "telsiz cihazı" niteliği taşımamaktadır.
 b) Yazılım, kullanıcının hâlihazırda sahip olduğu ve ilgili mevzuata göre tip onaylı/uygunluk değerlendirmesi yapılmış donanımın (Ethernet, Wi-Fi 2,4/5/6 GHz, 60 GHz, sub-GHz SRD modülleri, hücresel modem, uydu terminali, optik/FSO bağlantı) üzerinde çalışır. Donanıma ilişkin tip onayı ve piyasaya arz sorumluluğu ilgili cihaz üreticisi/ithalatçısına aittir.
 c) Hücresel ve uydu taşıyıcılar, kullanıcının yetkilendirilmiş işletmeciyle mevcut abonelik ilişkisi üzerinden kullanılır; başvuru sahibi elektronik haberleşme hizmeti sunmamakta, şebeke/altyapı işletmemekte ve abonelik ilişkisi kurmamaktadır. Bu nedenle 5809 sayılı Kanun'un 8'inci maddesi kapsamında işletmeci sıfatı bulunmadığı değerlendirilmektedir.
+d) Ürünün tarayıcı bileşeni, cihazlar arasında doğrudan uçtan uca bağlantı (WebRTC eşler arası veri kanalı) kurar. Başvuru sahibinin sunucuları yalnızca bağlantı kurulum sinyalleşmesi ve karşı taraf çevrimdışıyken şifreli paketin geçici olarak kuyruklanması (store-and-forward) işlevini görür; içerik açılamaz, saklanan şifreli kayıt süre sonunda otomatik silinir.
 
 3. SPEKTRUM KULLANIMI VE YAZILIMSAL SINIRLAMALAR
 Ürünün Türkiye (TR) bölge profili, Kısa Mesafe Erişimli Telsiz Cihazları (KET) Yönetmeliği ve Millî Frekans Planı hükümleri esas alınarak yapılandırılmıştır:
 - Sub-GHz SRD: 863–870 MHz, azami 25 mW e.r.p., azami %1 görev döngüsü — yazılımsal olarak zorlanmakta, bütçe dolduğunda paketler kuyruğa alınmaktadır.
 - Wi-Fi HaLow (902–928 MHz) ve TVWS (470–790 MHz) taşıyıcıları TR profilinde varsayılan ve zorunlu olarak KAPALI gelmekte, kullanıcı tarafından açılamamaktadır.
 - Yapılandırılabilir radyonun mevzuata aykırı parametrelere zorlanmasını engelleyen bölge kilidi mekanizması, Telsiz Ekipmanları Yönetmeliği'nin (2014/53/AB) yazılım-radyo uyumluluğuna ilişkin ilkeleriyle uyumlu olarak uygulanmaktadır.
+- Bölge profili ve parametre tablosu, ürünün kaynak kodunda tek ve denetlenebilir bir dosyada (regülasyon tablosu) tutulmakta; arayüzdeki tüm taşıyıcı seçenekleri bu tablodan türetilmektedir.
 
 4. VERİ VE İÇERİK BOYUTU
-Taşınan yük uçtan uca AES-256-GCM ile şifrelenir; anahtarlar kullanıcı cihazında üretilir ve cihazdan çıkmaz. Başvuru sahibi içerik verisine teknik olarak erişememektedir. Varsayılan yapılandırma kapalı devre olup genel internet erişimi dağıtmamaktadır. Kullanıcının genel internete çıkış (exit node) özelliğini etkinleştirmesi hâlinde, 5651 sayılı Kanun kapsamındaki erişim/yer sağlayıcı yükümlülüklerinin kullanıcıya ait olduğu, kullanıcı sözleşmesinin ilgili ekinde açıkça düzenlenmiştir.
+Taşınan yük uçtan uca AES-256-GCM ile şifrelenir; anahtarlar (Ed25519 imza / X25519 anahtar uzlaşımı) kullanıcı cihazında üretilir ve cihazdan çıkmaz. Başvuru sahibi içerik verisine teknik olarak erişememektedir. Sunucu tarafında yalnızca teknik telemetri (gecikme, paket kaybı, verim, zaman damgası), düğüm kimliği ve şifreli kuyruk kaydı tutulur. Bildirim altyapısı (Web Push/VAPID) yalnızca "uyandırma" sinyali taşır; mesaj içeriği, gönderen adı veya konum bildirime konulmaz, içerik cihazda çözülerek gösterilir. Varsayılan yapılandırma kapalı devre olup genel internet erişimi dağıtmamaktadır. Kullanıcının genel internete çıkış (exit node) özelliğini etkinleştirmesi hâlinde, 5651 sayılı Kanun kapsamındaki erişim/yer sağlayıcı yükümlülüklerinin kullanıcıya ait olduğu, kullanıcı sözleşmesinin ilgili ekinde açıkça düzenlenmiştir.
 
-5. TALEP
+5. DENETLENEBİLİRLİK
+Ürün, sıfır-bilgi iddiasının bağımsız olarak sınanmasına imkân veren bir öz denetim modülü içerir: sunucuya giden her alanın listesi, şifreli yükün açılamadığının kanıtı ve olay kayıtlarının SHA-256 zinciriyle bütünlük doğrulaması dışa aktarılabilir. Kurumunuzca talep edilmesi hâlinde bu çıktı ve doğrulama talimatı sunulacaktır.
+
+6. TALEP
 Yukarıda nitelikleri açıklanan ürünün;
 a) 5809 sayılı Elektronik Haberleşme Kanunu kapsamında yetkilendirme (bildirim/kullanım hakkı) gerektirip gerektirmediği,
 b) Telsiz kurma ve kullanma izni ile tip onayı yükümlülükleri bakımından, verici içermeyen salt yazılım niteliği nedeniyle muafiyet kapsamında değerlendirilip değerlendirilmeyeceği,
-c) Varsa yerine getirilmesi gereken ilave bildirim, belge veya teknik dosya yükümlülükleri,
+c) Tarayıcı üzerinden çalışan, eşler arası şifreli veri kanalı kuran bileşenin bu değerlendirmeyi değiştirip değiştirmediği,
+d) Varsa yerine getirilmesi gereken ilave bildirim, belge veya teknik dosya yükümlülükleri,
 hususlarında Kurumunuzun yazılı görüşünün tarafımıza bildirilmesini saygılarımla arz ederim.
 
-Kurumunuzca talep edilmesi hâlinde ürün teknik özeti, bölge profili (TR) spektrum parametre tablosu ve ilgili sözleşme ek metinleri ayrıca sunulacaktır.
+Kurumunuzca talep edilmesi hâlinde ürün teknik özeti, bölge profili (TR) spektrum parametre tablosu, sıfır-bilgi denetim çıktısı ve ilgili sözleşme ek metinleri ayrıca sunulacaktır.
+
 
 
 
