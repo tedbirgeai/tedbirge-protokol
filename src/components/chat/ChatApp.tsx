@@ -1577,7 +1577,41 @@ export function ChatApp() {
               </p>
             )}
 
+            {editing && (
+              <div
+                className="wa-pop flex items-center gap-2 px-3 pt-2"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                <div
+                  className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
+                  style={{
+                    borderColor: "var(--wa-accent)",
+                    background: "var(--wa-panel)",
+                    color: "var(--wa-muted)",
+                  }}
+                >
+                  <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                    Mesajı düzenle · {remainingWindow(editing, EDIT_WINDOW_MS)}
+                  </span>
+                  <span className="line-clamp-1 break-words">{editing.text}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(null);
+                    setDraft("");
+                  }}
+                  className="wa-press rounded-full p-2 hover:bg-black/5"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="Düzenlemeyi iptal et"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
             {replyTo && (
+
               <div
                 className="wa-pop flex items-start gap-2 px-3 pt-2"
                 style={{ background: "var(--wa-panel-soft)" }}
