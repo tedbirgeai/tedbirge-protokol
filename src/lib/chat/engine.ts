@@ -311,9 +311,12 @@ export async function markRead(convId: string) {
   if (conv.unread) await putConversation({ ...conv, unread: 0 });
   const rows = await listMessages(convId);
   const targets = rows.filter((m) => !m.outgoing && m.status !== "read");
+  // Okundu bilgisi gizliyse makbuz gönderilmez (karşılıklılık: kendi
+  // gönderdiklerimizde de mavi tik gösterilmez).
+  const silent = getPrivacy().hideReadReceipts;
   for (const m of targets) {
     await putMessage({ ...m, status: "read" });
-    void sendMesh("receipt", m.from, { t: "receipt", id: m.id, status: "read", convId });
+    if (!silent) void sendMesh("receipt", m.from, { t: "receipt", id: m.id, status: "read", convId });
   }
   await refreshConversations();
   await refreshMessages(convId);
