@@ -150,6 +150,38 @@ export async function cleanDuplicateConversations(): Promise<number> {
   return initial - before;
 }
 
+/** Sert temizlik sürüm anahtarı — artırılınca tüm cihazlarda bir kez daha koşar. */
+const PURGE_KEY = "tedbirge.chat.purge.v1";
+
+/**
+ * Sert IndexedDB temizliği (tek seferlik migration).
+ * Eski sürümlerden kalan; hiç mesajı olmayan, sabitlenmemiş ve hiçbir üyesi
+ * eşleştirilmemiş "hayalet" konuşmaları siler. Geçerli, doğrulanmış ya da
+ * içinde mesaj bulunan sohbetlere dokunulmaz.
+ */
+export async function purgeStaleConversations(force = false): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  if (!force && window.localStorage.getItem(PURGE_KEY)) return 0;
+  let removed = 0;
+  for (const c of await listConversations()) {
+    if (c.pinned) continue;
+    if (c.members.some((m) => isTrusted(m))) continue;
+    const msgs = await listMessages(c.id);
+    if (msgs.length > 0) continue;
+    await idbDeleteConversation(c.id);
+    removed += 1;
+  }
+  try {
+    window.localStorage.setItem(PURGE_KEY, String(Date.now()));
+  } catch {
+    /* private mode */
+  }
+  if (removed) publish({ conversations: await listConversations() });
+  return removed;
+}
+
+
+
 async function refreshConversations() {
   const rows = await mergeDuplicates(await listConversations());
   publish({ conversations: rows });
