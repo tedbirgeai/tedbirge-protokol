@@ -27,6 +27,7 @@ import { PanelNetworkMap } from "@/components/site/PanelNetworkMap";
 import { PanelAi } from "@/components/site/PanelAi";
 import { PanelCommerce } from "@/components/site/PanelCommerce";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
+import { PanelEnergy } from "@/components/site/PanelEnergy";
 
 
 export const Route = createFileRoute("/_authenticated/panel")({
@@ -95,6 +96,7 @@ type TabId =
   | "canli"
   | "mesh"
   | "tanilama"
+  | "enerji"
   | "kalibrasyon"
   | "guvenlik"
   | "yonetim"
@@ -108,6 +110,7 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "canli", label: "Canlı akış" },
   { id: "mesh", label: "Mesh & kurulum", needs: "operate" },
   { id: "tanilama", label: "Tanılama" },
+  { id: "enerji", label: "Enerji & saha" },
   { id: "kalibrasyon", label: "Kalibrasyon" },
   { id: "guvenlik", label: "Güvenlik" },
   { id: "yonetim", label: "Yönetim", needs: "manage" },
@@ -668,6 +671,13 @@ function Panel() {
               <RelayChainWizard licenses={keyedLicenses} devices={devices} onProvisioned={reloadDevices} />
               <FailoverSettings devices={devices} onUpdated={reloadDevices} />
             </>
+          )}
+
+          {tab === "enerji" && (
+            <section className="space-y-4">
+              <SectionLabel>Saha enerji ve donanım katmanı</SectionLabel>
+              <PanelEnergy licenseKey={licenses[0]?.license_key} />
+            </section>
           )}
 
           {tab === "tanilama" && (
