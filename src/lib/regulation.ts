@@ -595,8 +595,8 @@ Kurulacak bağlantı: sabit/mobil, nokta-nokta ve mesh; kalıcı yapı, direk, k
 - Test alanı görevli personel tarafından denetlenecek, acil durum irtibat numarası bulundurulacaktır.
 - Test sırasında genel internete çıkış (exit node) etkinleştirilmeyecek, ağ izole çalışacaktır; bu nedenle 5651 sayılı Kanun kapsamında toplu kullanım sağlayıcılığı doğmayacaktır.
 
-6. VERİ İŞLEME
-Test kapsamında yalnızca teknik telemetri (düğüm kimliği, sinyal seviyesi, gecikme, paket kaybı, zaman damgası) kaydedilecek olup, katılımcılara ait kişisel veri veya haberleşme içeriği işlenmeyecektir. 6698 sayılı KVKK kapsamında aydınlatma metni katılımcılara sunulacaktır.
+6. VERİ İŞLEME VE ÖLÇÜM YÖNTEMİ
+Test kapsamında yalnızca teknik telemetri (düğüm kimliği, sinyal seviyesi, gecikme, paket kaybı, verim, zaman damgası, konum doğruluğu) kaydedilecek olup, katılımcılara ait kişisel veri veya haberleşme içeriği işlenmeyecektir. Ölçümler, katılımcıların kendi cihazlarındaki tarayıcı üzerinden çalışan düğüm yazılımıyla otomatik toplanır ve imzalı, SHA-256 zinciriyle bütünlüğü doğrulanabilir bir saha raporuna dönüştürülür. Rapor talep hâlinde Valiliğinize sunulacaktır. 6698 sayılı KVKK kapsamında aydınlatma metni katılımcılara sunulacak; katılımcı cihazlarındaki haberleşme içeriği uçtan uca şifreli olduğundan test yürütücüsü tarafından da okunamayacaktır.
 
 7. TALEP
 Yukarıda ayrıntıları verilen saha testi faaliyeti hakkında Valiliğinizin bilgilendirilmesini, uygun görülmesi hâlinde ilgili birimlerin haberdar edilmesini ve varsa yerine getirmemiz gereken ilave tedbir/izin hususlarının tarafımıza bildirilmesini saygılarımla arz ederim.
@@ -605,4 +605,122 @@ Mehmet DİNÇ
 Tedbirge Protokol
 İmza: ...............................`,
   },
+  {
+    id: "kvkk-sifat-beyani",
+    label: "KVKK",
+    title: "KVKK Sıfat Beyanı ve VERBİS Değerlendirme Başvurusu (Taslak)",
+    summary:
+      "Uçtan uca şifreli taşıma mimarisinde veri sorumlusu/veri işleyen sıfatının tespiti ve VERBİS kayıt yükümlülüğü hakkında Kuruma yazılı görüş başvurusu.",
+    body: `KİŞİSEL VERİLERİ KORUMA KURUMU BAŞKANLIĞI'NA
+(Veri Yönetimi Dairesi Başkanlığı)
+Nasuh Akar Mah. Ziyabey Cad. 1407. Sok. No: 4 Balgat — Çankaya / ANKARA
+
+Konu: Uçtan uca şifreli haberleşme taşıma katmanında veri sorumlusu / veri işleyen sıfatının tespiti ve VERBİS kayıt yükümlülüğü hakkında görüş talebi.
+
+Tarih: ..../..../20....
+
+1. BAŞVURU SAHİBİ
+Unvan: Mehmet DİNÇ (Tedbirge Protokol) — şahıs işletmesi
+VKN-TCKN: ............................... · Adres: ...............................
+Tebligata esas e-posta / KEP: ...............................
+
+2. FAALİYETİN NİTELİĞİ
+Tedbirge Protokol, kurumların ve son kullanıcıların kendi cihazları arasında doğrudan, uçtan uca şifreli bağlantı kuran bir yazılım katmanıdır. Mimarinin belirleyici özellikleri şunlardır:
+a) Şifreleme anahtarları kullanıcı cihazında üretilir ve cihazdan hiçbir koşulda çıkmaz; başvuru sahibi haberleşme içeriğini teknik olarak çözemez.
+b) Mesajlar, sesli/görüntülü görüşmeler ve dosyalar cihazdan cihaza aktarılır; karşı taraf çevrimdışıyken yalnızca şifreli paket, sınırlı süreyle ve içeriği açılamaz biçimde kuyruklanır.
+c) Rehber, konum ve mesaj geçmişi sunucuya kopyalanmaz; cihazın yerel deposunda tutulur.
+d) Bildirim altyapısı yalnızca içeriksiz "uyandırma" sinyali taşır.
+e) Sunucu tarafında tutulan kayıtlar teknik telemetri, düğüm kimliği ve abonelik/lisans kayıtlarıyla sınırlıdır.
+
+3. HUKUKİ DEĞERLENDİRME
+Başvuru sahibi, haberleşme içeriği bakımından işleme amaç ve vasıtalarını belirleme imkânına sahip olmadığından 6698 sayılı Kanun'un 3'üncü maddesi anlamında bu veriler yönünden veri sorumlusu olmadığı; kurumsal müşteriler bakımından ise yalnızca sınırlı teknik veriler üzerinden veri işleyen sıfatını taşıdığı değerlendirilmektedir. Müşteri sözleşmelerine, Kanun'un 12'nci maddesi uyarınca veri işleyen yükümlülüklerini düzenleyen bir ek (DPA) konulmaktadır.
+
+4. TALEP
+a) Yukarıda tarif edilen mimaride başvuru sahibinin hangi veri kategorileri bakımından veri sorumlusu, hangileri bakımından veri işleyen sayılacağı,
+b) Sicile kayıt (VERBİS) yükümlülüğünün doğup doğmadığı, doğuyorsa kapsamı,
+c) Yurt dışında konumlanan bulut/altyapı hizmet sağlayıcılarının kullanılması hâlinde yurt dışına aktarım hükümleri bakımından, içeriğin sağlayıcı tarafından açılamıyor olmasının değerlendirmeye etkisi,
+hususlarında Kurumunuzun yazılı görüşünün tarafımıza bildirilmesini saygılarımla arz ederim.
+
+Mehmet DİNÇ
+Tedbirge Protokol
+İmza: ...............................`,
+  },
+  {
+    id: "bulut-birlikte-calisabilirlik",
+    label: "Bulut / Kurum BT",
+    title: "Bulut ve Kurumsal BT Birlikte Çalışabilirlik Beyanı (Taslak)",
+    summary:
+      "Cloudflare, AWS, Azure, GCP gibi sağlayıcıların ve kurumsal BT birimlerinin güvenlik incelemesine sunulacak; düğümün mevcut mimariye nasıl yan katman olarak eklendiğini ve geri dönüş prosedürünü açıklayan teknik-hukuki beyan.",
+    body: `BİRLİKTE ÇALIŞABİLİRLİK VE GÜVENLİK BEYANI
+(Bulut hizmet sağlayıcısı / kurumsal BT güvenlik incelemesi için)
+
+Tarih: ..../..../20....
+Beyanda bulunan: Mehmet DİNÇ (Tedbirge Protokol)
+Muhatap kurum / sağlayıcı: ...............................
+
+1. KONUMLANDIRMA
+Tedbirge Gateway, adından da anlaşılacağı üzere bir "düğüm"dür: mevcut bulut mimarisinin yerine geçmez, önüne yan katman (sidecar overlay) olarak konur. Kurumun uygulama kodu, kimlik altyapısı ve veri modeli değişmez. Amaç, bağlantı koptuğunda sahanın çalışmaya devam etmesi ve bağlantı geri geldiğinde kayıtların otomatik mahsuplaşmasıdır.
+
+2. ENTEGRASYON YÜZEYİ
+a) Ağ: düğüm, kurumun kendi ağında veya sahadaki cihazda çalışır; buluta giden trafik ters vekil / uç nokta yönlendirmesiyle önce düğümden geçer.
+b) Kimlik: kurumun mevcut kimlik sağlayıcısı (OIDC/SAML SSO) ile düğüm kimliği eşleştirilir; ayrı kullanıcı veritabanı oluşturulmaz.
+c) İstemci: kurulum gerektirmeyen tarayıcı uygulaması (PWA) ile telefon, tablet ve bilgisayar aynı düğüm ağına katılır; mağaza onayı veya cihaz yönetimi zorunluluğu yoktur.
+d) Uç çalıştırma: sinyalleşme ve kuyruk uç noktaları, sağlayıcının uç çalıştırma (edge worker) ortamında da çalışacak biçimde standart HTTP/WebSocket arayüzleriyle yazılmıştır; sağlayıcıya özgü kapalı bileşen kullanılmaz.
+e) Dışa açık uç noktalar imzalı doğrulama, hız sınırlama ve şema doğrulaması ile korunur; makine-makine entegrasyonu için açık API tanımı (OpenAPI) yayımlanmıştır.
+
+3. GÜVENLİK VE VERİ EGEMENLİĞİ
+- Taşınan içerik uçtan uca şifrelidir; ne sağlayıcı ne de Tedbirge içeriği açabilir.
+- Anahtarlar kullanıcı cihazında üretilir; kurum isterse tüm kuyruk ve sinyalleşme bileşenlerini kendi tenant'ında çalıştırabilir.
+- Her olay imzalı ve zincirlenmiş (SHA-256) kayda dönüşür; denetim çıktısı bağımsız doğrulanabilir.
+- Sıfır-bilgi iddiası, ürün içindeki öz denetim modülüyle sağlayıcı tarafından da sınanabilir.
+
+4. GERİ DÖNÜŞ (EXIT) GARANTİSİ
+Düğüm katmanı kaldırıldığında kurumun mimarisi ilk günkü hâline döner: yönlendirme kaydı geri alınır, veri modeli değişmediği için taşıma gerekmez, cihazlardaki yerel kayıtlar standart biçimde dışa aktarılır. Sağlayıcı bağımlılığı (vendor lock-in) oluşmaz.
+
+5. SORUMLULUK SINIRI
+Tedbirge, kurumun bulut sözleşmesinin tarafı değildir ve sağlayıcı hizmet seviyesi taahhütlerini devralmaz. Düğüm katmanına ilişkin hizmet seviyesi, ayrı bir ek ile düzenlenir.
+
+Mehmet DİNÇ
+Tedbirge Protokol
+İmza: ...............................`,
+  },
+  {
+    id: "afad-kamu-protokol",
+    label: "AFAD / Kamu",
+    title: "AFAD ve Kamu Kurumları İşbirliği Protokolü Talebi (Taslak)",
+    summary:
+      "Afet ve acil durumlarda kamu kurumlarının mevcut sistemleriyle birlikte çalışacak yedek haberleşme katmanı için işbirliği/pilot protokolü talep yazısı.",
+    body: `T.C. .................. VALİLİĞİ / İL AFET VE ACİL DURUM MÜDÜRLÜĞÜ'NE
+(veya ilgili kamu kurumu Bilgi İşlem / Haberleşme Birimi)
+
+Konu: Afet ve acil durumlarda mevcut haberleşme sistemlerini tamamlayıcı, yedek yazılım katmanı hakkında işbirliği ve pilot protokolü talebi.
+
+Tarih: ..../..../20....
+
+1. TALEPTE BULUNAN
+Unvan: Mehmet DİNÇ (Tedbirge Protokol) · Adres: ............................... · E-posta: ...............................
+
+2. GEREKÇE
+Afet anında ilk kaybedilen hizmet, veri bağlantısıdır. Mevcut telsiz ve uydu sistemleri kritik ekipler için çalışsa da, saha personelinin elindeki telefon ve tabletler bağlantısız kalmakta; durum raporu, fotoğraf, hasar tespiti ve konum bilgisi merkeze ulaşamamaktadır.
+
+3. ÖNERİLEN KATMAN
+a) Kurumun mevcut sistemlerinin yerine geçmez; onların çalışmadığı anda devreye giren tamamlayıcı bir yazılım katmanıdır.
+b) Personelin kendi cihazına kurulum yapmasına gerek yoktur; tarayıcıdan açılan bağlantı ile cihaz düğüme dönüşür.
+c) Cihazlar birbirine doğrudan bağlanır; internet olmadan mesaj, sesli mesaj, konum ve dosya paylaşımı sürer, bağlantı geri geldiğinde kayıtlar otomatik merkeze aktarılır.
+d) Tüm trafik uçtan uca şifrelidir; kayıtlar imzalı ve bütünlüğü doğrulanabilir biçimde tutulur, denetim raporu otomatik üretilir.
+e) Lisanssız bantlar kullanılır; kurumun tahsisli spektrumuna müdahale edilmez, ek telsiz izni gerekmez.
+
+4. TALEP
+a) Kurumunuz koordinasyonunda, önceden belirlenecek bir ilçe/mahalle ölçeğinde, personel güvenliğini etkilemeyen bir tatbikat kapsamında pilot uygulama yapılması,
+b) Pilot kapsamında veri sahipliği, gizlilik ve sorumluluk sınırlarını düzenleyen bir işbirliği protokolü imzalanması,
+c) Kurumunuzun mevcut olay yönetim sistemleriyle veri alışverişi için teknik irtibat kişisinin bildirilmesi,
+hususlarını saygılarımla arz ederim.
+
+Pilot faaliyeti ticari hizmet sunumu içermez; ölçüm sonuçları ve sınırlılıklar kurumunuza yazılı rapor olarak sunulur.
+
+Mehmet DİNÇ
+Tedbirge Protokol
+İmza: ...............................`,
+  },
 ];
+
