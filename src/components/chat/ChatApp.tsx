@@ -175,15 +175,8 @@ export function ChatApp() {
     return [...rows].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs);
   }, [chat.conversations, query]);
 
-  /** Doğrulanmış: grup ya da en az bir eşleşmiş üye içeren sohbetler. */
-  const conversations = useMemo(
-    () => allConversations.filter((c) => c.group || c.members.some((m) => pairing.trusted[m])),
-    [allConversations, pairing.trusted],
-  );
-  const unpairedConversations = useMemo(
-    () => allConversations.filter((c) => !c.group && !c.members.some((m) => pairing.trusted[m])),
-    [allConversations, pairing.trusted],
-  );
+  // WhatsApp modeli: tek liste. Eşleşme (PIN/QR) yalnızca cihaz bağlamada.
+  const conversations = allConversations;
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
@@ -191,11 +184,24 @@ export function ChatApp() {
   const activeName = active ? displayName(active.title) : "";
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
-  const activeTrusted = Boolean(active?.group || active?.members.some((m) => pairing.trusted[m]));
-
-  /** Yakında görünen ama henüz eşleşmemiş cihazlar. */
-  const unpairedPeers = peers.filter((p) => !pairing.trusted[p.nodeId]);
   const nameOf = (id: string) => displayName(id, chat.aliases[id]);
+
+  /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
+  const pendingCount = useMemo(
+    () => Object.values(chat.messages).flat().filter((m) => m.outgoing && m.status === "pending").length,
+    [chat.messages],
+  );
+
+  async function shareInvite() {
+    const url = `${window.location.origin}/chat`;
+    const text = `Tedbirge ile bana yazın: ${url}`;
+    try {
+      if (navigator.share) await navigator.share({ title: "Tedbirge", text, url });
+      else await navigator.clipboard.writeText(url);
+    } catch {
+      /* kullanıcı iptal etti */
+    }
+  }
 
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
@@ -288,10 +294,6 @@ export function ChatApp() {
                     key={p.nodeId}
                     type="button"
                     onClick={() => {
-                      if (!paired) {
-                        void beginPairing(p.nodeId, chat.aliases[p.nodeId]);
-                        return;
-                      }
                       void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
                         setActiveId(c.id);
                         setGroupMode(false);
@@ -302,7 +304,7 @@ export function ChatApp() {
                   >
                     <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
                     <span className="text-[11px]" style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}>
-                      {paired ? "çevrimiçi" : "Eşleştir"}
+                      {paired ? "çevrimiçi" : "yakında"}
                     </span>
                   </button>
                 );
@@ -346,7 +348,7 @@ export function ChatApp() {
           {pairing.incoming.map((req) => (
             <li key={`req_${req.nodeId}`} className="px-4 py-3" style={{ background: "var(--wa-panel-soft)" }}>
               <p className="text-[13px] font-medium" style={{ color: "var(--wa-text)" }}>
-                {nameOf(req.nodeId)} eşleşmek istiyor
+                {nameOf(req.nodeId)} cihazını hesabınıza bağlamak istiyor
               </p>
               <div className="mt-2 flex gap-2">
                 <button
@@ -408,8 +410,18 @@ export function ChatApp() {
             );
           })}
           {ready && conversations.length === 0 && (
-            <li className="px-4 py-6 text-sm" style={{ color: "var(--wa-muted)" }}>
-              Henüz doğrulanmış kişi yok. Aşağıdaki cihazlardan birini eşleştirin.
+            <li className="px-4 py-8 text-center">
+              <p className="text-sm" style={{ color: "var(--wa-muted)" }}>
+                Henüz kimse yok. Davet linkini paylaşın — karşı taraf linke dokunduğunda sohbet açılır.
+              </p>
+              <button
+                type="button"
+                onClick={() => void shareInvite()}
+                className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
+                style={{ background: "var(--wa-accent)" }}
+              >
+                Davet linki paylaş
+              </button>
             </li>
           )}
 
