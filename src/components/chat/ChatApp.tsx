@@ -32,7 +32,9 @@ import {
   Square,
   Star,
   Trash2,
+  Palette,
   Settings,
+
   Radio,
   Users,
   Video,
