@@ -377,12 +377,13 @@ function MessageRow({
               )}
               {typeof msg.geo.battery === "number" && (
                 <p className="mt-0.5 text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  🔋 %{Math.round(msg.geo.battery * 100)}
+                  🔋 %{Math.round(msg.geo.battery)}
                   {msg.geo.charging ? " · şarjda" : ""}
                 </p>
               )}
               <a
-                href={geoUri({ lat: msg.geo.lat, lon: msg.geo.lon })}
+                href={geoUri({ lat: msg.geo.lat, lon: msg.geo.lon, ts: msg.ts })}
+
                 className="mt-1 inline-flex items-center gap-1 text-[12px] underline"
                 style={{ color: "var(--wa-accent)" }}
               >
