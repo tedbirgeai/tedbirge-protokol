@@ -197,6 +197,14 @@ function Admin() {
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
           </button>
           <button
+            onClick={() => setTab("interop")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "interop" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            El sıkışma ({INTEROP_TARGETS.length})
+          </button>
+          <button
             onClick={() => setTab("plan")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
               tab === "plan" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
@@ -208,8 +216,11 @@ function Admin() {
 
         {tab === "plan" ? (
           <AdminBusinessPlan />
+        ) : tab === "interop" ? (
+          <AdminInterop />
         ) : tab === "docs" ? (
           <AdminOfficialDrafts />
+
         ) : tab === "ai" ? (
           leads.length === 0 ? (
             <p className="mt-8 text-sm text-muted-foreground">
