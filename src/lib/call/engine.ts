@@ -54,8 +54,55 @@ export type CallState = {
 };
 
 const ICE: RTCConfiguration = {
-  iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
+  iceServers: [
+    {
+      urls: [
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:global.stun.twilio.com:3478",
+      ],
+    },
+    // Simetrik NAT / mobil operatör ağlarında doğrudan yol kurulamazsa
+    // aktarma sunucusu devreye girer. İçerik uçtan uca şifreli kalır (DTLS-SRTP).
+    {
+      urls: [
+        "turn:openrelay.metered.ca:80",
+        "turn:openrelay.metered.ca:443",
+        "turns:openrelay.metered.ca:443?transport=tcp",
+      ],
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+  ],
+  iceCandidatePoolSize: 4,
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
 };
+
+/**
+ * Gönderici ayarları: görüntüde çözünürlük yerine akıcılığı korur,
+ * zayıf bağlantıda kaliteyi kademeli düşürür, sesi tek kanalda tutar.
+ */
+async function tuneSenders(pc: RTCPeerConnection) {
+  for (const sender of pc.getSenders()) {
+    if (!sender.track) continue;
+    try {
+      const params = sender.getParameters();
+      if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
+      if (sender.track.kind === "video") {
+        params.degradationPreference = "balanced";
+        params.encodings[0].maxBitrate = 1_200_000;
+        params.encodings[0].maxFramerate = 30;
+      } else {
+        params.encodings[0].maxBitrate = 48_000;
+      }
+      await sender.setParameters(params);
+    } catch {
+      /* bazı tarayıcılar parametre değişimini kısıtlar; görüşme etkilenmez */
+    }
+  }
+}
+
 
 const IDLE_QUALITY: CallQuality = {
   bars: 0,
@@ -130,12 +177,27 @@ export function getPeerStream(peerId: string) {
 
 async function ensureMedia(video: boolean) {
   if (localStream) return localStream;
-  localStream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    video: video ? { width: { ideal: 960 }, facingMode: "user" } : false,
-  });
+  const videoConstraints: MediaTrackConstraints = {
+    width: { ideal: 1280, max: 1280 },
+    height: { ideal: 720, max: 720 },
+    frameRate: { ideal: 30, max: 30 },
+    facingMode: "user",
+  };
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      video: video ? videoConstraints : false,
+    });
+  } catch {
+    // Kamera istenen çözünürlüğü desteklemiyorsa varsayılana düş.
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      video,
+    });
+  }
   return localStream;
 }
+
 
 function createLeg(peerId: string, alias: string) {
   const existing = legs.get(peerId);
@@ -316,6 +378,8 @@ async function dial(peerId: string, alias: string, video: boolean) {
   stream.getTracks().forEach((t) => {
     if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
   });
+  await tuneSenders(leg.pc);
+
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
   const sent = await sendMesh("call", peerId, {
@@ -415,7 +479,9 @@ export async function acceptCall() {
       stream.getTracks().forEach((t) => {
         if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
       });
+      await tuneSenders(leg.pc);
       await leg.pc.setRemoteDescription(offer.desc);
+
       await applyPendingIce(peerId, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
@@ -527,7 +593,9 @@ export async function switchCamera() {
     for (const leg of legs.values()) {
       const sender = leg.pc.getSenders().find((s) => s.track?.kind === "video");
       await sender?.replaceTrack(track);
+      await tuneSenders(leg.pc);
     }
+
     localStream?.getVideoTracks().forEach((t) => {
       t.stop();
       localStream?.removeTrack(t);
@@ -619,7 +687,9 @@ async function onCallSignal(from: string, raw: unknown) {
         stream.getTracks().forEach((t) => {
           if (!fresh.pc.getSenders().some((s) => s.track === t)) fresh.pc.addTrack(t, stream);
         });
+        await tuneSenders(fresh.pc);
         await fresh.pc.setRemoteDescription(desc);
+
         await applyPendingIce(from, fresh.pc);
         const answer = await fresh.pc.createAnswer();
         await fresh.pc.setLocalDescription(answer);
