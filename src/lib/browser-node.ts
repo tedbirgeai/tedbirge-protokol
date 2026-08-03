@@ -75,9 +75,15 @@ const TRANSIENT_KINDS = new Set<EnvelopeKind>([
   "ping",
   "pong",
   "signal",
-  "call",
   "presence",
 ]);
+
+/**
+ * Arama sinyali kalıcı sohbet verisi değildir; ancak doğrudan kanal kısa süreli
+ * kurulamadığında karşı cihaza ulaşabilmesi için bulut rölede taşınır. Gövde
+ * zaman damgası arama motorunda denetlendiğinden eski çağrı yeniden çalmaz.
+ */
+const NEVER_ENQUEUE_KINDS = new Set<EnvelopeKind>([...TRANSIENT_KINDS, "call"]);
 
 /**
  * Aynı Wi-Fi / hotspot ağındaki saha geçidini bulmak için denenecek adresler.
@@ -451,8 +457,11 @@ export class BrowserNode {
    */
   private scheduleRelayPoll() {
     if (this.relayTimer) clearTimeout(this.relayTimer);
-    const base = 15_000 * 2 ** this.relayFailures;
-    const delay = Math.min(base, 120_000) + Math.floor(Math.random() * 3_000);
+    // Sohbet açıkken yedek röle gecikmesi birkaç saniyeyi geçmez. Arka planda
+    // pil/veri tüketimini azaltmak için daha seyrek; hatada kademeli beklenir.
+    const foreground = typeof document !== "undefined" && document.visibilityState === "visible";
+    const base = (foreground ? 4_000 : 15_000) * 2 ** this.relayFailures;
+    const delay = Math.min(base, 120_000) + Math.floor(Math.random() * 1_000);
     this.relayTimer = setTimeout(async () => {
       this.relayTimer = null;
       await this.pollRelay();
@@ -1062,13 +1071,16 @@ export class BrowserNode {
       recordTx(false);
       // Kontrol paketleri gerçek zamanlıdır. Saklanmaları gecikme üretir,
       // eski çağrıları yeniden çaldırır ve ping/pong çoğalma döngüsü kurar.
-      if (TRANSIENT_KINDS.has(kind)) return false;
+       if (TRANSIENT_KINDS.has(kind)) return false;
       // Bulut yedek röle: alıcı kapalı olsa bile mesaj teslim edilmek üzere saklanır.
       if (await this.relayViaCloud(kind, to, payload, prio)) {
         recordTx(true);
         this.emit({});
         return true;
       }
+       // Arama sinyali çevrimdışı mesaj gibi yerel kalıcı kuyruğa yazılmaz;
+       // yalnız kısa ömürlü gerçek zamanlı/yedek röle yollarında denenir.
+       if (NEVER_ENQUEUE_KINDS.has(kind)) return false;
       // flushQueue mevcut bir niyeti yeniden denerken ikinci bir kuyruk kaydı
       // üretmemelidir. Aksi halde her başarısız tur kuyruğu katlayarak büyütür.
       if (!allowEnqueue) return false;
@@ -1154,7 +1166,7 @@ export class BrowserNode {
         // Önceki sürümlerden kalan bütün anlık kontrol paketlerini tek seferde
         // temizle. Bunlar tekrar gönderilmez ve yeni kuyruk öğesi üretemez.
         const queuedKind = item.t === "intent" ? item.kind : item.env.h.kind;
-        if (TRANSIENT_KINDS.has(queuedKind)) {
+        if (NEVER_ENQUEUE_KINDS.has(queuedKind)) {
           await deletePacket(row.pktId);
           continue;
         }

@@ -797,7 +797,13 @@ export function ChatApp() {
       ? active.title
       : contactLabel(active.members[0] ?? active.title, active.title)
     : "";
-  const peerId = active?.members[0];
+  // Mükerrer sohbetler birleştirildiğinde üyelerde eski cihaz kimlikleri de
+  // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
+  // kimliği seç; listenin ilk (eski) kaydına körlemesine arama yapma.
+  const peerId = active
+    ? active.members.find((member) => peers.some((peer) => peer.nodeId === member)) ??
+      active.members.at(-1)
+    : undefined;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   const nameOf = (id: string) => contactLabel(id, chat.aliases[id]);
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
