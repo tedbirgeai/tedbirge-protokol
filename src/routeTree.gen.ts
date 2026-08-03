@@ -55,6 +55,7 @@ import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authenticated/saha-raporu'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicRelayRouteImport } from './routes/api/public/relay'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
 import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
@@ -293,6 +294,11 @@ const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
   path: '/api/public/telemetry',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRelayRoute = ApiPublicRelayRouteImport.update({
+  id: '/api/public/relay',
+  path: '/api/public/relay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicQueueRoute = ApiPublicQueueRouteImport.update({
   id: '/api/public/queue',
   path: '/api/public/queue',
@@ -387,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
+  '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -442,6 +449,7 @@ export interface FileRoutesByTo {
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
+  '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -499,6 +507,7 @@ export interface FileRoutesById {
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
+  '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/api/public/cron/offline-check': typeof ApiPublicCronOfflineCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -556,6 +565,7 @@ export interface FileRouteTypes {
     | '/api/public/openapi.json'
     | '/api/public/ping'
     | '/api/public/queue'
+    | '/api/public/relay'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
@@ -611,6 +621,7 @@ export interface FileRouteTypes {
     | '/api/public/openapi.json'
     | '/api/public/ping'
     | '/api/public/queue'
+    | '/api/public/relay'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/api/public/openapi.json'
     | '/api/public/ping'
     | '/api/public/queue'
+    | '/api/public/relay'
     | '/api/public/telemetry'
     | '/api/public/cron/offline-check'
     | '/api/public/payments/webhook'
@@ -720,6 +732,7 @@ export interface RootRouteChildren {
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicPingRoute: typeof ApiPublicPingRoute
   ApiPublicQueueRoute: typeof ApiPublicQueueRoute
+  ApiPublicRelayRoute: typeof ApiPublicRelayRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronOfflineCheckRoute: typeof ApiPublicCronOfflineCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -1049,6 +1062,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelemetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/relay': {
+      id: '/api/public/relay'
+      path: '/api/public/relay'
+      fullPath: '/api/public/relay'
+      preLoaderRoute: typeof ApiPublicRelayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/queue': {
       id: '/api/public/queue'
       path: '/api/public/queue'
@@ -1173,6 +1193,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicPingRoute: ApiPublicPingRoute,
   ApiPublicQueueRoute: ApiPublicQueueRoute,
+  ApiPublicRelayRoute: ApiPublicRelayRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronOfflineCheckRoute: ApiPublicCronOfflineCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,

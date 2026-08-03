@@ -994,6 +994,60 @@ export type Database = {
         }
         Relationships: []
       }
+      relay_directory: {
+        Row: {
+          box_public: string
+          node_id: string
+          sign_public: string
+          updated_at: string
+        }
+        Insert: {
+          box_public: string
+          node_id: string
+          sign_public: string
+          updated_at?: string
+        }
+        Update: {
+          box_public?: string
+          node_id?: string
+          sign_public?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      relay_envelopes: {
+        Row: {
+          created_at: string
+          envelope: string
+          expires_at: string
+          id: string
+          origin_node: string
+          pkt_id: string
+          priority: number
+          target_node: string
+        }
+        Insert: {
+          created_at?: string
+          envelope: string
+          expires_at?: string
+          id?: string
+          origin_node: string
+          pkt_id: string
+          priority?: number
+          target_node: string
+        }
+        Update: {
+          created_at?: string
+          envelope?: string
+          expires_at?: string
+          id?: string
+          origin_node?: string
+          pkt_id?: string
+          priority?: number
+          target_node?: string
+        }
+        Relationships: []
+      }
       relay_plans: {
         Row: {
           antenna_height: string

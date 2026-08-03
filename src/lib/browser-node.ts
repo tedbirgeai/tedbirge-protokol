@@ -265,6 +265,9 @@ export class BrowserNode {
   >();
   private timer: ReturnType<typeof setInterval> | null = null;
   private retryTimer: ReturnType<typeof setInterval> | null = null;
+  /** Bulut yedek röle (store-and-forward) yoklama zamanlayıcısı. */
+  private relayTimer: ReturnType<typeof setInterval> | null = null;
+  private relayBusy = false;
 
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
@@ -374,6 +377,94 @@ export class BrowserNode {
     }, 60_000);
     this.retryTimer = setInterval(() => void this.flushQueue(), 12_000);
 
+    // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
+    void this.publishDirectory();
+    void this.pollRelay();
+    this.relayTimer = setInterval(() => void this.pollRelay(), 8_000);
+  }
+
+  /** Kendi genel anahtarlarımızı rehbere yazar (ilk temas için gerekir). */
+  private async publishDirectory() {
+    if (!this.identity || !this.state.online) return;
+    const { publishRelayKeys } = await import("@/lib/relay-cloud");
+    await publishRelayKeys({
+      nodeId: this.nodeId,
+      signPublic: this.identity.signPublic,
+      boxPublic: this.identity.boxPublic,
+    });
+  }
+
+  /** Bulutta bekleyen zarfları indirir ve normal mesh işleme hattına verir. */
+  private async pollRelay() {
+    if (this.relayBusy || !this.state.online) return;
+    this.relayBusy = true;
+    try {
+      const { pullRelayEnvelopes } = await import("@/lib/relay-cloud");
+      const items = await pullRelayEnvelopes(this.nodeId);
+      if (!items.length) return;
+      for (const item of items) {
+        await this.onMeshMessage(item.envelope, "cloud-relay");
+      }
+      await pullRelayEnvelopes(
+        this.nodeId,
+        items.map((i) => i.pktId),
+      );
+      this.emit({ lastRelayAt: new Date().toISOString() });
+    } catch {
+      /* ağ hatası: bir sonraki turda tekrar denenir */
+    } finally {
+      this.relayBusy = false;
+    }
+  }
+
+  /**
+   * Doğrudan eş yokken şifreli zarfı buluta bırakır (store-and-forward).
+   * Anahtarlar: bellek → yerel güven kaydı → bulut rehberi sırasıyla aranır.
+   */
+  private async relayViaCloud(
+    kind: EnvelopeKind,
+    to: string | "*",
+    payload: unknown,
+    priority: Priority,
+  ): Promise<boolean> {
+    if (!this.state.online || to === "*" || kind === "call" || kind === "signal") return false;
+    if (!this.identity) return false;
+
+    let boxPublic = this.peerKeys.get(to)?.bpk;
+    if (!boxPublic) {
+      const rec = await getPeer(to);
+      boxPublic = rec?.publicKey;
+    }
+    if (!boxPublic) {
+      const { lookupRelayKeys } = await import("@/lib/relay-cloud");
+      boxPublic = (await lookupRelayKeys(to))?.boxPublic;
+    }
+    if (!boxPublic) return false;
+
+    try {
+      const env = await createEnvelope({
+        from: this.nodeId,
+        to,
+        kind,
+        payload,
+        peerBoxPublic: boxPublic,
+        senderSignPublic: this.identity.signPublic,
+        priority,
+        ttl: MAX_TTL,
+      });
+      const { pushRelayEnvelopes } = await import("@/lib/relay-cloud");
+      return await pushRelayEnvelopes([
+        {
+          pktId: env.h.pktId,
+          to,
+          from: this.nodeId,
+          envelope: encodeEnvelope(env),
+          priority,
+        },
+      ]);
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -508,6 +599,8 @@ export class BrowserNode {
     this.timer = null;
     if (this.retryTimer) clearInterval(this.retryTimer);
     this.retryTimer = null;
+    if (this.relayTimer) clearInterval(this.relayTimer);
+    this.relayTimer = null;
 
     if (this.localTimer) clearInterval(this.localTimer);
     this.localTimer = null;
@@ -541,6 +634,8 @@ export class BrowserNode {
     void appendEvent("uplink", "İnternet geri geldi — kuyruk boşaltılıyor.");
     void this.flushQueue();
     void this.heartbeat();
+    void this.publishDirectory();
+    void this.pollRelay();
   };
 
   private handleOffline = () => {
@@ -853,6 +948,12 @@ export class BrowserNode {
       // yeniden açıldığında eski teklif tekrar gönderilir ve "kendi kendine
       // arama" hissi doğar. Bu yüzden call paketleri asla saklanmaz.
       if (kind === "call") return false;
+      // Bulut yedek röle: alıcı kapalı olsa bile mesaj teslim edilmek üzere saklanır.
+      if (await this.relayViaCloud(kind, to, payload, prio)) {
+        recordTx(true);
+        this.emit({});
+        return true;
+      }
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }

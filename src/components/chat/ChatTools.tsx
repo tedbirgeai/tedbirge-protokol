@@ -17,6 +17,7 @@ import {
 import { TTL_OPTIONS, setTtl, ttlOf } from "@/lib/chat/ephemeral";
 import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
+import { InstallAppButton } from "@/components/chat/InstallAppButton";
 
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
 
@@ -245,6 +246,20 @@ export function ChatSettingsDialog({
                 : "Bildirimlere izin ver"}
           </button>
         </section>
+
+        {/* Uygulamayı yükle */}
+        <section className="mt-6">
+          <h3 className="text-sm font-semibold">Uygulamayı yükle</h3>
+          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+            Telefon, tablet ve bilgisayarınıza ücretsiz kurun; çevrimdışıyken de açılır ve
+            güncellemeler otomatik iner.
+          </p>
+          <div className="mt-2">
+            <InstallAppButton />
+          </div>
+        </section>
+
+
 
         {/* Kaybolan mesajlar */}
         <section className="mt-6">

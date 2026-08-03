@@ -1,23 +1,26 @@
 {
   "name": "Tedbirge Protokol",
   "short_name": "Tedbirge",
-  "description": "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Saha pilotu, uyum panosu ve canlı mesh demosu.",
-  "start_url": "/",
+  "description": "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Uçtan uca şifreli sohbet, sesli/görüntülü görüşme, saha pilotu ve uyum panosu.",
+  "start_url": "/chat",
   "id": "/",
-
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
   "theme_color": "#0b1020",
   "background_color": "#0b1020",
   "lang": "tr",
-  "categories": ["utilities", "productivity"],
+  "dir": "ltr",
+  "categories": ["utilities", "productivity", "social"],
+  "launch_handler": { "client_mode": "focus-existing" },
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
+    { "name": "Sohbet", "url": "/chat" },
     { "name": "Saha erişimi", "url": "/saha" },
     { "name": "Canlı demo", "url": "/demo" },
     { "name": "Pilot panosu", "url": "/pilot-panosu" }
