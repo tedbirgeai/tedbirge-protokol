@@ -18,6 +18,7 @@ import { useSyncExternalStore } from "react";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
+import { showChatNotification } from "@/lib/chat/push";
 
 export type CallPhase = "idle" | "ringing" | "outgoing" | "active" | "reconnecting" | "ended";
 
