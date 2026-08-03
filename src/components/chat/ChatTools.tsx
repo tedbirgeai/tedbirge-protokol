@@ -14,6 +14,9 @@ import {
   notificationsAllowed,
   notificationsBlocked,
 } from "@/lib/chat/push";
+import { disableWebPush, enableWebPush } from "@/lib/chat/webpush";
+import { nodeSelf } from "@/lib/mesh-bus";
+
 import { TTL_OPTIONS, setTtl, ttlOf } from "@/lib/chat/ephemeral";
 import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
