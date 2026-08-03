@@ -611,11 +611,14 @@ function MenuItem({
 
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
+  const { skin } = useChatSkin();
   return (
     <div
+      data-skin={skin}
       className="wa flex h-[100dvh] items-center justify-center p-6"
       style={{ background: "var(--wa-panel-soft)" }}
     >
+
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm">
         <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
           Sohbete başlayın
