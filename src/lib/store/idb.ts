@@ -540,6 +540,8 @@ export type Conversation = {
   lastText: string;
   unread: number;
   pinned: boolean;
+  /** Sohbetin üstünde sabitlenen mesaj kimliği. */
+  pinnedMessageId?: string;
 };
 
 export function putConversation(rec: Conversation) {
