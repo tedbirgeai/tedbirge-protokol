@@ -427,6 +427,14 @@ export type ChatMessage = {
   status: MessageStatus;
   /** Medya eki (şifreli parçalardan yeniden birleştirilmiş data URL). */
   media?: { name: string; mime: string; size: number; dataUrl: string };
+  /** Yanıtlanan mesajın kısa özeti (alıntı balonu). */
+  replyTo?: { id: string; text: string; author: string };
+  /** Tepkiler: gönderen kimliği → emoji. */
+  reactions?: Record<string, string>;
+  /** Kullanıcı sildiyse metin yerine "bu mesaj silindi" gösterilir. */
+  deleted?: boolean;
+  /** Yıldızlanan mesaj. */
+  starred?: boolean;
 };
 
 export type Conversation = {
