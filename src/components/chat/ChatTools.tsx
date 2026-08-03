@@ -192,7 +192,9 @@ export function ChatSettingsDialog({
   const [ttl, setTtlValue] = useState(0);
   const [minutes, setMinutes] = useState(5);
   const [notify, setNotify] = useState(false);
+  const { skin, set: setSkinChoice } = useChatSkin();
   const fileRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     if (!open) return;
