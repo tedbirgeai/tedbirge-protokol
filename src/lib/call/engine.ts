@@ -54,8 +54,55 @@ export type CallState = {
 };
 
 const ICE: RTCConfiguration = {
-  iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
+  iceServers: [
+    {
+      urls: [
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:global.stun.twilio.com:3478",
+      ],
+    },
+    // Simetrik NAT / mobil operatör ağlarında doğrudan yol kurulamazsa
+    // aktarma sunucusu devreye girer. İçerik uçtan uca şifreli kalır (DTLS-SRTP).
+    {
+      urls: [
+        "turn:openrelay.metered.ca:80",
+        "turn:openrelay.metered.ca:443",
+        "turns:openrelay.metered.ca:443?transport=tcp",
+      ],
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+  ],
+  iceCandidatePoolSize: 4,
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
 };
+
+/**
+ * Gönderici ayarları: görüntüde çözünürlük yerine akıcılığı korur,
+ * zayıf bağlantıda kaliteyi kademeli düşürür, sesi tek kanalda tutar.
+ */
+async function tuneSenders(pc: RTCPeerConnection) {
+  for (const sender of pc.getSenders()) {
+    if (!sender.track) continue;
+    try {
+      const params = sender.getParameters();
+      if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
+      if (sender.track.kind === "video") {
+        params.degradationPreference = "balanced";
+        params.encodings[0].maxBitrate = 1_200_000;
+        params.encodings[0].maxFramerate = 30;
+      } else {
+        params.encodings[0].maxBitrate = 48_000;
+      }
+      await sender.setParameters(params);
+    } catch {
+      /* bazı tarayıcılar parametre değişimini kısıtlar; görüşme etkilenmez */
+    }
+  }
+}
+
 
 const IDLE_QUALITY: CallQuality = {
   bars: 0,
