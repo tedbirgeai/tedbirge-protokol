@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  Archive,
   ArrowLeft,
   BookUser,
   Check,
@@ -8,17 +9,22 @@ import {
   ChevronDown,
   Clock,
   Copy,
+  Forward,
   Globe,
   Home,
+  Languages,
   Lock,
+  MapPin,
   Mic,
   Paperclip,
+  Pencil,
   Phone,
   Pin,
   Plus,
   Reply,
   Search,
   Send,
+  Siren,
   Smile,
   Square,
   Star,
@@ -33,9 +39,15 @@ import {
 } from "lucide-react";
 import {
   bootChat,
+  canDeleteForEveryone,
+  canEdit,
   deleteMessage,
+  editMessage,
+  pinMessage,
   reactToMessage,
+  remainingWindow,
   sendTyping,
+  sendVoiceFile,
   toggleStar,
   createGroup,
   ensureDirectConversation,
@@ -48,13 +60,29 @@ import {
   togglePin,
   useChat,
   useConversationMessages,
+  EDIT_WINDOW_MS,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
+import { ForwardDialog } from "@/components/chat/ForwardDialog";
+import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
 import { bootLock, useLock } from "@/lib/chat/lock";
 import { startPtt, stopPtt } from "@/lib/chat/ptt";
 import { ensureNotificationPermission } from "@/lib/chat/push";
 import { ttlOf, ttlLabel } from "@/lib/chat/ephemeral";
+import {
+  ARCHIVE,
+  folderOf,
+  folderTabs,
+  getFolders,
+  isArchived,
+  onFoldersChange,
+  toggleArchive,
+} from "@/lib/chat/folders";
+import { getPrivacy, onPrivacyChange } from "@/lib/chat/privacy";
+import { cachedTranslation, translateText } from "@/lib/chat/translate";
+import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
+import { geoUri } from "@/lib/chat/location";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
@@ -71,7 +99,8 @@ import type { PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
-import type { ChatMessage } from "@/lib/store/idb";
+import type { ChatMessage, Conversation } from "@/lib/store/idb";
+
 
 function timeOf(ts: number) {
   return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
