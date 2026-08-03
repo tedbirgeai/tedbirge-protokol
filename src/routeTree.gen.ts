@@ -57,6 +57,7 @@ import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicRelayRouteImport } from './routes/api/public/relay'
 import { Route as ApiPublicQueueRouteImport } from './routes/api/public/queue'
+import { Route as ApiPublicPushRouteImport } from './routes/api/public/push'
 import { Route as ApiPublicPingRouteImport } from './routes/api/public/ping'
 import { Route as ApiPublicOpenapiDotjsonRouteImport } from './routes/api/public/openapi[.]json'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
@@ -304,6 +305,11 @@ const ApiPublicQueueRoute = ApiPublicQueueRouteImport.update({
   path: '/api/public/queue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPushRoute = ApiPublicPushRouteImport.update({
+  id: '/api/public/push',
+  path: '/api/public/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPingRoute = ApiPublicPingRouteImport.update({
   id: '/api/public/ping',
   path: '/api/public/ping',
@@ -392,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
+  '/api/public/push': typeof ApiPublicPushRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -448,6 +455,7 @@ export interface FileRoutesByTo {
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
+  '/api/public/push': typeof ApiPublicPushRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -506,6 +514,7 @@ export interface FileRoutesById {
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/openapi.json': typeof ApiPublicOpenapiDotjsonRoute
   '/api/public/ping': typeof ApiPublicPingRoute
+  '/api/public/push': typeof ApiPublicPushRoute
   '/api/public/queue': typeof ApiPublicQueueRoute
   '/api/public/relay': typeof ApiPublicRelayRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
@@ -564,6 +573,7 @@ export interface FileRouteTypes {
     | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/ping'
+    | '/api/public/push'
     | '/api/public/queue'
     | '/api/public/relay'
     | '/api/public/telemetry'
@@ -620,6 +630,7 @@ export interface FileRouteTypes {
     | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/ping'
+    | '/api/public/push'
     | '/api/public/queue'
     | '/api/public/relay'
     | '/api/public/telemetry'
@@ -677,6 +688,7 @@ export interface FileRouteTypes {
     | '/api/public/health'
     | '/api/public/openapi.json'
     | '/api/public/ping'
+    | '/api/public/push'
     | '/api/public/queue'
     | '/api/public/relay'
     | '/api/public/telemetry'
@@ -731,6 +743,7 @@ export interface RootRouteChildren {
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicOpenapiDotjsonRoute: typeof ApiPublicOpenapiDotjsonRoute
   ApiPublicPingRoute: typeof ApiPublicPingRoute
+  ApiPublicPushRoute: typeof ApiPublicPushRoute
   ApiPublicQueueRoute: typeof ApiPublicQueueRoute
   ApiPublicRelayRoute: typeof ApiPublicRelayRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -1076,6 +1089,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/push': {
+      id: '/api/public/push'
+      path: '/api/public/push'
+      fullPath: '/api/public/push'
+      preLoaderRoute: typeof ApiPublicPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/ping': {
       id: '/api/public/ping'
       path: '/api/public/ping'
@@ -1192,6 +1212,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicOpenapiDotjsonRoute: ApiPublicOpenapiDotjsonRoute,
   ApiPublicPingRoute: ApiPublicPingRoute,
+  ApiPublicPushRoute: ApiPublicPushRoute,
   ApiPublicQueueRoute: ApiPublicQueueRoute,
   ApiPublicRelayRoute: ApiPublicRelayRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
