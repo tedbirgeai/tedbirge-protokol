@@ -373,7 +373,36 @@ function Admin() {
   );
 }
 
+/** Dilekçe metnini düz metin dosyası olarak indirir. */
+function downloadDraft(id: string, title: string, body: string) {
+  const blob = new Blob([`${title}\n\n${body}\n`], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tedbirge-${id}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Tarayıcının yazdırma penceresini açar; oradan PDF olarak kaydedilebilir. */
+function printDraft(title: string, body: string) {
+  const w = window.open("", "_blank", "width=820,height=900");
+  if (!w) return;
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  w.document.write(
+    `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>${esc(title)}</title>` +
+      `<style>body{font-family:Georgia,serif;line-height:1.6;padding:40px;max-width:800px;margin:auto;}` +
+      `pre{white-space:pre-wrap;font-family:inherit;font-size:13px;}h1{font-size:16px;}</style></head>` +
+      `<body><h1>${esc(title)}</h1><pre>${esc(body)}</pre></body></html>`,
+  );
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
 function AdminOfficialDrafts() {
+
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="mt-8">
