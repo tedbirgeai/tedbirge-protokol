@@ -67,6 +67,19 @@ const LAN_RETRY_MS = 6_000;
 const LAN_ANNOUNCE_MS = 3_000;
 
 /**
+ * Yalnız anlık anlam taşıyan kontrol paketleri kalıcı kuyruğa veya bulut
+ * store-and-forward hattına ASLA yazılmaz. Aksi halde eski ping/call/presence
+ * paketleri her kuyruk turunda yeniden üretilerek röleyi kilitler.
+ */
+const TRANSIENT_KINDS = new Set<EnvelopeKind>([
+  "ping",
+  "pong",
+  "signal",
+  "call",
+  "presence",
+]);
+
+/**
  * Aynı Wi-Fi / hotspot ağındaki saha geçidini bulmak için denenecek adresler.
  * Bluetooth ve internet kapalı olsa da bu adreslerden biri açıksa cihazlar
  * saniyeler içinde birbirini bulur. Ajan yoksa denemeler sessizce düşer.
@@ -270,6 +283,9 @@ export class BrowserNode {
   /** Bulut yedek röle (store-and-forward) yoklama zamanlayıcısı. */
   private relayTimer: ReturnType<typeof setInterval> | null = null;
   private relayBusy = false;
+  private relayAck: string[] = [];
+  private relayFailures = 0;
+  private flushBusy = false;
 
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
@@ -386,7 +402,7 @@ export class BrowserNode {
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
     void this.publishDirectory();
     void this.pollRelay();
-    this.relayTimer = setInterval(() => void this.pollRelay(), 8_000);
+    this.scheduleRelayPoll();
   }
 
   /** Kendi genel anahtarlarımızı rehbere yazar (ilk temas için gerekir). */
@@ -406,21 +422,42 @@ export class BrowserNode {
     this.relayBusy = true;
     try {
       const { pullRelayEnvelopes } = await import("@/lib/relay-cloud");
-      const items = await pullRelayEnvelopes(this.nodeId);
+      // Önceki başarılı turun onayları yeni çekme isteğine eklenir. Böylece
+      // teslim + onay için iki ayrı HTTP isteği yerine tur başına tek istek olur.
+      const ack = this.relayAck;
+      const items = await pullRelayEnvelopes(this.nodeId, ack);
+      if (items === null) {
+        this.relayFailures = Math.min(this.relayFailures + 1, 5);
+        return;
+      }
+      this.relayFailures = 0;
+      this.relayAck = [];
       if (!items.length) return;
       for (const item of items) {
         await this.onMeshMessage(item.envelope, "cloud-relay");
       }
-      await pullRelayEnvelopes(
-        this.nodeId,
-        items.map((i) => i.pktId),
-      );
+      this.relayAck = items.map((i) => i.pktId);
       this.emit({ lastRelayAt: new Date().toISOString() });
     } catch {
       /* ağ hatası: bir sonraki turda tekrar denenir */
     } finally {
       this.relayBusy = false;
     }
+  }
+
+  /**
+   * Sabit aralıklı toplu yoklama yerine şaşırtılmış, hata halinde kademeli
+   * zamanlama kullanılır. Aynı ağdaki cihazlar aynı milisaniyede yük bindirmez.
+   */
+  private scheduleRelayPoll() {
+    if (this.relayTimer) clearTimeout(this.relayTimer);
+    const base = 15_000 * 2 ** this.relayFailures;
+    const delay = Math.min(base, 120_000) + Math.floor(Math.random() * 3_000);
+    this.relayTimer = setTimeout(async () => {
+      this.relayTimer = null;
+      await this.pollRelay();
+      if (this.state.running) this.scheduleRelayPoll();
+    }, delay);
   }
 
   /**
@@ -433,7 +470,7 @@ export class BrowserNode {
     payload: unknown,
     priority: Priority,
   ): Promise<boolean> {
-    if (!this.state.online || to === "*" || kind === "call" || kind === "signal") return false;
+    if (!this.state.online || to === "*" || TRANSIENT_KINDS.has(kind)) return false;
     if (!this.identity) return false;
 
     let boxPublic = this.peerKeys.get(to)?.bpk;
@@ -976,7 +1013,13 @@ export class BrowserNode {
    * Uçtan uca şifreli gönderim. Hedef başına ayrı zarf üretilir:
    * yalnızca alıcı gövdeyi açabilir. Eş yoksa niyet kuyruğa yazılır.
    */
-  async send(kind: EnvelopeKind, to: string | "*", payload: unknown, priority?: Priority) {
+  async send(
+    kind: EnvelopeKind,
+    to: string | "*",
+    payload: unknown,
+    priority?: Priority,
+    allowEnqueue = true,
+  ) {
     const prio = priority ?? defaultPriority(kind);
     if (!this.identity) this.identity = await ensureIdentity(this.nodeId);
 
@@ -1017,16 +1060,18 @@ export class BrowserNode {
         }
       }
       recordTx(false);
-      // Arama sinyalleri gerçek zamanlıdır: kuyruğa yazılırsa uygulama
-      // yeniden açıldığında eski teklif tekrar gönderilir ve "kendi kendine
-      // arama" hissi doğar. Bu yüzden call paketleri asla saklanmaz.
-      if (kind === "call") return false;
+      // Kontrol paketleri gerçek zamanlıdır. Saklanmaları gecikme üretir,
+      // eski çağrıları yeniden çaldırır ve ping/pong çoğalma döngüsü kurar.
+      if (TRANSIENT_KINDS.has(kind)) return false;
       // Bulut yedek röle: alıcı kapalı olsa bile mesaj teslim edilmek üzere saklanır.
       if (await this.relayViaCloud(kind, to, payload, prio)) {
         recordTx(true);
         this.emit({});
         return true;
       }
+      // flushQueue mevcut bir niyeti yeniden denerken ikinci bir kuyruk kaydı
+      // üretmemelidir. Aksi halde her başarısız tur kuyruğu katlayarak büyütür.
+      if (!allowEnqueue) return false;
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
@@ -1093,41 +1138,69 @@ export class BrowserNode {
   }
 
   private async flushQueue() {
-    const rows = await getPackets();
-    if (!rows.length) return;
-    for (const row of rows) {
-      const item = row.env as QueuedItem;
-      if (!item || typeof item !== "object") {
-        await deletePacket(row.pktId);
-        continue;
-      }
-      // Eski arama sinyalleri kuyrukta kalmışsa temizlenir (tekrar çalmasın).
-      if ((item.t === "intent" && item.kind === "call") || (item.t === "fwd" && item.env.h.kind === "call")) {
-        await deletePacket(row.pktId);
-        continue;
-      }
-      if (item.t === "fwd") {
-        if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
-        continue;
+    if (this.flushBusy) return;
+    this.flushBusy = true;
+    try {
+      const rows = await getPackets();
+      if (!rows.length) return;
+      const durable: typeof rows = [];
+      const uniqueIntents = new Set<string>();
+      for (const row of rows) {
+        const item = row.env as QueuedItem;
+        if (!item || typeof item !== "object") {
+          await deletePacket(row.pktId);
+          continue;
+        }
+        // Önceki sürümlerden kalan bütün anlık kontrol paketlerini tek seferde
+        // temizle. Bunlar tekrar gönderilmez ve yeni kuyruk öğesi üretemez.
+        const queuedKind = item.t === "intent" ? item.kind : item.env.h.kind;
+        if (TRANSIENT_KINDS.has(queuedKind)) {
+          await deletePacket(row.pktId);
+          continue;
+        }
+        if (item.t === "intent") {
+          const payloadId = (item.payload as { id?: unknown } | null)?.id;
+          if (typeof payloadId === "string") {
+            const key = `${item.kind}:${item.to}:${payloadId}`;
+            if (uniqueIntents.has(key)) {
+              await deletePacket(row.pktId);
+              continue;
+            }
+            uniqueIntents.add(key);
+          }
+        }
+        durable.push(row);
       }
 
-      if (item.kind === "telemetry" && this.state.online) {
-        const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
-        if (ok) await deletePacket(row.pktId);
-        continue;
-      }
-      const sent = await this.send(item.kind, item.to, item.payload, item.priority);
-      if (sent) {
-        await deletePacket(row.pktId);
-        const messageId = (item.payload as { id?: unknown } | null)?.id;
-        if (typeof messageId === "string") {
-          window.dispatchEvent(
-            new CustomEvent("tedbirge:outbox-sent", { detail: { messageId } }),
-          );
+      // Tek turda sınırlı sayıda kalıcı öğe gönderilir; büyük eski kuyruklar
+      // API'yi tekrar 429'a sürüklemeden kontrollü biçimde boşalır.
+      for (const row of durable.slice(0, 100)) {
+        const item = row.env as QueuedItem;
+        if (item.t === "fwd") {
+          if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
+          continue;
+        }
+
+        if (item.kind === "telemetry" && this.state.online) {
+          const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
+          if (ok) await deletePacket(row.pktId);
+          continue;
+        }
+        const sent = await this.send(item.kind, item.to, item.payload, item.priority, false);
+        if (sent) {
+          await deletePacket(row.pktId);
+          const messageId = (item.payload as { id?: unknown } | null)?.id;
+          if (typeof messageId === "string") {
+            window.dispatchEvent(
+              new CustomEvent("tedbirge:outbox-sent", { detail: { messageId } }),
+            );
+          }
         }
       }
+    } finally {
+      this.flushBusy = false;
+      await this.refreshQueueCount();
     }
-    await this.refreshQueueCount();
   }
 
   private async postTelemetry(body: Record<string, unknown>) {

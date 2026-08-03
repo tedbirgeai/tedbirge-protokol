@@ -76,7 +76,14 @@ export const Route = createFileRoute("/api/public/relay")({
         const { checkApiRateLimit } = await import("@/lib/api-rate-limit.server");
         const limit = await checkApiRateLimit("relay", clientKey(request));
         if (!limit.ok) {
-          return json({ ok: false, error: limit.message }, 429);
+          return new Response(JSON.stringify({ ok: false, error: limit.message }), {
+            status: 429,
+            headers: {
+              "content-type": "application/json",
+              "cache-control": "no-store",
+              "retry-after": String(limit.retryAfterSeconds),
+            },
+          });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
