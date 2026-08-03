@@ -25,11 +25,21 @@ import {
 import { knownPeerIds, sendMesh, startNode } from "@/lib/node-runtime";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { getAlias } from "@/lib/chat/profile";
-import { collectChunk, fileToDataUrl, isMediaChunk, splitMedia, MAX_MEDIA_BYTES } from "@/lib/chat/media";
+import {
+  collectChunk,
+  fileToDataUrl,
+  isMediaChunk,
+  splitMedia,
+  MAX_MEDIA_BYTES,
+} from "@/lib/chat/media";
 import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/chat/merkle";
 import { getBrowserNodeId } from "@/lib/browser-node";
 import { bootPairing, isTrusted } from "@/lib/chat/pairing";
 import { receivedSound, sentSound, vibrate } from "@/lib/chat/sounds";
+import { showChatNotification, isWakePayload, type WakePayload } from "@/lib/chat/push";
+import { isPttChunk, playPttChunk } from "@/lib/chat/ptt";
+import { sweepExpired, ttlOf } from "@/lib/chat/ephemeral";
+import { deleteMessageRecord } from "@/lib/store/idb";
 
 export type ChatState = {
   conversations: Conversation[];
@@ -59,7 +69,10 @@ function newId(prefix: string) {
 
 function loadAliases(): Record<string, string> {
   try {
-    return JSON.parse(window.localStorage.getItem("tedbirge.chat.aliases") ?? "{}") as Record<string, string>;
+    return JSON.parse(window.localStorage.getItem("tedbirge.chat.aliases") ?? "{}") as Record<
+      string,
+      string
+    >;
   } catch {
     return {};
   }
@@ -184,8 +197,6 @@ export async function purgeStaleConversations(force = false): Promise<number> {
   return removed;
 }
 
-
-
 async function refreshConversations() {
   const rows = await mergeDuplicates(await listConversations());
   publish({ conversations: rows });
@@ -226,7 +237,6 @@ async function resolveDirectConversation(from: string, alias?: string): Promise<
   return conv;
 }
 
-
 async function refreshMessages(convId: string) {
   const rows = await listMessages(convId);
   publish({ messages: { ...state.messages, [convId]: rows } });
@@ -238,7 +248,10 @@ export function directConvId(a: string, b: string) {
   return `dm_${[a, b].sort().join("_")}`;
 }
 
-export async function ensureDirectConversation(peerId: string, title?: string): Promise<Conversation> {
+export async function ensureDirectConversation(
+  peerId: string,
+  title?: string,
+): Promise<Conversation> {
   const conv = await resolveDirectConversation(peerId, title);
   if (title && conv.title !== title) {
     const updated = { ...conv, title };
@@ -249,7 +262,6 @@ export async function ensureDirectConversation(peerId: string, title?: string): 
   await refreshConversations();
   return conv;
 }
-
 
 export async function createGroup(title: string, members: string[]): Promise<Conversation> {
   const conv: Conversation = {
@@ -341,6 +353,7 @@ export async function sendText(
     outgoing: true,
     status: "pending",
     ...(replyTo ? { replyTo } : {}),
+    ...(ttlOf(convId) ? { expiresAt: Date.now() + ttlOf(convId) } : {}),
   };
   await appendLocal(conv, msg);
   sentSound();
@@ -358,10 +371,29 @@ export async function sendText(
       ts: msg.ts,
       alias: getAlias(),
       replyTo,
+      ttlMs: ttlOf(convId) || undefined,
     });
+    // Uyandırma paketi: karşı cihaz arka plandayken de bildirim üretilir.
+    void sendMesh("presence", peer, {
+      t: "wake",
+      kind: "message",
+      title: getAlias() || "Yeni mesaj",
+      preview: msg.text.slice(0, 80),
+    } satisfies WakePayload);
     delivered = delivered || ok;
   }
   await setStatus(msg.id, delivered ? "sent" : "pending");
+}
+
+/** Bir sohbetin hedef düğümleri (bas-konuş ve konferans için). */
+export async function conversationTargets(convId: string): Promise<string[]> {
+  const conv = await getConversation(convId);
+  return conv ? await targetsOf(conv) : [];
+}
+
+/** Kaydedilmiş sesli not / telsiz kaydını sohbete ekler. */
+export async function sendVoiceFile(convId: string, file: File): Promise<void> {
+  await sendMedia(convId, file);
 }
 
 export async function sendMedia(convId: string, file: File): Promise<void> {
@@ -381,7 +413,12 @@ export async function sendMedia(convId: string, file: File): Promise<void> {
     ts: Date.now(),
     outgoing: true,
     status: "pending",
-    media: { name: file.name, mime: file.type || "application/octet-stream", size: file.size, dataUrl },
+    media: {
+      name: file.name,
+      mime: file.type || "application/octet-stream",
+      size: file.size,
+      dataUrl,
+    },
   };
   await appendLocal(conv, msg);
 
@@ -396,9 +433,15 @@ export async function sendMedia(convId: string, file: File): Promise<void> {
   let ok = false;
   for (const peer of await targetsOf(conv)) {
     for (let i = 0; i < chunks.length; i += 1) {
-      const sent = await sendMesh("media", peer, { ...chunks[i]!, alias: getAlias(), group: conv.group });
+      const sent = await sendMesh("media", peer, {
+        ...chunks[i]!,
+        alias: getAlias(),
+        group: conv.group,
+      });
       ok = ok || sent;
-      publish({ transfers: { ...state.transfers, [mid]: Math.round(((i + 1) / chunks.length) * 100) } });
+      publish({
+        transfers: { ...state.transfers, [mid]: Math.round(((i + 1) / chunks.length) * 100) },
+      });
     }
   }
   const { [mid]: _done, ...rest } = state.transfers;
@@ -453,7 +496,13 @@ export async function reactToMessage(messageId: string, emoji: string) {
   const conv = await getConversation(msg.convId);
   if (!conv) return;
   for (const peer of await targetsOf(conv)) {
-    void sendMesh("chat", peer, { t: "react", id: messageId, emoji: next, convId: msg.convId, alias: getAlias() });
+    void sendMesh("chat", peer, {
+      t: "react",
+      id: messageId,
+      emoji: next,
+      convId: msg.convId,
+      alias: getAlias(),
+    });
   }
 }
 
@@ -468,7 +517,12 @@ export async function deleteMessage(messageId: string, forEveryone = true) {
   const conv = await getConversation(msg.convId);
   if (!conv) return;
   for (const peer of await targetsOf(conv)) {
-    void sendMesh("chat", peer, { t: "delete", id: messageId, convId: msg.convId, alias: getAlias() });
+    void sendMesh("chat", peer, {
+      t: "delete",
+      id: messageId,
+      convId: msg.convId,
+      alias: getAlias(),
+    });
   }
 }
 
@@ -490,13 +544,7 @@ function rememberAlias(peerId: string, alias?: string) {
 }
 
 function notify(title: string, body: string) {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  if (typeof document !== "undefined" && document.visibilityState === "visible") return;
-  try {
-    new Notification(title, { body, icon: "/icon-192.png", tag: "tedbirge-chat" });
-  } catch {
-    /* bazı tarayıcılar yalnızca servis çalışanından izin verir */
-  }
+  void showChatNotification({ title, body, kind: "message" });
 }
 
 type ChatPayload = {
@@ -512,6 +560,7 @@ type ChatPayload = {
   title?: string;
   replyTo?: { id: string; text: string; author: string };
   emoji?: string;
+  ttlMs?: number;
 };
 
 async function onChat(from: string, raw: unknown) {
@@ -520,7 +569,10 @@ async function onChat(from: string, raw: unknown) {
   rememberAlias(from, p.alias);
 
   if (p.t === "typing" || p.t === "stop-typing") {
-    const conv = p.group && p.convId ? await getConversation(p.convId) : await resolveDirectConversation(from, p.alias);
+    const conv =
+      p.group && p.convId
+        ? await getConversation(p.convId)
+        : await resolveDirectConversation(from, p.alias);
     if (!conv) return;
     if (p.t === "stop-typing") clearTyping(conv.id);
     else {
@@ -558,7 +610,9 @@ async function onChat(from: string, raw: unknown) {
       await putConversation({
         id: p.convId,
         title: p.title ?? "Grup",
-        members: Array.from(new Set([...(p.members ?? []), from])).filter((m) => m !== getBrowserNodeId()),
+        members: Array.from(new Set([...(p.members ?? []), from])).filter(
+          (m) => m !== getBrowserNodeId(),
+        ),
         group: true,
         lastTs: Date.now(),
         lastText: "Gruba eklendiniz",
@@ -601,6 +655,7 @@ async function onChat(from: string, raw: unknown) {
     outgoing: false,
     status: "delivered",
     ...(p.replyTo ? { replyTo: p.replyTo } : {}),
+    ...(p.ttlMs || ttlOf(convId) ? { expiresAt: Date.now() + (p.ttlMs || ttlOf(convId)) } : {}),
   };
   await appendLocal(conv, msg);
   clearTyping(convId);
@@ -619,11 +674,19 @@ async function onReceipt(_from: string, raw: unknown) {
 async function onMedia(from: string, raw: unknown) {
   const p = raw as Record<string, unknown>;
   rememberAlias(from, typeof p.alias === "string" ? p.alias : undefined);
+  if (isPttChunk(p)) {
+    // Bas-konuş çerçevesi: anında çalınır, kayıt sesli not olarak da gelir.
+    playPttChunk(p);
+    return;
+  }
   if (!isMediaChunk(p)) return;
   const result = collectChunk(p);
   if (!result.done) {
     publish({
-      transfers: { ...state.transfers, [p.mid]: Math.round((result.received / result.total) * 100) },
+      transfers: {
+        ...state.transfers,
+        [p.mid]: Math.round((result.received / result.total) * 100),
+      },
     });
     return;
   }
@@ -695,7 +758,11 @@ async function onSync(from: string, raw: unknown) {
       .filter((m) => m.convId === msg.convId && !msg.ids.includes(m.id))
       .map((m) => m.id);
     if (missing.length) {
-      void sendMesh("sync", from, { t: "want", convId: msg.convId, ids: missing } satisfies SyncMessage);
+      void sendMesh("sync", from, {
+        t: "want",
+        convId: msg.convId,
+        ids: missing,
+      } satisfies SyncMessage);
     }
     if (theyMiss.length) {
       void sendMesh("sync", from, {
@@ -708,7 +775,8 @@ async function onSync(from: string, raw: unknown) {
 
   if (msg.t === "want") {
     const give = all.filter((m) => msg.ids.includes(m.id));
-    if (give.length) void sendMesh("sync", from, { t: "give", messages: give } satisfies SyncMessage);
+    if (give.length)
+      void sendMesh("sync", from, { t: "give", messages: give } satisfies SyncMessage);
     return;
   }
 
@@ -762,6 +830,13 @@ export async function bootChat() {
   onMesh("receipt", (from, body) => void onReceipt(from, body));
   onMesh("media", (from, body) => void onMedia(from, body));
   onMesh("sync", (from, body) => void onSync(from, body));
+  onMesh("presence", (_from, body) => {
+    if (!isWakePayload(body)) return;
+    void showChatNotification({ title: body.title, body: body.preview, kind: body.kind });
+  });
+  // Kaybolan mesajlar: açılışta ve her dakika süresi dolanlar silinir.
+  void sweepEphemeral();
+  setInterval(() => void sweepEphemeral(), 60_000);
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();
   await cleanDuplicateConversations();
@@ -772,6 +847,16 @@ export async function bootChat() {
     if (knownPeerIds().length) void announceDigests();
   }, 30_000);
   setTimeout(() => void announceDigests(), 4_000);
+}
+
+/** Süresi dolan (kaybolan) mesajları siler ve arayüzü tazeler. */
+export async function sweepEphemeral(): Promise<number> {
+  const n = await sweepExpired((id) => deleteMessageRecord(id));
+  if (n) {
+    await refreshConversations();
+    for (const convId of Object.keys(state.messages)) await refreshMessages(convId);
+  }
+  return n;
 }
 
 export function useChat(): ChatState {

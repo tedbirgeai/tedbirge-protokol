@@ -23,6 +23,8 @@ import {
   Square,
   Star,
   Trash2,
+  Settings,
+  Radio,
   Users,
   Video,
   Volume2,
@@ -40,13 +42,19 @@ import {
   markRead,
   removeConversation,
   requestNotificationPermission,
+  conversationTargets,
   sendMedia,
   sendText,
   togglePin,
   useChat,
   useConversationMessages,
 } from "@/lib/chat/engine";
-import { bootCalls, startCall } from "@/lib/call/engine";
+import { bootCalls, startCall, startConference } from "@/lib/call/engine";
+import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
+import { bootLock, useLock } from "@/lib/chat/lock";
+import { startPtt, stopPtt } from "@/lib/chat/ptt";
+import { ensureNotificationPermission } from "@/lib/chat/push";
+import { ttlOf, ttlLabel } from "@/lib/chat/ephemeral";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
@@ -178,7 +186,11 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
   if (msg.status === "pending")
     return (
-      <Clock className="h-3.5 w-3.5" style={{ color: "var(--wa-tick)" }} aria-label="Bekliyor" />
+      <Clock
+        className="h-3.5 w-3.5"
+        style={{ color: "var(--wa-tick)" }}
+        aria-label="Bekliyor — bağlantı gelince gönderilecek"
+      />
     );
   if (msg.status === "read")
     return (
@@ -192,7 +204,13 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
     return (
       <CheckCheck className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="İletildi" />
     );
-  return <Check className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="Gönderildi" />;
+  return (
+    <Check
+      className="h-4 w-4"
+      style={{ color: "var(--wa-tick)" }}
+      aria-label="Röle üzerinden gönderildi"
+    />
+  );
 }
 
 /** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
@@ -465,6 +483,11 @@ export function ChatApp() {
   const [recSecs, setRecSecs] = useState(0);
   const [soundOff, setSoundOff] = useState(false);
   const [contactsOpen, setContactsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [ptt, setPtt] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(60);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -475,6 +498,7 @@ export function ChatApp() {
     timer: ReturnType<typeof setInterval>;
   } | null>(null);
 
+  const lock = useLock();
   const chat = useChat();
   const node = useNodeRuntime();
   const messages = useConversationMessages(activeId);
@@ -484,6 +508,8 @@ export function ChatApp() {
     void bootChat().then(() => setReady(true));
     // Gelen aramaların duyulabilmesi için sinyal dinleyicisi açılışta kurulur.
     bootCalls();
+    bootLock();
+    void ensureNotificationPermission();
     const unlock = () => unlockAudio();
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
@@ -498,6 +524,7 @@ export function ChatApp() {
   useEffect(() => {
     setReplyTo(null);
     setEmojiOpen(false);
+    setVisibleCount(60);
     inputRef.current?.focus();
   }, [activeId]);
 
@@ -548,6 +575,14 @@ export function ChatApp() {
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   const nameOf = (id: string) => contactLabel(id, chat.aliases[id]);
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
+  /** Kayan pencere: çok uzun sohbetlerde yalnızca son N mesaj DOM'a basılır. */
+  const shownMessages = useMemo(
+    () =>
+      messages.length > visibleCount ? messages.slice(messages.length - visibleCount) : messages,
+    [messages, visibleCount],
+  );
+  const hiddenCount = messages.length - shownMessages.length;
+  const activeTtl = activeId ? ttlOf(activeId) : 0;
 
   /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
   const pendingCount = useMemo(
@@ -557,6 +592,23 @@ export function ChatApp() {
         .filter((m) => m.outgoing && m.status === "pending").length,
     [chat.messages],
   );
+
+  /** Bas-konuş: basılı tutulduğu sürece canlı telsiz akışı gönderilir. */
+  async function pttDown() {
+    if (!active || ptt) return;
+    const targets = await conversationTargets(active.id);
+    const ok = await startPtt(active.id, targets);
+    if (!ok) return setError("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
+    setPtt(true);
+  }
+
+  async function pttUp() {
+    if (!active || !ptt) return;
+    setPtt(false);
+    const targets = await conversationTargets(active.id);
+    const file = await stopPtt(active.id, targets);
+    if (file) void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
+  }
 
   function submitDraft() {
     if (!active || !draft.trim()) return;
@@ -624,6 +676,7 @@ export function ChatApp() {
     }
   }
 
+  if (lock.locked) return <AppLockScreen onUnlocked={() => undefined} />;
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   return (
@@ -633,6 +686,11 @@ export function ChatApp() {
     >
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
+      <ChatSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        convId={activeId}
+      />
       <ContactsDialog
         open={contactsOpen}
         onOpenChange={setContactsOpen}
@@ -646,9 +704,22 @@ export function ChatApp() {
 
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
-        className={`flex h-full w-full shrink-0 flex-col md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
+        className={`relative flex h-full w-full shrink-0 flex-col md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
         style={{ background: "var(--wa-panel)", borderRight: "1px solid var(--wa-border)" }}
       >
+        <SearchPanel
+          open={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          onOpenMessage={(convId, messageId) => {
+            setActiveId(convId);
+            setSearchOpen(false);
+            setVisibleCount(5000);
+            setHighlightId(messageId);
+            setTimeout(() => {
+              document.getElementById(`msg_${messageId}`)?.scrollIntoView({ block: "center" });
+            }, 250);
+          }}
+        />
         <div
           className="flex items-center gap-3 px-4 py-2.5"
           style={{ background: "var(--wa-panel-soft)", borderBottom: "1px solid var(--wa-border)" }}
@@ -682,6 +753,32 @@ export function ChatApp() {
           >
             <Globe className="h-[18px] w-[18px]" />
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setSearchOpen(true);
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label="Mesajlarda ara"
+            title="Mesajlarda ara"
+          >
+            <Search className="h-[18px] w-[18px]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setSettingsOpen(true);
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label="Gizlilik ve yedekleme"
+            title="Gizlilik ve yedekleme"
+          >
+            <Settings className="h-[18px] w-[18px]" />
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -978,6 +1075,7 @@ export function ChatApp() {
                   {activeName}
                 </p>
                 <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
+                  {activeTtl > 0 ? `⏱ ${ttlLabel(activeTtl)} · ` : ""}
                   {peerTyping
                     ? "yazıyor…"
                     : active.group
@@ -991,9 +1089,15 @@ export function ChatApp() {
                 type="button"
                 onClick={() => {
                   pressFeedback();
-                  if (peerId) void startCall(peerId, false, activeName);
+                  if (active.group)
+                    void startConference(
+                      active.members.map((m) => ({ peerId: m, alias: nameOf(m) })),
+                      false,
+                      activeName,
+                    );
+                  else if (peerId) void startCall(peerId, false, activeName);
                 }}
-                disabled={active.group || !peerId}
+                disabled={!peerId}
                 className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
@@ -1004,9 +1108,15 @@ export function ChatApp() {
                 type="button"
                 onClick={() => {
                   pressFeedback();
-                  if (peerId) void startCall(peerId, true, activeName);
+                  if (active.group)
+                    void startConference(
+                      active.members.map((m) => ({ peerId: m, alias: nameOf(m) })),
+                      true,
+                      activeName,
+                    );
+                  else if (peerId) void startCall(peerId, true, activeName);
                 }}
-                disabled={active.group || !peerId}
+                disabled={!peerId}
                 className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
@@ -1050,12 +1160,29 @@ export function ChatApp() {
               >
                 <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
               </div>
-              {messages.map((m, i) => {
-                const prev = messages[i - 1];
+              {hiddenCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((v) => v + 200)}
+                  className="wa-press mx-auto block rounded-full bg-white/80 px-4 py-1.5 text-[12px]"
+                  style={{ color: "var(--wa-muted)" }}
+                >
+                  {hiddenCount} eski mesajı yükle
+                </button>
+              )}
+              {shownMessages.map((m, i) => {
+                const prev = shownMessages[i - 1];
                 const newDay =
                   !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
                 return (
-                  <div key={m.id} className="space-y-1.5">
+                  <div
+                    key={m.id}
+                    id={`msg_${m.id}`}
+                    className={`space-y-1.5 ${highlightId === m.id ? "rounded-lg ring-2 ring-offset-2" : ""}`}
+                    style={
+                      highlightId === m.id ? { boxShadow: "0 0 0 2px var(--wa-accent)" } : undefined
+                    }
+                  >
                     {newDay && (
                       <div
                         className="mx-auto w-fit rounded-md bg-white/80 px-3 py-1 text-[11px] font-medium"
@@ -1108,6 +1235,11 @@ export function ChatApp() {
               </button>
             )}
 
+            {ptt && (
+              <p className="px-5 pb-1 text-xs font-semibold" style={{ color: "#e03131" }}>
+                Telsiz açık — konuşun, bıraktığınızda kayıt sohbete düşer.
+              </p>
+            )}
             {error && (
               <p className="px-5 pb-2 text-xs" style={{ color: "#c0392b" }}>
                 {error}
@@ -1244,6 +1376,25 @@ export function ChatApp() {
                   style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
                 />
               )}
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  void pttDown();
+                }}
+                onPointerUp={() => void pttUp()}
+                onPointerLeave={() => void pttUp()}
+                onPointerCancel={() => void pttUp()}
+                className={`wa-press rounded-full p-2.5 ${ptt ? "wa-ring text-white" : ""}`}
+                style={{
+                  color: ptt ? "#fff" : "var(--wa-muted)",
+                  background: ptt ? "#e03131" : "transparent",
+                }}
+                aria-label="Bas-konuş (telsiz)"
+                title="Basılı tutun — telsiz gibi konuşun"
+              >
+                <Radio className="h-5 w-5" />
+              </button>
               {draft.trim() ? (
                 <button
                   type="submit"
