@@ -27,6 +27,7 @@ import { Route as KayitRouteImport } from './routes/kayit'
 import { Route as KatilRouteImport } from './routes/katil'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
 import { Route as KapsamaRouteImport } from './routes/kapsama'
+import { Route as KablosuzSarjRouteImport } from './routes/kablosuz-sarj'
 import { Route as IzinlerRouteImport } from './routes/izinler'
 import { Route as IletisimRouteImport } from './routes/iletisim'
 import { Route as IhracatUyumRouteImport } from './routes/ihracat-uyum'
@@ -150,6 +151,11 @@ const KarsilastirmaRoute = KarsilastirmaRouteImport.update({
 const KapsamaRoute = KapsamaRouteImport.update({
   id: '/kapsama',
   path: '/kapsama',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KablosuzSarjRoute = KablosuzSarjRouteImport.update({
+  id: '/kablosuz-sarj',
+  path: '/kablosuz-sarj',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IzinlerRoute = IzinlerRouteImport.update({
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/izinler': typeof IzinlerRoute
+  '/kablosuz-sarj': typeof KablosuzSarjRoute
   '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/katil': typeof KatilRoute
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/izinler': typeof IzinlerRoute
+  '/kablosuz-sarj': typeof KablosuzSarjRoute
   '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/katil': typeof KatilRoute
@@ -451,6 +459,7 @@ export interface FileRoutesById {
   '/ihracat-uyum': typeof IhracatUyumRoute
   '/iletisim': typeof IletisimRoute
   '/izinler': typeof IzinlerRoute
+  '/kablosuz-sarj': typeof KablosuzSarjRoute
   '/kapsama': typeof KapsamaRoute
   '/karsilastirma': typeof KarsilastirmaRoute
   '/katil': typeof KatilRoute
@@ -506,6 +515,7 @@ export interface FileRouteTypes {
     | '/ihracat-uyum'
     | '/iletisim'
     | '/izinler'
+    | '/kablosuz-sarj'
     | '/kapsama'
     | '/karsilastirma'
     | '/katil'
@@ -559,6 +569,7 @@ export interface FileRouteTypes {
     | '/ihracat-uyum'
     | '/iletisim'
     | '/izinler'
+    | '/kablosuz-sarj'
     | '/kapsama'
     | '/karsilastirma'
     | '/katil'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/ihracat-uyum'
     | '/iletisim'
     | '/izinler'
+    | '/kablosuz-sarj'
     | '/kapsama'
     | '/karsilastirma'
     | '/katil'
@@ -668,6 +680,7 @@ export interface RootRouteChildren {
   IhracatUyumRoute: typeof IhracatUyumRoute
   IletisimRoute: typeof IletisimRoute
   IzinlerRoute: typeof IzinlerRoute
+  KablosuzSarjRoute: typeof KablosuzSarjRoute
   KapsamaRoute: typeof KapsamaRoute
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KatilRoute: typeof KatilRoute
@@ -825,6 +838,13 @@ declare module '@tanstack/react-router' {
       path: '/kapsama'
       fullPath: '/kapsama'
       preLoaderRoute: typeof KapsamaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kablosuz-sarj': {
+      id: '/kablosuz-sarj'
+      path: '/kablosuz-sarj'
+      fullPath: '/kablosuz-sarj'
+      preLoaderRoute: typeof KablosuzSarjRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/izinler': {
@@ -1105,6 +1125,7 @@ const rootRouteChildren: RootRouteChildren = {
   IhracatUyumRoute: IhracatUyumRoute,
   IletisimRoute: IletisimRoute,
   IzinlerRoute: IzinlerRoute,
+  KablosuzSarjRoute: KablosuzSarjRoute,
   KapsamaRoute: KapsamaRoute,
   KarsilastirmaRoute: KarsilastirmaRoute,
   KatilRoute: KatilRoute,

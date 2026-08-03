@@ -30,6 +30,10 @@ import { digestsOf, isSyncMessage, merkleRoot, type SyncMessage } from "@/lib/ch
 import { getBrowserNodeId } from "@/lib/browser-node";
 import { bootPairing, isTrusted } from "@/lib/chat/pairing";
 import { receivedSound, sentSound, vibrate } from "@/lib/chat/sounds";
+import { showChatNotification, isWakePayload, type WakePayload } from "@/lib/chat/push";
+import { isPttChunk, playPttChunk } from "@/lib/chat/ptt";
+import { sweepExpired, ttlOf } from "@/lib/chat/ephemeral";
+import { deleteMessageRecord } from "@/lib/store/idb";
 
 export type ChatState = {
   conversations: Conversation[];
@@ -341,6 +345,7 @@ export async function sendText(
     outgoing: true,
     status: "pending",
     ...(replyTo ? { replyTo } : {}),
+    ...(ttlOf(convId) ? { expiresAt: Date.now() + ttlOf(convId) } : {}),
   };
   await appendLocal(conv, msg);
   sentSound();
@@ -358,10 +363,29 @@ export async function sendText(
       ts: msg.ts,
       alias: getAlias(),
       replyTo,
+      ttlMs: ttlOf(convId) || undefined,
     });
+    // Uyandırma paketi: karşı cihaz arka plandayken de bildirim üretilir.
+    void sendMesh("presence", peer, {
+      t: "wake",
+      kind: "message",
+      title: getAlias() || "Yeni mesaj",
+      preview: msg.text.slice(0, 80),
+    } satisfies WakePayload);
     delivered = delivered || ok;
   }
   await setStatus(msg.id, delivered ? "sent" : "pending");
+}
+
+/** Bir sohbetin hedef düğümleri (bas-konuş ve konferans için). */
+export async function conversationTargets(convId: string): Promise<string[]> {
+  const conv = await getConversation(convId);
+  return conv ? await targetsOf(conv) : [];
+}
+
+/** Kaydedilmiş sesli not / telsiz kaydını sohbete ekler. */
+export async function sendVoiceFile(convId: string, file: File): Promise<void> {
+  await sendMedia(convId, file);
 }
 
 export async function sendMedia(convId: string, file: File): Promise<void> {
@@ -490,13 +514,7 @@ function rememberAlias(peerId: string, alias?: string) {
 }
 
 function notify(title: string, body: string) {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  if (typeof document !== "undefined" && document.visibilityState === "visible") return;
-  try {
-    new Notification(title, { body, icon: "/icon-192.png", tag: "tedbirge-chat" });
-  } catch {
-    /* bazı tarayıcılar yalnızca servis çalışanından izin verir */
-  }
+  void showChatNotification({ title, body, kind: "message" });
 }
 
 type ChatPayload = {
@@ -512,6 +530,7 @@ type ChatPayload = {
   title?: string;
   replyTo?: { id: string; text: string; author: string };
   emoji?: string;
+  ttlMs?: number;
 };
 
 async function onChat(from: string, raw: unknown) {
@@ -601,6 +620,7 @@ async function onChat(from: string, raw: unknown) {
     outgoing: false,
     status: "delivered",
     ...(p.replyTo ? { replyTo: p.replyTo } : {}),
+    ...(p.ttlMs || ttlOf(convId) ? { expiresAt: Date.now() + (p.ttlMs || ttlOf(convId)) } : {}),
   };
   await appendLocal(conv, msg);
   clearTyping(convId);
@@ -619,6 +639,11 @@ async function onReceipt(_from: string, raw: unknown) {
 async function onMedia(from: string, raw: unknown) {
   const p = raw as Record<string, unknown>;
   rememberAlias(from, typeof p.alias === "string" ? p.alias : undefined);
+  if (isPttChunk(p)) {
+    // Bas-konuş çerçevesi: anında çalınır, kayıt sesli not olarak da gelir.
+    playPttChunk(p);
+    return;
+  }
   if (!isMediaChunk(p)) return;
   const result = collectChunk(p);
   if (!result.done) {
@@ -762,6 +787,13 @@ export async function bootChat() {
   onMesh("receipt", (from, body) => void onReceipt(from, body));
   onMesh("media", (from, body) => void onMedia(from, body));
   onMesh("sync", (from, body) => void onSync(from, body));
+  onMesh("presence", (_from, body) => {
+    if (!isWakePayload(body)) return;
+    void showChatNotification({ title: body.title, body: body.preview, kind: body.kind });
+  });
+  // Kaybolan mesajlar: açılışta ve her dakika süresi dolanlar silinir.
+  void sweepEphemeral();
+  setInterval(() => void sweepEphemeral(), 60_000);
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();
   await cleanDuplicateConversations();
@@ -772,6 +804,16 @@ export async function bootChat() {
     if (knownPeerIds().length) void announceDigests();
   }, 30_000);
   setTimeout(() => void announceDigests(), 4_000);
+}
+
+/** Süresi dolan (kaybolan) mesajları siler ve arayüzü tazeler. */
+export async function sweepEphemeral(): Promise<number> {
+  const n = await sweepExpired((id) => deleteMessageRecord(id));
+  if (n) {
+    await refreshConversations();
+    for (const convId of Object.keys(state.messages)) await refreshMessages(convId);
+  }
+  return n;
 }
 
 export function useChat(): ChatState {

@@ -20,6 +20,7 @@ import {
   toggleMute,
   useCall,
 } from "@/lib/call/engine";
+import type { CallQuality } from "@/lib/call/engine";
 import { callEndSound, pressFeedback, startRingback, startRingtone, stopRing } from "@/lib/chat/sounds";
 
 function useElapsed(startedAt: number | null) {
@@ -32,6 +33,31 @@ function useElapsed(startedAt: number | null) {
   if (!startedAt) return "";
   const s = Math.max(0, Math.floor((now - startedAt) / 1000));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** Bağlantı kalitesi çubuk göstergesi (jitter + paket kaybı + RTT). */
+function QualityBars({ q }: { q: CallQuality }) {
+  const color = q.bars >= 3 ? "var(--wa-accent, #25d366)" : q.bars === 2 ? "#f2a33c" : "#e03131";
+  return (
+    <span
+      className="inline-flex items-end gap-[2px]"
+      title={`${q.label}${q.rttMs !== null ? ` · ${q.rttMs} ms` : ""}${q.lossPct !== null ? ` · %${q.lossPct} kayıp` : ""}`}
+      aria-label={`Bağlantı kalitesi: ${q.label}`}
+    >
+      {[1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 3,
+            height: 4 + i * 3,
+            borderRadius: 1,
+            background: i <= q.bars ? color : "currentColor",
+            opacity: i <= q.bars ? 1 : 0.25,
+          }}
+        />
+      ))}
+    </span>
+  );
 }
 
 /** Tam ekran görüşme katmanı — geleneksel telefon arama deneyimi. */
@@ -78,6 +104,11 @@ export function CallOverlay() {
             ? "Görüşme bitti"
             : elapsed || "Görüşme sürüyor";
 
+  const statusLine =
+    call.phase === "reconnecting" && call.reconnects > 0
+      ? `${label} (${call.reconnects}. deneme)`
+      : label;
+
   const ctlBase =
     "wa-press flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground hover:bg-accent";
 
@@ -100,7 +131,7 @@ export function CallOverlay() {
               className="absolute bottom-8 right-8 h-40 w-28 rounded-sm border border-border object-cover"
             />
             <div className="absolute left-8 top-8 rounded-full bg-background/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              {call.peerAlias} · {label}
+              {call.peerAlias} · {statusLine}
             </div>
           </>
         ) : (
@@ -110,7 +141,30 @@ export function CallOverlay() {
             </div>
             <video ref={remoteRef} autoPlay playsInline className="hidden" />
             <p className="mt-6 text-xl font-semibold text-foreground">{call.peerAlias}</p>
-            <p className="mt-1 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+            <p className="mt-1 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              {statusLine}
+              {call.phase === "active" && <QualityBars q={call.quality} />}
+            </p>
+            {call.phase === "active" && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Bağlantı: {call.quality.label}
+                {call.quality.rttMs !== null ? ` · ${call.quality.rttMs} ms` : ""}
+                {call.quality.jitterMs !== null ? ` · titreşim ${call.quality.jitterMs} ms` : ""}
+                {call.quality.lossPct !== null ? ` · kayıp %${call.quality.lossPct}` : ""}
+              </p>
+            )}
+            {call.conference && call.participants.length > 0 && (
+              <ul className="mt-4 flex flex-wrap justify-center gap-2">
+                {call.participants.map((p) => (
+                  <li
+                    key={p.peerId}
+                    className="rounded-full border border-border px-3 py-1 text-[11px] text-muted-foreground"
+                  >
+                    {p.alias} · {p.connected ? "bağlı" : "bekliyor"}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

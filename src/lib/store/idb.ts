@@ -502,7 +502,10 @@ export type ChatMessage = {
   deleted?: boolean;
   /** Yıldızlanan mesaj. */
   starred?: boolean;
+  /** Kaybolan mesaj: bu andan sonra cihazdan fiziksel olarak silinir. */
+  expiresAt?: number;
 };
+
 
 export type Conversation = {
   id: string;
@@ -593,5 +596,15 @@ export function listAllMessages(): Promise<ChatMessage[]> {
   return safe(
     tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>),
     [],
+  );
+}
+
+/** Tek bir mesajı cihazdan fiziksel olarak siler (kaybolan mesaj / KVKK). */
+export function deleteMessageRecord(id: string) {
+  return safe(
+    tx<undefined>("messages", "readwrite", (s) => s.delete(id) as IDBRequest<undefined>).then(
+      () => true,
+    ),
+    false,
   );
 }
