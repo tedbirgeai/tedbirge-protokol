@@ -264,6 +264,8 @@ export class BrowserNode {
     { spk: string; bpk: string; fingerprint: string; verified: boolean; trust: TrustStatus }
   >();
   private timer: ReturnType<typeof setInterval> | null = null;
+  private retryTimer: ReturnType<typeof setInterval> | null = null;
+
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
   private carrierSend: ((raw: string, priority: Priority) => boolean) | null = null;
@@ -365,7 +367,13 @@ export class BrowserNode {
       });
 
     await this.heartbeat();
-    this.timer = setInterval(() => void this.heartbeat(), 60_000);
+    this.timer = setInterval(() => {
+      void this.heartbeat();
+      // Bekleyen mesajlar yalnız olay anında değil, düzenli olarak da denenir.
+      void this.flushQueue();
+    }, 60_000);
+    this.retryTimer = setInterval(() => void this.flushQueue(), 12_000);
+
   }
 
   /**
@@ -498,6 +506,9 @@ export class BrowserNode {
   stop() {
     this.timer && clearInterval(this.timer);
     this.timer = null;
+    if (this.retryTimer) clearInterval(this.retryTimer);
+    this.retryTimer = null;
+
     if (this.localTimer) clearInterval(this.localTimer);
     this.localTimer = null;
     if (this.lanTimer) clearInterval(this.lanTimer);
@@ -838,9 +849,14 @@ export class BrowserNode {
         }
       }
       recordTx(false);
+      // Arama sinyalleri gerçek zamanlıdır: kuyruğa yazılırsa uygulama
+      // yeniden açıldığında eski teklif tekrar gönderilir ve "kendi kendine
+      // arama" hissi doğar. Bu yüzden call paketleri asla saklanmaz.
+      if (kind === "call") return false;
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
+
 
     for (const target of targets) {
       const keys = this.peerKeys.get(target)!;
@@ -911,10 +927,16 @@ export class BrowserNode {
         await deletePacket(row.pktId);
         continue;
       }
+      // Eski arama sinyalleri kuyrukta kalmışsa temizlenir (tekrar çalmasın).
+      if ((item.t === "intent" && item.kind === "call") || (item.t === "fwd" && item.env.h.kind === "call")) {
+        await deletePacket(row.pktId);
+        continue;
+      }
       if (item.t === "fwd") {
         if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
         continue;
       }
+
       if (item.kind === "telemetry" && this.state.online) {
         const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
         if (ok) await deletePacket(row.pktId);
