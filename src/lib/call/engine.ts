@@ -378,6 +378,8 @@ async function dial(peerId: string, alias: string, video: boolean) {
   stream.getTracks().forEach((t) => {
     if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
   });
+  await tuneSenders(leg.pc);
+
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
   const sent = await sendMesh("call", peerId, {
