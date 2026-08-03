@@ -101,7 +101,6 @@ import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
 
-
 function timeOf(ts: number) {
   return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
@@ -303,7 +302,11 @@ function MessageRow({
         <div
           className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
           style={{
-            background: isSos ? "#fff0f0" : msg.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
+            background: isSos
+              ? "#fff0f0"
+              : msg.outgoing
+                ? "var(--wa-bubble-out)"
+                : "var(--wa-bubble-in)",
             color: "var(--wa-text)",
             border: isSos ? "1px solid #e03131" : undefined,
           }}
@@ -357,7 +360,10 @@ function MessageRow({
           ) : msg.geo ? (
             <div>
               {isSos && (
-                <p className="mb-1 flex items-center gap-1 text-[13px] font-bold" style={{ color: "#e03131" }}>
+                <p
+                  className="mb-1 flex items-center gap-1 text-[13px] font-bold"
+                  style={{ color: "#e03131" }}
+                >
                   <Siren className="h-4 w-4" aria-hidden /> ACİL DURUM YAYINI
                 </p>
               )}
@@ -383,7 +389,6 @@ function MessageRow({
               )}
               <a
                 href={geoUri({ lat: msg.geo.lat, lon: msg.geo.lon, ts: msg.ts })}
-
                 className="mt-1 inline-flex items-center gap-1 text-[12px] underline"
                 style={{ color: "var(--wa-accent)" }}
               >
@@ -574,7 +579,6 @@ function MessageRow({
   );
 }
 
-
 function MenuItem({
   icon,
   label,
@@ -694,7 +698,6 @@ export function ChatApp() {
     };
   }, []);
 
-
   useEffect(() => {
     setOnboarded(isOnboarded());
     void bootChat().then(() => setReady(true));
@@ -767,7 +770,6 @@ export function ChatApp() {
     () => allConversations.filter((c) => isArchived(c.id)).length,
     [allConversations, folderVersion],
   );
-
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
@@ -891,7 +893,6 @@ export function ChatApp() {
       setError("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
     }
   }
-
 
   async function shareInvite() {
     const url = `${window.location.origin}/chat`;
@@ -1107,8 +1108,6 @@ export function ChatApp() {
             );
           })}
         </div>
-
-
 
         {groupMode && (
           <div
@@ -1454,7 +1453,11 @@ export function ChatApp() {
                       className="sticky top-0 z-10 mx-auto mb-2 flex w-full max-w-2xl items-center gap-2 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
                       style={{ borderLeft: "3px solid var(--wa-accent)" }}
                     >
-                      <Pin className="h-3.5 w-3.5" style={{ color: "var(--wa-accent)" }} aria-hidden />
+                      <Pin
+                        className="h-3.5 w-3.5"
+                        style={{ color: "var(--wa-accent)" }}
+                        aria-hidden
+                      />
                       <button
                         type="button"
                         onClick={() => {
@@ -1529,7 +1532,6 @@ export function ChatApp() {
                       }}
                       onForward={setForwardMsg}
                     />
-
                   </div>
                 );
               })}
@@ -1611,7 +1613,6 @@ export function ChatApp() {
             )}
 
             {replyTo && (
-
               <div
                 className="wa-pop flex items-start gap-2 px-3 pt-2"
                 style={{ background: "var(--wa-panel-soft)" }}

@@ -45,9 +45,15 @@ export function EmergencyDialog({
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-semibold">
-            <Siren className="h-5 w-5" style={{ color: "#e03131" }} aria-hidden /> Konum ve acil durum
+            <Siren className="h-5 w-5" style={{ color: "#e03131" }} aria-hidden /> Konum ve acil
+            durum
           </h2>
-          <button type="button" onClick={onClose} className="wa-press rounded-full p-2" aria-label="Kapat">
+          <button
+            type="button"
+            onClick={onClose}
+            className="wa-press rounded-full p-2"
+            aria-label="Kapat"
+          >
             <X className="h-4 w-4" style={{ color: "var(--wa-muted)" }} />
           </button>
         </div>

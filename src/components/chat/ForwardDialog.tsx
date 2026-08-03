@@ -49,7 +49,12 @@ export function ForwardDialog({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">Mesajı ilet</h2>
-          <button type="button" onClick={onClose} className="wa-press rounded-full p-2" aria-label="Kapat">
+          <button
+            type="button"
+            onClick={onClose}
+            className="wa-press rounded-full p-2"
+            aria-label="Kapat"
+          >
             <X className="h-4 w-4" style={{ color: "var(--wa-muted)" }} />
           </button>
         </div>
@@ -66,7 +71,10 @@ export function ForwardDialog({
           Alıntılı ilet (kaynağı göster)
         </label>
 
-        <ul className="mt-3 flex-1 overflow-y-auto rounded-lg" style={{ border: "1px solid var(--wa-border)" }}>
+        <ul
+          className="mt-3 flex-1 overflow-y-auto rounded-lg"
+          style={{ border: "1px solid var(--wa-border)" }}
+        >
           {targets.length === 0 && (
             <li className="px-4 py-6 text-center text-[13px]" style={{ color: "var(--wa-muted)" }}>
               İletilecek başka sohbet yok.
