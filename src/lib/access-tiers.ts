@@ -153,7 +153,8 @@ export async function scanLocalNetwork(): Promise<string | null> {
   if (typeof window === "undefined") return null;
   publish({ scanning: true });
   const remembered = storedEndpoint();
-  const targets = remembered ? [remembered, ...LOCAL_CANDIDATES.filter((c) => c !== remembered)] : LOCAL_CANDIDATES;
+  const list = localCandidates();
+  const targets = remembered ? [remembered, ...list.filter((c) => c !== remembered)] : list;
   const found: string[] = [];
   for (const target of targets) {
     // eslint-disable-next-line no-await-in-loop -- sıralı deneme yerel ağı boğmamak için bilinçli
