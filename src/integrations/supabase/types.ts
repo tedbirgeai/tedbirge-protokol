@@ -994,6 +994,42 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          expires_at: string
+          failure_count: number
+          id: string
+          last_seen_at: string
+          node_id: string
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          expires_at?: string
+          failure_count?: number
+          id?: string
+          last_seen_at?: string
+          node_id: string
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          expires_at?: string
+          failure_count?: number
+          id?: string
+          last_seen_at?: string
+          node_id?: string
+          p256dh?: string
+        }
+        Relationships: []
+      }
       relay_directory: {
         Row: {
           box_public: string
