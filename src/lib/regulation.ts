@@ -486,12 +486,18 @@ export const CONTRACT_ANNEXES: ContractAnnex[] = [
  * ------------------------------------------------------------------ */
 
 export type OfficialDraft = {
-  id: "btk-muafiyet" | "valilik-saha-testi";
+  id:
+    | "btk-muafiyet"
+    | "valilik-saha-testi"
+    | "kvkk-sifat-beyani"
+    | "bulut-birlikte-calisabilirlik"
+    | "afad-kamu-protokol";
   label: string;
   title: string;
   summary: string;
   body: string;
 };
+
 
 export const OFFICIAL_DRAFTS: OfficialDraft[] = [
   {
