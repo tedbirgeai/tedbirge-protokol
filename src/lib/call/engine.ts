@@ -150,7 +150,12 @@ function createLeg(peerId: string, alias: string) {
     publish({ streamVersion: state.streamVersion + 1 });
   };
   pc.onicecandidate = (e) => {
-    if (e.candidate) void sendMesh("call", peerId, { t: "ice", candidate: e.candidate.toJSON() });
+    if (e.candidate)
+      void sendMesh("call", peerId, {
+        t: "ice",
+        candidate: e.candidate.toJSON(),
+        at: Date.now(),
+      });
   };
   pc.onconnectionstatechange = () => {
     syncParticipants();
@@ -209,6 +214,7 @@ async function restartIce(peerId: string) {
       video: state.video,
       alias: getAlias(),
       restart: true,
+      at: Date.now(),
     });
     const previous = reconnectTimers.get(peerId);
     if (previous) clearTimeout(previous);
@@ -413,7 +419,13 @@ export async function acceptCall() {
       await applyPendingIce(peerId, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
-      await sendMesh("call", peerId, { t: "answer", sdp: answer.sdp, alias: getAlias() });
+      const answered = await sendMesh("call", peerId, {
+        t: "answer",
+        sdp: answer.sdp,
+        alias: getAlias(),
+        at: Date.now(),
+      });
+      if (!answered) throw new Error("answer-unavailable");
         pendingOffers.delete(peerId);
         accepted += 1;
       } catch {
@@ -432,7 +444,7 @@ export async function acceptCall() {
 
 export function endCall(reason?: string) {
   const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
-  for (const peerId of peers) void sendMesh("call", peerId, { t: "bye" });
+  for (const peerId of peers) void sendMesh("call", peerId, { t: "bye", at: Date.now() });
   cleanup();
   publish({ phase: reason ? "ended" : "idle", error: reason ?? null });
   setTimeout(() => {
@@ -451,7 +463,7 @@ export function endCall(reason?: string) {
 export function dropParticipant(peerId: string) {
   const leg = legs.get(peerId);
   if (!leg) return;
-  void sendMesh("call", peerId, { t: "bye" });
+  void sendMesh("call", peerId, { t: "bye", at: Date.now() });
   try {
     leg.pc.close();
   } catch {
@@ -544,13 +556,17 @@ type CallSignal = {
 
 /** Bayat teklif penceresi: bundan eski sinyaller çalmaz (kuyruk tekrarı). */
 const OFFER_FRESH_MS = 60_000;
+const CONTROL_FRESH_MS = 90_000;
 
 async function onCallSignal(from: string, raw: unknown) {
   const p = raw as CallSignal;
   if (!p?.t) return;
   // Kendi cihazımızdan dönen sinyal asla arama olarak gösterilmez.
   if (!from || from === nodeSelf()) return;
-  if (p.t === "offer" && typeof p.at === "number" && Date.now() - p.at > OFFER_FRESH_MS) return;
+  const age = typeof p.at === "number" ? Date.now() - p.at : Number.POSITIVE_INFINITY;
+  // Eski sürümün tarihsiz çağrı paketleri bulut röleden gelirse çalıştırılmaz;
+  // böylece uygulama açılışında eski arama/ICE/bitirme sinyali canlanamaz.
+  if (p.t === "offer" ? age > OFFER_FRESH_MS : age > CONTROL_FRESH_MS) return;
 
 
   if (p.t === "offer" && p.sdp) {
@@ -566,7 +582,7 @@ async function onCallSignal(from: string, raw: unknown) {
       await applyPendingIce(from, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
-      await sendMesh("call", from, { t: "answer", sdp: answer.sdp });
+      await sendMesh("call", from, { t: "answer", sdp: answer.sdp, at: Date.now() });
       return;
     }
     // Aynı anda iki taraf da aradıysa deterministik "perfect negotiation":
@@ -580,7 +596,12 @@ async function onCallSignal(from: string, raw: unknown) {
         await applyPendingIce(from, leg.pc);
         const answer = await leg.pc.createAnswer();
         await leg.pc.setLocalDescription(answer);
-        await sendMesh("call", from, { t: "answer", sdp: answer.sdp, alias: getAlias() });
+        await sendMesh("call", from, {
+          t: "answer",
+          sdp: answer.sdp,
+          alias: getAlias(),
+          at: Date.now(),
+        });
         if (outgoingTimer) clearTimeout(outgoingTimer);
         outgoingTimer = null;
         publish({ phase: "active", startedAt: Date.now(), error: null });
@@ -602,15 +623,20 @@ async function onCallSignal(from: string, raw: unknown) {
         await applyPendingIce(from, fresh.pc);
         const answer = await fresh.pc.createAnswer();
         await fresh.pc.setLocalDescription(answer);
-        await sendMesh("call", from, { t: "answer", sdp: answer.sdp, alias: getAlias() });
+        await sendMesh("call", from, {
+          t: "answer",
+          sdp: answer.sdp,
+          alias: getAlias(),
+          at: Date.now(),
+        });
         publish({ conference: legs.size > 1 });
       } catch {
-        void sendMesh("call", from, { t: "busy" });
+        void sendMesh("call", from, { t: "busy", at: Date.now() });
       }
       return;
     }
     if (state.phase !== "idle" && state.phase !== "ended" && state.phase !== "ringing") {
-      void sendMesh("call", from, { t: "busy" });
+      void sendMesh("call", from, { t: "busy", at: Date.now() });
       return;
     }
     pendingOffers.set(from, { desc, alias: p.alias ?? from, video: Boolean(p.video) });
@@ -708,7 +734,7 @@ export function bootCalls() {
   onMesh("call", (from, body) => void onCallSignal(from, body));
   window.addEventListener("pagehide", () => {
     const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
-    for (const peerId of peers) void sendMesh("call", peerId, { t: "bye" });
+    for (const peerId of peers) void sendMesh("call", peerId, { t: "bye", at: Date.now() });
   });
 }
 
