@@ -164,7 +164,10 @@ function Admin() {
               ? "AI danışman talepleri"
               : tab === "plan"
                 ? "İş planı geliştirme rehberi"
-                : "İdari belgeler & dilekçeler"}
+                : tab === "interop"
+                  ? "El sıkışma haritası"
+                  : "İdari belgeler & dilekçeler"}
+
         </h1>
 
 
