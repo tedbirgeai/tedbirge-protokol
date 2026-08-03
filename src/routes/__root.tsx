@@ -19,6 +19,8 @@ import { NodeDock } from "../components/site/NodeDock";
 import { bootNodeRuntime } from "../lib/node-runtime";
 import { bootAccessEngine } from "../lib/access-tiers";
 import { ensureOfflineGrant } from "../lib/offline-license";
+import { runOneTimePurge } from "../lib/hard-reset";
+
 
 
 function NotFoundComponent() {
