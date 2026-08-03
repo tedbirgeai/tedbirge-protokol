@@ -68,7 +68,6 @@ import { ForwardDialog } from "@/components/chat/ForwardDialog";
 import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
 import { bootLock, useLock } from "@/lib/chat/lock";
 import { startPtt, stopPtt } from "@/lib/chat/ptt";
-import { ensureNotificationPermission } from "@/lib/chat/push";
 import { ttlOf, ttlLabel } from "@/lib/chat/ephemeral";
 import {
   ARCHIVE,
@@ -705,7 +704,6 @@ export function ChatApp() {
     // Gelen aramaların duyulabilmesi için sinyal dinleyicisi açılışta kurulur.
     bootCalls();
     bootLock();
-    void ensureNotificationPermission();
     const unlock = () => unlockAudio();
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });

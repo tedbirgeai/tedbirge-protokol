@@ -1058,7 +1058,15 @@ export class BrowserNode {
         continue;
       }
       const sent = await this.send(item.kind, item.to, item.payload, item.priority);
-      if (sent) await deletePacket(row.pktId);
+      if (sent) {
+        await deletePacket(row.pktId);
+        const messageId = (item.payload as { id?: unknown } | null)?.id;
+        if (typeof messageId === "string") {
+          window.dispatchEvent(
+            new CustomEvent("tedbirge:outbox-sent", { detail: { messageId } }),
+          );
+        }
+      }
     }
     await this.refreshQueueCount();
   }

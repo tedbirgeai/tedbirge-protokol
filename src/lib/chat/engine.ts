@@ -1189,6 +1189,10 @@ export async function bootChat() {
     if (!isWakePayload(body)) return;
     void showChatNotification({ title: body.title, body: body.preview, kind: body.kind });
   });
+  window.addEventListener("tedbirge:outbox-sent", (event) => {
+    const messageId = (event as CustomEvent<{ messageId?: string }>).detail?.messageId;
+    if (messageId) void setStatus(messageId, "sent");
+  });
   // Sohbeti olmayan menzildeki düğümlerden gelen acil durum yayını.
   onMesh("alert", (_from, body) => {
     const p = body as { t?: string; text?: string; alias?: string } | null;
