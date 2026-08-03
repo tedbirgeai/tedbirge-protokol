@@ -46,11 +46,11 @@ export async function pushRelayEnvelopes(
 export async function pullRelayEnvelopes(
   nodeId: string,
   ack: string[] = [],
-): Promise<{ pktId: string; envelope: string }[]> {
+): Promise<{ pktId: string; envelope: string }[] | null> {
   const res = await call<{ ok: boolean; items: { pktId: string; envelope: string }[] }>({
     action: "pull",
     nodeId,
     ack,
   });
-  return res?.ok ? (res.items ?? []) : [];
+  return res?.ok ? (res.items ?? []) : null;
 }

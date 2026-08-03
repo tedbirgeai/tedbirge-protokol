@@ -283,6 +283,8 @@ export class BrowserNode {
   /** Bulut yedek röle (store-and-forward) yoklama zamanlayıcısı. */
   private relayTimer: ReturnType<typeof setInterval> | null = null;
   private relayBusy = false;
+  private relayAck: string[] = [];
+  private relayFailures = 0;
   private flushBusy = false;
 
   private identity: Identity | null = null;
@@ -400,7 +402,7 @@ export class BrowserNode {
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
     void this.publishDirectory();
     void this.pollRelay();
-    this.relayTimer = setInterval(() => void this.pollRelay(), 8_000);
+    this.scheduleRelayPoll();
   }
 
   /** Kendi genel anahtarlarımızı rehbere yazar (ilk temas için gerekir). */
@@ -420,21 +422,42 @@ export class BrowserNode {
     this.relayBusy = true;
     try {
       const { pullRelayEnvelopes } = await import("@/lib/relay-cloud");
-      const items = await pullRelayEnvelopes(this.nodeId);
+      // Önceki başarılı turun onayları yeni çekme isteğine eklenir. Böylece
+      // teslim + onay için iki ayrı HTTP isteği yerine tur başına tek istek olur.
+      const ack = this.relayAck;
+      const items = await pullRelayEnvelopes(this.nodeId, ack);
+      if (items === null) {
+        this.relayFailures = Math.min(this.relayFailures + 1, 5);
+        return;
+      }
+      this.relayFailures = 0;
+      this.relayAck = [];
       if (!items.length) return;
       for (const item of items) {
         await this.onMeshMessage(item.envelope, "cloud-relay");
       }
-      await pullRelayEnvelopes(
-        this.nodeId,
-        items.map((i) => i.pktId),
-      );
+      this.relayAck = items.map((i) => i.pktId);
       this.emit({ lastRelayAt: new Date().toISOString() });
     } catch {
       /* ağ hatası: bir sonraki turda tekrar denenir */
     } finally {
       this.relayBusy = false;
     }
+  }
+
+  /**
+   * Sabit aralıklı toplu yoklama yerine şaşırtılmış, hata halinde kademeli
+   * zamanlama kullanılır. Aynı ağdaki cihazlar aynı milisaniyede yük bindirmez.
+   */
+  private scheduleRelayPoll() {
+    if (this.relayTimer) clearTimeout(this.relayTimer);
+    const base = 15_000 * 2 ** this.relayFailures;
+    const delay = Math.min(base, 120_000) + Math.floor(Math.random() * 3_000);
+    this.relayTimer = setTimeout(async () => {
+      this.relayTimer = null;
+      await this.pollRelay();
+      if (this.state.running) this.scheduleRelayPoll();
+    }, delay);
   }
 
   /**
