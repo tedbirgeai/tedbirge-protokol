@@ -608,10 +608,8 @@ function MenuItem({
 
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
-  const { skin } = useChatSkin();
   return (
     <div
-      data-skin={skin}
       className="wa flex h-[100dvh] items-center justify-center p-6"
       style={{ background: "var(--wa-panel-soft)" }}
     >
@@ -650,7 +648,6 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 }
 
 export function ChatApp() {
-  const { skin, toggle: toggleSkin } = useChatSkin();
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
 
@@ -940,7 +937,6 @@ export function ChatApp() {
 
   return (
     <div
-      data-skin={skin}
       className="wa flex h-[100dvh] w-full overflow-hidden"
       style={{ background: "var(--wa-panel-soft)" }}
     >
@@ -1085,23 +1081,6 @@ export function ChatApp() {
               <Volume2 className="h-[18px] w-[18px]" />
             )}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              toggleSkin();
-              toast.success(
-                skin === "pro" ? "Klasik arayüze dönüldü" : "Yeni arayüz etkinleştirildi",
-              );
-            }}
-            className="wa-press rounded-full p-2 hover:bg-black/5"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label={skin === "pro" ? "Klasik arayüze dön" : "Yeni arayüzü aç"}
-            title={skin === "pro" ? "Klasik arayüze dön" : "Yeni arayüzü aç"}
-          >
-            <Palette className="h-[18px] w-[18px]" />
-          </button>
-
           <button
             type="button"
             onClick={() => {
