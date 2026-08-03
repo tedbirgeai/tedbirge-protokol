@@ -54,6 +54,17 @@ export function CallOverlay() {
     void el.setSinkId?.(speaker ? "default" : "communications").catch(() => undefined);
   }, [speaker, call.phase]);
 
+  /** Zil / çalıyor tonu — geleneksel telefon deneyimi. */
+  useEffect(() => {
+    if (call.phase === "ringing") startRingtone();
+    else if (call.phase === "outgoing") startRingback();
+    else {
+      stopRing();
+      if (call.phase === "ended") callEndSound();
+    }
+    return () => stopRing();
+  }, [call.phase]);
+
   if (call.phase === "idle") return null;
 
   const label =
