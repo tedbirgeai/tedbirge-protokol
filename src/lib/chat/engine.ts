@@ -1005,6 +1005,7 @@ async function onChat(from: string, raw: unknown) {
     outgoing: false,
     status: "delivered",
     ...(p.replyTo ? { replyTo: p.replyTo } : {}),
+    ...(p.forwarded ? { forwarded: true, forwardedFrom: p.forwardedFrom } : {}),
     ...(p.ttlMs || ttlOf(convId) ? { expiresAt: Date.now() + (p.ttlMs || ttlOf(convId)) } : {}),
   };
   await appendLocal(conv, msg);
