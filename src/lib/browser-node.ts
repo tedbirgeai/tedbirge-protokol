@@ -916,10 +916,16 @@ export class BrowserNode {
         await deletePacket(row.pktId);
         continue;
       }
+      // Eski arama sinyalleri kuyrukta kalmışsa temizlenir (tekrar çalmasın).
+      if ((item.t === "intent" && item.kind === "call") || (item.t === "fwd" && item.env.h.kind === "call")) {
+        await deletePacket(row.pktId);
+        continue;
+      }
       if (item.t === "fwd") {
         if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
         continue;
       }
+
       if (item.kind === "telemetry" && this.state.online) {
         const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
         if (ok) await deletePacket(row.pktId);
