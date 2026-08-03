@@ -506,6 +506,9 @@ export class BrowserNode {
   stop() {
     this.timer && clearInterval(this.timer);
     this.timer = null;
+    if (this.retryTimer) clearInterval(this.retryTimer);
+    this.retryTimer = null;
+
     if (this.localTimer) clearInterval(this.localTimer);
     this.localTimer = null;
     if (this.lanTimer) clearInterval(this.lanTimer);
