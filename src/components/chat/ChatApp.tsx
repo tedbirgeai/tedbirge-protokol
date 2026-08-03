@@ -1429,6 +1429,43 @@ export function ChatApp() {
               >
                 <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
               </div>
+              {/* Sabitlenmiş mesaj şeridi */}
+              {active.pinnedMessageId &&
+                (() => {
+                  const pm = messages.find((x) => x.id === active.pinnedMessageId);
+                  if (!pm) return null;
+                  return (
+                    <div
+                      className="sticky top-0 z-10 mx-auto mb-2 flex w-full max-w-2xl items-center gap-2 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
+                      style={{ borderLeft: "3px solid var(--wa-accent)" }}
+                    >
+                      <Pin className="h-3.5 w-3.5" style={{ color: "var(--wa-accent)" }} aria-hidden />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHighlightId(pm.id);
+                          document
+                            .getElementById(`msg_${pm.id}`)
+                            ?.scrollIntoView({ block: "center", behavior: "smooth" });
+                        }}
+                        className="min-w-0 flex-1 truncate text-left text-[12.5px]"
+                        style={{ color: "var(--wa-text)" }}
+                      >
+                        {pm.text || pm.media?.name || "Ek"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void pinMessage(active.id, null)}
+                        className="wa-press rounded-full p-1"
+                        style={{ color: "var(--wa-muted)" }}
+                        aria-label="Sabitlemeyi kaldır"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })()}
+
               {hiddenCount > 0 && (
                 <button
                   type="button"
