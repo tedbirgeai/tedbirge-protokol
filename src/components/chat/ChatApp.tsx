@@ -1465,9 +1465,19 @@ export function ChatApp() {
                       authorName={nameOf(m.from)}
                       showAuthor={Boolean(active.group)}
                       progress={chat.transfers[m.id]}
+                      pinned={active.pinnedMessageId === m.id}
+                      translateTo={privacy.autoTranslateTo || undefined}
                       onReply={setReplyTo}
                       onImage={setLightbox}
+                      onEdit={(msg) => {
+                        setEditing(msg);
+                        setReplyTo(null);
+                        setDraft(msg.text);
+                        inputRef.current?.focus();
+                      }}
+                      onForward={setForwardMsg}
                     />
+
                   </div>
                 );
               })}
