@@ -494,6 +494,12 @@ async function onCallSignal(from: string, raw: unknown) {
       error: null,
       conference: pendingOffers.size > 1,
     });
+    void showChatNotification({
+      title: `📞 ${p.alias ?? from}`,
+      body: p.video ? "Görüntülü arama" : "Sesli arama",
+      kind: "call",
+      tag: "tedbirge-call",
+    });
     return;
   }
 
