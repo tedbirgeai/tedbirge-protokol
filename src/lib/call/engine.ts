@@ -479,7 +479,9 @@ export async function acceptCall() {
       stream.getTracks().forEach((t) => {
         if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
       });
+      await tuneSenders(leg.pc);
       await leg.pc.setRemoteDescription(offer.desc);
+
       await applyPendingIce(peerId, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
