@@ -685,7 +685,9 @@ async function onCallSignal(from: string, raw: unknown) {
         stream.getTracks().forEach((t) => {
           if (!fresh.pc.getSenders().some((s) => s.track === t)) fresh.pc.addTrack(t, stream);
         });
+        await tuneSenders(fresh.pc);
         await fresh.pc.setRemoteDescription(desc);
+
         await applyPendingIce(from, fresh.pc);
         const answer = await fresh.pc.createAnswer();
         await fresh.pc.setLocalDescription(answer);
