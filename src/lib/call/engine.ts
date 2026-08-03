@@ -90,11 +90,15 @@ async function tuneSenders(pc: RTCPeerConnection) {
       const params = sender.getParameters();
       if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
       if (sender.track.kind === "video") {
+        // Ayrıntı korunur, ağ zayıflarsa önce kare hızı düşer.
+        sender.track.contentHint = "motion";
         params.degradationPreference = "balanced";
-        params.encodings[0].maxBitrate = 1_200_000;
+        params.encodings[0].maxBitrate = 2_500_000;
         params.encodings[0].maxFramerate = 30;
+        delete params.encodings[0].scaleResolutionDownBy;
       } else {
-        params.encodings[0].maxBitrate = 48_000;
+        sender.track.contentHint = "speech";
+        params.encodings[0].maxBitrate = 64_000;
       }
       await sender.setParameters(params);
     } catch {
@@ -102,6 +106,7 @@ async function tuneSenders(pc: RTCPeerConnection) {
     }
   }
 }
+
 
 
 const IDLE_QUALITY: CallQuality = {
