@@ -161,3 +161,25 @@ export async function trustMap(): Promise<Record<string, TrustStatus>> {
   for (const r of rows) out[r.peerId] = trustStatusOf(r);
   return out;
 }
+
+/**
+ * QR bağlantısıyla gelen kimliği rehbere ekler (TOFU sabitlemesi).
+ * Aynı kimlik daha önce farklı anahtarla kayıtlıysa değişim işaretlenir.
+ */
+export async function importPeerFromQr(
+  peerId: string,
+  signPublic: string,
+): Promise<TrustStatus> {
+  const prev = await getPeer(peerId);
+  const changed = Boolean(prev?.knownSignPublic && prev.knownSignPublic !== signPublic);
+  const rec: PeerRecord = {
+    ...(prev ?? { peerId }),
+    peerId,
+    knownSignPublic: signPublic,
+    fingerprint: fingerprintOfKey(signPublic),
+    keyChangedAt: changed ? Date.now() : prev?.keyChangedAt,
+    lastSeen: Date.now(),
+  };
+  await putPeer(rec);
+  return trustStatusOf(rec);
+}
