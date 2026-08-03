@@ -1066,10 +1066,14 @@ export function ChatApp() {
           >
             <Plus className="h-[18px] w-[18px]" />
           </button>
-          <InstallAppButton compact />
         </div>
 
-
+        <div
+          className="px-3 py-2"
+          style={{ borderBottom: "1px solid var(--wa-border)" }}
+        >
+          <InstallAppButton />
+        </div>
         <div className="px-3 py-2">
           <div
             className="flex items-center gap-3 rounded-lg px-3 py-2"

@@ -17,6 +17,18 @@ function isIos() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent);
 }
 
+function isPublishedOrigin() {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return (
+    window.location.protocol === "https:" &&
+    !host.startsWith("id-preview--") &&
+    !host.startsWith("preview--") &&
+    !host.endsWith(".lovableproject.com") &&
+    window.self === window.top
+  );
+}
+
 /**
  * "Uygulamayı yükle" düğmesi — telefon, tablet ve bilgisayarda ana ekrana
  * / uygulama listesine ekler. iOS'ta tarayıcı otomatik kurulumu desteklemediği
@@ -27,6 +39,7 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
   const [ready, setReady] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState(false);
+  const published = isPublishedOrigin();
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
@@ -121,6 +134,9 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
                 </>
               ) : (
                 <>
+                  {!published && (
+                    <li>Önce yayınlanmış Tedbirge adresini yeni sekmede açın.</li>
+                  )}
                   <li>1. Tarayıcı menüsünü (⋮ veya …) açın.</li>
                   <li>
                     2. “Uygulamayı yükle” / “Ana ekrana ekle” seçeneğine dokunun (Chrome, Edge,

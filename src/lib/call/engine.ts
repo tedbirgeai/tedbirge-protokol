@@ -310,7 +310,14 @@ async function dial(peerId: string, alias: string, video: boolean) {
   });
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
-  await sendMesh("call", peerId, { t: "offer", sdp: offer.sdp, video, alias: getAlias(), at: Date.now() });
+  const sent = await sendMesh("call", peerId, {
+    t: "offer",
+    sdp: offer.sdp,
+    video,
+    alias: getAlias(),
+    at: Date.now(),
+  });
+  if (!sent) throw new Error("peer-unavailable");
 }
 
 export async function startCall(peerId: string, video: boolean, alias?: string) {
@@ -334,8 +341,12 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     ringTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Cevap yok.");
     }, RING_TIMEOUT_MS);
-  } catch {
-    endCall("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
+  } catch (error) {
+    endCall(
+      error instanceof Error && error.message === "peer-unavailable"
+        ? "Karşı cihaz şu anda erişilebilir değil."
+        : "Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.",
+    );
   }
 }
 
@@ -367,8 +378,12 @@ export async function startConference(
     ringTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Kimse katılmadı.");
     }, RING_TIMEOUT_MS);
-  } catch {
-    endCall("Görüşme başlatılamadı.");
+  } catch (error) {
+    endCall(
+      error instanceof Error && error.message === "peer-unavailable"
+        ? "Katılımcı cihazları şu anda erişilebilir değil."
+        : "Görüşme başlatılamadı.",
+    );
   }
 }
 
