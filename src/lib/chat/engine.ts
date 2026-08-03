@@ -399,11 +399,19 @@ export async function conversationTargets(convId: string): Promise<string[]> {
 }
 
 /** Kaydedilmiş sesli not / telsiz kaydını sohbete ekler. */
-export async function sendVoiceFile(convId: string, file: File): Promise<void> {
-  await sendMedia(convId, file);
+export async function sendVoiceFile(
+  convId: string,
+  file: File,
+  transcript?: string,
+): Promise<void> {
+  await sendMedia(convId, file, transcript);
 }
 
-export async function sendMedia(convId: string, file: File): Promise<void> {
+export async function sendMedia(
+  convId: string,
+  file: File,
+  transcript?: string,
+): Promise<void> {
   const conv = await getConversation(convId);
   if (!conv) return;
   if (file.size > MAX_MEDIA_BYTES) throw new Error("Dosya 8 MB sınırını aşıyor.");
@@ -426,6 +434,7 @@ export async function sendMedia(convId: string, file: File): Promise<void> {
       size: file.size,
       dataUrl,
     },
+    ...(transcript ? { transcript } : {}),
   };
   await appendLocal(conv, msg);
 
@@ -444,6 +453,7 @@ export async function sendMedia(convId: string, file: File): Promise<void> {
         ...chunks[i]!,
         alias: getAlias(),
         group: conv.group,
+        transcript,
       });
       ok = ok || sent;
       publish({
@@ -454,6 +464,273 @@ export async function sendMedia(convId: string, file: File): Promise<void> {
   const { [mid]: _done, ...rest } = state.transfers;
   publish({ transfers: rest });
   await setStatus(mid, ok ? "sent" : "pending");
+}
+
+/* -------------------- konum ve acil durum yayını -------------------- */
+
+/** Konumu çevrimdışı harita karesiyle birlikte sohbete gönderir. */
+export async function sendLocation(convId: string, point: GeoPoint, note?: string): Promise<void> {
+  const conv = await getConversation(convId);
+  if (!conv) return;
+  const me = getBrowserNodeId();
+  const geo: MessageGeo = {
+    lat: point.lat,
+    lon: point.lon,
+    acc: point.acc,
+    alt: point.alt,
+    frame: offlineMapFrame(point, note?.trim() || "Konumum"),
+    note: note?.trim() || undefined,
+  };
+  const msg: ChatMessage = {
+    id: newId("loc"),
+    convId,
+    from: me,
+    to: conv.group ? conv.id : conv.members[0]!,
+    kind: "location",
+    text: `📍 ${geoText(point)}`,
+    ts: Date.now(),
+    outgoing: true,
+    status: "pending",
+    geo,
+    ...(ttlOf(convId) ? { expiresAt: Date.now() + ttlOf(convId) } : {}),
+  };
+  await appendLocal(conv, msg);
+  sentSound();
+
+  let delivered = false;
+  for (const peer of await targetsOf(conv)) {
+    // Harita karesi alıcı cihazda yeniden çizilir — paket küçük kalır.
+    const ok = await sendMesh(
+      "chat",
+      peer,
+      {
+        t: "geo",
+        id: msg.id,
+        convId,
+        group: conv.group,
+        text: msg.text,
+        ts: msg.ts,
+        alias: getAlias(),
+        geo: { ...geo, frame: undefined },
+        ttlMs: ttlOf(convId) || undefined,
+      },
+      1,
+    );
+    delivered = delivered || ok;
+  }
+  await setStatus(msg.id, delivered ? "sent" : "pending");
+}
+
+export type SosResult = { conversations: number; peers: number; hasLocation: boolean };
+
+/**
+ * Acil durum yayını: tek dokunuşla tüm sohbetlere ve menzildeki tüm
+ * düğümlere konum + pil + not gönderilir. Öncelik 0 — kuyrukta asla
+ * budanmaz, çevrimdışıysa bağlantı gelir gelmez ilk o iletilir.
+ */
+export async function broadcastSos(note?: string): Promise<SosResult> {
+  const info = await collectEmergency(note);
+  const me = getBrowserNodeId();
+  const alias = getAlias() || me;
+  const geo: MessageGeo | undefined = info.point
+    ? {
+        lat: info.point.lat,
+        lon: info.point.lon,
+        acc: info.point.acc,
+        alt: info.point.alt,
+        frame: offlineMapFrame(info.point, `ACİL — ${alias}`),
+        battery: info.battery,
+        charging: info.charging,
+        note: note?.trim() || undefined,
+      }
+    : undefined;
+
+  const parts = [
+    "🆘 ACİL DURUM",
+    info.point ? `Konum: ${geoText(info.point)}` : "Konum alınamadı",
+    info.battery != null ? `Pil: %${info.battery}${info.charging ? " (şarjda)" : ""}` : "",
+    note?.trim() ? `Not: ${note.trim()}` : "",
+  ].filter(Boolean);
+  const text = parts.join(" · ");
+
+  const convs = await listConversations();
+  for (const conv of convs) {
+    const msg: ChatMessage = {
+      id: newId("sos"),
+      convId: conv.id,
+      from: me,
+      to: conv.group ? conv.id : (conv.members[0] ?? "*"),
+      kind: "sos",
+      text,
+      ts: Date.now(),
+      outgoing: true,
+      status: "pending",
+      geo,
+    };
+    await appendLocal(conv, msg);
+    for (const peer of await targetsOf(conv)) {
+      void sendMesh(
+        "chat",
+        peer,
+        {
+          t: "sos",
+          id: msg.id,
+          convId: conv.id,
+          group: conv.group,
+          text,
+          ts: msg.ts,
+          alias,
+          geo: geo ? { ...geo, frame: undefined } : undefined,
+        },
+        0,
+      );
+      void sendMesh("presence", peer, {
+        t: "wake",
+        kind: "call",
+        title: `🆘 ${alias} acil yardım istiyor`,
+        preview: text.slice(0, 120),
+      } satisfies WakePayload);
+    }
+  }
+
+  // Sohbeti olmayan menzildeki düğümlere de yayın (herkese açık uyarı).
+  const peers = knownPeerIds();
+  void sendMesh("alert", "*", { t: "sos", text, alias, geo: geo ? { ...geo, frame: undefined } : undefined }, 0);
+
+  return { conversations: convs.length, peers: peers.length, hasLocation: Boolean(info.point) };
+}
+
+/* ------------------- düzenleme, sabitleme, iletme ------------------- */
+
+/** Mesaj düzenleme penceresi (WhatsApp ile aynı: 15 dakika). */
+export const EDIT_WINDOW_MS = 15 * 60_000;
+/** Herkesten silme penceresi (WhatsApp: yaklaşık 2 gün). */
+export const DELETE_WINDOW_MS = 2 * 24 * 60 * 60_000;
+
+export function canEdit(msg: ChatMessage): boolean {
+  return (
+    msg.outgoing && msg.kind === "text" && !msg.deleted && Date.now() - msg.ts < EDIT_WINDOW_MS
+  );
+}
+
+export function canDeleteForEveryone(msg: ChatMessage): boolean {
+  return msg.outgoing && !msg.deleted && Date.now() - msg.ts < DELETE_WINDOW_MS;
+}
+
+export function remainingWindow(msg: ChatMessage, windowMs: number): string {
+  const left = windowMs - (Date.now() - msg.ts);
+  if (left <= 0) return "süre doldu";
+  const min = Math.ceil(left / 60_000);
+  if (min < 60) return `${min} dk`;
+  const h = Math.ceil(min / 60);
+  return h < 48 ? `${h} sa` : `${Math.ceil(h / 24)} gün`;
+}
+
+/** Gönderilmiş metin mesajını düzenler ve karşı tarafta günceller. */
+export async function editMessage(messageId: string, text: string): Promise<void> {
+  const msg = await getMessage(messageId);
+  if (!msg) return;
+  const clean = text.trim();
+  if (!clean || clean === msg.text) return;
+  if (!canEdit(msg)) throw new Error("Düzenleme süresi doldu (15 dakika).");
+  await putMessage({ ...msg, text: clean, editedAt: Date.now() });
+  await refreshMessages(msg.convId);
+  await refreshConversations();
+  const conv = await getConversation(msg.convId);
+  if (!conv) return;
+  for (const peer of await targetsOf(conv)) {
+    void sendMesh("chat", peer, {
+      t: "edit",
+      id: messageId,
+      convId: msg.convId,
+      text: clean,
+      alias: getAlias(),
+    });
+  }
+}
+
+/** Sohbetin üstünde bir mesajı sabitler / sabitlemeyi kaldırır. */
+export async function pinMessage(convId: string, messageId: string | null): Promise<void> {
+  const conv = await getConversation(convId);
+  if (!conv) return;
+  const next = conv.pinnedMessageId === messageId ? undefined : (messageId ?? undefined);
+  await putConversation({ ...conv, pinnedMessageId: next });
+  await refreshConversations();
+  for (const peer of await targetsOf(conv)) {
+    void sendMesh("chat", peer, {
+      t: "pin",
+      id: next ?? "",
+      convId,
+      alias: getAlias(),
+    });
+  }
+}
+
+/** Mesajı başka sohbetlere iletir; alıntılı iletmede kaynak korunur. */
+export async function forwardMessage(
+  messageId: string,
+  targetConvIds: string[],
+  options?: { quote?: boolean; authorName?: string },
+): Promise<number> {
+  const msg = await getMessage(messageId);
+  if (!msg || msg.deleted) return 0;
+  const author = options?.authorName ?? (msg.outgoing ? getAlias() || "Ben" : msg.from);
+  let sent = 0;
+  for (const convId of targetConvIds) {
+    const conv = await getConversation(convId);
+    if (!conv) continue;
+    if (msg.kind === "media" && msg.media) {
+      const res = await fetch(msg.media.dataUrl);
+      const blob = await res.blob();
+      await sendMedia(convId, new File([blob], msg.media.name, { type: msg.media.mime }));
+      sent += 1;
+      continue;
+    }
+    const body = msg.text || "";
+    const text = options?.quote ? `“${body}” — ${author}` : body;
+    if (!text.trim()) continue;
+    await sendForwardedText(conv, text, author);
+    sent += 1;
+  }
+  return sent;
+}
+
+async function sendForwardedText(conv: Conversation, text: string, author: string) {
+  const me = getBrowserNodeId();
+  const msg: ChatMessage = {
+    id: newId("msg"),
+    convId: conv.id,
+    from: me,
+    to: conv.group ? conv.id : conv.members[0]!,
+    kind: "text",
+    text,
+    ts: Date.now(),
+    outgoing: true,
+    status: "pending",
+    forwarded: true,
+    forwardedFrom: author,
+    ...(ttlOf(conv.id) ? { expiresAt: Date.now() + ttlOf(conv.id) } : {}),
+  };
+  await appendLocal(conv, msg);
+  let delivered = false;
+  for (const peer of await targetsOf(conv)) {
+    const ok = await sendMesh("chat", peer, {
+      t: "text",
+      id: msg.id,
+      convId: conv.id,
+      group: conv.group,
+      groupTitle: conv.group ? conv.title : undefined,
+      members: conv.group ? conv.members : undefined,
+      text,
+      ts: msg.ts,
+      alias: getAlias(),
+      forwarded: true,
+      forwardedFrom: author,
+      ttlMs: ttlOf(conv.id) || undefined,
+    });
+    delivered = delivered || ok;
+  }
+  await setStatus(msg.id, delivered ? "sent" : "pending");
 }
 
 async function setStatus(id: string, status: MessageStatus) {
