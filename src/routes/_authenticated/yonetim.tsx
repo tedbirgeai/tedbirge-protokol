@@ -69,7 +69,7 @@ type AiLead = {
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "plan">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "interop" | "plan">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
