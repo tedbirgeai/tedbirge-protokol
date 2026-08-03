@@ -849,6 +849,9 @@ type ChatPayload = {
   replyTo?: { id: string; text: string; author: string };
   emoji?: string;
   ttlMs?: number;
+  geo?: MessageGeo;
+  forwarded?: boolean;
+  forwardedFrom?: string;
 };
 
 async function onChat(from: string, raw: unknown) {
