@@ -32,15 +32,32 @@ const PROBE_PATH = "/api/public/ping";
 const PROBE_TIMEOUT_MS = 1500;
 const CHECK_INTERVAL_MS = 20_000;
 
-/** mDNS adı + saha kurulumlarında en sık görülen yerel geçit adresleri. */
-export const LOCAL_CANDIDATES = [
-  "http://tedbirge-gateway.local",
-  "http://tedbirge-gateway.local:8080",
-  "http://192.168.4.1",
-  "http://192.168.1.1:8080",
-  "http://192.168.0.1:8080",
-  "http://10.0.0.1:8080",
+/**
+ * mDNS adı + saha kurulumlarında en sık görülen yerel geçit adresleri.
+ * Sayfa HTTPS ile servis edildiğinde tüm adaylar https:// şemasına yükseltilir;
+ * düz http:// yoklaması hiçbir koşulda gönderilmez (karma içerik = "güvenli değil").
+ */
+const LOCAL_HOSTS = [
+  "tedbirge-gateway.local",
+  "tedbirge-gateway.local:8080",
+  "192.168.4.1",
+  "192.168.1.1:8080",
+  "192.168.0.1:8080",
+  "10.0.0.1:8080",
 ];
+
+function secureScheme(): "http" | "https" {
+  return typeof window !== "undefined" && window.location.protocol === "https:" ? "https" : "http";
+}
+
+export const LOCAL_CANDIDATES = LOCAL_HOSTS.map((h) => `http://${h}`);
+
+/** Çalışma anında sayfa protokolüne göre yükseltilmiş aday listesi. */
+export function localCandidates(): string[] {
+  const scheme = secureScheme();
+  return LOCAL_HOSTS.map((h) => `${scheme}://${h}`);
+}
+
 
 let state: AccessState = {
   tier: "cloud",
