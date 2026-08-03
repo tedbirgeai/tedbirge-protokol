@@ -662,10 +662,17 @@ export function ChatApp() {
   const [ptt, setPtt] = useState(false);
   const [visibleCount, setVisibleCount] = useState(60);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [forwardMsg, setForwardMsg] = useState<ChatMessage | null>(null);
+  const [editing, setEditing] = useState<ChatMessage | null>(null);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [folder, setFolder] = useState<string>("");
+  const [folderVersion, setFolderVersion] = useState(0);
+  const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const transcriptRef = useRef<TranscriptSession | null>(null);
   const recRef = useRef<{
     rec: MediaRecorder;
     chunks: Blob[];
@@ -676,6 +683,17 @@ export function ChatApp() {
   const chat = useChat();
   const node = useNodeRuntime();
   const messages = useConversationMessages(activeId);
+
+  // Klasör ve gizlilik tercihleri değişince liste ve çeviri anında yenilenir.
+  useEffect(() => {
+    const offFolders = onFoldersChange(() => setFolderVersion((v) => v + 1));
+    const offPrivacy = onPrivacyChange(() => setPrivacyState({ ...getPrivacy() }));
+    return () => {
+      offFolders();
+      offPrivacy();
+    };
+  }, []);
+
 
   useEffect(() => {
     setOnboarded(isOnboarded());
