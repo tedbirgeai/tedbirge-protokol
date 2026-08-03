@@ -130,6 +130,25 @@ export const Route = createFileRoute("/api/public/relay")({
             .from("relay_envelopes")
             .upsert(rows, { onConflict: "pkt_id", ignoreDuplicates: true });
           if (error) return json({ ok: false, error: "kuyruk_hatasi" }, 500);
+          // Alıcı kapalıysa cihazını uyandır: yalnızca "yeni şifreli mesaj var"
+          // sinyali gider; içerik sunucudan geçmez.
+          try {
+            const { notifyNode } = await import("@/lib/push-dispatch.server");
+            const targets = Array.from(new Set(parsed.items.map((i) => i.to))).slice(0, 20);
+            await Promise.all(
+              targets.map((to) =>
+                notifyNode(to, {
+                  kind: "message",
+                  title: "Yeni mesaj",
+                  body: "Şifreli yeni mesajınız var.",
+                  tag: "tedbirge-chat",
+                  url: "/chat",
+                }),
+              ),
+            );
+          } catch {
+            /* bildirim gönderilemese de mesaj kuyrukta durur */
+          }
           return json({ ok: true, stored: rows.length });
         }
 
