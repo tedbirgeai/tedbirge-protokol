@@ -714,6 +714,24 @@ export function ChatApp() {
     };
   }, []);
 
+  // QR bağlantısı (…/chat?p=<kimlik>&k=<anahtar>) ile gelen kişiyi rehbere ekler.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const p = q.get("p");
+    const k = q.get("k");
+    if (!p || !k) return;
+    void (async () => {
+      const { importPeerFromQr } = await import("@/lib/peer-trust");
+      await importPeerFromQr(p, k);
+      await refreshContacts();
+      toast.success("Kişi rehbere eklendi", { description: p });
+      const url = new URL(window.location.href);
+      url.searchParams.delete("p");
+      url.searchParams.delete("k");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    })();
+  }, []);
+
   // Sohbet değişince yazma alanına odaklan, yanıt/emoji durumunu sıfırla.
   useEffect(() => {
     setReplyTo(null);
