@@ -943,9 +943,11 @@ export function ChatApp() {
 
   return (
     <div
+      data-skin={skin}
       className="wa flex h-[100dvh] w-full overflow-hidden"
       style={{ background: "var(--wa-panel-soft)" }}
     >
+
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
       <ForwardDialog
