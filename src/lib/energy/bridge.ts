@@ -173,7 +173,7 @@ export async function connectVeDirect() {
 
   let stopped = false;
   const decoder = new TextDecoderStream();
-  port.readable.pipeTo(decoder.writable).catch(() => undefined);
+  port.readable.pipeTo(decoder.writable as unknown as WritableStream<Uint8Array>).catch(() => undefined);
   const reader = decoder.readable.getReader();
   const framer = new VeDirectFramer();
 
@@ -292,7 +292,7 @@ export async function connectGnss(baud = 9600) {
 
   let stopped = false;
   const decoder = new TextDecoderStream();
-  port.readable.pipeTo(decoder.writable).catch(() => undefined);
+  port.readable.pipeTo(decoder.writable as unknown as WritableStream<Uint8Array>).catch(() => undefined);
   const reader = decoder.readable.getReader();
 
   (async () => {
