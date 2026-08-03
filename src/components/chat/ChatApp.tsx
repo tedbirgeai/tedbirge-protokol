@@ -134,6 +134,203 @@ function StatusIcon({ msg }: { msg: ChatMessage }) {
   return <Check className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="Gönderildi" />;
 }
 
+
+/** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
+function MessageRow({
+  msg,
+  authorName,
+  showAuthor,
+  progress,
+  onReply,
+  onImage,
+}: {
+  msg: ChatMessage;
+  authorName: string;
+  showAuthor: boolean;
+  progress?: number;
+  onReply: (m: ChatMessage) => void;
+  onImage: (src: string) => void;
+}) {
+  const [menu, setMenu] = useState(false);
+  const reactions = Object.values(msg.reactions ?? {});
+
+  function quickReact(emoji: string) {
+    pressFeedback();
+    void reactToMessage(msg.id, emoji);
+    setMenu(false);
+  }
+
+  return (
+    <div className={`group flex ${msg.outgoing ? "justify-end" : "justify-start"}`}>
+      <div className="relative max-w-[80%]">
+        <div
+          className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
+          style={{
+            background: msg.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
+            color: "var(--wa-text)",
+          }}
+          onDoubleClick={() => quickReact("👍")}
+        >
+          {showAuthor && !msg.outgoing && (
+            <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
+              {authorName}
+            </p>
+          )}
+
+          {msg.replyTo && (
+            <div
+              className="mb-1 rounded-md border-l-[3px] px-2 py-1 text-[12.5px]"
+              style={{ borderColor: "var(--wa-accent)", background: "rgba(0,0,0,0.05)", color: "var(--wa-muted)" }}
+            >
+              <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                {msg.replyTo.author}
+              </span>
+              <span className="line-clamp-2 break-words">{msg.replyTo.text || "Ek"}</span>
+            </div>
+          )}
+
+          {msg.deleted ? (
+            <p className="italic" style={{ color: "var(--wa-muted)" }}>
+              Bu mesaj silindi
+            </p>
+          ) : msg.kind === "media" && msg.media ? (
+            msg.media.mime.startsWith("image/") ? (
+              <img
+                src={msg.media.dataUrl}
+                alt={msg.media.name}
+                onClick={() => onImage(msg.media!.dataUrl)}
+                className="max-h-64 cursor-zoom-in rounded-md"
+              />
+            ) : msg.media.mime.startsWith("audio/") ? (
+              <audio controls src={msg.media.dataUrl} className="w-56" />
+            ) : (
+              <a href={msg.media.dataUrl} download={msg.media.name} className="underline">
+                {msg.media.name} · {humanSize(msg.media.size)}
+              </a>
+            )
+          ) : (
+            <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+          )}
+
+          <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+            {msg.starred && <Star className="h-3 w-3 fill-current" aria-label="Yıldızlı" />}
+            <span>{timeOf(msg.ts)}</span>
+            <StatusIcon msg={msg} />
+          </div>
+
+          {progress !== undefined && (
+            <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              Aktarılıyor · %{progress}
+            </p>
+          )}
+
+          {reactions.length > 0 && (
+            <div
+              className="wa-pop absolute -bottom-3 right-2 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-[12px] shadow"
+              aria-label="Tepkiler"
+            >
+              {Array.from(new Set(reactions)).slice(0, 3).map((e) => (
+                <span key={e}>{e}</span>
+              ))}
+              {reactions.length > 1 && (
+                <span className="text-[10px]" style={{ color: "var(--wa-muted)" }}>
+                  {reactions.length}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Hızlı eylemler */}
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            setMenu((v) => !v);
+          }}
+          className={`wa-press absolute top-1 ${msg.outgoing ? "-left-7" : "-right-7"} rounded-full p-1 opacity-0 group-hover:opacity-100 focus:opacity-100`}
+          style={{ color: "var(--wa-muted)" }}
+          aria-label="Mesaj seçenekleri"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+
+        {menu && (
+          <div
+            className="wa-pop absolute z-20 mt-1 w-max rounded-xl bg-white p-1.5 shadow-lg"
+            style={{ [msg.outgoing ? "right" : "left"]: 0, top: "100%" }}
+          >
+            <div className="flex gap-1 px-1 pb-1.5">
+              {QUICK_REACTIONS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => quickReact(e)}
+                  className="wa-press rounded-full px-1 text-lg"
+                  aria-label={`Tepki ${e}`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            <MenuItem
+              icon={<Reply className="h-4 w-4" />}
+              label="Yanıtla"
+              onClick={() => {
+                onReply(msg);
+                setMenu(false);
+              }}
+            />
+            {msg.kind === "text" && !msg.deleted && (
+              <MenuItem
+                icon={<Copy className="h-4 w-4" />}
+                label="Kopyala"
+                onClick={() => {
+                  void navigator.clipboard.writeText(msg.text).catch(() => undefined);
+                  setMenu(false);
+                }}
+              />
+            )}
+            <MenuItem
+              icon={<Star className="h-4 w-4" />}
+              label={msg.starred ? "Yıldızı kaldır" : "Yıldızla"}
+              onClick={() => {
+                void toggleStar(msg.id);
+                setMenu(false);
+              }}
+            />
+            <MenuItem
+              icon={<Trash2 className="h-4 w-4" />}
+              label="Sil"
+              onClick={() => {
+                void deleteMessage(msg.id, msg.outgoing);
+                setMenu(false);
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        pressFeedback();
+        onClick();
+      }}
+      className="wa-press flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-black/5"
+      style={{ color: "var(--wa-text)" }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   return (
