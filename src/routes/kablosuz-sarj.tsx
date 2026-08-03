@@ -128,7 +128,57 @@ function WirelessChargingPage() {
         ))}
       </div>
 
+      <section className="mt-12 rounded-sm border border-primary/40 bg-primary/5 p-6">
+        <h2 className="text-lg font-semibold text-foreground">
+          Afet anı: ek donanım almadan hibrit şarj
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Dürüst sınır: <strong className="text-foreground">Wi-Fi sinyaliyle telefon şarj
+          edilemez.</strong> Bir Wi-Fi anteninden metrelerce ötede hasat edilen güç mikrowatt
+          seviyesindedir; telefonun ihtiyacı ise watt seviyesidir — arada yaklaşık bir milyon kat
+          fark vardır. Buna karşılık, sahadaki ekiplerin <em>cebindeki cihazlarla</em>, hiçbir yeni
+          donanım satın almadan kurabileceği gerçek bir hibrit enerji zinciri vardır:
+        </p>
+        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+          <li>
+            <strong className="text-foreground">Ters kablosuz şarj (telefondan telefona):</strong>{" "}
+            Çoğu güncel Android cihaz (Samsung "Wireless PowerShare", Pixel, Xiaomi) sırt sırta
+            verilerek 4,5-7,5 W ile başka bir telefonu veya kulaklığı besler. Ek donanım gerekmez;
+            ekipteki dolu cihaz, kritik düğüm telefonunu ayakta tutar.
+          </li>
+          <li>
+            <strong className="text-foreground">USB-C'den USB-C güç paylaşımı (OTG):</strong> Elde
+            var olan tek bir C-C kabloyla telefon/tablet/dizüstü birbirini besler. Dizüstü
+            bilgisayar sahadaki en büyük pil bankasıdır: 50-80 Wh kapasite, 3-5 telefon dolumu.
+          </li>
+          <li>
+            <strong className="text-foreground">Araç ve jeneratör köprüsü:</strong> Araç USB/12 V
+            çıkışı, rölanti dahil, saha kutusunu ve terminalleri besleyebilir. Araç aynı zamanda
+            hareketli röle noktasıdır.
+          </li>
+          <li>
+            <strong className="text-foreground">Yazılım tarafı — enerji bütçesi:</strong> Cihaz
+            "Tasarruf Kipi"ne alındığında ekran parlaklığı, arka plan senkronizasyonu ve tarama
+            sıklığı düşürülür; menzil taraması periyodik uykuya alınır. Tipik kazanç: %35-60 daha
+            uzun saha ömrü.
+          </li>
+          <li>
+            <strong className="text-foreground">Rol dönüşümü:</strong> Pili %15'in altına düşen
+            cihaz otomatik olarak "röle" rolünden çıkıp "uç" rolüne geçer; yönlendirme yükü dolu
+            cihazlara kayar. Böylece ağ, en zayıf pili tüketmeden ayakta kalır.
+          </li>
+        </ol>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Sonuç: afet anında enerji sorunu "havadan şarj" ile değil,{" "}
+          <strong className="text-foreground">
+            cihazlar arası güç paylaşımı + yazılımsal enerji bütçesi
+          </strong>{" "}
+          ile çözülür. Bu ikisi zaten elinizdeki donanımla mümkündür.
+        </p>
+      </section>
+
       <section className="mt-12 rounded-sm border border-border bg-card p-6">
+
         <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <ShieldCheck className="h-5 w-5 text-primary" aria-hidden /> Önerilen kurulum
         </h2>
