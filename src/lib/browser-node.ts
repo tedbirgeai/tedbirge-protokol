@@ -259,6 +259,8 @@ export class BrowserNode {
   private lanSocket: WebSocket | null = null;
   private lanTimer: ReturnType<typeof setInterval> | null = null;
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
+  /** Teklif gelmeden ulaşan ICE adayları kaybolmaz; uzak açıklamadan sonra uygulanır. */
+  private pendingPeerIce = new Map<string, RTCIceCandidateInit[]>();
   private peerKeys = new Map<
     string,
     { spk: string; bpk: string; fingerprint: string; verified: boolean; trust: TrustStatus }
@@ -616,6 +618,7 @@ export class BrowserNode {
     window.removeEventListener("offline", this.handleOffline);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
+    this.pendingPeerIce.clear();
     try {
       this.localBus?.close();
     } catch {
@@ -763,6 +766,9 @@ export class BrowserNode {
       if (data.type === "offer") {
         const entry = this.peers.get(remote) ?? this.newPeer(remote);
         await entry.pc.setRemoteDescription({ type: "offer", sdp: data.sdp });
+        const queued = this.pendingPeerIce.get(remote) ?? [];
+        this.pendingPeerIce.delete(remote);
+        for (const candidate of queued) await entry.pc.addIceCandidate(candidate);
         const answer = await entry.pc.createAnswer();
         await entry.pc.setLocalDescription(answer);
         await this.signal(remote, { type: "answer", sdp: answer.sdp });
@@ -770,9 +776,17 @@ export class BrowserNode {
         const entry = this.peers.get(remote);
         if (entry && !entry.pc.currentRemoteDescription) {
           await entry.pc.setRemoteDescription({ type: "answer", sdp: data.sdp });
+          const queued = this.pendingPeerIce.get(remote) ?? [];
+          this.pendingPeerIce.delete(remote);
+          for (const candidate of queued) await entry.pc.addIceCandidate(candidate);
         }
       } else if (data.type === "ice" && data.candidate) {
-        await this.peers.get(remote)?.pc.addIceCandidate(data.candidate);
+        const entry = this.peers.get(remote);
+        if (!entry?.pc.remoteDescription) {
+          this.pendingPeerIce.set(remote, [...(this.pendingPeerIce.get(remote) ?? []), data.candidate]);
+        } else {
+          await entry.pc.addIceCandidate(data.candidate);
+        }
       }
     } catch (error) {
       this.emit({ error: error instanceof Error ? error.message : "sinyalleşme hatası" });
@@ -1044,7 +1058,15 @@ export class BrowserNode {
         continue;
       }
       const sent = await this.send(item.kind, item.to, item.payload, item.priority);
-      if (sent) await deletePacket(row.pktId);
+      if (sent) {
+        await deletePacket(row.pktId);
+        const messageId = (item.payload as { id?: unknown } | null)?.id;
+        if (typeof messageId === "string") {
+          window.dispatchEvent(
+            new CustomEvent("tedbirge:outbox-sent", { detail: { messageId } }),
+          );
+        }
+      }
     }
     await this.refreshQueueCount();
   }
