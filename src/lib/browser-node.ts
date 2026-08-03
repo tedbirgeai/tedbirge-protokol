@@ -365,7 +365,13 @@ export class BrowserNode {
       });
 
     await this.heartbeat();
-    this.timer = setInterval(() => void this.heartbeat(), 60_000);
+    this.timer = setInterval(() => {
+      void this.heartbeat();
+      // Bekleyen mesajlar yalnız olay anında değil, düzenli olarak da denenir.
+      void this.flushQueue();
+    }, 60_000);
+    this.retryTimer = setInterval(() => void this.flushQueue(), 12_000);
+
   }
 
   /**
