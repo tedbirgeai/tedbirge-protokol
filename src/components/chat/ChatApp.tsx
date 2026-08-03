@@ -4,22 +4,36 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
+  ChevronDown,
   Clock,
+  Copy,
   Globe,
   Home,
   Lock,
+  Mic,
   Paperclip,
   Phone,
   Pin,
   Plus,
+  Reply,
   Search,
   Send,
+  Smile,
+  Square,
+  Star,
   Trash2,
   Users,
   Video,
+  Volume2,
+  VolumeX,
+  X,
 } from "lucide-react";
 import {
   bootChat,
+  deleteMessage,
+  reactToMessage,
+  sendTyping,
+  toggleStar,
   createGroup,
   ensureDirectConversation,
   markRead,
@@ -36,6 +50,13 @@ import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/c
 import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { humanSize } from "@/lib/chat/media";
+import {
+  isSoundMuted,
+  pressFeedback,
+  setSoundMuted,
+  unlockAudio,
+  vibrate,
+} from "@/lib/chat/sounds";
 import { useNodeRuntime } from "@/lib/node-runtime";
 import type { PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
@@ -43,6 +64,25 @@ import type { ChatMessage } from "@/lib/store/idb";
 
 function timeOf(ts: number) {
   return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+}
+
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+
+const EMOJIS = [
+  "😀","😃","😄","😁","😆","😅","😂","🤣","😊","🙂","😉","😍","😘","😗","🤗","🤔",
+  "😐","😴","😷","🤒","😎","🥳","😢","😭","😡","👍","👎","👏","🙏","💪","🤝","✌️",
+  "❤️","💔","🔥","⭐","✅","❌","⚠️","📍","📞","📷","🎉","☕","🍽️","🚗","🏠","🔋",
+];
+
+/** Gün ayırıcı etiketi — bugün / dün / tarih. */
+function dayLabel(ts: number) {
+  const d = new Date(ts);
+  const today = new Date();
+  const yest = new Date(today.getTime() - 86_400_000);
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (same(d, today)) return "Bugün";
+  if (same(d, yest)) return "Dün";
+  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 /** Ham cihaz kimliklerini gizler; kullanıcıya okunabilir bir ad gösterir. */
