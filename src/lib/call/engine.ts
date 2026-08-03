@@ -155,6 +155,9 @@ function createLeg(peerId: string, alias: string) {
       (l) => l.pc.connectionState === "connected",
     );
     if (pc.connectionState === "connected") {
+      const reconnectTimer = reconnectTimers.get(peerId);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimers.delete(peerId);
       publish({ phase: "active", startedAt: state.startedAt ?? Date.now(), error: null });
       startStats();
     } else if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
@@ -211,7 +214,10 @@ async function restartIce(peerId: string) {
         const current = legs.get(peerId);
         if (current && current.pc.connectionState !== "connected") {
           if (state.reconnects >= MAX_RECONNECTS) endCall("Bağlantı yeniden kurulamadı.");
-          else void restartIce(peerId);
+          else {
+            publish({ reconnects: state.reconnects + 1 });
+            void restartIce(peerId);
+          }
         }
       }, 8_000),
     );
@@ -336,6 +342,7 @@ export async function startConference(
   title = "Grup görüşmesi",
 ) {
   bootCalls();
+  if (state.phase !== "idle" && state.phase !== "ended") return;
   const list = peers.slice(0, 4);
   if (!list.length) return;
   publish({
@@ -365,6 +372,8 @@ export async function acceptCall() {
   const entries = Array.from(pendingOffers.entries());
   if (!entries.length) return;
   try {
+    if (ringTimer) clearTimeout(ringTimer);
+    ringTimer = null;
     const stream = await ensureMedia(state.video);
     for (const [peerId, offer] of entries) {
       const leg = createLeg(peerId, state.peerAlias || peerId);
@@ -497,6 +506,11 @@ async function onCallSignal(from: string, raw: unknown) {
     const desc: RTCSessionDescriptionInit = { type: "offer", sdp: p.sdp };
     const leg = legs.get(from);
     if (p.restart && leg) {
+      // İki uç aynı anda ICE yeniden başlatırsa yalnız polite uç geri çekilir.
+      if (leg.pc.signalingState !== "stable") {
+        if (!leg.polite) return;
+        await leg.pc.setLocalDescription({ type: "rollback" });
+      }
       await leg.pc.setRemoteDescription(desc);
       await applyPendingIce(from, leg.pc);
       const answer = await leg.pc.createAnswer();
