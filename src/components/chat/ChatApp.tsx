@@ -98,6 +98,7 @@ import { useNodeRuntime } from "@/lib/node-runtime";
 import { getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
+import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
 
@@ -1065,7 +1066,9 @@ export function ChatApp() {
           >
             <Plus className="h-[18px] w-[18px]" />
           </button>
+          <InstallAppButton compact />
         </div>
+
 
         <div className="px-3 py-2">
           <div
