@@ -1082,6 +1082,34 @@ export function ChatApp() {
           </div>
         </div>
 
+        {/* Klasör ve arşiv sekmeleri */}
+        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
+          {tabs.map((t) => {
+            const on = folder === t.id;
+            const isArchive = t.id === ARCHIVE;
+            if (isArchive && archivedCount === 0 && !on) return null;
+            return (
+              <button
+                key={t.id || "all"}
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setFolder(t.id);
+                }}
+                className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+                style={{
+                  background: on ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                  color: on ? "#fff" : "var(--wa-muted)",
+                }}
+              >
+                {isArchive ? `Arşiv${archivedCount ? ` · ${archivedCount}` : ""}` : t.label}
+              </button>
+            );
+          })}
+        </div>
+
+
+
         {groupMode && (
           <div
             className="p-4"
