@@ -268,10 +268,11 @@ export async function ensureDirectConversation(
 }
 
 export async function createGroup(title: string, members: string[]): Promise<Conversation> {
+  const self = getBrowserNodeId();
   const conv: Conversation = {
     id: newId("grp"),
     title: title.trim() || "Yeni grup",
-    members: Array.from(new Set(members)),
+    members: Array.from(new Set(members)).filter((member) => member && member !== self),
     group: true,
     lastTs: Date.now(),
     lastText: "",
