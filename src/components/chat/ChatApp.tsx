@@ -752,8 +752,22 @@ export function ChatApp() {
     return [...rows].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs);
   }, [chat.conversations, query]);
 
-  // WhatsApp modeli: tek liste. Eşleşme (PIN/QR) yalnızca cihaz bağlamada.
-  const conversations = allConversations;
+  // Klasör görünümü: "" → arşivlenmemiş tümü, ARCHIVE → arşiv, diğer → klasör.
+  const tabs = useMemo(() => folderTabs(), [folderVersion]);
+  const conversations = useMemo(
+    () =>
+      allConversations.filter((c) => {
+        const f = folderOf(c.id);
+        if (folder === "") return f !== ARCHIVE;
+        return f === folder;
+      }),
+    [allConversations, folder, folderVersion],
+  );
+  const archivedCount = useMemo(
+    () => allConversations.filter((c) => isArchived(c.id)).length,
+    [allConversations, folderVersion],
+  );
+
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
