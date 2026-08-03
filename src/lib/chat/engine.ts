@@ -1074,6 +1074,10 @@ async function onMedia(from: string, raw: unknown) {
     outgoing: false,
     status: "delivered",
     media: { name: result.name, mime: result.mime, size: result.size, dataUrl: result.dataUrl },
+    ...(typeof (raw as { transcript?: unknown }).transcript === "string" &&
+    (raw as { transcript: string }).transcript
+      ? { transcript: (raw as { transcript: string }).transcript }
+      : {}),
   });
   void sendMesh("receipt", from, { t: "receipt", id: result.mid, status: "delivered", convId });
   receivedSound();
