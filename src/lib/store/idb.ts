@@ -280,7 +280,7 @@ export type TrustedNode = {
   alias?: string;
   /** Eşleşme anındaki genel anahtar (varsa) — değişirse güven düşer. */
   publicKey?: string;
-  method: "pin" | "qr";
+  method: "pin" | "qr" | "auto";
   pairedAt: number;
 };
 
