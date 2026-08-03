@@ -248,18 +248,46 @@ function MessageRow({
   authorName,
   showAuthor,
   progress,
+  pinned,
+  translateTo,
   onReply,
   onImage,
+  onEdit,
+  onForward,
 }: {
   msg: ChatMessage;
   authorName: string;
   showAuthor: boolean;
   progress?: number;
+  pinned?: boolean;
+  translateTo?: string;
   onReply: (m: ChatMessage) => void;
   onImage: (src: string) => void;
+  onEdit: (m: ChatMessage) => void;
+  onForward: (m: ChatMessage) => void;
 }) {
   const [menu, setMenu] = useState(false);
+  const [translated, setTranslated] = useState<string | null>(null);
   const reactions = Object.values(msg.reactions ?? {});
+
+  // Otomatik çeviri: yalnızca gelen metin mesajları, cihazda önbelleklenir.
+  useEffect(() => {
+    setTranslated(null);
+    const text = msg.text?.trim();
+    if (!translateTo || msg.outgoing || msg.deleted || !text) return;
+    const hit = cachedTranslation(text, translateTo);
+    if (hit) {
+      setTranslated(hit);
+      return;
+    }
+    let alive = true;
+    void translateText(text, translateTo).then((r) => {
+      if (alive && r.ok && r.text && r.text !== text) setTranslated(r.text);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [msg.id, msg.text, msg.outgoing, msg.deleted, translateTo]);
 
   function quickReact(emoji: string) {
     pressFeedback();
@@ -267,20 +295,42 @@ function MessageRow({
     setMenu(false);
   }
 
+  const isSos = msg.kind === "sos";
+
   return (
     <div className={`group flex ${msg.outgoing ? "justify-end" : "justify-start"}`}>
       <div className="relative max-w-[80%]">
         <div
           className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
           style={{
-            background: msg.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
+            background: isSos ? "#fff0f0" : msg.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
             color: "var(--wa-text)",
+            border: isSos ? "1px solid #e03131" : undefined,
           }}
           onDoubleClick={() => quickReact("👍")}
         >
           {showAuthor && !msg.outgoing && (
             <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
               {authorName}
+            </p>
+          )}
+
+          {(msg.forwarded || pinned) && (
+            <p
+              className="mb-0.5 flex items-center gap-1 text-[11px] italic"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              {msg.forwarded && (
+                <>
+                  <Forward className="h-3 w-3" aria-hidden />
+                  İletildi{msg.forwardedFrom ? ` · ${msg.forwardedFrom}` : ""}
+                </>
+              )}
+              {pinned && (
+                <>
+                  <Pin className="h-3 w-3" aria-hidden /> Sabitlenmiş
+                </>
+              )}
             </p>
           )}
 
@@ -304,6 +354,41 @@ function MessageRow({
             <p className="italic" style={{ color: "var(--wa-muted)" }}>
               Bu mesaj silindi
             </p>
+          ) : msg.geo ? (
+            <div>
+              {isSos && (
+                <p className="mb-1 flex items-center gap-1 text-[13px] font-bold" style={{ color: "#e03131" }}>
+                  <Siren className="h-4 w-4" aria-hidden /> ACİL DURUM YAYINI
+                </p>
+              )}
+              {msg.geo.frame && (
+                <img
+                  src={msg.geo.frame}
+                  alt="Çevrimdışı konum haritası"
+                  onClick={() => onImage(msg.geo!.frame!)}
+                  className="mb-1 max-h-56 cursor-zoom-in rounded-md"
+                />
+              )}
+              <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+              {msg.geo.note && (
+                <p className="mt-0.5 text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                  {msg.geo.note}
+                </p>
+              )}
+              {typeof msg.geo.battery === "number" && (
+                <p className="mt-0.5 text-[12px]" style={{ color: "var(--wa-muted)" }}>
+                  🔋 %{Math.round(msg.geo.battery * 100)}
+                  {msg.geo.charging ? " · şarjda" : ""}
+                </p>
+              )}
+              <a
+                href={geoUri({ lat: msg.geo.lat, lon: msg.geo.lon })}
+                className="mt-1 inline-flex items-center gap-1 text-[12px] underline"
+                style={{ color: "var(--wa-accent)" }}
+              >
+                <MapPin className="h-3 w-3" aria-hidden /> Harita uygulamasında aç
+              </a>
+            </div>
           ) : msg.kind === "media" && msg.media ? (
             msg.media.mime.startsWith("image/") ? (
               <img
@@ -313,7 +398,14 @@ function MessageRow({
                 className="max-h-64 cursor-zoom-in rounded-md"
               />
             ) : msg.media.mime.startsWith("audio/") ? (
-              <audio controls src={msg.media.dataUrl} className="w-56" />
+              <div>
+                <audio controls src={msg.media.dataUrl} className="w-56" />
+                {msg.transcript && (
+                  <p className="mt-1 text-[12.5px] italic" style={{ color: "var(--wa-muted)" }}>
+                    “{msg.transcript}”
+                  </p>
+                )}
+              </div>
             ) : (
               <a href={msg.media.dataUrl} download={msg.media.name} className="underline">
                 {msg.media.name} · {humanSize(msg.media.size)}
@@ -323,10 +415,21 @@ function MessageRow({
             <p className="whitespace-pre-wrap break-words">{msg.text}</p>
           )}
 
+          {translated && (
+            <p
+              className="mt-1 flex items-start gap-1 border-t pt-1 text-[13px]"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+            >
+              <Languages className="mt-[3px] h-3 w-3 shrink-0" aria-hidden />
+              <span className="whitespace-pre-wrap break-words">{translated}</span>
+            </p>
+          )}
+
           <div
             className="mt-0.5 flex items-center justify-end gap-1 text-[11px]"
             style={{ color: "var(--wa-muted)" }}
           >
+            {msg.editedAt && <span>düzenlendi</span>}
             {msg.starred && <Star className="h-3 w-3 fill-current" aria-label="Yıldızlı" />}
             <span>{timeOf(msg.ts)}</span>
             <StatusIcon msg={msg} />
@@ -397,6 +500,36 @@ function MessageRow({
                 setMenu(false);
               }}
             />
+            {!msg.deleted && (
+              <MenuItem
+                icon={<Forward className="h-4 w-4" />}
+                label="İlet / alıntılı ilet"
+                onClick={() => {
+                  onForward(msg);
+                  setMenu(false);
+                }}
+              />
+            )}
+            {msg.outgoing && msg.kind === "text" && canEdit(msg) && (
+              <MenuItem
+                icon={<Pencil className="h-4 w-4" />}
+                label={`Düzenle (${remainingWindow(msg, EDIT_WINDOW_MS)})`}
+                onClick={() => {
+                  onEdit(msg);
+                  setMenu(false);
+                }}
+              />
+            )}
+            {!msg.deleted && (
+              <MenuItem
+                icon={<Pin className="h-4 w-4" />}
+                label={pinned ? "Sabitlemeyi kaldır" : "Sohbete sabitle"}
+                onClick={() => {
+                  void pinMessage(msg.convId, pinned ? null : msg.id);
+                  setMenu(false);
+                }}
+              />
+            )}
             {msg.kind === "text" && !msg.deleted && (
               <MenuItem
                 icon={<Copy className="h-4 w-4" />}
@@ -415,11 +548,21 @@ function MessageRow({
                 setMenu(false);
               }}
             />
+            {canDeleteForEveryone(msg) && (
+              <MenuItem
+                icon={<Trash2 className="h-4 w-4" />}
+                label="Herkesten sil"
+                onClick={() => {
+                  void deleteMessage(msg.id, true);
+                  setMenu(false);
+                }}
+              />
+            )}
             <MenuItem
               icon={<Trash2 className="h-4 w-4" />}
-              label="Sil"
+              label="Bende sil"
               onClick={() => {
-                void deleteMessage(msg.id, msg.outgoing);
+                void deleteMessage(msg.id, false);
                 setMenu(false);
               }}
             />
@@ -429,6 +572,7 @@ function MessageRow({
     </div>
   );
 }
+
 
 function MenuItem({
   icon,
