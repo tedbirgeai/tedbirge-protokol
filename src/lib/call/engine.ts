@@ -593,7 +593,9 @@ export async function switchCamera() {
     for (const leg of legs.values()) {
       const sender = leg.pc.getSenders().find((s) => s.track?.kind === "video");
       await sender?.replaceTrack(track);
+      await tuneSenders(leg.pc);
     }
+
     localStream?.getVideoTracks().forEach((t) => {
       t.stop();
       localStream?.removeTrack(t);
