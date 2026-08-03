@@ -18,6 +18,7 @@ import { useSyncExternalStore } from "react";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
+import { showChatNotification } from "@/lib/chat/push";
 
 export type CallPhase = "idle" | "ringing" | "outgoing" | "active" | "reconnecting" | "ended";
 
@@ -493,6 +494,12 @@ async function onCallSignal(from: string, raw: unknown) {
       video: Boolean(p.video),
       error: null,
       conference: pendingOffers.size > 1,
+    });
+    void showChatNotification({
+      title: `📞 ${p.alias ?? from}`,
+      body: p.video ? "Görüntülü arama" : "Sesli arama",
+      kind: "call",
+      tag: "tedbirge-call",
     });
     return;
   }

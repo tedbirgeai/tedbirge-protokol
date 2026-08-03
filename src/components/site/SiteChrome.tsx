@@ -400,6 +400,7 @@ export function SiteFooter() {
               <li><Link to="/saha" className={footerLinkClass}>Saha erişimi (ücretsiz)</Link></li>
               <li><Link to="/kapsama" className={footerLinkClass}>Kapsama planlayıcı</Link></li>
               <li><Link to="/saha-raporu" className={footerLinkClass}>Saha test raporu</Link></li>
+              <li><Link to="/kablosuz-sarj" className={footerLinkClass}>Kablosuz şarj & enerji</Link></li>
             </ul>
             <FooterHeading>
               <span className="mt-6 block">Geliştirici</span>
