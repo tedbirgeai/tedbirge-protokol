@@ -38,7 +38,6 @@ import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { humanSize } from "@/lib/chat/media";
 import { useNodeRuntime } from "@/lib/node-runtime";
 import type { PeerInfo } from "@/lib/browser-node";
-import { describeTier, useAccessTier } from "@/lib/access-tiers";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import type { ChatMessage } from "@/lib/store/idb";
 
@@ -146,8 +145,6 @@ export function ChatApp() {
 
   const chat = useChat();
   const node = useNodeRuntime();
-  const access = useAccessTier();
-  const tier = describeTier(access);
   const messages = useConversationMessages(activeId);
 
   useEffect(() => {
@@ -175,15 +172,8 @@ export function ChatApp() {
     return [...rows].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs);
   }, [chat.conversations, query]);
 
-  /** Doğrulanmış: grup ya da en az bir eşleşmiş üye içeren sohbetler. */
-  const conversations = useMemo(
-    () => allConversations.filter((c) => c.group || c.members.some((m) => pairing.trusted[m])),
-    [allConversations, pairing.trusted],
-  );
-  const unpairedConversations = useMemo(
-    () => allConversations.filter((c) => !c.group && !c.members.some((m) => pairing.trusted[m])),
-    [allConversations, pairing.trusted],
-  );
+  // WhatsApp modeli: tek liste. Eşleşme (PIN/QR) yalnızca cihaz bağlamada.
+  const conversations = allConversations;
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
@@ -191,11 +181,24 @@ export function ChatApp() {
   const activeName = active ? displayName(active.title) : "";
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
-  const activeTrusted = Boolean(active?.group || active?.members.some((m) => pairing.trusted[m]));
-
-  /** Yakında görünen ama henüz eşleşmemiş cihazlar. */
-  const unpairedPeers = peers.filter((p) => !pairing.trusted[p.nodeId]);
   const nameOf = (id: string) => displayName(id, chat.aliases[id]);
+
+  /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
+  const pendingCount = useMemo(
+    () => Object.values(chat.messages).flat().filter((m) => m.outgoing && m.status === "pending").length,
+    [chat.messages],
+  );
+
+  async function shareInvite() {
+    const url = `${window.location.origin}/chat`;
+    const text = `Tedbirge ile bana yazın: ${url}`;
+    try {
+      if (navigator.share) await navigator.share({ title: "Tedbirge", text, url });
+      else await navigator.clipboard.writeText(url);
+    } catch {
+      /* kullanıcı iptal etti */
+    }
+  }
 
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
@@ -220,7 +223,7 @@ export function ChatApp() {
               {me}
             </p>
             <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
-              {tier.label}
+              {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : "Bağlı"}
             </p>
           </div>
           <Link
@@ -288,10 +291,6 @@ export function ChatApp() {
                     key={p.nodeId}
                     type="button"
                     onClick={() => {
-                      if (!paired) {
-                        void beginPairing(p.nodeId, chat.aliases[p.nodeId]);
-                        return;
-                      }
                       void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
                         setActiveId(c.id);
                         setGroupMode(false);
@@ -302,7 +301,7 @@ export function ChatApp() {
                   >
                     <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
                     <span className="text-[11px]" style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}>
-                      {paired ? "çevrimiçi" : "Eşleştir"}
+                      {paired ? "çevrimiçi" : "yakında"}
                     </span>
                   </button>
                 );
@@ -346,7 +345,7 @@ export function ChatApp() {
           {pairing.incoming.map((req) => (
             <li key={`req_${req.nodeId}`} className="px-4 py-3" style={{ background: "var(--wa-panel-soft)" }}>
               <p className="text-[13px] font-medium" style={{ color: "var(--wa-text)" }}>
-                {nameOf(req.nodeId)} eşleşmek istiyor
+                {nameOf(req.nodeId)} cihazını hesabınıza bağlamak istiyor
               </p>
               <div className="mt-2 flex gap-2">
                 <button
@@ -408,76 +407,29 @@ export function ChatApp() {
             );
           })}
           {ready && conversations.length === 0 && (
-            <li className="px-4 py-6 text-sm" style={{ color: "var(--wa-muted)" }}>
-              Henüz doğrulanmış kişi yok. Aşağıdaki cihazlardan birini eşleştirin.
+            <li className="px-4 py-8 text-center">
+              <p className="text-sm" style={{ color: "var(--wa-muted)" }}>
+                Henüz kimse yok. Davet linkini paylaşın — karşı taraf linke dokunduğunda sohbet açılır.
+              </p>
+              <button
+                type="button"
+                onClick={() => void shareInvite()}
+                className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
+                style={{ background: "var(--wa-accent)" }}
+              >
+                Davet linki paylaş
+              </button>
             </li>
           )}
 
-          {(unpairedPeers.length > 0 || unpairedConversations.length > 0) && (
-            <li
-              className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: "var(--wa-muted)" }}
-            >
-              Yakındaki eşleşmemiş cihazlar
-            </li>
-          )}
-          {unpairedPeers.map((p) => (
-            <li key={`np_${p.nodeId}`} style={{ borderBottom: "1px solid var(--wa-border)" }}>
-              <div className="flex items-center gap-3 px-4 py-3">
-                <Avatar name={nameOf(p.nodeId)} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
-                    {nameOf(p.nodeId)}
-                  </p>
-                  <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                    Eşleşme bekliyor · mesaj gönderilemez
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void beginPairing(p.nodeId, chat.aliases[p.nodeId])}
-                  className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
-                  style={{ background: "var(--wa-accent)" }}
-                >
-                  Eşleştir
-                </button>
-              </div>
-            </li>
-          ))}
-          {unpairedConversations
-            .filter((c) => !unpairedPeers.some((p) => c.members.includes(p.nodeId)))
-            .map((c) => (
-              <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <Avatar name={displayName(c.title)} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
-                      {displayName(c.title)}
-                    </p>
-                    <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                      Eşleşme bekliyor
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => c.members[0] && void beginPairing(c.members[0], c.title)}
-                    className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
-                    style={{ background: "var(--wa-accent)" }}
-                  >
-                    Eşleştir
-                  </button>
-                </div>
-              </li>
-            ))}
         </ul>
-
 
         <div
           className="flex items-center gap-2 px-4 py-2 text-[11px]"
           style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
         >
           <Lock className="h-3 w-3" aria-hidden />
-          <span>Uçtan uca şifreli · {tier.message}</span>
+          <span>{pendingCount > 0 ? `Çevrimdışı — ${pendingCount} mesaj bekliyor` : "Bağlı · uçtan uca şifreli"}</span>
         </div>
       </aside>
 
@@ -517,13 +469,13 @@ export function ChatApp() {
                   {activeName}
                 </p>
                 <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  {active.group ? "Grup" : peerOnline ? `çevrimiçi · ${tier.label}` : `bağlantı bekleniyor · ${tier.label}`}
+                  {active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => peerId && void startCall(peerId, false, activeName)}
-                disabled={active.group || !peerId || !activeTrusted}
+                disabled={active.group || !peerId}
                 className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
@@ -533,7 +485,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => peerId && void startCall(peerId, true, activeName)}
-                disabled={active.group || !peerId || !activeTrusted}
+                disabled={active.group || !peerId}
                 className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
@@ -610,24 +562,6 @@ export function ChatApp() {
               </p>
             )}
 
-            {!activeTrusted ? (
-              <div
-                className="flex flex-wrap items-center justify-between gap-3 p-4"
-                style={{ background: "var(--wa-panel-soft)", borderTop: "1px solid var(--wa-border)" }}
-              >
-                <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
-                  Bu cihaz henüz eşleşmedi. Mesaj ve arama kanalı, PIN veya karekod doğrulanana kadar kapalıdır.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => peerId && void beginPairing(peerId, active.title)}
-                  className="rounded-full px-4 py-2 text-[12px] font-semibold text-white"
-                  style={{ background: "var(--wa-accent)" }}
-                >
-                  Cihazı Eşleştir
-                </button>
-              </div>
-            ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -676,7 +610,6 @@ export function ChatApp() {
                 <Send className="h-4 w-4" />
               </button>
             </form>
-            )}
           </>
         )}
       </section>

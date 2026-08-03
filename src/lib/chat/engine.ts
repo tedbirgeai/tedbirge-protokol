@@ -166,6 +166,7 @@ export async function purgeStaleConversations(force = false): Promise<number> {
   for (const c of await listConversations()) {
     if (c.pinned) continue;
     if (c.members.some((m) => isTrusted(m))) continue;
+
     const msgs = await listMessages(c.id);
     if (msgs.length > 0) continue;
     await idbDeleteConversation(c.id);
@@ -302,8 +303,8 @@ export async function markRead(convId: string) {
 /* ------------------------------ gönderim ------------------------------ */
 
 async function targetsOf(conv: Conversation) {
-  // Güven sınırı: yalnızca eşleşmiş (PIN/QR doğrulanmış) cihazlara gönderilir.
-  return Array.from(new Set(conv.members)).filter((m) => isTrusted(m));
+  // WhatsApp modeli: kanal açıktır, güvenlik arka planda (E2EE + TOFU).
+  return Array.from(new Set(conv.members));
 }
 
 async function appendLocal(conv: Conversation, msg: ChatMessage) {

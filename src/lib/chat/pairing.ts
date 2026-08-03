@@ -68,7 +68,7 @@ export function trustedIds(): string[] {
   return Object.keys(state.trusted);
 }
 
-async function trust(nodeId: string, method: "pin" | "qr", alias?: string) {
+async function trust(nodeId: string, method: "pin" | "qr" | "auto", alias?: string) {
   const rec: TrustedNode = { nodeId, alias, method, pairedAt: Date.now() };
   await putTrustedNode(rec);
   publish({
@@ -81,6 +81,17 @@ export async function revokeTrust(nodeId: string) {
   await deleteTrustedNode(nodeId);
   const { [nodeId]: _gone, ...rest } = state.trusted;
   publish({ trusted: rest });
+}
+
+/**
+ * TOFU (Trust On First Use) — WhatsApp modeli.
+ * Kişiyle konuşmak için PIN gerekmez: bir eşten ilk gerçek trafik geldiğinde
+ * kimliği sessizce sabitlenir. PIN/QR yalnızca "kendi cihazını bağlama"
+ * akışında kullanılır ve rozeti "doğrulanmış" yapar.
+ */
+export async function autoTrust(nodeId: string, alias?: string) {
+  if (state.trusted[nodeId]) return;
+  await trust(nodeId, "auto", alias);
 }
 
 /* ------------------------------ PIN ------------------------------ */
@@ -217,8 +228,12 @@ async function onPair(from: string, raw: unknown) {
 export async function bootPairing() {
   if (booted || typeof window === "undefined") return;
   booted = true;
-  // Güven sınırı: eşleşmemiş düğümlerin paketleri düşürülür.
-  setMeshGate((_kind, from, body) => isTrusted(from) || isPairPacket(body));
+  // Güven sınırı gevşetildi (TOFU): kanal açıktır, kimlik ilk temasta
+  // sabitlenir. Sabitlenmiş anahtar değişirse peer-trust katmanı uyarır.
+  setMeshGate((_kind, from, body) => {
+    if (!isTrusted(from) && !isPairPacket(body)) void autoTrust(from);
+    return true;
+  });
   onMesh("chat", (from, body) => void onPair(from, body));
   const rows = await listTrustedNodes();
   const map: Record<string, TrustedNode> = {};
