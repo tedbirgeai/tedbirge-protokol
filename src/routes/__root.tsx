@@ -147,11 +147,14 @@ function RootComponent() {
   const embedded = pathname.startsWith("/chat") || pathname.startsWith("/sohbet");
 
   useEffect(() => {
+    // Eski mükerrer kayıtları temizleyen tek seferlik sıfırlama; sayfa yenilenir.
+    if (runOneTimePurge()) return;
     setupOfflineSupport();
     bootNodeRuntime();
     bootAccessEngine();
     void ensureOfflineGrant();
   }, []);
+
 
   return (
     <QueryClientProvider client={queryClient}>
