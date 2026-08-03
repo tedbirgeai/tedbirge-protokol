@@ -828,46 +828,73 @@ export function ChatApp() {
               </button>
             </header>
 
-            <div className="wa-chat-bg flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12">
+            <div
+              ref={scrollRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+              }}
+              className="wa-chat-bg relative flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12"
+            >
               <div className="mx-auto mb-3 w-fit rounded-md bg-white/70 px-3 py-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
                 <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
               </div>
-              {messages.map((m) => (
-                <div key={m.id} className={`flex ${m.outgoing ? "justify-end" : "justify-start"}`}>
+              {messages.map((m, i) => {
+                const prev = messages[i - 1];
+                const newDay = !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
+                return (
+                  <div key={m.id} className="space-y-1.5">
+                    {newDay && (
+                      <div
+                        className="mx-auto w-fit rounded-md bg-white/80 px-3 py-1 text-[11px] font-medium"
+                        style={{ color: "var(--wa-muted)" }}
+                      >
+                        {dayLabel(m.ts)}
+                      </div>
+                    )}
+                    <MessageRow
+                      msg={m}
+                      authorName={nameOf(m.from)}
+                      showAuthor={Boolean(active.group)}
+                      progress={chat.transfers[m.id]}
+                      onReply={setReplyTo}
+                      onImage={setLightbox}
+                    />
+                  </div>
+                );
+              })}
+              {peerTyping && (
+                <div className="flex justify-start">
                   <div
-                    className="max-w-[78%] rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
-                    style={{
-                      background: m.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
-                      color: "var(--wa-text)",
-                    }}
+                    className="wa-bubble rounded-lg px-3 py-2 shadow-sm"
+                    style={{ background: "var(--wa-bubble-in)", color: "var(--wa-muted)" }}
                   >
-                    {m.kind === "media" && m.media ? (
-                      m.media.mime.startsWith("image/") ? (
-                        <img src={m.media.dataUrl} alt={m.media.name} className="max-h-64 rounded-md" />
-                      ) : m.media.mime.startsWith("audio/") ? (
-                        <audio controls src={m.media.dataUrl} className="w-56" />
-                      ) : (
-                        <a href={m.media.dataUrl} download={m.media.name} className="underline">
-                          {m.media.name} · {humanSize(m.media.size)}
-                        </a>
-                      )
-                    ) : (
-                      <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                    )}
-                    <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                      <span>{timeOf(m.ts)}</span>
-                      <StatusIcon msg={m} />
-                    </div>
-                    {chat.transfers[m.id] !== undefined && (
-                      <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                        Aktarılıyor · %{chat.transfers[m.id]}
-                      </p>
-                    )}
+                    <span className="wa-typing inline-flex items-center">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
                   </div>
                 </div>
-              ))}
+              )}
               <div ref={endRef} />
             </div>
+
+            {!atBottom && (
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setAtBottom(true);
+                  endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+                }}
+                className="wa-press absolute bottom-24 right-6 z-10 rounded-full bg-white p-2.5 shadow-lg"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="En alta git"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </button>
+            )}
 
             {error && (
               <p className="px-5 pb-2 text-xs" style={{ color: "#c0392b" }}>
@@ -875,14 +902,63 @@ export function ChatApp() {
               </p>
             )}
 
+            {replyTo && (
+              <div
+                className="wa-pop flex items-start gap-2 px-3 pt-2"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                <div
+                  className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
+                  style={{ borderColor: "var(--wa-accent)", background: "var(--wa-panel)", color: "var(--wa-muted)" }}
+                >
+                  <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                    {replyTo.outgoing ? me : activeName}
+                  </span>
+                  <span className="line-clamp-1 break-words">
+                    {replyTo.text || replyTo.media?.name || "Ek"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyTo(null)}
+                  className="wa-press rounded-full p-2 hover:bg-black/5"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="Yanıtı iptal et"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {emojiOpen && (
+              <div
+                className="wa-pop grid max-h-44 grid-cols-8 gap-1 overflow-y-auto px-3 pt-2 sm:grid-cols-12"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                {EMOJIS.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => {
+                      vibrate(8);
+                      setDraft((d) => d + e);
+                      inputRef.current?.focus();
+                    }}
+                    className="wa-press rounded-md py-1 text-xl hover:bg-black/5"
+                    aria-label={`Emoji ${e}`}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!draft.trim()) return;
-                void sendText(active.id, draft);
-                setDraft("");
+                submitDraft();
               }}
-              className="flex items-center gap-2 p-2.5"
+              className="flex items-center gap-1.5 p-2.5"
               style={{ background: "var(--wa-panel-soft)", borderTop: "1px solid var(--wa-border)" }}
             >
               <input
@@ -899,30 +975,83 @@ export function ChatApp() {
               />
               <button
                 type="button"
-                onClick={() => fileRef.current?.click()}
-                className="rounded-full p-2.5 hover:bg-black/5"
+                onClick={() => {
+                  pressFeedback();
+                  setEmojiOpen((v) => !v);
+                }}
+                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                style={{ color: emojiOpen ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                aria-label="Emoji ekle"
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  fileRef.current?.click();
+                }}
+                className="wa-press rounded-full p-2.5 hover:bg-black/5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Dosya ekle"
               >
                 <Paperclip className="h-5 w-5" />
               </button>
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Bir mesaj yazın"
-                className="flex-1 rounded-lg px-4 py-2.5 text-sm outline-none"
-                style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
-              />
-              <button
-                type="submit"
-                className="rounded-full p-2.5 text-white disabled:opacity-50"
-                style={{ background: "var(--wa-accent)" }}
-                disabled={!draft.trim()}
-                aria-label="Gönder"
-              >
-                <Send className="h-4 w-4" />
-              </button>
+              {recording ? (
+                <div
+                  className="flex flex-1 items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
+                  style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+                >
+                  <span className="wa-rec h-2.5 w-2.5 rounded-full" style={{ background: "#e03131" }} aria-hidden />
+                  <span>
+                    Ses kaydediliyor · {String(Math.floor(recSecs / 60)).padStart(2, "0")}:
+                    {String(recSecs % 60).padStart(2, "0")}
+                  </span>
+                </div>
+              ) : (
+                <input
+                  ref={inputRef}
+                  value={draft}
+                  onChange={(e) => {
+                    setDraft(e.target.value);
+                    if (active) void sendTyping(active.id, e.target.value.length > 0);
+                  }}
+                  placeholder="Bir mesaj yazın"
+                  className="flex-1 rounded-lg px-4 py-2.5 text-sm outline-none"
+                  style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+                />
+              )}
+              {draft.trim() ? (
+                <button
+                  type="submit"
+                  className="wa-press rounded-full p-2.5 text-white"
+                  style={{ background: "var(--wa-accent)" }}
+                  aria-label="Gönder"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void toggleRecording()}
+                  className={`wa-press rounded-full p-2.5 text-white ${recording ? "wa-ring" : ""}`}
+                  style={{ background: recording ? "#e03131" : "var(--wa-accent)" }}
+                  aria-label={recording ? "Kaydı bitir ve gönder" : "Sesli not kaydet"}
+                >
+                  {recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+              )}
             </form>
+
+            {lightbox && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6"
+                onClick={() => setLightbox(null)}
+                role="presentation"
+              >
+                <img src={lightbox} alt="Büyütülmüş görsel" className="max-h-full max-w-full rounded-md" />
+              </div>
+            )}
           </>
         )}
       </section>
