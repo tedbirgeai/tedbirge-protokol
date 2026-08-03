@@ -478,7 +478,21 @@ export async function migrateLegacyQueue(): Promise<number> {
 /* --------------------- sohbet: konuşmalar ve mesajlar --------------------- */
 
 export type MessageStatus = "pending" | "sent" | "delivered" | "read";
-export type MessageKind = "text" | "media" | "system" | "call";
+export type MessageKind = "text" | "media" | "system" | "call" | "location" | "sos";
+
+/** Konum mesajı gövdesi (çevrimdışı harita karesi ile birlikte taşınır). */
+export type MessageGeo = {
+  lat: number;
+  lon: number;
+  acc?: number;
+  alt?: number;
+  /** Cihazda üretilmiş çevrimdışı harita karesi (PNG data URL). */
+  frame?: string;
+  /** Acil durum yayınında pil seviyesi. */
+  battery?: number | null;
+  charging?: boolean | null;
+  note?: string;
+};
 
 export type ChatMessage = {
   /** Küresel benzersiz mesaj kimliği (gönderende üretilir, uçtan uca korunur). */
@@ -504,6 +518,16 @@ export type ChatMessage = {
   starred?: boolean;
   /** Kaybolan mesaj: bu andan sonra cihazdan fiziksel olarak silinir. */
   expiresAt?: number;
+  /** Mesaj düzenlendiyse son düzenleme zamanı. */
+  editedAt?: number;
+  /** Konum / acil durum yayını gövdesi. */
+  geo?: MessageGeo;
+  /** Sesli notun cihazda üretilmiş transkripti. */
+  transcript?: string;
+  /** İletilen mesaj rozetleri. */
+  forwarded?: boolean;
+  /** Alıntılı iletmede özgün göndericinin adı. */
+  forwardedFrom?: string;
 };
 
 export type Conversation = {
@@ -516,6 +540,8 @@ export type Conversation = {
   lastText: string;
   unread: number;
   pinned: boolean;
+  /** Sohbetin üstünde sabitlenen mesaj kimliği. */
+  pinnedMessageId?: string;
 };
 
 export function putConversation(rec: Conversation) {

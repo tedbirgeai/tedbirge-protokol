@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  Archive,
   ArrowLeft,
   BookUser,
   Check,
@@ -8,17 +9,22 @@ import {
   ChevronDown,
   Clock,
   Copy,
+  Forward,
   Globe,
   Home,
+  Languages,
   Lock,
+  MapPin,
   Mic,
   Paperclip,
+  Pencil,
   Phone,
   Pin,
   Plus,
   Reply,
   Search,
   Send,
+  Siren,
   Smile,
   Square,
   Star,
@@ -33,9 +39,15 @@ import {
 } from "lucide-react";
 import {
   bootChat,
+  canDeleteForEveryone,
+  canEdit,
   deleteMessage,
+  editMessage,
+  pinMessage,
   reactToMessage,
+  remainingWindow,
   sendTyping,
+  sendVoiceFile,
   toggleStar,
   createGroup,
   ensureDirectConversation,
@@ -48,13 +60,29 @@ import {
   togglePin,
   useChat,
   useConversationMessages,
+  EDIT_WINDOW_MS,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
+import { ForwardDialog } from "@/components/chat/ForwardDialog";
+import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
 import { bootLock, useLock } from "@/lib/chat/lock";
 import { startPtt, stopPtt } from "@/lib/chat/ptt";
 import { ensureNotificationPermission } from "@/lib/chat/push";
 import { ttlOf, ttlLabel } from "@/lib/chat/ephemeral";
+import {
+  ARCHIVE,
+  folderOf,
+  folderTabs,
+  getFolders,
+  isArchived,
+  onFoldersChange,
+  toggleArchive,
+} from "@/lib/chat/folders";
+import { getPrivacy, onPrivacyChange } from "@/lib/chat/privacy";
+import { cachedTranslation, translateText } from "@/lib/chat/translate";
+import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
+import { geoUri } from "@/lib/chat/location";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
@@ -71,7 +99,7 @@ import type { PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
-import type { ChatMessage } from "@/lib/store/idb";
+import type { ChatMessage, Conversation } from "@/lib/store/idb";
 
 function timeOf(ts: number) {
   return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
@@ -219,18 +247,46 @@ function MessageRow({
   authorName,
   showAuthor,
   progress,
+  pinned,
+  translateTo,
   onReply,
   onImage,
+  onEdit,
+  onForward,
 }: {
   msg: ChatMessage;
   authorName: string;
   showAuthor: boolean;
   progress?: number;
+  pinned?: boolean;
+  translateTo?: string;
   onReply: (m: ChatMessage) => void;
   onImage: (src: string) => void;
+  onEdit: (m: ChatMessage) => void;
+  onForward: (m: ChatMessage) => void;
 }) {
   const [menu, setMenu] = useState(false);
+  const [translated, setTranslated] = useState<string | null>(null);
   const reactions = Object.values(msg.reactions ?? {});
+
+  // Otomatik çeviri: yalnızca gelen metin mesajları, cihazda önbelleklenir.
+  useEffect(() => {
+    setTranslated(null);
+    const text = msg.text?.trim();
+    if (!translateTo || msg.outgoing || msg.deleted || !text) return;
+    const hit = cachedTranslation(text, translateTo);
+    if (hit) {
+      setTranslated(hit);
+      return;
+    }
+    let alive = true;
+    void translateText(text, translateTo).then((r) => {
+      if (alive && !r.error && r.text && r.text !== text) setTranslated(r.text);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [msg.id, msg.text, msg.outgoing, msg.deleted, translateTo]);
 
   function quickReact(emoji: string) {
     pressFeedback();
@@ -238,20 +294,46 @@ function MessageRow({
     setMenu(false);
   }
 
+  const isSos = msg.kind === "sos";
+
   return (
     <div className={`group flex ${msg.outgoing ? "justify-end" : "justify-start"}`}>
       <div className="relative max-w-[80%]">
         <div
           className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
           style={{
-            background: msg.outgoing ? "var(--wa-bubble-out)" : "var(--wa-bubble-in)",
+            background: isSos
+              ? "#fff0f0"
+              : msg.outgoing
+                ? "var(--wa-bubble-out)"
+                : "var(--wa-bubble-in)",
             color: "var(--wa-text)",
+            border: isSos ? "1px solid #e03131" : undefined,
           }}
           onDoubleClick={() => quickReact("👍")}
         >
           {showAuthor && !msg.outgoing && (
             <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
               {authorName}
+            </p>
+          )}
+
+          {(msg.forwarded || pinned) && (
+            <p
+              className="mb-0.5 flex items-center gap-1 text-[11px] italic"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              {msg.forwarded && (
+                <>
+                  <Forward className="h-3 w-3" aria-hidden />
+                  İletildi{msg.forwardedFrom ? ` · ${msg.forwardedFrom}` : ""}
+                </>
+              )}
+              {pinned && (
+                <>
+                  <Pin className="h-3 w-3" aria-hidden /> Sabitlenmiş
+                </>
+              )}
             </p>
           )}
 
@@ -275,6 +357,44 @@ function MessageRow({
             <p className="italic" style={{ color: "var(--wa-muted)" }}>
               Bu mesaj silindi
             </p>
+          ) : msg.geo ? (
+            <div>
+              {isSos && (
+                <p
+                  className="mb-1 flex items-center gap-1 text-[13px] font-bold"
+                  style={{ color: "#e03131" }}
+                >
+                  <Siren className="h-4 w-4" aria-hidden /> ACİL DURUM YAYINI
+                </p>
+              )}
+              {msg.geo.frame && (
+                <img
+                  src={msg.geo.frame}
+                  alt="Çevrimdışı konum haritası"
+                  onClick={() => onImage(msg.geo!.frame!)}
+                  className="mb-1 max-h-56 cursor-zoom-in rounded-md"
+                />
+              )}
+              <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+              {msg.geo.note && (
+                <p className="mt-0.5 text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                  {msg.geo.note}
+                </p>
+              )}
+              {typeof msg.geo.battery === "number" && (
+                <p className="mt-0.5 text-[12px]" style={{ color: "var(--wa-muted)" }}>
+                  🔋 %{Math.round(msg.geo.battery)}
+                  {msg.geo.charging ? " · şarjda" : ""}
+                </p>
+              )}
+              <a
+                href={geoUri({ lat: msg.geo.lat, lon: msg.geo.lon, ts: msg.ts })}
+                className="mt-1 inline-flex items-center gap-1 text-[12px] underline"
+                style={{ color: "var(--wa-accent)" }}
+              >
+                <MapPin className="h-3 w-3" aria-hidden /> Harita uygulamasında aç
+              </a>
+            </div>
           ) : msg.kind === "media" && msg.media ? (
             msg.media.mime.startsWith("image/") ? (
               <img
@@ -284,7 +404,14 @@ function MessageRow({
                 className="max-h-64 cursor-zoom-in rounded-md"
               />
             ) : msg.media.mime.startsWith("audio/") ? (
-              <audio controls src={msg.media.dataUrl} className="w-56" />
+              <div>
+                <audio controls src={msg.media.dataUrl} className="w-56" />
+                {msg.transcript && (
+                  <p className="mt-1 text-[12.5px] italic" style={{ color: "var(--wa-muted)" }}>
+                    “{msg.transcript}”
+                  </p>
+                )}
+              </div>
             ) : (
               <a href={msg.media.dataUrl} download={msg.media.name} className="underline">
                 {msg.media.name} · {humanSize(msg.media.size)}
@@ -294,10 +421,21 @@ function MessageRow({
             <p className="whitespace-pre-wrap break-words">{msg.text}</p>
           )}
 
+          {translated && (
+            <p
+              className="mt-1 flex items-start gap-1 border-t pt-1 text-[13px]"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+            >
+              <Languages className="mt-[3px] h-3 w-3 shrink-0" aria-hidden />
+              <span className="whitespace-pre-wrap break-words">{translated}</span>
+            </p>
+          )}
+
           <div
             className="mt-0.5 flex items-center justify-end gap-1 text-[11px]"
             style={{ color: "var(--wa-muted)" }}
           >
+            {msg.editedAt && <span>düzenlendi</span>}
             {msg.starred && <Star className="h-3 w-3 fill-current" aria-label="Yıldızlı" />}
             <span>{timeOf(msg.ts)}</span>
             <StatusIcon msg={msg} />
@@ -368,6 +506,36 @@ function MessageRow({
                 setMenu(false);
               }}
             />
+            {!msg.deleted && (
+              <MenuItem
+                icon={<Forward className="h-4 w-4" />}
+                label="İlet / alıntılı ilet"
+                onClick={() => {
+                  onForward(msg);
+                  setMenu(false);
+                }}
+              />
+            )}
+            {msg.outgoing && msg.kind === "text" && canEdit(msg) && (
+              <MenuItem
+                icon={<Pencil className="h-4 w-4" />}
+                label={`Düzenle (${remainingWindow(msg, EDIT_WINDOW_MS)})`}
+                onClick={() => {
+                  onEdit(msg);
+                  setMenu(false);
+                }}
+              />
+            )}
+            {!msg.deleted && (
+              <MenuItem
+                icon={<Pin className="h-4 w-4" />}
+                label={pinned ? "Sabitlemeyi kaldır" : "Sohbete sabitle"}
+                onClick={() => {
+                  void pinMessage(msg.convId, pinned ? null : msg.id);
+                  setMenu(false);
+                }}
+              />
+            )}
             {msg.kind === "text" && !msg.deleted && (
               <MenuItem
                 icon={<Copy className="h-4 w-4" />}
@@ -386,11 +554,21 @@ function MessageRow({
                 setMenu(false);
               }}
             />
+            {canDeleteForEveryone(msg) && (
+              <MenuItem
+                icon={<Trash2 className="h-4 w-4" />}
+                label="Herkesten sil"
+                onClick={() => {
+                  void deleteMessage(msg.id, true);
+                  setMenu(false);
+                }}
+              />
+            )}
             <MenuItem
               icon={<Trash2 className="h-4 w-4" />}
-              label="Sil"
+              label="Bende sil"
               onClick={() => {
-                void deleteMessage(msg.id, msg.outgoing);
+                void deleteMessage(msg.id, false);
                 setMenu(false);
               }}
             />
@@ -488,10 +666,17 @@ export function ChatApp() {
   const [ptt, setPtt] = useState(false);
   const [visibleCount, setVisibleCount] = useState(60);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [forwardMsg, setForwardMsg] = useState<ChatMessage | null>(null);
+  const [editing, setEditing] = useState<ChatMessage | null>(null);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [folder, setFolder] = useState<string>("");
+  const [folderVersion, setFolderVersion] = useState(0);
+  const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const transcriptRef = useRef<TranscriptSession | null>(null);
   const recRef = useRef<{
     rec: MediaRecorder;
     chunks: Blob[];
@@ -502,6 +687,16 @@ export function ChatApp() {
   const chat = useChat();
   const node = useNodeRuntime();
   const messages = useConversationMessages(activeId);
+
+  // Klasör ve gizlilik tercihleri değişince liste ve çeviri anında yenilenir.
+  useEffect(() => {
+    const offFolders = onFoldersChange(() => setFolderVersion((v) => v + 1));
+    const offPrivacy = onPrivacyChange(() => setPrivacyState({ ...getPrivacy() }));
+    return () => {
+      offFolders();
+      offPrivacy();
+    };
+  }, []);
 
   useEffect(() => {
     setOnboarded(isOnboarded());
@@ -560,8 +755,21 @@ export function ChatApp() {
     return [...rows].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs);
   }, [chat.conversations, query]);
 
-  // WhatsApp modeli: tek liste. Eşleşme (PIN/QR) yalnızca cihaz bağlamada.
-  const conversations = allConversations;
+  // Klasör görünümü: "" → arşivlenmemiş tümü, ARCHIVE → arşiv, diğer → klasör.
+  const tabs = useMemo(() => folderTabs(), [folderVersion]);
+  const conversations = useMemo(
+    () =>
+      allConversations.filter((c) => {
+        const f = folderOf(c.id);
+        if (folder === "") return f !== ARCHIVE;
+        return f === folder;
+      }),
+    [allConversations, folder, folderVersion],
+  );
+  const archivedCount = useMemo(
+    () => allConversations.filter((c) => isArchived(c.id)).length,
+    [allConversations, folderVersion],
+  );
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
@@ -613,6 +821,16 @@ export function ChatApp() {
   function submitDraft() {
     if (!active || !draft.trim()) return;
     pressFeedback();
+    // Düzenleme modunda mesaj yerinde güncellenir, yeni mesaj oluşmaz.
+    if (editing) {
+      const target = editing;
+      const text = draft;
+      setDraft("");
+      setEditing(null);
+      void editMessage(target.id, text).catch((err: Error) => setError(err.message));
+      inputRef.current?.focus();
+      return;
+    }
     void sendText(
       active.id,
       draft,
@@ -643,6 +861,8 @@ export function ChatApp() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
       const chunks: Blob[] = [];
+      // Transkript kayıtla eş zamanlı, tamamen cihazda üretilir.
+      transcriptRef.current = startTranscript("tr-TR");
       rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -650,10 +870,19 @@ export function ChatApp() {
         recRef.current = null;
         setRecording(false);
         setRecSecs(0);
+        const session = transcriptRef.current;
+        transcriptRef.current = null;
         const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
-        if (blob.size < 800) return;
+        if (blob.size < 800) {
+          void session?.stop();
+          return;
+        }
         const file = new File([blob], `sesli-not-${Date.now()}.webm`, { type: blob.type });
-        void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
+        const finish = session ? session.stop() : Promise.resolve("");
+        void finish
+          .catch(() => "")
+          .then((text) => sendVoiceFile(active.id, file, text?.trim() || undefined))
+          .catch((err: Error) => setError(err.message));
       };
       const timer = setInterval(() => setRecSecs((v) => v + 1), 1000);
       recRef.current = { rec, chunks, timer };
@@ -686,6 +915,19 @@ export function ChatApp() {
     >
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
+      <ForwardDialog
+        message={forwardMsg}
+        conversations={chat.conversations as Conversation[]}
+        titleOf={titleOf}
+        authorName={forwardMsg?.outgoing ? me : nameOf(forwardMsg?.from ?? "")}
+        onClose={() => setForwardMsg(null)}
+      />
+      <EmergencyDialog
+        open={emergencyOpen}
+        convId={activeId}
+        onClose={() => setEmergencyOpen(false)}
+      />
+
       <ChatSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -839,6 +1081,32 @@ export function ChatApp() {
               style={{ color: "var(--wa-text)" }}
             />
           </div>
+        </div>
+
+        {/* Klasör ve arşiv sekmeleri */}
+        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
+          {tabs.map((t) => {
+            const on = folder === t.id;
+            const isArchive = t.id === ARCHIVE;
+            if (isArchive && archivedCount === 0 && !on) return null;
+            return (
+              <button
+                key={t.id || "all"}
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setFolder(t.id);
+                }}
+                className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+                style={{
+                  background: on ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                  color: on ? "#fff" : "var(--wa-muted)",
+                }}
+              >
+                {isArchive ? `Arşiv${archivedCount ? ` · ${archivedCount}` : ""}` : t.label}
+              </button>
+            );
+          })}
         </div>
 
         {groupMode && (
@@ -1135,6 +1403,21 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => {
+                  pressFeedback();
+                  toggleArchive(active.id);
+                  setActiveId(null);
+                }}
+                className="wa-press rounded-full p-2 hover:bg-black/5"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
+                title={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
+              >
+                <Archive className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   void removeConversation(active.id);
                   setActiveId(null);
                 }}
@@ -1160,6 +1443,47 @@ export function ChatApp() {
               >
                 <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
               </div>
+              {/* Sabitlenmiş mesaj şeridi */}
+              {active.pinnedMessageId &&
+                (() => {
+                  const pm = messages.find((x) => x.id === active.pinnedMessageId);
+                  if (!pm) return null;
+                  return (
+                    <div
+                      className="sticky top-0 z-10 mx-auto mb-2 flex w-full max-w-2xl items-center gap-2 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
+                      style={{ borderLeft: "3px solid var(--wa-accent)" }}
+                    >
+                      <Pin
+                        className="h-3.5 w-3.5"
+                        style={{ color: "var(--wa-accent)" }}
+                        aria-hidden
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHighlightId(pm.id);
+                          document
+                            .getElementById(`msg_${pm.id}`)
+                            ?.scrollIntoView({ block: "center", behavior: "smooth" });
+                        }}
+                        className="min-w-0 flex-1 truncate text-left text-[12.5px]"
+                        style={{ color: "var(--wa-text)" }}
+                      >
+                        {pm.text || pm.media?.name || "Ek"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void pinMessage(active.id, null)}
+                        className="wa-press rounded-full p-1"
+                        style={{ color: "var(--wa-muted)" }}
+                        aria-label="Sabitlemeyi kaldır"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })()}
+
               {hiddenCount > 0 && (
                 <button
                   type="button"
@@ -1196,8 +1520,17 @@ export function ChatApp() {
                       authorName={nameOf(m.from)}
                       showAuthor={Boolean(active.group)}
                       progress={chat.transfers[m.id]}
+                      pinned={active.pinnedMessageId === m.id}
+                      translateTo={privacy.autoTranslateTo || undefined}
                       onReply={setReplyTo}
                       onImage={setLightbox}
+                      onEdit={(msg) => {
+                        setEditing(msg);
+                        setReplyTo(null);
+                        setDraft(msg.text);
+                        inputRef.current?.focus();
+                      }}
+                      onForward={setForwardMsg}
                     />
                   </div>
                 );
@@ -1244,6 +1577,39 @@ export function ChatApp() {
               <p className="px-5 pb-2 text-xs" style={{ color: "#c0392b" }}>
                 {error}
               </p>
+            )}
+
+            {editing && (
+              <div
+                className="wa-pop flex items-center gap-2 px-3 pt-2"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                <div
+                  className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
+                  style={{
+                    borderColor: "var(--wa-accent)",
+                    background: "var(--wa-panel)",
+                    color: "var(--wa-muted)",
+                  }}
+                >
+                  <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                    Mesajı düzenle · {remainingWindow(editing, EDIT_WINDOW_MS)}
+                  </span>
+                  <span className="line-clamp-1 break-words">{editing.text}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(null);
+                    setDraft("");
+                  }}
+                  className="wa-press rounded-full p-2 hover:bg-black/5"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="Düzenlemeyi iptal et"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             )}
 
             {replyTo && (
@@ -1348,6 +1714,20 @@ export function ChatApp() {
               >
                 <Paperclip className="h-5 w-5" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setEmergencyOpen(true);
+                }}
+                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                style={{ color: "#e03131" }}
+                aria-label="Konum paylaş veya acil durum yayını"
+                title="Konum paylaş · Acil durum yayını (SOS)"
+              >
+                <Siren className="h-5 w-5" />
+              </button>
+
               {recording ? (
                 <div
                   className="flex flex-1 items-center gap-2 rounded-lg px-4 py-2.5 text-sm"

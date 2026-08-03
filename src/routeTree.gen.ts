@@ -49,6 +49,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RehberIndexRouteImport } from './routes/rehber.index'
 import { Route as RehberSlugRouteImport } from './routes/rehber.$slug'
+import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedYonetimRouteImport } from './routes/_authenticated/yonetim'
 import { Route as AuthenticatedSahaRaporuRouteImport } from './routes/_authenticated/saha-raporu'
@@ -262,6 +263,11 @@ const RehberSlugRoute = RehberSlugRouteImport.update({
   path: '/rehber/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTranslateRoute = ApiTranslateRouteImport.update({
+  id: '/api/translate',
+  path: '/api/translate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -372,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/translate': typeof ApiTranslateRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
@@ -426,6 +433,7 @@ export interface FileRoutesByTo {
   '/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/translate': typeof ApiTranslateRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber': typeof RehberIndexRoute
   '/teklif/$id': typeof AuthenticatedTeklifIdRoute
@@ -482,6 +490,7 @@ export interface FileRoutesById {
   '/_authenticated/saha-raporu': typeof AuthenticatedSahaRaporuRoute
   '/_authenticated/yonetim': typeof AuthenticatedYonetimRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/translate': typeof ApiTranslateRoute
   '/rehber/$slug': typeof RehberSlugRoute
   '/rehber/': typeof RehberIndexRoute
   '/_authenticated/teklif/$id': typeof AuthenticatedTeklifIdRoute
@@ -538,6 +547,7 @@ export interface FileRouteTypes {
     | '/saha-raporu'
     | '/yonetim'
     | '/api/chat'
+    | '/api/translate'
     | '/rehber/$slug'
     | '/rehber/'
     | '/teklif/$id'
@@ -592,6 +602,7 @@ export interface FileRouteTypes {
     | '/saha-raporu'
     | '/yonetim'
     | '/api/chat'
+    | '/api/translate'
     | '/rehber/$slug'
     | '/rehber'
     | '/teklif/$id'
@@ -647,6 +658,7 @@ export interface FileRouteTypes {
     | '/_authenticated/saha-raporu'
     | '/_authenticated/yonetim'
     | '/api/chat'
+    | '/api/translate'
     | '/rehber/$slug'
     | '/rehber/'
     | '/_authenticated/teklif/$id'
@@ -700,6 +712,7 @@ export interface RootRouteChildren {
   UyumlulukRoute: typeof UyumlulukRoute
   YasalRoute: typeof YasalRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiTranslateRoute: typeof ApiTranslateRoute
   RehberSlugRoute: typeof RehberSlugRoute
   RehberIndexRoute: typeof RehberIndexRoute
   ApiPublicEnrollRoute: typeof ApiPublicEnrollRoute
@@ -994,6 +1007,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RehberSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/translate': {
+      id: '/api/translate'
+      path: '/api/translate'
+      fullPath: '/api/translate'
+      preLoaderRoute: typeof ApiTranslateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -1145,6 +1165,7 @@ const rootRouteChildren: RootRouteChildren = {
   UyumlulukRoute: UyumlulukRoute,
   YasalRoute: YasalRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiTranslateRoute: ApiTranslateRoute,
   RehberSlugRoute: RehberSlugRoute,
   RehberIndexRoute: RehberIndexRoute,
   ApiPublicEnrollRoute: ApiPublicEnrollRoute,
