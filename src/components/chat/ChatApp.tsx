@@ -95,7 +95,7 @@ import {
   vibrate,
 } from "@/lib/chat/sounds";
 import { useNodeRuntime } from "@/lib/node-runtime";
-import type { PeerInfo } from "@/lib/browser-node";
+import { getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
@@ -972,7 +972,7 @@ export function ChatApp() {
               {me}
             </p>
             <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
-              {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : "Bağlı"}
+              {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : `${getPersonId()} · Bağlı`}
             </p>
           </div>
           <Link

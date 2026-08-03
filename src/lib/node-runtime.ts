@@ -7,7 +7,12 @@
  */
 
 import { useSyncExternalStore } from "react";
-import { BrowserNode, getBrowserNodeId, type BrowserNodeState } from "@/lib/browser-node";
+import {
+  BrowserNode,
+  getBrowserNodeId,
+  syncPersonIdentity,
+  type BrowserNodeState,
+} from "@/lib/browser-node";
 import { sendOverBestCarrier, setCarrierEnvelopeSink } from "@/lib/carrier-bridge";
 import { pruneSeen } from "@/lib/store/idb";
 import type { Priority } from "@/lib/store/idb";
@@ -54,6 +59,7 @@ export function setNodeLicense(key?: string) {
 
 export async function startNode() {
   if (node) return;
+  await syncPersonIdentity();
   node = new BrowserNode(license, publish);
 
   // PHY veri düzlemi: IP koptuğunda zarflar bağlı LoRa/HaLow modemine yazılır.

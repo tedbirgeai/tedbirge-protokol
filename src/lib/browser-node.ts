@@ -54,6 +54,7 @@ import {
 } from "@/lib/diagnostics";
 
 const ID_KEY = "tedbirge.browser-node.id";
+const PERSON_ID_KEY = "tedbirge.person.id";
 const CHANNEL = "tedbirge-mesh-v1";
 /** Yerel keşif kanalı: aynı cihaz/aynı origin üzerindeki sekme ve PWA örnekleri. */
 const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
@@ -183,6 +184,39 @@ export function getBrowserNodeId() {
     window.localStorage.setItem(ID_KEY, id);
   }
   return id;
+}
+
+/**
+ * Kişi kimliği hesap düzeyindedir; Edge/Chrome/PWA değişse de aynıdır.
+ * Düğüm kimliği ise oturum çakışmalarını ve anahtar paylaşımını önlemek için
+ * cihaz başına ayrı kalır. Bu, modern mesajlaşmadaki hesap + bağlı cihaz
+ * ayrımıdır.
+ */
+export function getPersonId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(PERSON_ID_KEY) ?? getBrowserNodeId();
+  } catch {
+    return getBrowserNodeId();
+  }
+}
+
+export async function syncPersonIdentity(): Promise<string> {
+  if (typeof window === "undefined") return "";
+  try {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return getPersonId();
+    const source = new TextEncoder().encode(`tedbirge/person/v1:${data.user.id}`);
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", source));
+    const code = Array.from(digest.slice(0, 6), (b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase();
+    const personId = `TBG-${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8, 12)}`;
+    window.localStorage.setItem(PERSON_ID_KEY, personId);
+    return personId;
+  } catch {
+    return getPersonId();
+  }
 }
 
 const ICE: RTCConfiguration = {
