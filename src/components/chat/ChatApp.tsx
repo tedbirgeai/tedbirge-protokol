@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -314,7 +314,7 @@ function MessageRow({
   );
 }
 
-function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+function MenuItem({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -377,8 +377,18 @@ export function ChatApp() {
   const [newPeer, setNewPeer] = useState("");
   const [groupMode, setGroupMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [atBottom, setAtBottom] = useState(true);
+  const [recording, setRecording] = useState(false);
+  const [recSecs, setRecSecs] = useState(0);
+  const [soundOff, setSoundOff] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; timer: ReturnType<typeof setInterval> } | null>(null);
 
   const chat = useChat();
   const node = useNodeRuntime();
@@ -387,11 +397,26 @@ export function ChatApp() {
   useEffect(() => {
     setOnboarded(isOnboarded());
     void bootChat().then(() => setReady(true));
+    const unlock = () => unlockAudio();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    setSoundOff(isSoundMuted());
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
   }, []);
 
+  // Sohbet değişince yazma alanına odaklan, yanıt/emoji durumunu sıfırla.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, activeId]);
+    setReplyTo(null);
+    setEmojiOpen(false);
+    inputRef.current?.focus();
+  }, [activeId]);
+
+  useEffect(() => {
+    if (atBottom) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [messages.length, activeId, atBottom]);
 
   useEffect(() => {
     if (activeId) void markRead(activeId);
@@ -425,6 +450,57 @@ export function ChatApp() {
     () => Object.values(chat.messages).flat().filter((m) => m.outgoing && m.status === "pending").length,
     [chat.messages],
   );
+
+  function submitDraft() {
+    if (!active || !draft.trim()) return;
+    pressFeedback();
+    void sendText(active.id, draft, replyTo
+      ? {
+          id: replyTo.id,
+          text: replyTo.deleted ? "Silinen mesaj" : replyTo.text || replyTo.media?.name || "Ek",
+          author: replyTo.outgoing ? me : displayName(active.title),
+        }
+      : undefined);
+    setDraft("");
+    setReplyTo(null);
+    setEmojiOpen(false);
+    void sendTyping(active.id, false);
+    inputRef.current?.focus();
+  }
+
+  /** Sesli not — basılı tutmadan tek dokunuşla başlat/bitir. */
+  async function toggleRecording() {
+    if (!active) return;
+    pressFeedback();
+    if (recRef.current) {
+      recRef.current.rec.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (recRef.current) clearInterval(recRef.current.timer);
+        recRef.current = null;
+        setRecording(false);
+        setRecSecs(0);
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 800) return;
+        const file = new File([blob], `sesli-not-${Date.now()}.webm`, { type: blob.type });
+        void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
+      };
+      const timer = setInterval(() => setRecSecs((v) => v + 1), 1000);
+      recRef.current = { rec, chunks, timer };
+      rec.start();
+      setRecording(true);
+      vibrate(20);
+    } catch {
+      setError("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
+    }
+  }
 
   async function shareInvite() {
     const url = `${window.location.origin}/chat`;
