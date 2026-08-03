@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useChatSkin } from "@/lib/chat/skin";
+
 import {
   Archive,
   ArrowLeft,
@@ -30,7 +32,9 @@ import {
   Square,
   Star,
   Trash2,
+  Palette,
   Settings,
+
   Radio,
   Users,
   Video,
@@ -607,11 +611,14 @@ function MenuItem({
 
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
+  const { skin } = useChatSkin();
   return (
     <div
+      data-skin={skin}
       className="wa flex h-[100dvh] items-center justify-center p-6"
       style={{ background: "var(--wa-panel-soft)" }}
     >
+
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm">
         <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
           Sohbete başlayın
@@ -646,8 +653,10 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 }
 
 export function ChatApp() {
+  const { skin, toggle: toggleSkin } = useChatSkin();
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
@@ -934,9 +943,11 @@ export function ChatApp() {
 
   return (
     <div
+      data-skin={skin}
       className="wa flex h-[100dvh] w-full overflow-hidden"
       style={{ background: "var(--wa-panel-soft)" }}
     >
+
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
       <ForwardDialog
@@ -1077,6 +1088,23 @@ export function ChatApp() {
               <Volume2 className="h-[18px] w-[18px]" />
             )}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              toggleSkin();
+              toast.success(
+                skin === "pro" ? "Klasik arayüze dönüldü" : "Yeni arayüz etkinleştirildi",
+              );
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label={skin === "pro" ? "Klasik arayüze dön" : "Yeni arayüzü aç"}
+            title={skin === "pro" ? "Klasik arayüze dön" : "Yeni arayüzü aç"}
+          >
+            <Palette className="h-[18px] w-[18px]" />
+          </button>
+
           <button
             type="button"
             onClick={() => {
