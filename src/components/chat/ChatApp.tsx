@@ -593,7 +593,7 @@ export function ChatApp() {
             className="wa-press rounded-full p-2 hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Rehber"
-            title="Rehber"
+            title={`Rehber · ${contactBook.contacts.length} kişi`}
           >
             <BookUser className="h-[18px] w-[18px]" />
           </button>
