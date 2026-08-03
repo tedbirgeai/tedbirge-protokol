@@ -67,6 +67,19 @@ const LAN_RETRY_MS = 6_000;
 const LAN_ANNOUNCE_MS = 3_000;
 
 /**
+ * Yalnız anlık anlam taşıyan kontrol paketleri kalıcı kuyruğa veya bulut
+ * store-and-forward hattına ASLA yazılmaz. Aksi halde eski ping/call/presence
+ * paketleri her kuyruk turunda yeniden üretilerek röleyi kilitler.
+ */
+const TRANSIENT_KINDS = new Set<EnvelopeKind>([
+  "ping",
+  "pong",
+  "signal",
+  "call",
+  "presence",
+]);
+
+/**
  * Aynı Wi-Fi / hotspot ağındaki saha geçidini bulmak için denenecek adresler.
  * Bluetooth ve internet kapalı olsa da bu adreslerden biri açıksa cihazlar
  * saniyeler içinde birbirini bulur. Ajan yoksa denemeler sessizce düşer.
@@ -270,6 +283,7 @@ export class BrowserNode {
   /** Bulut yedek röle (store-and-forward) yoklama zamanlayıcısı. */
   private relayTimer: ReturnType<typeof setInterval> | null = null;
   private relayBusy = false;
+  private flushBusy = false;
 
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
@@ -433,7 +447,7 @@ export class BrowserNode {
     payload: unknown,
     priority: Priority,
   ): Promise<boolean> {
-    if (!this.state.online || to === "*" || kind === "call" || kind === "signal") return false;
+    if (!this.state.online || to === "*" || TRANSIENT_KINDS.has(kind)) return false;
     if (!this.identity) return false;
 
     let boxPublic = this.peerKeys.get(to)?.bpk;
@@ -1017,10 +1031,9 @@ export class BrowserNode {
         }
       }
       recordTx(false);
-      // Arama sinyalleri gerçek zamanlıdır: kuyruğa yazılırsa uygulama
-      // yeniden açıldığında eski teklif tekrar gönderilir ve "kendi kendine
-      // arama" hissi doğar. Bu yüzden call paketleri asla saklanmaz.
-      if (kind === "call") return false;
+      // Kontrol paketleri gerçek zamanlıdır. Saklanmaları gecikme üretir,
+      // eski çağrıları yeniden çaldırır ve ping/pong çoğalma döngüsü kurar.
+      if (TRANSIENT_KINDS.has(kind)) return false;
       // Bulut yedek röle: alıcı kapalı olsa bile mesaj teslim edilmek üzere saklanır.
       if (await this.relayViaCloud(kind, to, payload, prio)) {
         recordTx(true);
@@ -1093,41 +1106,49 @@ export class BrowserNode {
   }
 
   private async flushQueue() {
-    const rows = await getPackets();
-    if (!rows.length) return;
-    for (const row of rows) {
-      const item = row.env as QueuedItem;
-      if (!item || typeof item !== "object") {
-        await deletePacket(row.pktId);
-        continue;
-      }
-      // Eski arama sinyalleri kuyrukta kalmışsa temizlenir (tekrar çalmasın).
-      if ((item.t === "intent" && item.kind === "call") || (item.t === "fwd" && item.env.h.kind === "call")) {
-        await deletePacket(row.pktId);
-        continue;
-      }
-      if (item.t === "fwd") {
-        if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
-        continue;
-      }
+    if (this.flushBusy) return;
+    this.flushBusy = true;
+    try {
+      const rows = await getPackets();
+      if (!rows.length) return;
+      for (const row of rows) {
+        const item = row.env as QueuedItem;
+        if (!item || typeof item !== "object") {
+          await deletePacket(row.pktId);
+          continue;
+        }
+        // Önceki sürümlerden kalan bütün anlık kontrol paketlerini tek seferde
+        // temizle. Bunlar tekrar gönderilmez ve yeni kuyruk öğesi üretemez.
+        const queuedKind = item.t === "intent" ? item.kind : item.env.h.kind;
+        if (TRANSIENT_KINDS.has(queuedKind)) {
+          await deletePacket(row.pktId);
+          continue;
+        }
+        if (item.t === "fwd") {
+          if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
+          continue;
+        }
 
-      if (item.kind === "telemetry" && this.state.online) {
-        const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
-        if (ok) await deletePacket(row.pktId);
-        continue;
-      }
-      const sent = await this.send(item.kind, item.to, item.payload, item.priority);
-      if (sent) {
-        await deletePacket(row.pktId);
-        const messageId = (item.payload as { id?: unknown } | null)?.id;
-        if (typeof messageId === "string") {
-          window.dispatchEvent(
-            new CustomEvent("tedbirge:outbox-sent", { detail: { messageId } }),
-          );
+        if (item.kind === "telemetry" && this.state.online) {
+          const ok = await this.postTelemetry(item.payload as Record<string, unknown>);
+          if (ok) await deletePacket(row.pktId);
+          continue;
+        }
+        const sent = await this.send(item.kind, item.to, item.payload, item.priority);
+        if (sent) {
+          await deletePacket(row.pktId);
+          const messageId = (item.payload as { id?: unknown } | null)?.id;
+          if (typeof messageId === "string") {
+            window.dispatchEvent(
+              new CustomEvent("tedbirge:outbox-sent", { detail: { messageId } }),
+            );
+          }
         }
       }
+    } finally {
+      this.flushBusy = false;
+      await this.refreshQueueCount();
     }
-    await this.refreshQueueCount();
   }
 
   private async postTelemetry(body: Record<string, unknown>) {
