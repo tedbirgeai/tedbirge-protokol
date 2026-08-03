@@ -514,11 +514,19 @@ type CallSignal = {
   video?: boolean;
   alias?: string;
   restart?: boolean;
+  at?: number;
 };
+
+/** Bayat teklif penceresi: bundan eski sinyaller çalmaz (kuyruk tekrarı). */
+const OFFER_FRESH_MS = 60_000;
 
 async function onCallSignal(from: string, raw: unknown) {
   const p = raw as CallSignal;
   if (!p?.t) return;
+  // Kendi cihazımızdan dönen sinyal asla arama olarak gösterilmez.
+  if (!from || from === nodeSelf()) return;
+  if (p.t === "offer" && typeof p.at === "number" && Date.now() - p.at > OFFER_FRESH_MS) return;
+
 
   if (p.t === "offer" && p.sdp) {
     const desc: RTCSessionDescriptionInit = { type: "offer", sdp: p.sdp };
