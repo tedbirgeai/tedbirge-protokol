@@ -267,7 +267,42 @@ export function ChatSettingsDialog({
               </button>
             )}
           </div>
+          <NotificationHealth />
         </section>
+
+        {/* Arayüz görünümü */}
+        <section className="mt-6">
+          <h3 className="text-sm font-semibold">Arayüz görünümü</h3>
+          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+            Yeni arayüzü beğenmezseniz tek dokunuşla eski görünüme dönebilirsiniz.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(
+              [
+                { id: "pro", label: "Yeni arayüz" },
+                { id: "klasik", label: "Klasik arayüz" },
+              ] as const
+            ).map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setSkinChoice(o.id);
+                }}
+                className="wa-press rounded-full border px-4 py-2 text-[13px] font-semibold"
+                style={
+                  skin === o.id
+                    ? { background: "var(--wa-accent)", color: "#fff", borderColor: "transparent" }
+                    : { borderColor: "var(--wa-border)", color: "var(--wa-muted)" }
+                }
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
 
 
         {/* Uygulamayı yükle */}
