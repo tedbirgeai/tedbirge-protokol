@@ -358,7 +358,7 @@ function Onboarding({ onDone }: { onDone: () => void }) {
             void requestNotificationPermission();
             onDone();
           }}
-          className="mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="wa-press mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
           style={{ background: "var(--wa-accent)" }}
         >
           Devam et
@@ -444,6 +444,7 @@ export function ChatApp() {
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   const nameOf = (id: string) => displayName(id, chat.aliases[id]);
+  const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
 
   /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
   const pendingCount = useMemo(
@@ -552,7 +553,7 @@ export function ChatApp() {
 
           <Link
             to="/kurumsal"
-            className="rounded-full p-2 hover:bg-black/5"
+            className="wa-press rounded-full p-2 hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Hakkında"
             title="Hakkında"
@@ -561,8 +562,26 @@ export function ChatApp() {
           </Link>
           <button
             type="button"
-            onClick={() => setGroupMode((v) => !v)}
-            className="rounded-full p-2 hover:bg-black/5"
+            onClick={() => {
+              const next = !soundOff;
+              setSoundMuted(next);
+              setSoundOff(next);
+              if (!next) pressFeedback();
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label={soundOff ? "Sesleri aç" : "Sesleri kapat"}
+            title={soundOff ? "Sesleri aç" : "Sesleri kapat"}
+          >
+            {soundOff ? <VolumeX className="h-[18px] w-[18px]" /> : <Volume2 className="h-[18px] w-[18px]" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setGroupMode((v) => !v);
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Yeni sohbet veya grup"
           >
@@ -609,7 +628,7 @@ export function ChatApp() {
                         setGroupMode(false);
                       });
                     }}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                    className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
                     style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                   >
                     <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
@@ -689,7 +708,7 @@ export function ChatApp() {
                   tabIndex={0}
                   onClick={() => setActiveId(c.id)}
                   onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
-                  className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-black/[0.03]"
+                  className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
                   <Avatar name={name} />
@@ -727,7 +746,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => void shareInvite()}
-                className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
+                className="wa-press mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
                 style={{ background: "var(--wa-accent)" }}
               >
                 Davet linki paylaş
@@ -747,7 +766,7 @@ export function ChatApp() {
       </aside>
 
       {/* Sağ panel — aktif sohbet */}
-      <section className={`flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
+      <section className={`relative flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
         {!active ? (
           <div
             className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center"
@@ -782,14 +801,17 @@ export function ChatApp() {
                   {activeName}
                 </p>
                 <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  {active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
+                  {peerTyping ? "yazıyor…" : active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => peerId && void startCall(peerId, false, activeName)}
+                onClick={() => {
+                  pressFeedback();
+                  if (peerId) void startCall(peerId, false, activeName);
+                }}
                 disabled={active.group || !peerId}
-                className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
+                className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
               >
@@ -797,9 +819,12 @@ export function ChatApp() {
               </button>
               <button
                 type="button"
-                onClick={() => peerId && void startCall(peerId, true, activeName)}
+                onClick={() => {
+                  pressFeedback();
+                  if (peerId) void startCall(peerId, true, activeName);
+                }}
                 disabled={active.group || !peerId}
-                className="rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
+                className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
               >
@@ -808,7 +833,7 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => void togglePin(active.id)}
-                className="rounded-full p-2 hover:bg-black/5"
+                className="wa-press rounded-full p-2 hover:bg-black/5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sabitle"
               >
@@ -820,7 +845,7 @@ export function ChatApp() {
                   void removeConversation(active.id);
                   setActiveId(null);
                 }}
-                className="rounded-full p-2 hover:bg-black/5"
+                className="wa-press rounded-full p-2 hover:bg-black/5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sohbeti sil"
               >
