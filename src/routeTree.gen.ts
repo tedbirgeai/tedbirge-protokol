@@ -38,6 +38,7 @@ import { Route as GuvenlikRouteImport } from './routes/guvenlik'
 import { Route as GizlilikRouteImport } from './routes/gizlilik'
 import { Route as GirisRouteImport } from './routes/giris'
 import { Route as FiyatlandirmaRouteImport } from './routes/fiyatlandirma'
+import { Route as EnerjiRouteImport } from './routes/enerji'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -211,6 +212,11 @@ const FiyatlandirmaRoute = FiyatlandirmaRouteImport.update({
   path: '/fiyatlandirma',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnerjiRoute = EnerjiRouteImport.update({
+  id: '/enerji',
+  path: '/enerji',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnRoute = EnRouteImport.update({
   id: '/en',
   path: '/en',
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
+  '/enerji': typeof EnerjiRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
+  '/enerji': typeof EnerjiRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
@@ -473,6 +481,7 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
+  '/enerji': typeof EnerjiRoute
   '/fiyatlandirma': typeof FiyatlandirmaRoute
   '/giris': typeof GirisRoute
   '/gizlilik': typeof GizlilikRoute
@@ -532,6 +541,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/dokumanlar'
     | '/en'
+    | '/enerji'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
@@ -589,6 +599,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/dokumanlar'
     | '/en'
+    | '/enerji'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
@@ -647,6 +658,7 @@ export interface FileRouteTypes {
     | '/demo'
     | '/dokumanlar'
     | '/en'
+    | '/enerji'
     | '/fiyatlandirma'
     | '/giris'
     | '/gizlilik'
@@ -706,6 +718,7 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   DokumanlarRoute: typeof DokumanlarRoute
   EnRoute: typeof EnRoute
+  EnerjiRoute: typeof EnerjiRoute
   FiyatlandirmaRoute: typeof FiyatlandirmaRoute
   GirisRoute: typeof GirisRoute
   GizlilikRoute: typeof GizlilikRoute
@@ -956,6 +969,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FiyatlandirmaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/enerji': {
+      id: '/enerji'
+      path: '/enerji'
+      fullPath: '/enerji'
+      preLoaderRoute: typeof EnerjiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/en': {
       id: '/en'
       path: '/en'
@@ -1175,6 +1195,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   DokumanlarRoute: DokumanlarRoute,
   EnRoute: EnRoute,
+  EnerjiRoute: EnerjiRoute,
   FiyatlandirmaRoute: FiyatlandirmaRoute,
   GirisRoute: GirisRoute,
   GizlilikRoute: GizlilikRoute,
