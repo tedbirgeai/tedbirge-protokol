@@ -264,6 +264,8 @@ export class BrowserNode {
     { spk: string; bpk: string; fingerprint: string; verified: boolean; trust: TrustStatus }
   >();
   private timer: ReturnType<typeof setInterval> | null = null;
+  private retryTimer: ReturnType<typeof setInterval> | null = null;
+
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
   private carrierSend: ((raw: string, priority: Priority) => boolean) | null = null;
