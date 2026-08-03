@@ -21,7 +21,13 @@ import {
   useCall,
 } from "@/lib/call/engine";
 import type { CallQuality } from "@/lib/call/engine";
-import { callEndSound, pressFeedback, startRingback, startRingtone, stopRing } from "@/lib/chat/sounds";
+import {
+  callEndSound,
+  pressFeedback,
+  startRingback,
+  startRingtone,
+  stopRing,
+} from "@/lib/chat/sounds";
 
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
@@ -74,7 +80,9 @@ export function CallOverlay() {
   }, [call.phase, call.video]);
 
   useEffect(() => {
-    const el = remoteRef.current as (HTMLVideoElement & { setSinkId?: (id: string) => Promise<void> }) | null;
+    const el = remoteRef.current as
+      | (HTMLVideoElement & { setSinkId?: (id: string) => Promise<void> })
+      | null;
     if (!el) return;
     el.volume = speaker ? 1 : 0.35;
     void el.setSinkId?.(speaker ? "default" : "communications").catch(() => undefined);
@@ -232,7 +240,11 @@ export function CallOverlay() {
                   className={ctlBase}
                   aria-label={call.cameraOff ? "Kamerayı aç" : "Kamerayı kapat"}
                 >
-                  {call.cameraOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
+                  {call.cameraOff ? (
+                    <VideoOff className="h-5 w-5" />
+                  ) : (
+                    <Video className="h-5 w-5" />
+                  )}
                 </button>
                 <button
                   type="button"

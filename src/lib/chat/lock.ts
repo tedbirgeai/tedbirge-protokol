@@ -41,9 +41,13 @@ function readRecord(): LockRecord | null {
 
 async function derive(pin: string, saltB64: string): Promise<string> {
   const salt = Uint8Array.from(atob(saltB64), (c) => c.charCodeAt(0));
-  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, [
-    "deriveBits",
-  ]);
+  const base = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(pin),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
   const bits = await crypto.subtle.deriveBits(
     { name: "PBKDF2", salt: salt as BufferSource, iterations: 210_000, hash: "SHA-256" },
     base,
@@ -71,7 +75,10 @@ export async function enableLock(pin: string): Promise<boolean> {
   crypto.getRandomValues(saltBytes);
   const salt = b64(saltBytes);
   const hash = await derive(pin, salt);
-  window.localStorage.setItem(KEY, JSON.stringify({ salt, hash, createdAt: Date.now() } satisfies LockRecord));
+  window.localStorage.setItem(
+    KEY,
+    JSON.stringify({ salt, hash, createdAt: Date.now() } satisfies LockRecord),
+  );
   publish({ enabled: true, locked: false });
   return true;
 }

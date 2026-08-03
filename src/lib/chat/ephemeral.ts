@@ -46,9 +46,7 @@ export function ttlLabel(ms: number): string {
 }
 
 /** Süresi dolan mesajları siler; silinen sayısını döner. */
-export async function sweepExpired(
-  remove: (id: string) => Promise<unknown>,
-): Promise<number> {
+export async function sweepExpired(remove: (id: string) => Promise<unknown>): Promise<number> {
   const now = Date.now();
   const all = await listAllMessages();
   let n = 0;

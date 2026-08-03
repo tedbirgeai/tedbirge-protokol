@@ -577,7 +577,8 @@ export function ChatApp() {
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
   /** Kayan pencere: çok uzun sohbetlerde yalnızca son N mesaj DOM'a basılır. */
   const shownMessages = useMemo(
-    () => (messages.length > visibleCount ? messages.slice(messages.length - visibleCount) : messages),
+    () =>
+      messages.length > visibleCount ? messages.slice(messages.length - visibleCount) : messages,
     [messages, visibleCount],
   );
   const hiddenCount = messages.length - shownMessages.length;
@@ -685,7 +686,11 @@ export function ChatApp() {
     >
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
-      <ChatSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} convId={activeId} />
+      <ChatSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        convId={activeId}
+      />
       <ContactsDialog
         open={contactsOpen}
         onOpenChange={setContactsOpen}
@@ -1174,7 +1179,9 @@ export function ChatApp() {
                     key={m.id}
                     id={`msg_${m.id}`}
                     className={`space-y-1.5 ${highlightId === m.id ? "rounded-lg ring-2 ring-offset-2" : ""}`}
-                    style={highlightId === m.id ? { boxShadow: "0 0 0 2px var(--wa-accent)" } : undefined}
+                    style={
+                      highlightId === m.id ? { boxShadow: "0 0 0 2px var(--wa-accent)" } : undefined
+                    }
                   >
                     {newDay && (
                       <div

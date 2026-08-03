@@ -1,8 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Lock, Search, ShieldCheck, Timer, X, Download, Upload, Bell } from "lucide-react";
 import { createBackup, downloadBackup, restoreBackup } from "@/lib/chat/backup";
-import { autoLockMinutes, disableLock, enableLock, lockEnabled, setAutoLockMinutes, verifyPin } from "@/lib/chat/lock";
-import { ensureNotificationPermission, notificationsAllowed, notificationsBlocked } from "@/lib/chat/push";
+import {
+  autoLockMinutes,
+  disableLock,
+  enableLock,
+  lockEnabled,
+  setAutoLockMinutes,
+  verifyPin,
+} from "@/lib/chat/lock";
+import {
+  ensureNotificationPermission,
+  notificationsAllowed,
+  notificationsBlocked,
+} from "@/lib/chat/push";
 import { TTL_OPTIONS, setTtl, ttlOf } from "@/lib/chat/ephemeral";
 import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
@@ -49,7 +60,11 @@ export function AppLockScreen({ onUnlocked }: { onUnlocked: () => void }) {
           className="mt-5 w-full rounded-lg border px-4 py-3 text-center text-lg tracking-[0.5em] outline-none"
           style={{ borderColor: error ? "#e03131" : "var(--wa-border)" }}
         />
-        {error && <p className="mt-2 text-xs" style={{ color: "#e03131" }}>PIN hatalı.</p>}
+        {error && (
+          <p className="mt-2 text-xs" style={{ color: "#e03131" }}>
+            PIN hatalı.
+          </p>
+        )}
         <button
           type="submit"
           className="wa-press mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white"
@@ -91,7 +106,10 @@ export function SearchPanel({
   if (!open) return null;
   return (
     <div className="absolute inset-0 z-30 flex flex-col" style={panel}>
-      <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid var(--wa-border)" }}>
+      <div
+        className="flex items-center gap-2 px-3 py-2"
+        style={{ borderBottom: "1px solid var(--wa-border)" }}
+      >
         <Search className="h-4 w-4" style={{ color: "var(--wa-muted)" }} aria-hidden />
         <input
           autoFocus
@@ -112,7 +130,12 @@ export function SearchPanel({
         >
           Yıldızlı
         </button>
-        <button type="button" onClick={onClose} className="wa-press rounded-full p-2" aria-label="Aramayı kapat">
+        <button
+          type="button"
+          onClick={onClose}
+          className="wa-press rounded-full p-2"
+          aria-label="Aramayı kapat"
+        >
           <X className="h-4 w-4" style={{ color: "var(--wa-muted)" }} />
         </button>
       </div>
@@ -177,7 +200,11 @@ export function ChatSettingsDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="presentation" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      role="presentation"
+      onClick={onClose}
+    >
       <div
         className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-xl p-6 shadow-xl"
         style={panel}
@@ -185,7 +212,12 @@ export function ChatSettingsDialog({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Gizlilik ve yedekleme</h2>
-          <button type="button" onClick={onClose} className="wa-press rounded-full p-2" aria-label="Kapat">
+          <button
+            type="button"
+            onClick={onClose}
+            className="wa-press rounded-full p-2"
+            aria-label="Kapat"
+          >
             <X className="h-4 w-4" style={{ color: "var(--wa-muted)" }} />
           </button>
         </div>
@@ -196,7 +228,8 @@ export function ChatSettingsDialog({
             <Bell className="h-4 w-4" aria-hidden /> Bildirimler
           </h3>
           <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Uygulama arka plandayken mesaj ve arama bildirimi alırsınız. Bildirim metni cihazınızda üretilir.
+            Uygulama arka plandayken mesaj ve arama bildirimi alırsınız. Bildirim metni cihazınızda
+            üretilir.
           </p>
           <button
             type="button"
@@ -205,7 +238,11 @@ export function ChatSettingsDialog({
             className="wa-press mt-2 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
             style={{ background: "var(--wa-accent)" }}
           >
-            {notify ? "Bildirimler açık" : notificationsBlocked() ? "Tarayıcı engelledi" : "Bildirimlere izin ver"}
+            {notify
+              ? "Bildirimler açık"
+              : notificationsBlocked()
+                ? "Tarayıcı engelledi"
+                : "Bildirimlere izin ver"}
           </button>
         </section>
 
@@ -215,7 +252,9 @@ export function ChatSettingsDialog({
             <Timer className="h-4 w-4" aria-hidden /> Kaybolan mesajlar
           </h3>
           <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            {convId ? "Bu sohbette gönderilen mesajlar seçtiğiniz sürenin sonunda iki cihazdan da silinir." : "Bir sohbet açtığınızda süre seçebilirsiniz."}
+            {convId
+              ? "Bu sohbette gönderilen mesajlar seçtiğiniz sürenin sonunda iki cihazdan da silinir."
+              : "Bir sohbet açtığınızda süre seçebilirsiniz."}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {TTL_OPTIONS.map((o) => (
@@ -268,7 +307,9 @@ export function ChatSettingsDialog({
                   setErr(null);
                   setPin("");
                   setLocked(!locked);
-                  setMsg(locked ? "Kilit kapatıldı." : "Kilit açıldı — uygulama beklemede kilitlenir.");
+                  setMsg(
+                    locked ? "Kilit kapatıldı." : "Kilit açıldı — uygulama beklemede kilitlenir.",
+                  );
                 });
               }}
               className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white"
@@ -278,7 +319,10 @@ export function ChatSettingsDialog({
             </button>
           </div>
           {locked && (
-            <label className="mt-2 flex items-center gap-2 text-xs" style={{ color: "var(--wa-muted)" }}>
+            <label
+              className="mt-2 flex items-center gap-2 text-xs"
+              style={{ color: "var(--wa-muted)" }}
+            >
               Hareketsizlik süresi
               <select
                 value={minutes}
@@ -306,7 +350,8 @@ export function ChatSettingsDialog({
             <Download className="h-4 w-4" aria-hidden /> Yedekleme ve cihaz taşıma
           </h3>
           <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Tüm geçmiş, parolanızla şifrelenmiş tek bir .tbg dosyasına yazılır. Dosya buluta yüklenmez.
+            Tüm geçmiş, parolanızla şifrelenmiş tek bir .tbg dosyasına yazılır. Dosya buluta
+            yüklenmez.
           </p>
           <input
             value={pass}
@@ -361,8 +406,16 @@ export function ChatSettingsDialog({
           />
         </section>
 
-        {msg && <p className="mt-4 text-xs" style={{ color: "var(--wa-accent)" }}>{msg}</p>}
-        {err && <p className="mt-4 text-xs" style={{ color: "#e03131" }}>{err}</p>}
+        {msg && (
+          <p className="mt-4 text-xs" style={{ color: "var(--wa-accent)" }}>
+            {msg}
+          </p>
+        )}
+        {err && (
+          <p className="mt-4 text-xs" style={{ color: "#e03131" }}>
+            {err}
+          </p>
+        )}
       </div>
     </div>
   );

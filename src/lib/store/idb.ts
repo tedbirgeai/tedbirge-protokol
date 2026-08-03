@@ -506,7 +506,6 @@ export type ChatMessage = {
   expiresAt?: number;
 };
 
-
 export type Conversation = {
   id: string;
   title: string;

@@ -99,8 +99,8 @@ function WirelessChargingPage() {
       <p className="mt-4 max-w-3xl text-muted-foreground">
         Kısa cevap: <strong className="text-foreground">evet</strong> — cep telefonu, tablet ve saha
         terminalleri kablosuz şarj edilebilir; bunun için Qi/Qi2 indüktif katman kullanılır. Ancak
-        kablosuz şarj bir <em>enerji kaynağı</em> değil, <em>bakım ve sızdırmazlık kolaylığıdır</em>.
-        Sahadaki asıl kaynak güneş + LiFePO4'tür.
+        kablosuz şarj bir <em>enerji kaynağı</em> değil, <em>bakım ve sızdırmazlık kolaylığıdır</em>
+        . Sahadaki asıl kaynak güneş + LiFePO4'tür.
       </p>
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">
@@ -135,10 +135,18 @@ function WirelessChargingPage() {
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>Sabit düğüm: 30 W güneş paneli + MPPT + 12,8 V 20 Ah LiFePO4 + BMS.</li>
           <li>Kutu içine 15 W Qi alıcı, dışına mıknatıslı hizalama halkası (kapak hiç açılmaz).</li>
-          <li>Saha ekibi için 10.000 mAh Qi2 power-bank — telefon ve tablet çantadan çıkarılmadan şarj olur.</li>
+          <li>
+            Saha ekibi için 10.000 mAh Qi2 power-bank — telefon ve tablet çantadan çıkarılmadan şarj
+            olur.
+          </li>
           <li>Şarj yönetimi ayrı MCU'da; sıcaklık kesme ve hücre dengeleme zorunlu.</li>
-          <li>Enerji telemetrisi mesh üzerinden panele düşer; pil %20 altında bakım uyarısı üretilir.</li>
-          <li>Uyum: WPC (Qi) sertifikalı modül, CE/RED + EMC testi. 100-205 kHz bandı ek lisans gerektirmez.</li>
+          <li>
+            Enerji telemetrisi mesh üzerinden panele düşer; pil %20 altında bakım uyarısı üretilir.
+          </li>
+          <li>
+            Uyum: WPC (Qi) sertifikalı modül, CE/RED + EMC testi. 100-205 kHz bandı ek lisans
+            gerektirmez.
+          </li>
         </ol>
       </section>
 

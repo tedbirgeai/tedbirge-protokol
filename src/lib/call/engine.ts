@@ -53,7 +53,13 @@ const ICE: RTCConfiguration = {
   iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
 };
 
-const IDLE_QUALITY: CallQuality = { bars: 0, rttMs: null, jitterMs: null, lossPct: null, label: "—" };
+const IDLE_QUALITY: CallQuality = {
+  bars: 0,
+  rttMs: null,
+  jitterMs: null,
+  lossPct: null,
+  label: "—",
+};
 
 let state: CallState = {
   phase: "idle",
@@ -136,7 +142,9 @@ function createLeg(peerId: string, alias: string) {
   };
   pc.onconnectionstatechange = () => {
     syncParticipants();
-    const anyConnected = Array.from(legs.values()).some((l) => l.pc.connectionState === "connected");
+    const anyConnected = Array.from(legs.values()).some(
+      (l) => l.pc.connectionState === "connected",
+    );
     if (pc.connectionState === "connected") {
       publish({ phase: "active", startedAt: state.startedAt ?? Date.now(), error: null });
       startStats();
@@ -188,7 +196,15 @@ function scoreOf(rtt: number | null, jitter: number | null, loss: number | null)
   if ((rtt ?? 0) > 500 || (jitter ?? 0) > 80 || (loss ?? 0) > 8) bars = 1;
   if ((rtt ?? 0) > 900 || (loss ?? 0) > 20) bars = 0;
   const label =
-    bars >= 4 ? "Mükemmel" : bars === 3 ? "İyi" : bars === 2 ? "Orta" : bars === 1 ? "Zayıf" : "Kopuk";
+    bars >= 4
+      ? "Mükemmel"
+      : bars === 3
+        ? "İyi"
+        : bars === 2
+          ? "Orta"
+          : bars === 1
+            ? "Zayıf"
+            : "Kopuk";
   return { bars: bars as CallQuality["bars"], rttMs: rtt, jitterMs: jitter, lossPct: loss, label };
 }
 
@@ -202,7 +218,11 @@ async function readStats() {
       const report = await leg.pc.getStats();
       report.forEach((s) => {
         const r = s as unknown as Record<string, number | string>;
-        if (s.type === "candidate-pair" && r["state"] === "succeeded" && typeof r["currentRoundTripTime"] === "number") {
+        if (
+          s.type === "candidate-pair" &&
+          r["state"] === "succeeded" &&
+          typeof r["currentRoundTripTime"] === "number"
+        ) {
           const ms = Math.round((r["currentRoundTripTime"] as number) * 1000);
           rtt = rtt === null ? ms : Math.max(rtt, ms);
         }
@@ -335,7 +355,13 @@ export function endCall(reason?: string) {
   publish({ phase: reason ? "ended" : "idle", error: reason ?? null });
   setTimeout(() => {
     if (state.phase === "ended")
-      publish({ phase: "idle", peerId: null, error: null, participants: [], quality: IDLE_QUALITY });
+      publish({
+        phase: "idle",
+        peerId: null,
+        error: null,
+        participants: [],
+        quality: IDLE_QUALITY,
+      });
   }, 3000);
 }
 
@@ -510,7 +536,14 @@ async function onCallSignal(from: string, raw: unknown) {
     cleanup();
     publish({ phase: "ended", error: p.t === "busy" ? "Karşı taraf meşgul." : null });
     setTimeout(
-      () => publish({ phase: "idle", peerId: null, error: null, participants: [], quality: IDLE_QUALITY }),
+      () =>
+        publish({
+          phase: "idle",
+          peerId: null,
+          error: null,
+          participants: [],
+          quality: IDLE_QUALITY,
+        }),
       2500,
     );
   }
