@@ -1404,6 +1404,21 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => {
+                  pressFeedback();
+                  toggleArchive(active.id);
+                  setActiveId(null);
+                }}
+                className="wa-press rounded-full p-2 hover:bg-black/5"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
+                title={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
+              >
+                <Archive className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   void removeConversation(active.id);
                   setActiveId(null);
                 }}
