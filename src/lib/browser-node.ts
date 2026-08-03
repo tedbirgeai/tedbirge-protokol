@@ -838,9 +838,14 @@ export class BrowserNode {
         }
       }
       recordTx(false);
+      // Arama sinyalleri gerçek zamanlıdır: kuyruğa yazılırsa uygulama
+      // yeniden açıldığında eski teklif tekrar gönderilir ve "kendi kendine
+      // arama" hissi doğar. Bu yüzden call paketleri asla saklanmaz.
+      if (kind === "call") return false;
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
       return false;
     }
+
 
     for (const target of targets) {
       const keys = this.peerKeys.get(target)!;
