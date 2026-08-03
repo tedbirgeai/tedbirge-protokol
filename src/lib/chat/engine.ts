@@ -795,10 +795,13 @@ export async function reactToMessage(messageId: string, emoji: string) {
 export async function deleteMessage(messageId: string, forEveryone = true) {
   const msg = await getMessage(messageId);
   if (!msg) return;
-  await putMessage({ ...msg, deleted: true, text: "", media: undefined });
+  // Herkesten silme yalnızca pencere içindeki KENDİ mesajlarımızda geçerlidir;
+  // dışındaysa sessizce "bende sil"e düşer.
+  const everyone = forEveryone && canDeleteForEveryone(msg);
+  await putMessage({ ...msg, deleted: true, text: "", media: undefined, geo: undefined });
   await refreshMessages(msg.convId);
   await refreshConversations();
-  if (!forEveryone) return;
+  if (!everyone) return;
   const conv = await getConversation(msg.convId);
   if (!conv) return;
   for (const peer of await targetsOf(conv)) {
