@@ -21,6 +21,7 @@ import {
   type ChatMessage,
   type Conversation,
   type MessageStatus,
+  type MessageGeo,
 } from "@/lib/store/idb";
 import { knownPeerIds, sendMesh, startNode } from "@/lib/node-runtime";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
@@ -40,6 +41,9 @@ import { showChatNotification, isWakePayload, type WakePayload } from "@/lib/cha
 import { isPttChunk, playPttChunk } from "@/lib/chat/ptt";
 import { sweepExpired, ttlOf } from "@/lib/chat/ephemeral";
 import { deleteMessageRecord } from "@/lib/store/idb";
+import { getPrivacy } from "@/lib/chat/privacy";
+import { collectEmergency, geoText, offlineMapFrame, type GeoPoint } from "@/lib/chat/location";
+import { bootBackupTransfer } from "@/lib/chat/transfer";
 
 export type ChatState = {
   conversations: Conversation[];
