@@ -72,7 +72,9 @@ function ContactRow({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-medium">{c.displayName}</p>
+            <p className="truncate text-sm font-medium">
+              {c.displayName === c.shortId ? "Adsız kişi" : c.displayName}
+            </p>
             <TrustBadge trust={c.trust} />
             {c.ambiguous && (
               <span className="inline-flex items-center gap-1 text-[11px] text-destructive">
