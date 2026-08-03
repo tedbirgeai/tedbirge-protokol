@@ -751,6 +751,7 @@ function clearTyping(convId: string) {
 /** Karşı tarafa "yazıyor…" sinyali gönderir (kısıtlı sıklıkta). */
 let lastTypingSent = 0;
 export async function sendTyping(convId: string, active = true) {
+  if (getPrivacy().hideTyping) return;
   const now = Date.now();
   if (active && now - lastTypingSent < 2200) return;
   lastTypingSent = active ? now : 0;
