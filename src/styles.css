@@ -256,3 +256,124 @@
     radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.03) 1px, transparent 1.6px);
   background-size: 28px 28px, 44px 44px;
 }
+
+/* ------------------------------------------------------------------
+ * Sohbet arayüzü canlılık katmanı — basma geri bildirimi, balon
+ * animasyonları ve "yazıyor" göstergesi. Yalnızca görsel katman.
+ * ---------------------------------------------------------------- */
+.wa-press {
+  transition:
+    transform 120ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    background-color 140ms ease,
+    opacity 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.wa-press:active {
+  transform: scale(0.9);
+}
+.wa-row {
+  transition: background-color 140ms ease;
+}
+.wa-row:active {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+@keyframes wa-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.wa-bubble {
+  animation: wa-bubble-in 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes wa-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.wa-pop {
+  animation: wa-pop 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes wa-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.wa-typing span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 3px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: wa-dot 1.2s infinite;
+}
+.wa-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.wa-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes wa-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 128, 105, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(0, 128, 105, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 128, 105, 0);
+  }
+}
+.wa-ring {
+  animation: wa-pulse-ring 1.6s infinite;
+}
+
+@keyframes wa-rec {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.wa-rec {
+  animation: wa-rec 1s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-bubble,
+  .wa-pop,
+  .wa-ring,
+  .wa-rec,
+  .wa-typing span {
+    animation: none;
+  }
+  .wa-press:active {
+    transform: none;
+  }
+}
