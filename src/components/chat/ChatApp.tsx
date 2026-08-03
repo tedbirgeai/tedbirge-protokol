@@ -1092,6 +1092,23 @@ export function ChatApp() {
             type="button"
             onClick={() => {
               pressFeedback();
+              toggleSkin();
+              toast.success(
+                skin === "pro" ? "Klasik arayüze dönüldü" : "Yeni arayüz etkinleştirildi",
+              );
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label={skin === "pro" ? "Klasik arayüze dön" : "Yeni arayüzü aç"}
+            title={skin === "pro" ? "Klasik arayüze dön" : "Yeni arayüzü aç"}
+          >
+            <Palette className="h-[18px] w-[18px]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
               setGroupMode((v) => !v);
             }}
             className="wa-press rounded-full p-2 hover:bg-black/5"
