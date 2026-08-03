@@ -282,7 +282,7 @@ function MessageRow({
     }
     let alive = true;
     void translateText(text, translateTo).then((r) => {
-      if (alive && r.ok && r.text && r.text !== text) setTranslated(r.text);
+      if (alive && !r.error && r.text && r.text !== text) setTranslated(r.text);
     });
     return () => {
       alive = false;
