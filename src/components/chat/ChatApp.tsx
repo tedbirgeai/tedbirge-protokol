@@ -1713,6 +1713,20 @@ export function ChatApp() {
               >
                 <Paperclip className="h-5 w-5" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setEmergencyOpen(true);
+                }}
+                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                style={{ color: "#e03131" }}
+                aria-label="Konum paylaş veya acil durum yayını"
+                title="Konum paylaş · Acil durum yayını (SOS)"
+              >
+                <Siren className="h-5 w-5" />
+              </button>
+
               {recording ? (
                 <div
                   className="flex flex-1 items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
