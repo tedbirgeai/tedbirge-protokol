@@ -72,9 +72,54 @@ function timeOf(ts: number) {
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 const EMOJIS = [
-  "😀","😃","😄","😁","😆","😅","😂","🤣","😊","🙂","😉","😍","😘","😗","🤗","🤔",
-  "😐","😴","😷","🤒","😎","🥳","😢","😭","😡","👍","👎","👏","🙏","💪","🤝","✌️",
-  "❤️","💔","🔥","⭐","✅","❌","⚠️","📍","📞","📷","🎉","☕","🍽️","🚗","🏠","🔋",
+  "😀",
+  "😃",
+  "😄",
+  "😁",
+  "😆",
+  "😅",
+  "😂",
+  "🤣",
+  "😊",
+  "🙂",
+  "😉",
+  "😍",
+  "😘",
+  "😗",
+  "🤗",
+  "🤔",
+  "😐",
+  "😴",
+  "😷",
+  "🤒",
+  "😎",
+  "🥳",
+  "😢",
+  "😭",
+  "😡",
+  "👍",
+  "👎",
+  "👏",
+  "🙏",
+  "💪",
+  "🤝",
+  "✌️",
+  "❤️",
+  "💔",
+  "🔥",
+  "⭐",
+  "✅",
+  "❌",
+  "⚠️",
+  "📍",
+  "📞",
+  "📷",
+  "🎉",
+  "☕",
+  "🍽️",
+  "🚗",
+  "🏠",
+  "🔋",
 ];
 
 /** Gün ayırıcı etiketi — bugün / dün / tarih. */
@@ -93,7 +138,10 @@ function displayName(value: string, alias?: string) {
   if (alias && alias.trim()) return alias;
   const looksLikeId = /^[a-z]{2,6}-[0-9a-f]{6,}$/i.test(value) || /^[0-9a-f-]{16,}$/i.test(value);
   if (!looksLikeId) return value;
-  const tail = value.replace(/[^0-9a-z]/gi, "").slice(-4).toUpperCase();
+  const tail = value
+    .replace(/[^0-9a-z]/gi, "")
+    .slice(-4)
+    .toUpperCase();
   return `Cihaz ${tail}`;
 }
 
@@ -129,14 +177,23 @@ function Avatar({ name, size = 44 }: { name: string; size?: number }) {
 function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
   if (msg.status === "pending")
-    return <Clock className="h-3.5 w-3.5" style={{ color: "var(--wa-tick)" }} aria-label="Bekliyor" />;
+    return (
+      <Clock className="h-3.5 w-3.5" style={{ color: "var(--wa-tick)" }} aria-label="Bekliyor" />
+    );
   if (msg.status === "read")
-    return <CheckCheck className="h-4 w-4" style={{ color: "var(--wa-tick-read)" }} aria-label="Okundu" />;
+    return (
+      <CheckCheck
+        className="h-4 w-4"
+        style={{ color: "var(--wa-tick-read)" }}
+        aria-label="Okundu"
+      />
+    );
   if (msg.status === "delivered")
-    return <CheckCheck className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="İletildi" />;
+    return (
+      <CheckCheck className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="İletildi" />
+    );
   return <Check className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="Gönderildi" />;
 }
-
 
 /** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
 function MessageRow({
@@ -183,7 +240,11 @@ function MessageRow({
           {msg.replyTo && (
             <div
               className="mb-1 rounded-md border-l-[3px] px-2 py-1 text-[12.5px]"
-              style={{ borderColor: "var(--wa-accent)", background: "rgba(0,0,0,0.05)", color: "var(--wa-muted)" }}
+              style={{
+                borderColor: "var(--wa-accent)",
+                background: "rgba(0,0,0,0.05)",
+                color: "var(--wa-muted)",
+              }}
             >
               <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
                 {msg.replyTo.author}
@@ -215,7 +276,10 @@ function MessageRow({
             <p className="whitespace-pre-wrap break-words">{msg.text}</p>
           )}
 
-          <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+          <div
+            className="mt-0.5 flex items-center justify-end gap-1 text-[11px]"
+            style={{ color: "var(--wa-muted)" }}
+          >
             {msg.starred && <Star className="h-3 w-3 fill-current" aria-label="Yıldızlı" />}
             <span>{timeOf(msg.ts)}</span>
             <StatusIcon msg={msg} />
@@ -232,9 +296,11 @@ function MessageRow({
               className="wa-pop absolute -bottom-3 right-2 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-[12px] shadow"
               aria-label="Tepkiler"
             >
-              {Array.from(new Set(reactions)).slice(0, 3).map((e) => (
-                <span key={e}>{e}</span>
-              ))}
+              {Array.from(new Set(reactions))
+                .slice(0, 3)
+                .map((e) => (
+                  <span key={e}>{e}</span>
+                ))}
               {reactions.length > 1 && (
                 <span className="text-[10px]" style={{ color: "var(--wa-muted)" }}>
                   {reactions.length}
@@ -317,7 +383,15 @@ function MessageRow({
   );
 }
 
-function MenuItem({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
+function MenuItem({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -337,14 +411,17 @@ function MenuItem({ icon, label, onClick }: { icon: ReactNode; label: string; on
 function Onboarding({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   return (
-    <div className="wa flex h-[100dvh] items-center justify-center p-6" style={{ background: "var(--wa-panel-soft)" }}>
+    <div
+      className="wa flex h-[100dvh] items-center justify-center p-6"
+      style={{ background: "var(--wa-panel-soft)" }}
+    >
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm">
         <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
           Sohbete başlayın
         </h2>
         <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-          Yalnızca görünen adınızı yazın. Telefon numarası, e-posta ya da hesap gerekmez; güvenlik anahtarlarınız
-          cihazınızda otomatik oluşturulur ve hiçbir sunucuya gönderilmez.
+          Yalnızca görünen adınızı yazın. Telefon numarası, e-posta ya da hesap gerekmez; güvenlik
+          anahtarlarınız cihazınızda otomatik oluşturulur ve hiçbir sunucuya gönderilmez.
         </p>
         <input
           value={name}
@@ -392,7 +469,11 @@ export function ChatApp() {
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; timer: ReturnType<typeof setInterval> } | null>(null);
+  const recRef = useRef<{
+    rec: MediaRecorder;
+    chunks: Blob[];
+    timer: ReturnType<typeof setInterval>;
+  } | null>(null);
 
   const chat = useChat();
   const node = useNodeRuntime();
@@ -442,7 +523,9 @@ export function ChatApp() {
     const q = query.trim().toLocaleLowerCase("tr");
     const rows = q
       ? chat.conversations.filter(
-          (c) => c.title.toLocaleLowerCase("tr").includes(q) || c.lastText.toLocaleLowerCase("tr").includes(q),
+          (c) =>
+            c.title.toLocaleLowerCase("tr").includes(q) ||
+            c.lastText.toLocaleLowerCase("tr").includes(q),
         )
       : chat.conversations;
     return [...rows].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs);
@@ -454,7 +537,11 @@ export function ChatApp() {
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   const me = getAlias() || "Ben";
-  const activeName = active ? (active.group ? active.title : contactLabel(active.members[0] ?? active.title, active.title)) : "";
+  const activeName = active
+    ? active.group
+      ? active.title
+      : contactLabel(active.members[0] ?? active.title, active.title)
+    : "";
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   const nameOf = (id: string) => contactLabel(id, chat.aliases[id]);
@@ -462,20 +549,27 @@ export function ChatApp() {
 
   /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
   const pendingCount = useMemo(
-    () => Object.values(chat.messages).flat().filter((m) => m.outgoing && m.status === "pending").length,
+    () =>
+      Object.values(chat.messages)
+        .flat()
+        .filter((m) => m.outgoing && m.status === "pending").length,
     [chat.messages],
   );
 
   function submitDraft() {
     if (!active || !draft.trim()) return;
     pressFeedback();
-    void sendText(active.id, draft, replyTo
-      ? {
-          id: replyTo.id,
-          text: replyTo.deleted ? "Silinen mesaj" : replyTo.text || replyTo.media?.name || "Ek",
-          author: replyTo.outgoing ? me : displayName(active.title),
-        }
-      : undefined);
+    void sendText(
+      active.id,
+      draft,
+      replyTo
+        ? {
+            id: replyTo.id,
+            text: replyTo.deleted ? "Silinen mesaj" : replyTo.text || replyTo.media?.name || "Ek",
+            author: replyTo.outgoing ? me : displayName(active.title),
+          }
+        : undefined,
+    );
     setDraft("");
     setReplyTo(null);
     setEmojiOpen(false);
@@ -531,7 +625,10 @@ export function ChatApp() {
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   return (
-    <div className="wa flex h-[100dvh] w-full overflow-hidden" style={{ background: "var(--wa-panel-soft)" }}>
+    <div
+      className="wa flex h-[100dvh] w-full overflow-hidden"
+      style={{ background: "var(--wa-panel-soft)" }}
+    >
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
       <ContactsDialog
@@ -544,7 +641,6 @@ export function ChatApp() {
           });
         }}
       />
-
 
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
@@ -610,7 +706,11 @@ export function ChatApp() {
             aria-label={soundOff ? "Sesleri aç" : "Sesleri kapat"}
             title={soundOff ? "Sesleri aç" : "Sesleri kapat"}
           >
-            {soundOff ? <VolumeX className="h-[18px] w-[18px]" /> : <Volume2 className="h-[18px] w-[18px]" />}
+            {soundOff ? (
+              <VolumeX className="h-[18px] w-[18px]" />
+            ) : (
+              <Volume2 className="h-[18px] w-[18px]" />
+            )}
           </button>
           <button
             type="button"
@@ -643,7 +743,13 @@ export function ChatApp() {
         </div>
 
         {groupMode && (
-          <div className="p-4" style={{ borderTop: "1px solid var(--wa-border)", borderBottom: "1px solid var(--wa-border)" }}>
+          <div
+            className="p-4"
+            style={{
+              borderTop: "1px solid var(--wa-border)",
+              borderBottom: "1px solid var(--wa-border)",
+            }}
+          >
             <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
               Yakındaki cihazlar otomatik listelenir. Dokunarak sohbet açabilirsiniz.
             </p>
@@ -668,14 +774,18 @@ export function ChatApp() {
                     className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
                     style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                   >
-                    <span className="truncate">{contactLabel(p.nodeId, chat.aliases[p.nodeId])}</span>
-                    <span className="text-[11px]" style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}>
+                    <span className="truncate">
+                      {contactLabel(p.nodeId, chat.aliases[p.nodeId])}
+                    </span>
+                    <span
+                      className="text-[11px]"
+                      style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                    >
                       {paired ? "çevrimiçi" : "yakında"}
                     </span>
                   </button>
                 );
               })}
-
             </div>
             <div className="mt-3 flex gap-2">
               <input
@@ -693,7 +803,10 @@ export function ChatApp() {
                   const known = peers.some((p) => p.nodeId === value);
                   const task = known
                     ? ensureDirectConversation(value)
-                    : createGroup(value, peers.map((p: PeerInfo) => p.nodeId));
+                    : createGroup(
+                        value,
+                        peers.map((p: PeerInfo) => p.nodeId),
+                      );
                   void task.then((c) => {
                     setActiveId(c.id);
                     setNewPeer("");
@@ -712,7 +825,11 @@ export function ChatApp() {
 
         <ul className="flex-1 overflow-y-auto">
           {pairing.incoming.map((req) => (
-            <li key={`req_${req.nodeId}`} className="px-4 py-3" style={{ background: "var(--wa-panel-soft)" }}>
+            <li
+              key={`req_${req.nodeId}`}
+              className="px-4 py-3"
+              style={{ background: "var(--wa-panel-soft)" }}
+            >
               <p className="text-[13px] font-medium" style={{ color: "var(--wa-text)" }}>
                 {nameOf(req.nodeId)} cihazını hesabınıza bağlamak istiyor
               </p>
@@ -751,8 +868,17 @@ export function ChatApp() {
                   <Avatar name={name} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate text-[15px] font-medium" style={{ color: "var(--wa-text)" }}>
-                        {c.pinned && <Pin className="mr-1 inline h-3 w-3" style={{ color: "var(--wa-accent)" }} aria-hidden />}
+                      <p
+                        className="truncate text-[15px] font-medium"
+                        style={{ color: "var(--wa-text)" }}
+                      >
+                        {c.pinned && (
+                          <Pin
+                            className="mr-1 inline h-3 w-3"
+                            style={{ color: "var(--wa-accent)" }}
+                            aria-hidden
+                          />
+                        )}
                         {name}
                       </p>
                       <span className="shrink-0 text-[11px]" style={{ color: "var(--wa-muted)" }}>
@@ -778,7 +904,8 @@ export function ChatApp() {
           {ready && conversations.length === 0 && (
             <li className="px-4 py-8 text-center">
               <p className="text-sm" style={{ color: "var(--wa-muted)" }}>
-                Henüz kimse yok. Davet linkini paylaşın — karşı taraf linke dokunduğunda sohbet açılır.
+                Henüz kimse yok. Davet linkini paylaşın — karşı taraf linke dokunduğunda sohbet
+                açılır.
               </p>
               <button
                 type="button"
@@ -790,7 +917,6 @@ export function ChatApp() {
               </button>
             </li>
           )}
-
         </ul>
 
         <div
@@ -798,12 +924,18 @@ export function ChatApp() {
           style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
         >
           <Lock className="h-3 w-3" aria-hidden />
-          <span>{pendingCount > 0 ? `Çevrimdışı — ${pendingCount} mesaj bekliyor` : "Bağlı · uçtan uca şifreli"}</span>
+          <span>
+            {pendingCount > 0
+              ? `Çevrimdışı — ${pendingCount} mesaj bekliyor`
+              : "Bağlı · uçtan uca şifreli"}
+          </span>
         </div>
       </aside>
 
       {/* Sağ panel — aktif sohbet */}
-      <section className={`relative flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}>
+      <section
+        className={`relative flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}
+      >
         {!active ? (
           <div
             className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center"
@@ -813,15 +945,18 @@ export function ChatApp() {
               Tedbirge Mesajlaşma
             </p>
             <p className="max-w-md text-sm" style={{ color: "var(--wa-muted)" }}>
-              Bir sohbet seçin. Mesajlarınız internet varken bulut üzerinden, internet yokken yakındaki cihazlar
-              üzerinden iletilir — siz hiçbir ayar yapmazsınız.
+              Bir sohbet seçin. Mesajlarınız internet varken bulut üzerinden, internet yokken
+              yakındaki cihazlar üzerinden iletilir — siz hiçbir ayar yapmazsınız.
             </p>
           </div>
         ) : (
           <>
             <header
               className="flex items-center gap-3 px-4 py-2"
-              style={{ background: "var(--wa-panel-soft)", borderBottom: "1px solid var(--wa-border)" }}
+              style={{
+                background: "var(--wa-panel-soft)",
+                borderBottom: "1px solid var(--wa-border)",
+              }}
             >
               <button
                 type="button"
@@ -834,11 +969,20 @@ export function ChatApp() {
               </button>
               <Avatar name={activeName} size={40} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-semibold" style={{ color: "var(--wa-text)" }}>
+                <p
+                  className="truncate text-[15px] font-semibold"
+                  style={{ color: "var(--wa-text)" }}
+                >
                   {activeName}
                 </p>
                 <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  {peerTyping ? "yazıyor…" : active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
+                  {peerTyping
+                    ? "yazıyor…"
+                    : active.group
+                      ? "Grup"
+                      : peerOnline
+                        ? "çevrimiçi"
+                        : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button
@@ -898,12 +1042,16 @@ export function ChatApp() {
               }}
               className="wa-chat-bg relative flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12"
             >
-              <div className="mx-auto mb-3 w-fit rounded-md bg-white/70 px-3 py-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              <div
+                className="mx-auto mb-3 w-fit rounded-md bg-white/70 px-3 py-1 text-[11px]"
+                style={{ color: "var(--wa-muted)" }}
+              >
                 <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
               </div>
               {messages.map((m, i) => {
                 const prev = messages[i - 1];
-                const newDay = !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
+                const newDay =
+                  !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
                 return (
                   <div key={m.id} className="space-y-1.5">
                     {newDay && (
@@ -971,7 +1119,11 @@ export function ChatApp() {
               >
                 <div
                   className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
-                  style={{ borderColor: "var(--wa-accent)", background: "var(--wa-panel)", color: "var(--wa-muted)" }}
+                  style={{
+                    borderColor: "var(--wa-accent)",
+                    background: "var(--wa-panel)",
+                    color: "var(--wa-muted)",
+                  }}
                 >
                   <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
                     {replyTo.outgoing ? me : activeName}
@@ -1021,7 +1173,10 @@ export function ChatApp() {
                 submitDraft();
               }}
               className="flex items-center gap-1.5 p-2.5"
-              style={{ background: "var(--wa-panel-soft)", borderTop: "1px solid var(--wa-border)" }}
+              style={{
+                background: "var(--wa-panel-soft)",
+                borderTop: "1px solid var(--wa-border)",
+              }}
             >
               <input
                 ref={fileRef}
@@ -1064,7 +1219,11 @@ export function ChatApp() {
                   className="flex flex-1 items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
                   style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
                 >
-                  <span className="wa-rec h-2.5 w-2.5 rounded-full" style={{ background: "#e03131" }} aria-hidden />
+                  <span
+                    className="wa-rec h-2.5 w-2.5 rounded-full"
+                    style={{ background: "#e03131" }}
+                    aria-hidden
+                  />
                   <span>
                     Ses kaydediliyor · {String(Math.floor(recSecs / 60)).padStart(2, "0")}:
                     {String(recSecs % 60).padStart(2, "0")}
@@ -1111,7 +1270,11 @@ export function ChatApp() {
                 onClick={() => setLightbox(null)}
                 role="presentation"
               >
-                <img src={lightbox} alt="Büyütülmüş görsel" className="max-h-full max-w-full rounded-md" />
+                <img
+                  src={lightbox}
+                  alt="Büyütülmüş görsel"
+                  className="max-h-full max-w-full rounded-md"
+                />
               </div>
             )}
           </>

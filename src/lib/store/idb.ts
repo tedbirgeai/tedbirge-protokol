@@ -105,13 +105,16 @@ export function openDb(): Promise<IDBDatabase> {
         const s = db.createObjectStore("inbox", { keyPath: "pktId" });
         s.createIndex("ts", "ts");
       }
-      if (!db.objectStoreNames.contains("keys")) db.createObjectStore("keys", { keyPath: "nodeId" });
-      if (!db.objectStoreNames.contains("peers")) db.createObjectStore("peers", { keyPath: "peerId" });
+      if (!db.objectStoreNames.contains("keys"))
+        db.createObjectStore("keys", { keyPath: "nodeId" });
+      if (!db.objectStoreNames.contains("peers"))
+        db.createObjectStore("peers", { keyPath: "peerId" });
       if (!db.objectStoreNames.contains("trusted_nodes"))
         db.createObjectStore("trusted_nodes", { keyPath: "nodeId" });
       if (!db.objectStoreNames.contains("events"))
         db.createObjectStore("events", { keyPath: "id", autoIncrement: true });
-      if (!db.objectStoreNames.contains("licenses")) db.createObjectStore("licenses", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("licenses"))
+        db.createObjectStore("licenses", { keyPath: "id" });
       if (!db.objectStoreNames.contains("conversations"))
         db.createObjectStore("conversations", { keyPath: "id" });
       if (!db.objectStoreNames.contains("messages")) {
@@ -150,15 +153,17 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
 
 export function putPacket(pkt: StoredPacket) {
   return safe(
-    tx<IDBValidKey>("outbox", "readwrite", (s) => s.put(pkt) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>("outbox", "readwrite", (s) => s.put(pkt) as IDBRequest<IDBValidKey>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function getPackets(): Promise<StoredPacket[]> {
   return safe(
-    tx<StoredPacket[]>("outbox", "readonly", (s) => s.getAll() as IDBRequest<StoredPacket[]>).then((rows) =>
-      rows.sort((a, b) => a.priority - b.priority || a.ts - b.ts),
+    tx<StoredPacket[]>("outbox", "readonly", (s) => s.getAll() as IDBRequest<StoredPacket[]>).then(
+      (rows) => rows.sort((a, b) => a.priority - b.priority || a.ts - b.ts),
     ),
     [],
   );
@@ -166,20 +171,29 @@ export function getPackets(): Promise<StoredPacket[]> {
 
 export function deletePacket(pktId: string) {
   return safe(
-    tx<undefined>("outbox", "readwrite", (s) => s.delete(pktId) as IDBRequest<undefined>).then(() => true),
+    tx<undefined>("outbox", "readwrite", (s) => s.delete(pktId) as IDBRequest<undefined>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function countPackets(): Promise<number> {
-  return safe(tx<number>("outbox", "readonly", (s) => s.count()), 0);
+  return safe(
+    tx<number>("outbox", "readonly", (s) => s.count()),
+    0,
+  );
 }
 
 /* ------------------------- inbox / idempotency ------------------------- */
 
 export async function alreadySeen(pktId: string): Promise<boolean> {
   const row = await safe(
-    tx<SeenRecord | undefined>("inbox", "readonly", (s) => s.get(pktId) as IDBRequest<SeenRecord | undefined>),
+    tx<SeenRecord | undefined>(
+      "inbox",
+      "readonly",
+      (s) => s.get(pktId) as IDBRequest<SeenRecord | undefined>,
+    ),
     undefined,
   );
   return Boolean(row);
@@ -187,8 +201,10 @@ export async function alreadySeen(pktId: string): Promise<boolean> {
 
 export function markSeen(pktId: string) {
   return safe(
-    tx<IDBValidKey>("inbox", "readwrite", (s) =>
-      s.put({ pktId, ts: Date.now() } satisfies SeenRecord) as IDBRequest<IDBValidKey>,
+    tx<IDBValidKey>(
+      "inbox",
+      "readwrite",
+      (s) => s.put({ pktId, ts: Date.now() } satisfies SeenRecord) as IDBRequest<IDBValidKey>,
     ).then(() => true),
     false,
   );
@@ -204,7 +220,9 @@ export async function pruneSeen(maxAgeMs = 30 * 24 * 3600_000) {
   const stale = rows.filter((r) => r.ts < cutoff);
   for (const r of stale) {
     await safe(
-      tx<undefined>("inbox", "readwrite", (s) => s.delete(r.pktId) as IDBRequest<undefined>).then(() => undefined),
+      tx<undefined>("inbox", "readwrite", (s) => s.delete(r.pktId) as IDBRequest<undefined>).then(
+        () => undefined,
+      ),
       undefined,
     );
   }
@@ -215,14 +233,20 @@ export async function pruneSeen(maxAgeMs = 30 * 24 * 3600_000) {
 
 export function putKeyRecord(rec: KeyRecord) {
   return safe(
-    tx<IDBValidKey>("keys", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>("keys", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function getKeyRecord(nodeId: string): Promise<KeyRecord | undefined> {
   return safe(
-    tx<KeyRecord | undefined>("keys", "readonly", (s) => s.get(nodeId) as IDBRequest<KeyRecord | undefined>),
+    tx<KeyRecord | undefined>(
+      "keys",
+      "readonly",
+      (s) => s.get(nodeId) as IDBRequest<KeyRecord | undefined>,
+    ),
     undefined,
   );
 }
@@ -231,15 +255,19 @@ export function getKeyRecord(nodeId: string): Promise<KeyRecord | undefined> {
 
 export function putOfflineLicense(rec: OfflineLicenseRecord) {
   return safe(
-    tx<IDBValidKey>("licenses", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>("licenses", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function getOfflineLicense(id: string): Promise<OfflineLicenseRecord | undefined> {
   return safe(
-    tx<OfflineLicenseRecord | undefined>("licenses", "readonly", (s) =>
-      s.get(id) as IDBRequest<OfflineLicenseRecord | undefined>,
+    tx<OfflineLicenseRecord | undefined>(
+      "licenses",
+      "readonly",
+      (s) => s.get(id) as IDBRequest<OfflineLicenseRecord | undefined>,
     ),
     undefined,
   );
@@ -247,7 +275,11 @@ export function getOfflineLicense(id: string): Promise<OfflineLicenseRecord | un
 
 export function listOfflineLicenses(): Promise<OfflineLicenseRecord[]> {
   return safe(
-    tx<OfflineLicenseRecord[]>("licenses", "readonly", (s) => s.getAll() as IDBRequest<OfflineLicenseRecord[]>),
+    tx<OfflineLicenseRecord[]>(
+      "licenses",
+      "readonly",
+      (s) => s.getAll() as IDBRequest<OfflineLicenseRecord[]>,
+    ),
     [],
   );
 }
@@ -256,30 +288,40 @@ export function listOfflineLicenses(): Promise<OfflineLicenseRecord[]> {
 
 export function putPeer(rec: PeerRecord) {
   return safe(
-    tx<IDBValidKey>("peers", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>("peers", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function getPeer(peerId: string): Promise<PeerRecord | undefined> {
   return safe(
-    tx<PeerRecord | undefined>("peers", "readonly", (s) => s.get(peerId) as IDBRequest<PeerRecord | undefined>),
+    tx<PeerRecord | undefined>(
+      "peers",
+      "readonly",
+      (s) => s.get(peerId) as IDBRequest<PeerRecord | undefined>,
+    ),
     undefined,
   );
 }
 
 export function listPeers(): Promise<PeerRecord[]> {
-  return safe(tx<PeerRecord[]>("peers", "readonly", (s) => s.getAll() as IDBRequest<PeerRecord[]>), []);
+  return safe(
+    tx<PeerRecord[]>("peers", "readonly", (s) => s.getAll() as IDBRequest<PeerRecord[]>),
+    [],
+  );
 }
 
 /** KVKK m.7 / GDPR m.17 — tek bir eş kaydını cihazdan siler. */
 export function deletePeer(peerId: string) {
   return safe(
-    tx<undefined>("peers", "readwrite", (s) => s.delete(peerId) as IDBRequest<undefined>).then(() => true),
+    tx<undefined>("peers", "readwrite", (s) => s.delete(peerId) as IDBRequest<undefined>).then(
+      () => true,
+    ),
     false,
   );
 }
-
 
 /* -------------------------- güvenilir cihazlar -------------------------- */
 
@@ -295,15 +337,21 @@ export type TrustedNode = {
 
 export function putTrustedNode(rec: TrustedNode) {
   return safe(
-    tx<IDBValidKey>("trusted_nodes", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>(
+      "trusted_nodes",
+      "readwrite",
+      (s) => s.put(rec) as IDBRequest<IDBValidKey>,
+    ).then(() => true),
     false,
   );
 }
 
 export function getTrustedNode(nodeId: string): Promise<TrustedNode | undefined> {
   return safe(
-    tx<TrustedNode | undefined>("trusted_nodes", "readonly", (s) =>
-      s.get(nodeId) as IDBRequest<TrustedNode | undefined>,
+    tx<TrustedNode | undefined>(
+      "trusted_nodes",
+      "readonly",
+      (s) => s.get(nodeId) as IDBRequest<TrustedNode | undefined>,
     ),
     undefined,
   );
@@ -318,9 +366,11 @@ export function listTrustedNodes(): Promise<TrustedNode[]> {
 
 export function deleteTrustedNode(nodeId: string) {
   return safe(
-    tx<undefined>("trusted_nodes", "readwrite", (s) => s.delete(nodeId) as IDBRequest<undefined>).then(
-      () => true,
-    ),
+    tx<undefined>(
+      "trusted_nodes",
+      "readwrite",
+      (s) => s.delete(nodeId) as IDBRequest<undefined>,
+    ).then(() => true),
     false,
   );
 }
@@ -329,8 +379,11 @@ export function deleteTrustedNode(nodeId: string) {
 
 export function appendEvent(kind: string, detail: string) {
   return safe(
-    tx<IDBValidKey>("events", "readwrite", (s) =>
-      s.add({ ts: Date.now(), kind, detail } satisfies EventRecord) as IDBRequest<IDBValidKey>,
+    tx<IDBValidKey>(
+      "events",
+      "readwrite",
+      (s) =>
+        s.add({ ts: Date.now(), kind, detail } satisfies EventRecord) as IDBRequest<IDBValidKey>,
     ).then(() => true),
     false,
   );
@@ -338,8 +391,8 @@ export function appendEvent(kind: string, detail: string) {
 
 export function listEvents(): Promise<EventRecord[]> {
   return safe(
-    tx<EventRecord[]>("events", "readonly", (s) => s.getAll() as IDBRequest<EventRecord[]>).then((r) =>
-      r.sort((a, b) => b.ts - a.ts),
+    tx<EventRecord[]>("events", "readonly", (s) => s.getAll() as IDBRequest<EventRecord[]>).then(
+      (r) => r.sort((a, b) => b.ts - a.ts),
     ),
     [],
   );
@@ -347,7 +400,12 @@ export function listEvents(): Promise<EventRecord[]> {
 
 /* ---------------------------- storage kotası ---------------------------- */
 
-export type StorageEstimateInfo = { usage: number; quota: number; ratio: number; persisted: boolean };
+export type StorageEstimateInfo = {
+  usage: number;
+  quota: number;
+  ratio: number;
+  persisted: boolean;
+};
 
 export async function storageInfo(): Promise<StorageEstimateInfo> {
   const empty = { usage: 0, quota: 0, ratio: 0, persisted: false };
@@ -460,15 +518,21 @@ export type Conversation = {
 
 export function putConversation(rec: Conversation) {
   return safe(
-    tx<IDBValidKey>("conversations", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>(
+      "conversations",
+      "readwrite",
+      (s) => s.put(rec) as IDBRequest<IDBValidKey>,
+    ).then(() => true),
     false,
   );
 }
 
 export function getConversation(id: string): Promise<Conversation | undefined> {
   return safe(
-    tx<Conversation | undefined>("conversations", "readonly", (s) =>
-      s.get(id) as IDBRequest<Conversation | undefined>,
+    tx<Conversation | undefined>(
+      "conversations",
+      "readonly",
+      (s) => s.get(id) as IDBRequest<Conversation | undefined>,
     ),
     undefined,
   );
@@ -476,7 +540,11 @@ export function getConversation(id: string): Promise<Conversation | undefined> {
 
 export function listConversations(): Promise<Conversation[]> {
   return safe(
-    tx<Conversation[]>("conversations", "readonly", (s) => s.getAll() as IDBRequest<Conversation[]>).then((rows) =>
+    tx<Conversation[]>(
+      "conversations",
+      "readonly",
+      (s) => s.getAll() as IDBRequest<Conversation[]>,
+    ).then((rows) =>
       rows.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastTs - a.lastTs),
     ),
     [],
@@ -485,34 +553,45 @@ export function listConversations(): Promise<Conversation[]> {
 
 export function deleteConversation(id: string) {
   return safe(
-    tx<undefined>("conversations", "readwrite", (s) => s.delete(id) as IDBRequest<undefined>).then(() => true),
+    tx<undefined>("conversations", "readwrite", (s) => s.delete(id) as IDBRequest<undefined>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function putMessage(rec: ChatMessage) {
   return safe(
-    tx<IDBValidKey>("messages", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(() => true),
+    tx<IDBValidKey>("messages", "readwrite", (s) => s.put(rec) as IDBRequest<IDBValidKey>).then(
+      () => true,
+    ),
     false,
   );
 }
 
 export function getMessage(id: string): Promise<ChatMessage | undefined> {
   return safe(
-    tx<ChatMessage | undefined>("messages", "readonly", (s) => s.get(id) as IDBRequest<ChatMessage | undefined>),
+    tx<ChatMessage | undefined>(
+      "messages",
+      "readonly",
+      (s) => s.get(id) as IDBRequest<ChatMessage | undefined>,
+    ),
     undefined,
   );
 }
 
 export function listMessages(convId: string): Promise<ChatMessage[]> {
   return safe(
-    tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>).then((rows) =>
-      rows.filter((m) => m.convId === convId).sort((a, b) => a.ts - b.ts),
+    tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>).then(
+      (rows) => rows.filter((m) => m.convId === convId).sort((a, b) => a.ts - b.ts),
     ),
     [],
   );
 }
 
 export function listAllMessages(): Promise<ChatMessage[]> {
-  return safe(tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>), []);
+  return safe(
+    tx<ChatMessage[]>("messages", "readonly", (s) => s.getAll() as IDBRequest<ChatMessage[]>),
+    [],
+  );
 }

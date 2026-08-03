@@ -52,9 +52,10 @@ const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 export function shortIdOf(material: string): string {
   let bytes: Uint8Array;
   try {
-    bytes = /^[A-Za-z0-9+/=]+$/.test(material) && material.length > 20
-      ? fromB64(material)
-      : new TextEncoder().encode(material);
+    bytes =
+      /^[A-Za-z0-9+/=]+$/.test(material) && material.length > 20
+        ? fromB64(material)
+        : new TextEncoder().encode(material);
   } catch {
     bytes = new TextEncoder().encode(material);
   }

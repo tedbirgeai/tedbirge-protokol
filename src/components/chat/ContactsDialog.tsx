@@ -7,7 +7,16 @@
 import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
-import { BadgeCheck, Copy, Download, Pencil, Search, ShieldAlert, Trash2, UserRound } from "lucide-react";
+import {
+  BadgeCheck,
+  Copy,
+  Download,
+  Pencil,
+  Search,
+  ShieldAlert,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,7 +26,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PeerVerifyDialog, TrustBadge, type PeerVerifyTarget } from "@/components/site/PeerVerifyDialog";
+import {
+  PeerVerifyDialog,
+  TrustBadge,
+  type PeerVerifyTarget,
+} from "@/components/site/PeerVerifyDialog";
 import {
   eraseAllContacts,
   eraseContact,
@@ -98,7 +111,12 @@ function ContactRow({
             </div>
           ) : (
             <div className="mt-2 flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => setEditing(true)}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => setEditing(true)}
+              >
                 <Pencil className="mr-1 h-3 w-3" /> Ad ver
               </Button>
               <Button
@@ -128,7 +146,12 @@ function ContactRow({
                 <Copy className="mr-1 h-3 w-3" /> Kimliği kopyala
               </Button>
               {onOpen && (
-                <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => onOpen(c.peerId)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-[11px]"
+                  onClick={() => onOpen(c.peerId)}
+                >
                   Sohbeti aç
                 </Button>
               )}
@@ -202,15 +225,26 @@ export function ContactsDialog({
           <DialogHeader>
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
-              Telefon numarası yoktur. Herkesin değişmeyen bir kısa kimliği vardır; adları siz verirsiniz.
+              Telefon numarası yoktur. Herkesin değişmeyen bir kısa kimliği vardır; adları siz
+              verirsiniz.
             </DialogDescription>
           </DialogHeader>
 
           {/* Kendi kimlik kartım */}
           <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">
-            {qr && <img src={qr} alt="Kendi kimlik karekodunuz" width={120} height={120} className="rounded border" />}
+            {qr && (
+              <img
+                src={qr}
+                alt="Kendi kimlik karekodunuz"
+                width={120}
+                height={120}
+                className="rounded border"
+              />
+            )}
             <div className="min-w-0 flex-1">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Sizin kimliğiniz</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                Sizin kimliğiniz
+              </p>
               <p className="mt-1 font-mono text-lg tracking-wider">{myShort}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Bu kod cihaz değiştirseniz bile aynı kalır ve kimseyle karışmaz.
@@ -232,8 +266,12 @@ export function ContactsDialog({
                   onClick={() => {
                     const url = `${window.location.origin}/chat`;
                     const text = `Tedbirge kimliğim: ${myShort} — ${url}`;
-                    if (navigator.share) void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
-                    else void navigator.clipboard?.writeText(text).then(() => toast("Davet kopyalandı"));
+                    if (navigator.share)
+                      void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
+                    else
+                      void navigator.clipboard
+                        ?.writeText(text)
+                        .then(() => toast("Davet kopyalandı"));
                   }}
                 >
                   Paylaş
@@ -267,9 +305,10 @@ export function ContactsDialog({
           {/* KVKK / GDPR */}
           <div className="rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
             <p>
-              <strong className="text-foreground">Verileriniz sizde kalır.</strong> Rehber yalnızca bu cihazda
-              saklanır; sunucuya, buluta veya üçüncü kişilere aktarılmaz. Telefon rehberiniz okunmaz, numara
-              istenmez. Mesaj içerikleri uçtan uca şifrelidir (KVKK m.4 veri minimizasyonu · GDPR m.5/25).
+              <strong className="text-foreground">Verileriniz sizde kalır.</strong> Rehber yalnızca
+              bu cihazda saklanır; sunucuya, buluta veya üçüncü kişilere aktarılmaz. Telefon
+              rehberiniz okunmaz, numara istenmez. Mesaj içerikleri uçtan uca şifrelidir (KVKK m.4
+              veri minimizasyonu · GDPR m.5/25).
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -289,7 +328,8 @@ export function ContactsDialog({
                 variant="outline"
                 className="text-destructive"
                 onClick={() => {
-                  if (!window.confirm("Tüm rehber bu cihazdan silinsin mi? Mesajlarınız korunur.")) return;
+                  if (!window.confirm("Tüm rehber bu cihazdan silinsin mi? Mesajlarınız korunur."))
+                    return;
                   void eraseAllContacts().then((n) => toast(`${n} kişi silindi`));
                 }}
               >
@@ -297,8 +337,8 @@ export function ContactsDialog({
               </Button>
             </div>
             <p className="mt-3">
-              Taşınabilirlik (KVKK m.11 / GDPR m.20) ve silme (KVKK m.7 / GDPR m.17) haklarınızı buradan tek
-              dokunuşla kullanabilirsiniz.
+              Taşınabilirlik (KVKK m.11 / GDPR m.20) ve silme (KVKK m.7 / GDPR m.17) haklarınızı
+              buradan tek dokunuşla kullanabilirsiniz.
             </p>
           </div>
         </DialogContent>
