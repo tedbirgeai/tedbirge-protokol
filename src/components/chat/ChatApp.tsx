@@ -653,8 +653,10 @@ function Onboarding({ onDone }: { onDone: () => void }) {
 }
 
 export function ChatApp() {
+  const { skin, toggle: toggleSkin } = useChatSkin();
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
