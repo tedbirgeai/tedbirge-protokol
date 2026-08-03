@@ -889,11 +889,70 @@ async function onChat(from: string, raw: unknown) {
   if (p.t === "delete" && p.id) {
     const msg = await getMessage(p.id);
     if (!msg) return;
-    await putMessage({ ...msg, deleted: true, text: "", media: undefined });
+    await putMessage({ ...msg, deleted: true, text: "", media: undefined, geo: undefined });
     await refreshMessages(msg.convId);
     await refreshConversations();
     return;
   }
+
+  if (p.t === "edit" && p.id && typeof p.text === "string") {
+    const msg = await getMessage(p.id);
+    if (!msg || msg.deleted) return;
+    await putMessage({ ...msg, text: p.text, editedAt: Date.now() });
+    await refreshMessages(msg.convId);
+    await refreshConversations();
+    return;
+  }
+
+  if (p.t === "pin") {
+    const conv =
+      p.group && p.convId
+        ? await getConversation(p.convId)
+        : await resolveDirectConversation(from, p.alias);
+    if (!conv) return;
+    await putConversation({ ...conv, pinnedMessageId: p.id || undefined });
+    await refreshConversations();
+    return;
+  }
+
+  if ((p.t === "geo" || p.t === "sos") && p.id) {
+    const conv =
+      p.group && p.convId
+        ? ((await getConversation(p.convId)) ?? (await resolveDirectConversation(from, p.alias)))
+        : await resolveDirectConversation(from, p.alias);
+    if (!conv || (await getMessage(p.id))) return;
+    const geo = p.geo
+      ? {
+          ...p.geo,
+          frame: offlineMapFrame(
+            { lat: p.geo.lat, lon: p.geo.lon, acc: p.geo.acc, alt: p.geo.alt, ts: p.ts ?? Date.now() },
+            p.t === "sos" ? `ACİL — ${p.alias ?? from}` : (p.alias ?? "Konum"),
+          ),
+        }
+      : undefined;
+    await appendLocal(conv, {
+      id: p.id,
+      convId: conv.id,
+      from,
+      to: getBrowserNodeId(),
+      kind: p.t === "sos" ? "sos" : "location",
+      text: p.text ?? "📍 Konum",
+      ts: p.ts ?? Date.now(),
+      outgoing: false,
+      status: "delivered",
+      geo,
+      ...(p.ttlMs ? { expiresAt: Date.now() + p.ttlMs } : {}),
+    });
+    receivedSound();
+    vibrate(p.t === "sos" ? 60 : 14);
+    notify(
+      p.t === "sos" ? `🆘 ${p.alias ?? conv.title}` : conv.title,
+      p.text ?? "Konum paylaşıldı",
+    );
+    return;
+  }
+
+
 
   if (p.t === "group-invite" && p.convId) {
     const exists = await getConversation(p.convId);
