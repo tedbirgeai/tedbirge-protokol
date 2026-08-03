@@ -60,15 +60,37 @@ export function manualBlocks(signPublicB64: string): string[] {
   return fingerprintOfKey(signPublicB64).split("-");
 }
 
-/** QR yükü — kamera ile çevrimdışı okunur (internet gerekmez). */
+const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
+
+/**
+ * QR yükü — telefon kamerası doğrudan açabilsin diye normal bir https
+ * bağlantısıdır. Kimlik ve genel anahtar bağlantı parametrelerinde taşınır;
+ * bağlantı açıldığında kişi rehbere eklenir.
+ */
 export function qrPayload(peerId: string, signPublicB64: string): string {
-  return `tbg-peer:${peerId}:${signPublicB64}`;
+  const origin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : FALLBACK_ORIGIN;
+  const u = new URL("/chat", origin);
+  u.searchParams.set("p", peerId);
+  u.searchParams.set("k", signPublicB64);
+  return u.toString();
 }
 
 export function parseQrPayload(raw: string): { peerId: string; signPublic: string } | null {
-  const m = /^tbg-peer:([^:]+):(.+)$/.exec(raw.trim());
-  if (!m) return null;
-  return { peerId: m[1], signPublic: m[2] };
+  const value = raw.trim();
+  const legacy = /^tbg-peer:([^:]+):(.+)$/.exec(value);
+  if (legacy) return { peerId: legacy[1], signPublic: legacy[2] };
+  try {
+    const u = new URL(value);
+    const peerId = u.searchParams.get("p");
+    const signPublic = u.searchParams.get("k");
+    if (peerId && signPublic) return { peerId, signPublic };
+  } catch {
+    /* geçersiz bağlantı */
+  }
+  return null;
 }
 
 export function trustStatusOf(rec?: PeerRecord | null): TrustStatus {
