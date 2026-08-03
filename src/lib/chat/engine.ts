@@ -1185,6 +1185,19 @@ export async function bootChat() {
     if (!isWakePayload(body)) return;
     void showChatNotification({ title: body.title, body: body.preview, kind: body.kind });
   });
+  // Sohbeti olmayan menzildeki düğümlerden gelen acil durum yayını.
+  onMesh("alert", (_from, body) => {
+    const p = body as { t?: string; text?: string; alias?: string } | null;
+    if (!p || p.t !== "sos" || !p.text) return;
+    receivedSound();
+    vibrate(60);
+    void showChatNotification({
+      title: `🆘 ${p.alias ?? "Yakındaki bir cihaz"}`,
+      body: p.text,
+      kind: "call",
+    });
+  });
+  bootBackupTransfer();
   // Kaybolan mesajlar: açılışta ve her dakika süresi dolanlar silinir.
   void sweepEphemeral();
   setInterval(() => void sweepEphemeral(), 60_000);
