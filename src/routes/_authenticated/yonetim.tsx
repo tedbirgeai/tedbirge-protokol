@@ -6,7 +6,10 @@ import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { updateAiLeadStatus, rebuildLeadPlan } from "@/lib/leads.functions";
 import { OFFICIAL_DRAFTS } from "@/lib/regulation";
+import { INTEROP_TARGETS } from "@/lib/interop";
 import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
+import { AdminInterop } from "@/components/site/AdminInterop";
+
 
 
 export const Route = createFileRoute("/_authenticated/yonetim")({
@@ -69,7 +72,7 @@ type AiLead = {
 function Admin() {
   const { user } = useAuth();
   const { isAdmin, loading: roleLoading } = useIsAdmin(user?.id);
-  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "plan">("pilot");
+  const [tab, setTab] = useState<"pilot" | "ai" | "docs" | "interop" | "plan">("pilot");
   const [rows, setRows] = useState<PilotRequest[]>([]);
   const [leads, setLeads] = useState<AiLead[]>([]);
   const [filter, setFilter] = useState<string>("all");
@@ -164,7 +167,10 @@ function Admin() {
               ? "AI danışman talepleri"
               : tab === "plan"
                 ? "İş planı geliştirme rehberi"
-                : "İdari belgeler & dilekçeler"}
+                : tab === "interop"
+                  ? "El sıkışma haritası"
+                  : "İdari belgeler & dilekçeler"}
+
         </h1>
 
 
@@ -194,6 +200,14 @@ function Admin() {
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
           </button>
           <button
+            onClick={() => setTab("interop")}
+            className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+              tab === "interop" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+            }`}
+          >
+            El sıkışma ({INTEROP_TARGETS.length})
+          </button>
+          <button
             onClick={() => setTab("plan")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
               tab === "plan" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
@@ -205,8 +219,11 @@ function Admin() {
 
         {tab === "plan" ? (
           <AdminBusinessPlan />
+        ) : tab === "interop" ? (
+          <AdminInterop />
         ) : tab === "docs" ? (
           <AdminOfficialDrafts />
+
         ) : tab === "ai" ? (
           leads.length === 0 ? (
             <p className="mt-8 text-sm text-muted-foreground">
@@ -356,7 +373,36 @@ function Admin() {
   );
 }
 
+/** Dilekçe metnini düz metin dosyası olarak indirir. */
+function downloadDraft(id: string, title: string, body: string) {
+  const blob = new Blob([`${title}\n\n${body}\n`], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tedbirge-${id}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Tarayıcının yazdırma penceresini açar; oradan PDF olarak kaydedilebilir. */
+function printDraft(title: string, body: string) {
+  const w = window.open("", "_blank", "width=820,height=900");
+  if (!w) return;
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  w.document.write(
+    `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>${esc(title)}</title>` +
+      `<style>body{font-family:Georgia,serif;line-height:1.6;padding:40px;max-width:800px;margin:auto;}` +
+      `pre{white-space:pre-wrap;font-family:inherit;font-size:13px;}h1{font-size:16px;}</style></head>` +
+      `<body><h1>${esc(title)}</h1><pre>${esc(body)}</pre></body></html>`,
+  );
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
 function AdminOfficialDrafts() {
+
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="mt-8">
@@ -382,13 +428,21 @@ function AdminOfficialDrafts() {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.summary}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <a
-                  href={`/belgeler/tedbirge-${d.id}.pdf`}
-                  download
+                <button
+                  type="button"
+                  onClick={() => downloadDraft(d.id, d.title, d.body)}
                   className="rounded-sm bg-primary px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
                 >
-                  PDF indir
-                </a>
+                  Metni indir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => printDraft(d.title, d.body)}
+                  className="rounded-sm border border-border px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+                >
+                  Yazdır / PDF
+                </button>
+
                 <button
                   type="button"
                   onClick={() => void navigator.clipboard.writeText(d.body).catch(() => {})}
