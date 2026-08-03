@@ -399,13 +399,21 @@ function AdminOfficialDrafts() {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d.summary}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <a
-                  href={`/belgeler/tedbirge-${d.id}.pdf`}
-                  download
+                <button
+                  type="button"
+                  onClick={() => downloadDraft(d.id, d.title, d.body)}
                   className="rounded-sm bg-primary px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90"
                 >
-                  PDF indir
-                </a>
+                  Metni indir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => printDraft(d.title, d.body)}
+                  className="rounded-sm border border-border px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
+                >
+                  Yazdır / PDF
+                </button>
+
                 <button
                   type="button"
                   onClick={() => void navigator.clipboard.writeText(d.body).catch(() => {})}
