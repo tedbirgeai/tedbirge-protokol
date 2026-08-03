@@ -270,8 +270,16 @@ export function getPeer(peerId: string): Promise<PeerRecord | undefined> {
 
 export function listPeers(): Promise<PeerRecord[]> {
   return safe(tx<PeerRecord[]>("peers", "readonly", (s) => s.getAll() as IDBRequest<PeerRecord[]>), []);
-
 }
+
+/** KVKK m.7 / GDPR m.17 — tek bir eş kaydını cihazdan siler. */
+export function deletePeer(peerId: string) {
+  return safe(
+    tx<undefined>("peers", "readwrite", (s) => s.delete(peerId) as IDBRequest<undefined>).then(() => true),
+    false,
+  );
+}
+
 
 /* -------------------------- güvenilir cihazlar -------------------------- */
 
