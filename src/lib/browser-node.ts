@@ -17,6 +17,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { getAlias, setAlias } from "@/lib/chat/profile";
 import { ensureIdentity, type Identity } from "@/lib/crypto/identity";
 import {
   createEnvelope,
@@ -206,6 +207,12 @@ export async function syncPersonIdentity(): Promise<string> {
   try {
     const { data } = await supabase.auth.getUser();
     if (!data.user) return getPersonId();
+    // Görünen ad hesap profilinden gelir; yerel kayıt yalnız çevrimdışı önbellektir.
+    const fullName =
+      typeof data.user.user_metadata?.["full_name"] === "string"
+        ? data.user.user_metadata["full_name"].trim()
+        : "";
+    if (fullName && !getAlias()) setAlias(fullName);
     const source = new TextEncoder().encode(`tedbirge/person/v1:${data.user.id}`);
     const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", source));
     const code = Array.from(digest.slice(0, 6), (b) => b.toString(16).padStart(2, "0"))

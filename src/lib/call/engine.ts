@@ -93,6 +93,7 @@ let ringTimer: ReturnType<typeof setTimeout> | null = null;
 let statsTimer: ReturnType<typeof setInterval> | null = null;
 const pendingIce = new Map<string, RTCIceCandidateInit[]>();
 const reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const restarting = new Set<string>();
 const MAX_RECONNECTS = 3;
 const RING_TIMEOUT_MS = 45_000;
 
@@ -195,7 +196,8 @@ async function applyPendingIce(peerId: string, pc: RTCPeerConnection) {
 
 async function restartIce(peerId: string) {
   const leg = legs.get(peerId);
-  if (!leg) return;
+  if (!leg || restarting.has(peerId) || leg.pc.signalingState !== "stable") return;
+  restarting.add(peerId);
   try {
     const offer = await leg.pc.createOffer({ iceRestart: true });
     await leg.pc.setLocalDescription(offer);
@@ -223,6 +225,8 @@ async function restartIce(peerId: string) {
     );
   } catch {
     publish({ error: "Bağlantı kurulamadı. Mesaj olarak göndermeyi deneyin." });
+  } finally {
+    restarting.delete(peerId);
   }
 }
 
@@ -371,11 +375,13 @@ export async function startConference(
 export async function acceptCall() {
   const entries = Array.from(pendingOffers.entries());
   if (!entries.length) return;
+  if (ringTimer) clearTimeout(ringTimer);
+  ringTimer = null;
   try {
-    if (ringTimer) clearTimeout(ringTimer);
-    ringTimer = null;
     const stream = await ensureMedia(state.video);
+    let accepted = 0;
     for (const [peerId, offer] of entries) {
+      try {
       const leg = createLeg(peerId, state.peerAlias || peerId);
       stream.getTracks().forEach((t) => {
         if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
@@ -385,8 +391,15 @@ export async function acceptCall() {
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
       await sendMesh("call", peerId, { t: "answer", sdp: answer.sdp, alias: getAlias() });
+        pendingOffers.delete(peerId);
+        accepted += 1;
+      } catch {
+        const failed = legs.get(peerId);
+        failed?.pc.close();
+        legs.delete(peerId);
+      }
     }
-    pendingOffers = new Map();
+    if (!accepted) throw new Error("no accepted leg");
     publish({ phase: "active", startedAt: Date.now() });
     startStats();
   } catch {
@@ -434,6 +447,7 @@ function cleanup() {
   localStream = null;
   pendingOffers = new Map();
   pendingIce.clear();
+  restarting.clear();
   for (const timer of reconnectTimers.values()) clearTimeout(timer);
   reconnectTimers.clear();
   for (const leg of legs.values()) {
@@ -459,10 +473,12 @@ export function toggleCamera() {
 }
 
 let facing: "user" | "environment" = "user";
+let switchingCamera = false;
 
 /** Ön / arka kamera değişimi — görüşme kesilmeden akış değiştirilir. */
 export async function switchCamera() {
-  if (!legs.size || !state.video) return;
+  if (!legs.size || !state.video || switchingCamera) return;
+  switchingCamera = true;
   facing = facing === "user" ? "environment" : "user";
   try {
     const fresh = await navigator.mediaDevices.getUserMedia({
@@ -484,6 +500,8 @@ export async function switchCamera() {
     listeners.forEach((l) => l());
   } catch {
     publish({ error: "Kamera değiştirilemedi." });
+  } finally {
+    switchingCamera = false;
   }
 }
 
@@ -644,6 +662,10 @@ export function bootCalls() {
   booted = true;
   bootMeshBus();
   onMesh("call", (from, body) => void onCallSignal(from, body));
+  window.addEventListener("pagehide", () => {
+    const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
+    for (const peerId of peers) void sendMesh("call", peerId, { t: "bye" });
+  });
 }
 
 export function useCall(): CallState {
