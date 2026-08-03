@@ -226,7 +226,7 @@ export function ChatApp() {
               {me}
             </p>
             <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
-              {tier.label}
+              {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : "Bağlı"}
             </p>
           </div>
           <Link
@@ -472,7 +472,7 @@ export function ChatApp() {
                   {activeName}
                 </p>
                 <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  {active.group ? "Grup" : peerOnline ? `çevrimiçi · ${tier.label}` : `bağlantı bekleniyor · ${tier.label}`}
+                  {active.group ? "Grup" : peerOnline ? "çevrimiçi" : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button
