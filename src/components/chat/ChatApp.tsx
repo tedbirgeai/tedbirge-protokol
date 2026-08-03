@@ -38,7 +38,6 @@ import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { humanSize } from "@/lib/chat/media";
 import { useNodeRuntime } from "@/lib/node-runtime";
 import type { PeerInfo } from "@/lib/browser-node";
-import { describeTier, useAccessTier } from "@/lib/access-tiers";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import type { ChatMessage } from "@/lib/store/idb";
 
@@ -146,8 +145,6 @@ export function ChatApp() {
 
   const chat = useChat();
   const node = useNodeRuntime();
-  const access = useAccessTier();
-  const tier = describeTier(access);
   const messages = useConversationMessages(activeId);
 
   useEffect(() => {
