@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  BookUser,
   Check,
   CheckCheck,
   ChevronDown,
@@ -60,6 +61,8 @@ import {
 import { useNodeRuntime } from "@/lib/node-runtime";
 import type { PeerInfo } from "@/lib/browser-node";
 import { CallOverlay } from "@/components/chat/CallOverlay";
+import { ContactsDialog } from "@/components/chat/ContactsDialog";
+import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
 import type { ChatMessage } from "@/lib/store/idb";
 
 function timeOf(ts: number) {
@@ -384,6 +387,7 @@ export function ChatApp() {
   const [recording, setRecording] = useState(false);
   const [recSecs, setRecSecs] = useState(0);
   const [soundOff, setSoundOff] = useState(false);
+  const [contactsOpen, setContactsOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -423,6 +427,16 @@ export function ChatApp() {
   }, [activeId, messages.length]);
 
   const pairing = usePairing();
+  const contactBook = useContacts();
+
+  // Rehber, yeni eş ya da yeni sohbet göründüğünde kendini tazeler.
+  useEffect(() => {
+    void refreshContacts();
+  }, [chat.conversations.length, node.peers?.length, pairing.trusted]);
+
+  /** Sohbet başlığını üç katmanlı rehber adıyla gösterir. */
+  const titleOf = (c: { group: boolean; title: string; members: string[] }) =>
+    c.group ? c.title : contactLabel(c.members[0] ?? c.title, c.title);
 
   const allConversations = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("tr");
@@ -440,10 +454,10 @@ export function ChatApp() {
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   const me = getAlias() || "Ben";
-  const activeName = active ? displayName(active.title) : "";
+  const activeName = active ? (active.group ? active.title : contactLabel(active.members[0] ?? active.title, active.title)) : "";
   const peerId = active?.members[0];
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
-  const nameOf = (id: string) => displayName(id, chat.aliases[id]);
+  const nameOf = (id: string) => contactLabel(id, chat.aliases[id]);
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
 
   /** Bekleyen (henüz iletilmemiş) mesaj sayısı — tek satırlık sade durum. */
@@ -520,6 +534,16 @@ export function ChatApp() {
     <div className="wa flex h-[100dvh] w-full overflow-hidden" style={{ background: "var(--wa-panel-soft)" }}>
       <CallOverlay />
       <PairingDialog nameOf={nameOf} />
+      <ContactsDialog
+        open={contactsOpen}
+        onOpenChange={setContactsOpen}
+        onOpenChat={(pid) => {
+          void ensureDirectConversation(pid, chat.aliases[pid]).then((c) => {
+            setActiveId(c.id);
+            setContactsOpen(false);
+          });
+        }}
+      />
 
 
       {/* Sol panel — profil, arama, konuşma listesi */}
@@ -560,6 +584,19 @@ export function ChatApp() {
           >
             <Globe className="h-[18px] w-[18px]" />
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setContactsOpen(true);
+            }}
+            className="wa-press rounded-full p-2 hover:bg-black/5"
+            style={{ color: "var(--wa-muted)" }}
+            aria-label="Rehber"
+            title="Rehber"
+          >
+            <BookUser className="h-[18px] w-[18px]" />
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -631,7 +668,7 @@ export function ChatApp() {
                     className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
                     style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                   >
-                    <span className="truncate">{displayName(p.nodeId, chat.aliases[p.nodeId])}</span>
+                    <span className="truncate">{contactLabel(p.nodeId, chat.aliases[p.nodeId])}</span>
                     <span className="text-[11px]" style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}>
                       {paired ? "çevrimiçi" : "yakında"}
                     </span>
@@ -700,7 +737,7 @@ export function ChatApp() {
             </li>
           ))}
           {conversations.map((c) => {
-            const name = displayName(c.title);
+            const name = titleOf(c);
             return (
               <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
                 <div
