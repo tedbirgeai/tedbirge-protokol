@@ -19,6 +19,7 @@ import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
 import { showChatNotification } from "@/lib/chat/push";
+import { getBrowserNodeId } from "@/lib/browser-node";
 
 export type CallPhase = "idle" | "ringing" | "outgoing" | "active" | "reconnecting" | "ended";
 
@@ -48,6 +49,8 @@ export type CallState = {
   quality: CallQuality;
   /** Kaçıncı yeniden bağlanma denemesi. */
   reconnects: number;
+  /** Uzak medya izi değiştiğinde oynatıcıyı yeniden bağlamak için artar. */
+  streamVersion: number;
 };
 
 const ICE: RTCConfiguration = {
@@ -75,6 +78,7 @@ let state: CallState = {
   conference: false,
   quality: IDLE_QUALITY,
   reconnects: 0,
+  streamVersion: 0,
 };
 
 const listeners = new Set<() => void>();
@@ -87,6 +91,11 @@ let pendingOffers = new Map<string, RTCSessionDescriptionInit>();
 let booted = false;
 let ringTimer: ReturnType<typeof setTimeout> | null = null;
 let statsTimer: ReturnType<typeof setInterval> | null = null;
+const pendingIce = new Map<string, RTCIceCandidateInit[]>();
+const reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const restarting = new Set<string>();
+const MAX_RECONNECTS = 3;
+const RING_TIMEOUT_MS = 45_000;
 
 function publish(patch: Partial<CallState>) {
   state = { ...state, ...patch };
@@ -136,7 +145,7 @@ function createLeg(peerId: string, alias: string) {
     e.streams[0]?.getTracks().forEach((t) => {
       if (!stream.getTracks().includes(t)) stream.addTrack(t);
     });
-    listeners.forEach((l) => l());
+    publish({ streamVersion: state.streamVersion + 1 });
   };
   pc.onicecandidate = (e) => {
     if (e.candidate) void sendMesh("call", peerId, { t: "ice", candidate: e.candidate.toJSON() });
@@ -147,6 +156,9 @@ function createLeg(peerId: string, alias: string) {
       (l) => l.pc.connectionState === "connected",
     );
     if (pc.connectionState === "connected") {
+      const reconnectTimer = reconnectTimers.get(peerId);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimers.delete(peerId);
       publish({ phase: "active", startedAt: state.startedAt ?? Date.now(), error: null });
       startStats();
     } else if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
@@ -157,7 +169,8 @@ function createLeg(peerId: string, alias: string) {
           error: pc.connectionState === "failed" ? "Bağlantı zayıf — yeniden deneniyor." : null,
         });
       }
-      void restartIce(peerId);
+      if (state.reconnects < MAX_RECONNECTS) void restartIce(peerId);
+      else endCall("Bağlantı yeniden kurulamadı.");
     }
   };
   legs.set(peerId, leg);
@@ -166,12 +179,25 @@ function createLeg(peerId: string, alias: string) {
 }
 
 function nodeSelf(): string {
-  return getAlias();
+  return getBrowserNodeId();
+}
+
+async function applyPendingIce(peerId: string, pc: RTCPeerConnection) {
+  const queued = pendingIce.get(peerId) ?? [];
+  pendingIce.delete(peerId);
+  for (const candidate of queued) {
+    try {
+      await pc.addIceCandidate(candidate);
+    } catch {
+      /* eski veya geçersiz aday görüşmeyi durdurmaz */
+    }
+  }
 }
 
 async function restartIce(peerId: string) {
   const leg = legs.get(peerId);
-  if (!leg) return;
+  if (!leg || restarting.has(peerId) || leg.pc.signalingState !== "stable") return;
+  restarting.add(peerId);
   try {
     const offer = await leg.pc.createOffer({ iceRestart: true });
     await leg.pc.setLocalDescription(offer);
@@ -182,8 +208,25 @@ async function restartIce(peerId: string) {
       alias: getAlias(),
       restart: true,
     });
+    const previous = reconnectTimers.get(peerId);
+    if (previous) clearTimeout(previous);
+    reconnectTimers.set(
+      peerId,
+      setTimeout(() => {
+        const current = legs.get(peerId);
+        if (current && current.pc.connectionState !== "connected") {
+          if (state.reconnects >= MAX_RECONNECTS) endCall("Bağlantı yeniden kurulamadı.");
+          else {
+            publish({ reconnects: state.reconnects + 1 });
+            void restartIce(peerId);
+          }
+        }
+      }, 8_000),
+    );
   } catch {
     publish({ error: "Bağlantı kurulamadı. Mesaj olarak göndermeyi deneyin." });
+  } finally {
+    restarting.delete(peerId);
   }
 }
 
@@ -272,6 +315,7 @@ async function dial(peerId: string, alias: string, video: boolean) {
 
 export async function startCall(peerId: string, video: boolean, alias?: string) {
   bootCalls();
+  if (state.phase !== "idle" && state.phase !== "ended") return;
   publish({
     phase: "outgoing",
     peerId,
@@ -289,7 +333,7 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     await dial(peerId, alias ?? peerId, video);
     ringTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Cevap yok.");
-    }, 45_000);
+    }, RING_TIMEOUT_MS);
   } catch {
     endCall("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
   }
@@ -302,6 +346,7 @@ export async function startConference(
   title = "Grup görüşmesi",
 ) {
   bootCalls();
+  if (state.phase !== "idle" && state.phase !== "ended") return;
   const list = peers.slice(0, 4);
   if (!list.length) return;
   publish({
@@ -321,7 +366,7 @@ export async function startConference(
     for (const p of list) await dial(p.peerId, p.alias ?? p.peerId, video);
     ringTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Kimse katılmadı.");
-    }, 45_000);
+    }, RING_TIMEOUT_MS);
   } catch {
     endCall("Görüşme başlatılamadı.");
   }
@@ -330,19 +375,31 @@ export async function startConference(
 export async function acceptCall() {
   const entries = Array.from(pendingOffers.entries());
   if (!entries.length) return;
+  if (ringTimer) clearTimeout(ringTimer);
+  ringTimer = null;
   try {
     const stream = await ensureMedia(state.video);
+    let accepted = 0;
     for (const [peerId, offer] of entries) {
+      try {
       const leg = createLeg(peerId, state.peerAlias || peerId);
       stream.getTracks().forEach((t) => {
         if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
       });
       await leg.pc.setRemoteDescription(offer);
+      await applyPendingIce(peerId, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
       await sendMesh("call", peerId, { t: "answer", sdp: answer.sdp, alias: getAlias() });
+        pendingOffers.delete(peerId);
+        accepted += 1;
+      } catch {
+        const failed = legs.get(peerId);
+        failed?.pc.close();
+        legs.delete(peerId);
+      }
     }
-    pendingOffers = new Map();
+    if (!accepted) throw new Error("no accepted leg");
     publish({ phase: "active", startedAt: Date.now() });
     startStats();
   } catch {
@@ -351,7 +408,8 @@ export async function acceptCall() {
 }
 
 export function endCall(reason?: string) {
-  for (const peerId of legs.keys()) void sendMesh("call", peerId, { t: "bye" });
+  const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
+  for (const peerId of peers) void sendMesh("call", peerId, { t: "bye" });
   cleanup();
   publish({ phase: reason ? "ended" : "idle", error: reason ?? null });
   setTimeout(() => {
@@ -388,6 +446,10 @@ function cleanup() {
   localStream?.getTracks().forEach((t) => t.stop());
   localStream = null;
   pendingOffers = new Map();
+  pendingIce.clear();
+  restarting.clear();
+  for (const timer of reconnectTimers.values()) clearTimeout(timer);
+  reconnectTimers.clear();
   for (const leg of legs.values()) {
     try {
       leg.pc.close();
@@ -411,10 +473,12 @@ export function toggleCamera() {
 }
 
 let facing: "user" | "environment" = "user";
+let switchingCamera = false;
 
 /** Ön / arka kamera değişimi — görüşme kesilmeden akış değiştirilir. */
 export async function switchCamera() {
-  if (!legs.size || !state.video) return;
+  if (!legs.size || !state.video || switchingCamera) return;
+  switchingCamera = true;
   facing = facing === "user" ? "environment" : "user";
   try {
     const fresh = await navigator.mediaDevices.getUserMedia({
@@ -436,6 +500,8 @@ export async function switchCamera() {
     listeners.forEach((l) => l());
   } catch {
     publish({ error: "Kamera değiştirilemedi." });
+  } finally {
+    switchingCamera = false;
   }
 }
 
@@ -458,10 +524,36 @@ async function onCallSignal(from: string, raw: unknown) {
     const desc: RTCSessionDescriptionInit = { type: "offer", sdp: p.sdp };
     const leg = legs.get(from);
     if (p.restart && leg) {
+      // İki uç aynı anda ICE yeniden başlatırsa yalnız polite uç geri çekilir.
+      if (leg.pc.signalingState !== "stable") {
+        if (!leg.polite) return;
+        await leg.pc.setLocalDescription({ type: "rollback" });
+      }
       await leg.pc.setRemoteDescription(desc);
+      await applyPendingIce(from, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
       await sendMesh("call", from, { t: "answer", sdp: answer.sdp });
+      return;
+    }
+    // Aynı anda iki taraf da aradıysa deterministik "perfect negotiation":
+    // küçük düğüm kimliği arayan kalır; büyük kimlik kendi teklifini geri
+    // alıp gelen teklifi cevaplar. Böylece iki taraf da meşgule düşmez.
+    if (state.phase === "outgoing" && state.peerId === from && leg) {
+      if (!leg.polite) return;
+      try {
+        await leg.pc.setLocalDescription({ type: "rollback" });
+        await leg.pc.setRemoteDescription(desc);
+        await applyPendingIce(from, leg.pc);
+        const answer = await leg.pc.createAnswer();
+        await leg.pc.setLocalDescription(answer);
+        await sendMesh("call", from, { t: "answer", sdp: answer.sdp, alias: getAlias() });
+        if (ringTimer) clearTimeout(ringTimer);
+        ringTimer = null;
+        publish({ phase: "active", startedAt: Date.now(), error: null });
+      } catch {
+        endCall("Eşzamanlı arama çözülemedi.");
+      }
       return;
     }
     // Görüşme sürerken yeni katılımcı → konferansa dahil et.
@@ -473,6 +565,7 @@ async function onCallSignal(from: string, raw: unknown) {
           if (!fresh.pc.getSenders().some((s) => s.track === t)) fresh.pc.addTrack(t, stream);
         });
         await fresh.pc.setRemoteDescription(desc);
+        await applyPendingIce(from, fresh.pc);
         const answer = await fresh.pc.createAnswer();
         await fresh.pc.setLocalDescription(answer);
         await sendMesh("call", from, { t: "answer", sdp: answer.sdp, alias: getAlias() });
@@ -495,6 +588,10 @@ async function onCallSignal(from: string, raw: unknown) {
       error: null,
       conference: pendingOffers.size > 1,
     });
+    if (ringTimer) clearTimeout(ringTimer);
+    ringTimer = setTimeout(() => {
+      if (state.phase === "ringing" && pendingOffers.has(from)) endCall("Cevapsız arama.");
+    }, RING_TIMEOUT_MS);
     void showChatNotification({
       title: `📞 ${p.alias ?? from}`,
       body: p.video ? "Görüntülü arama" : "Sesli arama",
@@ -510,6 +607,7 @@ async function onCallSignal(from: string, raw: unknown) {
     if (ringTimer) clearTimeout(ringTimer);
     if (p.alias) leg.alias = p.alias;
     await leg.pc.setRemoteDescription({ type: "answer", sdp: p.sdp });
+    await applyPendingIce(from, leg.pc);
     publish({ phase: "active", startedAt: state.startedAt ?? Date.now() });
     syncParticipants();
     startStats();
@@ -518,7 +616,10 @@ async function onCallSignal(from: string, raw: unknown) {
 
   if (p.t === "ice" && p.candidate) {
     const leg = legs.get(from);
-    if (!leg) return;
+    if (!leg || !leg.pc.remoteDescription) {
+      pendingIce.set(from, [...(pendingIce.get(from) ?? []), p.candidate]);
+      return;
+    }
     try {
       await leg.pc.addIceCandidate(p.candidate);
     } catch {
@@ -561,6 +662,10 @@ export function bootCalls() {
   booted = true;
   bootMeshBus();
   onMesh("call", (from, body) => void onCallSignal(from, body));
+  window.addEventListener("pagehide", () => {
+    const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
+    for (const peerId of peers) void sendMesh("call", peerId, { t: "bye" });
+  });
 }
 
 export function useCall(): CallState {

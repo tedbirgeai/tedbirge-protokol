@@ -72,12 +72,36 @@ export function CallOverlay() {
   const localRef = useRef<HTMLVideoElement>(null);
   const remoteRef = useRef<HTMLVideoElement>(null);
   const [speaker, setSpeaker] = useState(true);
+  const [playBlocked, setPlayBlocked] = useState(false);
   const elapsed = useElapsed(call.phase === "active" ? call.startedAt : null);
 
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
-    if (remoteRef.current) remoteRef.current.srcObject = getRemoteStream();
-  }, [call.phase, call.video]);
+    const remote = remoteRef.current;
+    if (remote) {
+      remote.srcObject = getRemoteStream();
+      if (call.phase === "active") {
+        void remote
+          .play()
+          .then(() => setPlayBlocked(false))
+          .catch(() => setPlayBlocked(true));
+      }
+    }
+  }, [call.phase, call.video, call.streamVersion]);
+
+  async function enableCallAudio() {
+    pressFeedback();
+    const remote = remoteRef.current;
+    if (!remote) return;
+    remote.muted = false;
+    remote.volume = 1;
+    try {
+      await remote.play();
+      setPlayBlocked(false);
+    } catch {
+      setPlayBlocked(true);
+    }
+  }
 
   useEffect(() => {
     const el = remoteRef.current as
@@ -178,6 +202,16 @@ export function CallOverlay() {
       </div>
 
       {call.error && <p className="pb-4 text-sm text-destructive">{call.error}</p>}
+      {playBlocked && call.phase === "active" && (
+        <button
+          type="button"
+          onClick={() => void enableCallAudio()}
+          className="wa-press mb-4 flex items-center gap-2 rounded-sm border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary"
+        >
+          <Volume2 className="h-4 w-4" />
+          Görüşme sesini aç
+        </button>
+      )}
 
       <div className="flex items-center gap-4 pb-12">
         {call.phase === "ringing" ? (
