@@ -389,8 +389,12 @@ async function dial(peerId: string, alias: string, video: boolean) {
     alias: getAlias(),
     at: Date.now(),
   });
+  // Karşı cihaz kapalı/arka planda olabilir: telefonu çaldırmak için
+  // uyandırma bildirimi yollanır (içerik gönderilmez).
+  void import("@/lib/chat/webpush").then((m) => m.wakePeer(peerId, "call")).catch(() => {});
   if (!sent) throw new Error("peer-unavailable");
 }
+
 
 export async function startCall(peerId: string, video: boolean, alias?: string) {
   bootCalls();
