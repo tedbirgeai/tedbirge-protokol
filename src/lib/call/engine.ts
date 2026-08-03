@@ -84,12 +84,14 @@ let state: CallState = {
 const listeners = new Set<() => void>();
 
 type Leg = { pc: RTCPeerConnection; stream: MediaStream; alias: string; polite: boolean };
+type PendingOffer = { desc: RTCSessionDescriptionInit; alias: string; video: boolean };
 
 const legs = new Map<string, Leg>();
 let localStream: MediaStream | null = null;
-let pendingOffers = new Map<string, RTCSessionDescriptionInit>();
+let pendingOffers = new Map<string, PendingOffer>();
 let booted = false;
-let ringTimer: ReturnType<typeof setTimeout> | null = null;
+let outgoingTimer: ReturnType<typeof setTimeout> | null = null;
+const incomingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let statsTimer: ReturnType<typeof setInterval> | null = null;
 const pendingIce = new Map<string, RTCIceCandidateInit[]>();
 const reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -323,6 +325,10 @@ async function dial(peerId: string, alias: string, video: boolean) {
 export async function startCall(peerId: string, video: boolean, alias?: string) {
   bootCalls();
   if (state.phase !== "idle" && state.phase !== "ended") return;
+  if (!peerId || peerId === nodeSelf()) {
+    publish({ phase: "ended", error: "Kendi cihazınızı arayamazsınız." });
+    return;
+  }
   publish({
     phase: "outgoing",
     peerId,
@@ -338,7 +344,8 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
   });
   try {
     await dial(peerId, alias ?? peerId, video);
-    ringTimer = setTimeout(() => {
+    if (outgoingTimer) clearTimeout(outgoingTimer);
+    outgoingTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Cevap yok.");
     }, RING_TIMEOUT_MS);
   } catch (error) {
@@ -358,7 +365,7 @@ export async function startConference(
 ) {
   bootCalls();
   if (state.phase !== "idle" && state.phase !== "ended") return;
-  const list = peers.slice(0, 4);
+  const list = peers.filter((p) => p.peerId && p.peerId !== nodeSelf()).slice(0, 4);
   if (!list.length) return;
   publish({
     phase: "outgoing",
@@ -375,7 +382,8 @@ export async function startConference(
   });
   try {
     for (const p of list) await dial(p.peerId, p.alias ?? p.peerId, video);
-    ringTimer = setTimeout(() => {
+    if (outgoingTimer) clearTimeout(outgoingTimer);
+    outgoingTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Kimse katılmadı.");
     }, RING_TIMEOUT_MS);
   } catch (error) {
@@ -390,18 +398,18 @@ export async function startConference(
 export async function acceptCall() {
   const entries = Array.from(pendingOffers.entries());
   if (!entries.length) return;
-  if (ringTimer) clearTimeout(ringTimer);
-  ringTimer = null;
+  for (const timer of incomingTimers.values()) clearTimeout(timer);
+  incomingTimers.clear();
   try {
     const stream = await ensureMedia(state.video);
     let accepted = 0;
     for (const [peerId, offer] of entries) {
       try {
-      const leg = createLeg(peerId, state.peerAlias || peerId);
+      const leg = createLeg(peerId, offer.alias || peerId);
       stream.getTracks().forEach((t) => {
         if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
       });
-      await leg.pc.setRemoteDescription(offer);
+      await leg.pc.setRemoteDescription(offer.desc);
       await applyPendingIce(peerId, leg.pc);
       const answer = await leg.pc.createAnswer();
       await leg.pc.setLocalDescription(answer);
@@ -455,8 +463,10 @@ export function dropParticipant(peerId: string) {
 }
 
 function cleanup() {
-  if (ringTimer) clearTimeout(ringTimer);
-  ringTimer = null;
+  if (outgoingTimer) clearTimeout(outgoingTimer);
+  outgoingTimer = null;
+  for (const timer of incomingTimers.values()) clearTimeout(timer);
+  incomingTimers.clear();
   stopStats();
   localStream?.getTracks().forEach((t) => t.stop());
   localStream = null;
@@ -571,8 +581,8 @@ async function onCallSignal(from: string, raw: unknown) {
         const answer = await leg.pc.createAnswer();
         await leg.pc.setLocalDescription(answer);
         await sendMesh("call", from, { t: "answer", sdp: answer.sdp, alias: getAlias() });
-        if (ringTimer) clearTimeout(ringTimer);
-        ringTimer = null;
+        if (outgoingTimer) clearTimeout(outgoingTimer);
+        outgoingTimer = null;
         publish({ phase: "active", startedAt: Date.now(), error: null });
       } catch {
         endCall("Eşzamanlı arama çözülemedi.");
@@ -582,6 +592,7 @@ async function onCallSignal(from: string, raw: unknown) {
     // Görüşme sürerken yeni katılımcı → konferansa dahil et.
     if (state.phase === "active") {
       try {
+        if (leg && leg.pc.signalingState !== "stable") return;
         const stream = await ensureMedia(state.video);
         const fresh = createLeg(from, p.alias ?? from);
         stream.getTracks().forEach((t) => {
@@ -602,19 +613,25 @@ async function onCallSignal(from: string, raw: unknown) {
       void sendMesh("call", from, { t: "busy" });
       return;
     }
-    pendingOffers.set(from, desc);
+    pendingOffers.set(from, { desc, alias: p.alias ?? from, video: Boolean(p.video) });
     publish({
       phase: "ringing",
       peerId: from,
       peerAlias: p.alias ?? from,
-      video: Boolean(p.video),
+      video: Boolean(p.video) || Array.from(pendingOffers.values()).some((offer) => offer.video),
       error: null,
       conference: pendingOffers.size > 1,
     });
-    if (ringTimer) clearTimeout(ringTimer);
-    ringTimer = setTimeout(() => {
-      if (state.phase === "ringing" && pendingOffers.has(from)) endCall("Cevapsız arama.");
-    }, RING_TIMEOUT_MS);
+    const previousTimer = incomingTimers.get(from);
+    if (previousTimer) clearTimeout(previousTimer);
+    incomingTimers.set(
+      from,
+      setTimeout(() => {
+        pendingOffers.delete(from);
+        incomingTimers.delete(from);
+        if (state.phase === "ringing" && pendingOffers.size === 0) endCall("Cevapsız arama.");
+      }, RING_TIMEOUT_MS),
+    );
     void showChatNotification({
       title: `📞 ${p.alias ?? from}`,
       body: p.video ? "Görüntülü arama" : "Sesli arama",
@@ -627,7 +644,8 @@ async function onCallSignal(from: string, raw: unknown) {
   if (p.t === "answer" && p.sdp) {
     const leg = legs.get(from);
     if (!leg) return;
-    if (ringTimer) clearTimeout(ringTimer);
+    if (outgoingTimer) clearTimeout(outgoingTimer);
+    outgoingTimer = null;
     if (p.alias) leg.alias = p.alias;
     await leg.pc.setRemoteDescription({ type: "answer", sdp: p.sdp });
     await applyPendingIce(from, leg.pc);
@@ -653,6 +671,9 @@ async function onCallSignal(from: string, raw: unknown) {
 
   if (p.t === "bye" || p.t === "busy") {
     pendingOffers.delete(from);
+    const incomingTimer = incomingTimers.get(from);
+    if (incomingTimer) clearTimeout(incomingTimer);
+    incomingTimers.delete(from);
     const leg = legs.get(from);
     if (leg) {
       try {

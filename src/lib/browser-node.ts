@@ -359,6 +359,10 @@ export class BrowserNode {
     this.channel
       .on("presence", { event: "sync" }, () => void this.dialNewPeers())
       .on("broadcast", { event: "signal" }, ({ payload }) => void this.onSignal(payload))
+      .on("broadcast", { event: "mesh" }, ({ payload }) => {
+        const raw = (payload as { envelope?: unknown } | null)?.envelope;
+        if (typeof raw === "string") void this.onMeshMessage(raw, "cloud-realtime");
+      })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           this.cloudUp = true;
@@ -464,6 +468,54 @@ export class BrowserNode {
           priority,
         },
       ]);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Çevrimiçi iki cihaz arasında, veri kanalı henüz kurulmamış olsa bile
+   * şifreli zarfı gerçek zamanlı yayın kanalından taşır. Sunucu yalnız opak
+   * zarfı görür; içerik alıcının cihazında açılır. Arama sinyalleri burada
+   * saklanmaz, bu nedenle eski çağrıların sonradan çalması mümkün değildir.
+   */
+  private async sendRealtimeEnvelope(
+    kind: EnvelopeKind,
+    to: string | "*",
+    payload: unknown,
+    priority: Priority,
+  ): Promise<boolean> {
+    if (!this.channel || !this.cloudUp || !this.state.online || to === "*" || !this.identity) {
+      return false;
+    }
+    const present = Object.keys(this.channel.presenceState()).includes(to);
+    if (!present) return false;
+
+    let boxPublic = this.peerKeys.get(to)?.bpk;
+    if (!boxPublic) boxPublic = (await getPeer(to))?.publicKey;
+    if (!boxPublic) {
+      const { lookupRelayKeys } = await import("@/lib/relay-cloud");
+      boxPublic = (await lookupRelayKeys(to))?.boxPublic;
+    }
+    if (!boxPublic) return false;
+
+    try {
+      const env = await createEnvelope({
+        from: this.nodeId,
+        to,
+        kind,
+        payload,
+        peerBoxPublic: boxPublic,
+        senderSignPublic: this.identity.signPublic,
+        priority,
+        ttl: MAX_TTL,
+      });
+      const result = await this.channel.send({
+        type: "broadcast",
+        event: "mesh",
+        payload: { envelope: encodeEnvelope(env) },
+      });
+      return result === "ok";
     } catch {
       return false;
     }
@@ -934,6 +986,13 @@ export class BrowserNode {
       .filter((id) => this.peerKeys.has(id));
 
     if (!targets.length) {
+      // İnternet varken doğrudan WebRTC veri kanalı oluşmasını beklemeyiz:
+      // mesaj ve arama sinyali şifreli gerçek zamanlı kanaldan anında gider.
+      if (await this.sendRealtimeEnvelope(kind, to, payload, prio)) {
+        recordTx(true);
+        this.emit({});
+        return true;
+      }
       // IP yok: bilinen eşler için PHY veri düzlemini (LoRa/HaLow) dene.
       if (this.carrierSend) {
         const known = Array.from(this.peerKeys.entries()).filter(([id]) => to === "*" || id === to);
