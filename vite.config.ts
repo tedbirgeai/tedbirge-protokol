@@ -26,6 +26,8 @@ export default defineConfig({
         outDir: "dist/client",
 
         workbox: {
+          // Uygulama kapalıyken bile bildirim gösteren push dinleyicisi.
+          importScripts: ["/push-sw.js"],
           globPatterns: ["**/*.{js,css,html,woff,woff2,ttf,svg,png,ico,webmanifest,json,txt}"],
           navigateFallback: "/cevrimdisi",
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
