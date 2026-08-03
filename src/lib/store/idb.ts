@@ -270,6 +270,7 @@ export function getPeer(peerId: string): Promise<PeerRecord | undefined> {
 
 export function listPeers(): Promise<PeerRecord[]> {
   return safe(tx<PeerRecord[]>("peers", "readonly", (s) => s.getAll() as IDBRequest<PeerRecord[]>), []);
+
 }
 
 /* -------------------------- güvenilir cihazlar -------------------------- */
