@@ -82,9 +82,12 @@ function lanSignalUrls(): string[] {
   // adres çubuğunda "güvenli değil" uyarısı doğurur; bu durumda yalnızca
   // sayfanın kendi origin'i üzerinden güvenli sinyalleşme denenir.
   if (ws === "wss") {
-    if (host) urls.add(`wss://${host}:${LAN_SIGNAL_PORT}`);
+    const isPrivateHost =
+      /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host) || host.endsWith(".local");
+    if (isPrivateHost) urls.add(`wss://${host}:${LAN_SIGNAL_PORT}`);
     return Array.from(urls);
   }
+
   // 1) Sayfanın servis edildiği yerel adres (saha AP / yerel ajan aynı makinede).
   if (host && !/^(localhost|127\.0\.0\.1)$/.test(host) && !host.includes("lovable")) {
     urls.add(`${ws}://${host}:${LAN_SIGNAL_PORT}`);
