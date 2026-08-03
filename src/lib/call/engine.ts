@@ -310,7 +310,7 @@ async function dial(peerId: string, alias: string, video: boolean) {
   });
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
-  await sendMesh("call", peerId, { t: "offer", sdp: offer.sdp, video, alias: getAlias() });
+  await sendMesh("call", peerId, { t: "offer", sdp: offer.sdp, video, alias: getAlias(), at: Date.now() });
 }
 
 export async function startCall(peerId: string, video: boolean, alias?: string) {
