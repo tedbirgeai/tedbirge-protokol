@@ -55,7 +55,6 @@ import {
   ensureDirectConversation,
   markRead,
   removeConversation,
-  requestNotificationPermission,
   conversationTargets,
   sendMedia,
   sendText,
@@ -86,7 +85,8 @@ import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
 import { geoUri } from "@/lib/chat/location";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
-import { getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
+import { getAlias, isOnboarded } from "@/lib/chat/profile";
+import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
   isSoundMuted,
@@ -605,47 +605,6 @@ function MenuItem({
   );
 }
 
-function Onboarding({ onDone }: { onDone: () => void }) {
-  const [name, setName] = useState("");
-  return (
-    <div
-      className="wa flex h-[100dvh] items-center justify-center p-6"
-      style={{ background: "var(--wa-panel-soft)" }}
-    >
-
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
-          Sohbete başlayın
-        </h2>
-        <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-          Yalnızca görünen adınızı yazın. Telefon numarası, e-posta ya da hesap gerekmez; güvenlik
-          anahtarlarınız cihazınızda otomatik oluşturulur ve hiçbir sunucuya gönderilmez.
-        </p>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Adınız (ör. Ekin Dinç)"
-          className="mt-5 w-full rounded-lg border px-4 py-3 text-sm outline-none"
-          style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
-        />
-        <button
-          type="button"
-          disabled={!name.trim()}
-          onClick={() => {
-            setAlias(name);
-            void requestNotificationPermission();
-            onDone();
-          }}
-          className="wa-press mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-          style={{ background: "var(--wa-accent)" }}
-        >
-          Devam et
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function ChatApp() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -803,8 +762,8 @@ export function ChatApp() {
   // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
   // kimliği seç; listenin ilk (eski) kaydına körlemesine arama yapma.
   const peerId = active
-    ? active.members.find((member) => peers.some((peer) => peer.nodeId === member)) ??
-      active.members.at(-1)
+    ? (active.members.find((member) => peers.some((peer) => peer.nodeId === member)) ??
+      active.members.at(-1))
     : undefined;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   const nameOf = (id: string) => contactLabel(id, chat.aliases[id]);
@@ -932,14 +891,13 @@ export function ChatApp() {
   }
 
   if (lock.locked) return <AppLockScreen onUnlocked={() => undefined} />;
-  if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
+  if (!onboarded) return <PhoneOnboarding onDone={() => setOnboarded(true)} />;
 
   return (
     <div
       className="wa flex h-[100dvh] w-full overflow-hidden"
       style={{ background: "var(--wa-panel-soft)" }}
     >
-
       <PairingDialog nameOf={nameOf} />
       <ForwardDialog
         message={forwardMsg}
@@ -1093,10 +1051,7 @@ export function ChatApp() {
           </button>
         </div>
 
-        <div
-          className="px-3 py-2"
-          style={{ borderBottom: "1px solid var(--wa-border)" }}
-        >
+        <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--wa-border)" }}>
           <InstallAppButton />
         </div>
         <div className="px-3 py-2">

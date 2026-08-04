@@ -400,3 +400,23 @@
     transform: none;
   }
 }
+
+/* Mobil/tablette yatay kayma ve çentik güvenli alan düzeltmeleri. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+.wa {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.wa img,
+.wa video,
+.wa canvas {
+  max-width: 100%;
+  height: auto;
+}
