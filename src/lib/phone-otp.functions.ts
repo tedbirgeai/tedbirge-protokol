@@ -75,6 +75,28 @@ export const sendPhoneOtp = createServerFn({ method: "POST" })
     if (!sender) return { ok: false as const, reason: "no-sender" as const };
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+
+    // Twilio deneme (trial) hesapları serbest metin SMS'e izin vermez; yalnızca
+    // önceden tanımlı şablonlar (Content template) gönderilebilir. Şablon kimliği
+    // tanımlıysa şablonla, değilse klasik metinle gönderilir.
+    const contentSid = process.env["TWILIO_CONTENT_SID"]?.trim();
+    const messagingServiceSid = process.env["TWILIO_MESSAGING_SERVICE_SID"]?.trim();
+
+    const form = new URLSearchParams({ To: data.phone });
+    if (messagingServiceSid) form.set("MessagingServiceSid", messagingServiceSid);
+    else form.set("From", sender);
+
+    if (contentSid) {
+      form.set("ContentSid", contentSid);
+      // Şablon değişkenleri: {{1}} = marka, {{2}} = kod, {{3}} = geçerlilik (dk)
+      form.set("ContentVariables", JSON.stringify({ "1": "Tedbirge", "2": code, "3": "5" }));
+    } else {
+      form.set(
+        "Body",
+        `Tedbirge doğrulama kodunuz: ${code}. Kod 5 dakika geçerlidir. Kodu kimseyle paylaşmayın.`,
+      );
+    }
+
     const res = await fetch(`${GATEWAY}/Messages.json`, {
       method: "POST",
       headers: {
@@ -82,21 +104,18 @@ export const sendPhoneOtp = createServerFn({ method: "POST" })
         "X-Connection-Api-Key": twilioKey,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        To: data.phone,
-        From: sender,
-        Body: `Tedbirge doğrulama kodunuz: ${code}. Kod 5 dakika geçerlidir. Kodu kimseyle paylaşmayın.`,
-      }),
+      body: form,
     });
     if (!res.ok) {
       const detail = await res.text();
       console.error(`[otp] twilio send failed [${res.status}]: ${detail}`);
-      // Twilio deneme (trial) hesabı serbest metin SMS göndermeye izin vermez.
+      // 572006: deneme hesabı, serbest metin yerine hazır şablon zorunlu.
       if (detail.includes("572006") || /trial account/i.test(detail)) {
         return { ok: false as const, reason: "trial-restricted" as const };
       }
       return { ok: false as const, reason: "send-failed" as const, status: res.status };
     }
+
 
 
     await supabaseAdmin.from("phone_otp_codes").insert({
