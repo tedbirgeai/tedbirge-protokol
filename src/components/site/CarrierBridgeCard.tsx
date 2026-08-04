@@ -93,10 +93,97 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
         </p>
       )}
       {msg && (
-        <p className="mt-3 rounded-sm border border-destructive/40 bg-destructive/10 p-3 font-mono text-[11px]">
+        <p className="mt-3 rounded-sm border border-border bg-background/60 p-3 font-mono text-[11px] text-muted-foreground">
           {msg}
         </p>
       )}
+
+      {/* Yerel geçit adresi — dinamik IP/port + sertifika izni */}
+      <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className={label}>Yerel geçit adresi</span>
+          {!editingGw && (
+            <button
+              type="button"
+              onClick={() => {
+                setGwDraft(gwUrl);
+                setEditingGw(true);
+              }}
+              className="rounded-sm border border-border px-2.5 py-1 font-mono text-[10px]"
+            >
+              Düzenle / IP değiştir
+            </button>
+          )}
+        </div>
+
+        {editingGw ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              value={gwDraft}
+              onChange={(e) => setGwDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveGateway()}
+              placeholder="192.168.0.1:8443"
+              className="w-full max-w-xs rounded-sm border border-border bg-background px-3 py-1.5 font-mono text-[11px] outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              onClick={saveGateway}
+              className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary"
+            >
+              Kaydet
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingGw(false);
+                setGwError(null);
+                setGwDraft(gwUrl);
+              }}
+              className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px]"
+            >
+              Vazgeç
+            </button>
+          </div>
+        ) : (
+          <p className="mt-2 font-mono text-[12px] text-foreground">{gwUrl}</p>
+        )}
+        {gwError && <p className="mt-2 font-mono text-[10px] text-destructive">{gwError}</p>}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <a
+            href={(() => {
+              try {
+                return gatewayCertUrl(gwUrl);
+              } catch {
+                return gatewayCertUrl();
+              }
+            })()}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px]"
+          >
+            🔗 Yerel sertifika iznini onayla
+          </a>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            Açılan sekmede “Gelişmiş → Yine de devam et” diyerek tek seferlik izin verin, sonra
+            bu sayfaya dönüp Geçide bağlan'a basın.
+          </span>
+        </div>
+        <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+          Adres yalnızca bu tarayıcıda saklanır (yerel depolama). IP veya port farklıysa
+          örn. <span className="text-foreground">10.0.0.1:8443</span> yazmanız yeterlidir;
+          {" "}
+          {(() => {
+            try {
+              normalizeGatewayUrl(gwDraft);
+              return "adres biçimi geçerli.";
+            } catch {
+              return "adres biçimini kontrol edin.";
+            }
+          })()}
+        </p>
+      </div>
+
 
       {/* Spektrum bütçesi — BTK/ETSI görev döngüsü yazılımsal tavanı */}
       <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
