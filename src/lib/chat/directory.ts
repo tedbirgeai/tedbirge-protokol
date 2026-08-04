@@ -59,18 +59,22 @@ export async function pickDeviceContacts(): Promise<DeviceContact[]> {
   return out;
 }
 
-/** Serbest metinden (yapıştırılan liste) numara çıkarır. */
-export function parsePastedContacts(text: string): DeviceContact[] {
-  return text
-    .split(/[\n,;]+/)
-    .map((line) => {
-      const phone = normalizePhone(line);
-      if (!phone) return null;
-      const name = line.replace(/[\d+()\-\s]/g, "").trim();
-      return { name: name || phone, phone };
-    })
-    .filter((v): v is DeviceContact => v !== null);
+/**
+ * Cihaz rehberini otomatik eşitler: izin verilirse seçilen kişiler
+ * arka planda özetlenip Tedbirge ağıyla eşleştirilir. Elle numara
+ * yazma/yapıştırma yoktur.
+ */
+export async function syncDeviceContacts(): Promise<ImportResult | null> {
+  if (!deviceContactsSupported()) return null;
+  try {
+    const picked = await pickDeviceContacts();
+    if (picked.length === 0) return { checked: 0, matched: 0 };
+    return await importContacts(picked);
+  } catch {
+    return null;
+  }
 }
+
 
 export type ImportResult = { checked: number; matched: number };
 
