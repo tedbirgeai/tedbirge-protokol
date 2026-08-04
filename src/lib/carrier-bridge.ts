@@ -695,6 +695,79 @@ export function normalizeGatewayUrl(input: string): string {
   return `${u.protocol}//${u.host}`;
 }
 
+/**
+ * Yerel ağda en sık kullanılan modem/router geçit adayları.
+ * Kullanıcı hiçbir şey yazmadan otomatik tarama bunlar üzerinden yapılır.
+ */
+export const GATEWAY_CANDIDATES = [
+  "tedbirge.local:8443",
+  "192.168.1.1:8443",
+  "192.168.0.1:8443",
+  "192.168.1.254:8443",
+  "192.168.2.1:8443",
+  "10.0.0.1:8443",
+  "10.0.0.138:8443",
+  "172.16.0.1:8443",
+  "192.168.8.1:8443",
+  "192.168.100.1:8443",
+] as const;
+
+/** Tek bir adayı kısa zaman aşımıyla yoklar. */
+function probeGateway(url: string, timeoutMs = 1200): Promise<boolean> {
+  return new Promise((resolve) => {
+    let done = false;
+    let ws: WebSocket;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      try {
+        ws?.close();
+      } catch {
+        /* yok say */
+      }
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    try {
+      ws = new WebSocket(url);
+    } catch {
+      finish(false);
+      return;
+    }
+    ws.onopen = () => finish(true);
+    ws.onerror = () => finish(false);
+    ws.onclose = () => finish(false);
+  });
+}
+
+/**
+ * Yerel geçidi otomatik bulur: kayıtlı adres → yaygın modem adresleri.
+ * Bulunursa adres saklanır ve döndürülür; bulunamazsa null döner.
+ */
+export async function discoverGatewayUrl(
+  onProgress?: (candidate: string) => void,
+): Promise<string | null> {
+  const list = [savedGatewayUrl(), ...GATEWAY_CANDIDATES].filter(Boolean) as string[];
+  const seen = new Set<string>();
+  for (const raw of list) {
+    let target: string;
+    try {
+      target = normalizeGatewayUrl(raw);
+    } catch {
+      continue;
+    }
+    if (seen.has(target)) continue;
+    seen.add(target);
+    onProgress?.(target);
+    if (await probeGateway(target)) {
+      setGatewayUrl(target);
+      return target;
+    }
+  }
+  return null;
+}
+
 /** Sertifika izni için tarayıcıda açılacak https adresi. */
 export function gatewayCertUrl(url?: string): string {
   const target = url ? normalizeGatewayUrl(url) : gatewayUrl();
