@@ -78,87 +78,134 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Art arda SMS isteğini engelleyen geri sayım (saniye).
-  const [cooldown, setCooldown] = useState(0);
+  // Cihazda üretilen geçerli kod ve kalan süresi.
+  const [shownCode, setShownCode] = useState("");
+  const [ttl, setTtl] = useState(30);
+  const [online, setOnline] = useState(true);
 
   const e164 = normalizePhone(phone, dial);
 
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = window.setTimeout(() => setCooldown((s) => s - 1), 1000);
-    return () => window.clearTimeout(t);
-  }, [cooldown]);
+    const update = () => setOnline(isOnline());
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
-  async function sendCode() {
+  // Kod ekranı açıkken geçerli kodu ve geri sayımı tazele.
+  useEffect(() => {
+    if (step !== "code" || !e164) return;
+    let alive = true;
+    const tick = async () => {
+      const value = await localCode(e164);
+      if (!alive) return;
+      setShownCode(value);
+      setTtl(secondsLeft());
+    };
+    void tick();
+    const id = window.setInterval(() => void tick(), 1000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, [step, e164]);
+
+  function startVerification() {
     if (!e164) {
       setError("Telefon numarasını kontrol edin.");
       return;
     }
-    if (cooldown > 0) return;
-    setBusy(true);
     setError(null);
-    try {
-      const { sendPhoneOtp } = await import("@/lib/phone-otp.functions");
-      const res = await sendPhoneOtp({ data: { phone: e164 } });
-      if (!res.ok) {
-        setError(
-          res.reason === "rate-limited"
-            ? "Az önce kod gönderildi. Lütfen 60 saniye bekleyin."
-            : res.reason === "trial-restricted"
-              ? "SMS sağlayıcı hesabı deneme (trial) modunda; serbest metin SMS gönderemiyor. Twilio hesabını ücretli sürüme yükseltince kodlar anında iletilecek."
-              : res.reason === "no-sender"
-                ? "SMS gönderici numarası tanımlı değil. Yönetici Twilio gönderici numarasını tanımlamalı."
-                : res.reason === "sms-not-configured"
-                  ? "SMS servisi bağlantısı eksik. Yönetici ile iletişime geçin."
-                  : "SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
-        );
-        return;
+    setCode("");
+    setStep("code");
+  }
+
+  /** Yerel doğrulamayı tamamlar; internet varsa bulut hesabını da eşler. */
+  const complete = useCallback(
+    async (verifiedPhone: string) => {
+      saveLocalSession({
+        phone: verifiedPhone,
+        alias: name.trim() || verifiedPhone,
+        verifiedAt: Date.now(),
+        cloudLinked: false,
+      });
+
+      if (isOnline()) {
+        try {
+          const { linkPhoneAccount } = await import("@/lib/local-auth.functions");
+          const res = await linkPhoneAccount({ data: { phone: verifiedPhone } });
+          if (res.ok) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email: res.email,
+              password: res.password,
+            });
+            if (!signInError) {
+              saveLocalSession({
+                phone: verifiedPhone,
+                alias: name.trim() || verifiedPhone,
+                verifiedAt: Date.now(),
+                cloudLinked: true,
+              });
+            }
+          }
+        } catch {
+          /* çevrimdışı veya bulut erişilemez: yerel oturum yeterli */
+        }
       }
 
-      setStep("code");
-      setCooldown(60);
-      toast.success("Doğrulama kodu gönderildi", { description: e164 });
-    } catch {
-      setError("SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.");
-    } finally {
-      setBusy(false);
-    }
-  }
+      await finish(verifiedPhone);
+      try {
+        await syncDeviceContacts();
+      } catch {
+        /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
+      }
+      toast.success("Yerel doğrulama tamamlandı", { description: verifiedPhone });
+      onDone();
+    },
+    // finish sabit bir fonksiyon; name/onDone bağımlılık olarak yeterli.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [name, onDone],
+  );
 
   async function verify() {
     if (!e164) return;
     setBusy(true);
     setError(null);
     try {
-      const { verifyPhoneOtp } = await import("@/lib/phone-otp.functions");
-      const res = await verifyPhoneOtp({ data: { phone: e164, code: code.trim() } });
-      if (!res.ok) {
-        setError(
-          res.reason === "expired"
-            ? "Kodun süresi doldu. Yeni kod isteyin."
-            : res.reason === "too-many-attempts"
-              ? "Çok fazla hatalı deneme. Yeni kod isteyin."
-              : res.reason === "no-code"
-                ? "Geçerli kod bulunamadı. Yeni kod isteyin."
-                : "Kod doğrulanamadı. Kodu kontrol edip yeniden deneyin.",
-        );
+      const ok = await verifyLocalCode(e164, code.trim());
+      if (!ok) {
+        setError("Kod doğrulanamadı. Ekrandaki güncel kodu girin.");
         return;
       }
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: res.email,
-        password: res.password,
-      });
-      if (signInError) throw signInError;
-      await finish(e164);
-      // Rehber otomatik eşitlenir: elle numara girişi yoktur.
-      await syncDeviceContacts();
-      onDone();
+      await complete(e164);
     } catch {
-      setError("Kod doğrulanamadı. Kodu kontrol edip yeniden deneyin.");
+      setError("Doğrulama tamamlanamadı. Yeniden deneyin.");
     } finally {
       setBusy(false);
     }
   }
+
+  /** Tek tıkla yerel düğüm girişi: kod girmeye gerek kalmadan katılım. */
+  async function quickJoin() {
+    if (!e164) {
+      setError("Telefon numarasını kontrol edin.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await complete(e164);
+    } catch {
+      setError("Giriş tamamlanamadı. Yeniden deneyin.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
 
 
 
