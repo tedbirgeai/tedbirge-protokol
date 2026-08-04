@@ -223,19 +223,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             >
               {busy ? "Gönderiliyor…" : "Kodu gönder"}
             </button>
-
-            <button
-              type="button"
-              disabled={!name.trim()}
-              onClick={() => {
-                void finish(null);
-                onDone();
-              }}
-              className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium disabled:opacity-50"
-              style={{ color: "var(--wa-muted)" }}
-            >
-              Numarasız, yalnızca bu cihazda devam et
-            </button>
           </>
         )}
 
@@ -245,7 +232,9 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
               Doğrulama kodu
             </h2>
             <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-              {e164} numarasına gönderilen 6 haneli kodu girin.
+              {testMode
+                ? `Test modu: doğrulama kodunuz ${FALLBACK_CODE}. Kodu girip devam edin.`
+                : `${e164} numarasına gönderilen 6 haneli kodu girin.`}
             </p>
             <input
               value={code}
