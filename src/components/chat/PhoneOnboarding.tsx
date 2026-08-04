@@ -13,11 +13,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setPhone } from "@/lib/chat/profile";
-import { normalizePhone } from "@/lib/chat/directory";
+import { normalizePhone, syncDeviceContacts } from "@/lib/chat/directory";
 import { ensureNotificationPermission } from "@/lib/chat/push";
-import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
 
-type Step = "phone" | "code" | "contacts";
+type Step = "phone" | "code";
 
 /** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
 const COUNTRIES: { code: string; flag: string; name: string }[] = [
@@ -106,7 +105,9 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       });
       if (error) throw error;
       await finish(e164);
-      setStep("contacts");
+      // Rehber otomatik eşitlenir: elle numara girişi yoktur.
+      await syncDeviceContacts();
+      onDone();
     } catch (err) {
       setError(err instanceof Error ? `Kod doğrulanamadı: ${err.message}` : "Kod doğrulanamadı.");
     } finally {
@@ -261,9 +262,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
           </>
         )}
 
-        {step === "contacts" && (
-          <ContactImportPanel onDone={onDone} title="Rehberinizdeki Tedbirge kullanıcıları" />
-        )}
       </div>
     </div>
   );
