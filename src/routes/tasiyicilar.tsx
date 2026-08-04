@@ -6,17 +6,18 @@ import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 export const Route = createFileRoute("/tasiyicilar")({
   head: () => ({
     meta: [
-      { title: "9 Taşıyıcı — Tedbirge Off-Grid Fiziksel Katmanlar" },
+      { title: "10 Taşıyıcı — Tedbirge Off-Grid Fiziksel Katmanlar" },
       {
         name: "description",
         content:
-          "Tedbirge Protokol'ün desteklediği dokuz taşıyıcı: Ethernet, Wi-Fi, hücresel, uydu, WiGig 60GHz, FSO lazer, Wi-Fi HaLow, TVWS, LoRa ISM ve Zero-KVKK RF çerçeveleme.",
+          "Tedbirge Protokol'ün desteklediği on taşıyıcı: OpenWrt WSS yerel geçit, Ethernet, Wi-Fi, hücresel, uydu, WiGig 60GHz, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa ISM.",
       },
       { property: "og:title", content: "Tedbirge Taşıyıcı Matrisi" },
       {
         property: "og:description",
-        content: "Menzil, bant genişliği, gecikme ve yasal statüsüyle dokuz fiziksel taşıyıcı.",
+        content: "Menzil, bant genişliği, gecikme ve yasal statüsüyle on fiziksel taşıyıcı.",
       },
+
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/tasiyicilar" },
       { name: "twitter:card", content: "summary_large_image" },
