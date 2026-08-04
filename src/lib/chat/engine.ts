@@ -394,7 +394,7 @@ export async function sendText(
   await appendLocal(conv, msg);
   sentSound();
 
-  let delivered = false;
+  let delivered = isSelfConversation(convId);
   for (const peer of await targetsOf(conv)) {
     const ok = await sendMesh("chat", peer, {
       t: "text",
