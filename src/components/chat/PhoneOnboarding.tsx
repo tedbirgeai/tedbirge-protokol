@@ -161,21 +161,26 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             <label className="mt-4 block text-xs font-medium" style={{ color: "var(--wa-muted)" }}>
               Telefon numarası
             </label>
-            <div className="mt-1 grid grid-cols-[92px_minmax(0,1fr)] gap-2">
+            <div className="mt-1 grid grid-cols-[minmax(0,130px)_minmax(0,1fr)] gap-2">
               <div
-                className="flex items-center gap-1 rounded-lg border px-3"
+                className="relative flex items-center rounded-lg border px-3"
                 style={{ borderColor: "var(--wa-border)" }}
               >
-                <span className="text-sm" style={{ color: "var(--wa-muted)" }}>
-                  +
+                <span className="pointer-events-none truncate text-sm" style={{ color: "var(--wa-text)" }}>
+                  {COUNTRIES.find((c) => c.code === dial)?.flag ?? "🌐"} +{dial}
                 </span>
-                <input
+                <select
+                  aria-label="Ülke kodu"
                   value={dial}
-                  inputMode="numeric"
-                  onChange={(e) => setDial(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="w-full bg-transparent py-3 text-sm outline-none"
-                  style={{ color: "var(--wa-text)" }}
-                />
+                  onChange={(e) => setDial(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={`${c.code}-${c.name}`} value={c.code}>
+                      {c.flag} {c.name} (+{c.code})
+                    </option>
+                  ))}
+                </select>
               </div>
               <input
                 value={phone}
@@ -186,6 +191,11 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
                 style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
               />
             </div>
+            {e164 && (
+              <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                Kimliğiniz: {e164}
+              </p>
+            )}
 
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
