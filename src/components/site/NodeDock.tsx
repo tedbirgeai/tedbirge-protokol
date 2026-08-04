@@ -170,7 +170,7 @@ export function NodeDock() {
                 )}
                 {state.error && <p className="mt-2 text-xs text-destructive">{state.error}</p>}
                 <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                  Kimlik: {state.nodeId || "…"} · RTT {state.rttMs != null ? `${state.rttMs} ms` : "—"}
+                  Bu cihaz · Gecikme {state.rttMs != null ? `${state.rttMs} ms` : "—"}
                 </p>
               </div>
               {qr && (
