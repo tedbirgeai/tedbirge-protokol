@@ -815,6 +815,7 @@ export async function connectGatewayCarrier(url?: string) {
     frames: 0,
     lastLine: "",
     uploaded: 0,
+    simulated: false,
     error: null,
   };
   publish();
@@ -824,7 +825,7 @@ export async function connectGatewayCarrier(url?: string) {
     text.split(/\r?\n/).forEach((l) => l && ingest(carrier, l));
   };
   socket.onclose = () => {
-    upsert(carrier, { error: "Geçit bağlantısı kapandı." });
+    if (state.links[carrier] && !state.links[carrier].simulated) connectVirtualGateway();
   };
 
   handles.set(carrier, {
