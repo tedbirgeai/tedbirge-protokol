@@ -31,7 +31,7 @@ import {
   TrustBadge,
   type PeerVerifyTarget,
 } from "@/components/site/PeerVerifyDialog";
-import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
+import { deviceContactsSupported, syncDeviceContacts } from "@/lib/chat/directory";
 import {
   eraseAllContacts,
   eraseContact,
