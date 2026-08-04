@@ -591,6 +591,7 @@ export function dropParticipant(peerId: string) {
 
 function cleanup() {
   if (outgoingTimer) clearTimeout(outgoingTimer);
+  stopDialRetry();
   outgoingTimer = null;
   for (const timer of incomingTimers.values()) clearTimeout(timer);
   incomingTimers.clear();
