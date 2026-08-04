@@ -100,14 +100,68 @@ export function callEndSound() {
 /* --------------------------- arama zilleri --------------------------- */
 
 function ringtoneBurst() {
-  // Klasik iki notalı zil deseni.
-  tone({ freq: 880, duration: 0.35, gain: 0.16, type: "sine" });
-  tone({ freq: 1100, duration: 0.35, delay: 0.4, gain: 0.16, type: "sine" });
+  // Klasik telefon zili: 440 + 480 Hz çift ton, 20 Hz tremolo ile
+  // "zil çarpması" hissi. 2 sn çalar, 4 sn susar (geleneksel desen).
+  if (muted) return;
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
+  const dur = 2.0;
+  const bus = ac.createGain();
+  bus.gain.setValueAtTime(0.0001, t0);
+  bus.gain.exponentialRampToValueAtTime(0.22, t0 + 0.05);
+  bus.gain.setValueAtTime(0.22, t0 + dur - 0.1);
+  bus.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  bus.connect(ac.destination);
+
+  // Tremolo (zil tokmağı titreşimi)
+  const trem = ac.createOscillator();
+  const tremGain = ac.createGain();
+  trem.type = "sine";
+  trem.frequency.setValueAtTime(20, t0);
+  tremGain.gain.setValueAtTime(0.45, t0);
+  trem.connect(tremGain).connect(bus.gain);
+  trem.start(t0);
+  trem.stop(t0 + dur + 0.05);
+
+  for (const f of [440, 480]) {
+    const osc = ac.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(f, t0);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.5, t0);
+    osc.connect(g).connect(bus);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
+  }
 }
 
 function ringbackBurst() {
-  // Arayan tarafta duyulan "çalıyor" tonu.
-  tone({ freq: 440, duration: 0.9, gain: 0.09, type: "sine" });
+  // Arayan tarafta duyulan santral "çalıyor" tonu: 400 + 450 Hz, 1 sn.
+  if (muted) return;
+  const ac = audio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02;
+  const dur = 1.0;
+  const bus = ac.createGain();
+  bus.gain.setValueAtTime(0.0001, t0);
+  bus.gain.exponentialRampToValueAtTime(0.12, t0 + 0.04);
+  bus.gain.setValueAtTime(0.12, t0 + dur - 0.08);
+  bus.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  bus.connect(ac.destination);
+  for (const f of [400, 450]) {
+    const osc = ac.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(f, t0);
+    osc.connect(bus);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
+  }
+}
+
+/** Karşı taraf henüz ulaşılamadıysa duyulan sessiz "arama" bilgisi tonu. */
+function searchingBurst() {
+  tone({ freq: 300, duration: 0.16, gain: 0.05, type: "sine" });
 }
 
 /** Gelen arama zili — kabul/red edilene kadar döner, ayrıca titreşim. */
@@ -115,19 +169,27 @@ export function startRingtone() {
   stopRing();
   if (muted) return;
   ringtoneBurst();
-  vibrate([400, 300, 400, 900]);
+  vibrate([600, 400, 600, 1400]);
   ringTimer = setInterval(() => {
     ringtoneBurst();
-    vibrate([400, 300, 400, 900]);
-  }, 2600);
+    vibrate([600, 400, 600, 1400]);
+  }, 6000);
 }
 
-/** Giden arama tonu — karşı taraf açana kadar döner. */
+/** Giden arama tonu — karşı tarafın telefonu çalarken duyulur. */
 export function startRingback() {
   stopRing();
   if (muted) return;
   ringbackBurst();
-  ringTimer = setInterval(ringbackBurst, 3000);
+  ringTimer = setInterval(ringbackBurst, 4000);
+}
+
+/** Karşı cihaza henüz ulaşılamadı: "aranıyor" bilgi tonu. */
+export function startSearching() {
+  stopRing();
+  if (muted) return;
+  searchingBurst();
+  ringTimer = setInterval(searchingBurst, 2000);
 }
 
 export function stopRing() {
