@@ -402,9 +402,39 @@ async function dial(peerId: string, alias: string, video: boolean) {
   // Karşı cihaz kapalı/arka planda olabilir: telefonu çaldırmak için
   // uyandırma bildirimi yollanır (içerik gönderilmez).
   void import("@/lib/chat/webpush").then((m) => m.wakePeer(peerId, "call")).catch(() => {});
-  if (!sent) throw new Error("peer-unavailable");
+  return sent;
 }
 
+/**
+ * Çağrı ısrarı: karşı cihaz uyanana kadar teklif periyodik tekrarlanır.
+ * Telefon mantığı — hat kurulana ya da süre dolana dek "aranıyor" sürer.
+ */
+function startDialRetry(peerId: string, video: boolean) {
+  stopDialRetry();
+  dialRetryTimer = setInterval(() => {
+    if (state.phase !== "outgoing" || state.peerId !== peerId) {
+      stopDialRetry();
+      return;
+    }
+    const leg = legs.get(peerId);
+    const sdp = leg?.pc.localDescription?.sdp;
+    if (!sdp) return;
+    void sendMesh("call", peerId, {
+      t: "offer",
+      sdp,
+      video,
+      alias: getAlias(),
+      at: Date.now(),
+    });
+    if (!state.remoteRinging)
+      void import("@/lib/chat/webpush").then((m) => m.wakePeer(peerId, "call")).catch(() => {});
+  }, DIAL_RETRY_MS);
+}
+
+function stopDialRetry() {
+  if (dialRetryTimer) clearInterval(dialRetryTimer);
+  dialRetryTimer = null;
+}
 
 export async function startCall(peerId: string, video: boolean, alias?: string) {
   bootCalls();
@@ -429,18 +459,18 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
   });
   try {
     await dial(peerId, alias ?? peerId, video);
+    // Teklif ilk turda ulaşmasa bile arama düşürülmez: karşı cihaz açıldığı
+    // anda yakalansın diye teklif tekrarlanır, süre dolunca "Cevap yok".
+    startDialRetry(peerId, video);
     if (outgoingTimer) clearTimeout(outgoingTimer);
     outgoingTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Cevap yok.");
     }, RING_TIMEOUT_MS);
-  } catch (error) {
-    endCall(
-      error instanceof Error && error.message === "peer-unavailable"
-        ? "Karşı cihaz şu anda erişilebilir değil."
-        : "Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.",
-    );
+  } catch {
+    endCall("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
   }
 }
+
 
 /** Grup / konferans araması — her katılımcıya ayrı bağlantı (2-4 kişi). */
 export async function startConference(
