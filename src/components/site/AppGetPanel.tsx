@@ -1,61 +1,38 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Download, MessageSquare, QrCode, Smartphone, X } from "lucide-react";
 import QRCode from "qrcode";
 
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
+import { isIosDevice, promptInstall, useInstallState } from "@/lib/pwa-install";
 
 /**
  * "Tedbirge Web / Uygulamayı Edin" paneli.
  * Ana ekrana ekleme (PWA) ve QR ile mobil cihaza aktarma akışlarını yönetir.
  */
 export function AppGetPanel() {
-  const promptRef = useRef<InstallPromptEvent | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  const { canInstall, installed } = useInstallState();
   const [note, setNote] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrData, setQrData] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      promptRef.current = e as InstallPromptEvent;
-      setCanInstall(true);
-    };
-    const onInstalled = () => {
-      setInstalled(true);
-      setCanInstall(false);
-      promptRef.current = null;
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", onInstalled);
-    if (window.matchMedia?.("(display-mode: standalone)").matches) setInstalled(true);
     setShareUrl(`${window.location.origin}/chat`);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
   }, []);
 
   const install = useCallback(async () => {
-    const evt = promptRef.current;
-    if (!evt) {
+    const result = await promptInstall();
+    if (result === "unavailable") {
       setNote(
-        "Tarayıcınız otomatik kurulumu desteklemiyor. Menüden “Ana ekrana ekle” (iPhone’da Paylaş → Ana Ekrana Ekle) seçeneğini kullanın.",
+        isIosDevice()
+          ? "iPhone/iPad: Safari’de Paylaş → “Ana Ekrana Ekle” seçeneğine dokunun."
+          : "Tarayıcınız otomatik kurulumu desteklemiyor. Menüden “Ana ekrana ekle” seçeneğini kullanın.",
       );
       return;
     }
-    await evt.prompt();
-    const choice = await evt.userChoice;
-    promptRef.current = null;
-    setCanInstall(false);
-    setNote(choice.outcome === "accepted" ? "Uygulama ana ekranınıza eklendi." : "Kurulum iptal edildi.");
+    setNote(result === "accepted" ? "Uygulama ana ekranınıza eklendi." : "Kurulum iptal edildi.");
   }, []);
+
 
   const openQr = useCallback(async () => {
     setQrOpen(true);
