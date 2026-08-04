@@ -149,7 +149,20 @@ const carriers: Carrier[] = [
     license: "ISM · görev döngüsü sınırlarına tabi",
     use: "Tam off-grid mesh omurgası; RadioHead RH_RF95 uyumlu çerçeveleme, SX1262 dongle.",
   },
+  {
+    no: "10",
+    name: "OpenWrt / WSS yerel geçit",
+    kind: "openwrt-gateway",
+    band: "Duvar içi IP (Ethernet · PLC · MoCA · Wi-Fi)",
+    range: "Bina/site geneli — şebeke beslemeli 7/24 düğüm",
+    bandwidth: "50 Mbps – 1 Gbps",
+    latency: "~10 ms",
+    status: "ACTIVE",
+    license: "Lisans gerekmez · kapalı devre (egress kilitli)",
+    use: "Ev/bina geçidi olarak sürekli açık röle; şifreli zarfı WSS üzerinden taşır, genel internete NAT/proxy yapmaz.",
+  },
 ];
+
 
 const statusLabel: Record<Carrier["status"], string> = {
   ACTIVE: "Üretimde aktif",
