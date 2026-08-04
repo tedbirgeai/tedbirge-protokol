@@ -248,7 +248,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <button
               type="button"
-              disabled={busy || code.length < 4}
+              disabled={busy || code.length < 6}
               onClick={() => void verify()}
               className="wa-press mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
               style={{ background: "var(--wa-accent)" }}
@@ -257,14 +257,29 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
             <button
               type="button"
+              disabled={busy || cooldown > 0}
+              onClick={() => void sendCode()}
+              className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium disabled:opacity-60"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              {cooldown > 0 ? `Tekrar kod gönder: ${cooldown}s` : "Tekrar kod gönder"}
+            </button>
+            <button
+              type="button"
               onClick={() => setStep("phone")}
-              className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium"
+              className="mt-1 w-full rounded-full px-4 py-2.5 text-xs font-medium"
               style={{ color: "var(--wa-muted)" }}
             >
               Numarayı değiştir
             </button>
           </>
         )}
+
+        <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
+          Numaranız yalnızca uçtan uca şifreli ağ kimliğinizi doğrulamak için kullanılır. 6698
+          sayılı KVKK kapsamında numaranız 3. taraflarla asla paylaşılmaz.
+        </p>
+
 
       </div>
     </div>
