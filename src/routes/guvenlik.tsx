@@ -116,6 +116,35 @@ function Security() {
         </dl>
       </section>
 
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <SectionLabel>Yasal zırh</SectionLabel>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight">{MERE_CONDUIT.title}</h2>
+        <p className="mt-4 inline-flex items-center gap-2 rounded-sm border border-primary/50 bg-primary/5 px-3 py-1.5 font-mono text-[11px] text-primary">
+          ✓ {MERE_CONDUIT.badge}
+        </p>
+        <ul className="mt-6 space-y-3 text-sm leading-relaxed text-muted-foreground">
+          {MERE_CONDUIT.clauses.map((c) => (
+            <li key={c} className="rounded-sm border border-border bg-card/40 p-4">
+              {c}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-6 rounded-sm border border-border bg-background/60 p-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {EGRESS_POLICY.title}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{EGRESS_POLICY.summary}</p>
+          <ul className="mt-3 space-y-1.5 font-mono text-[11px] text-muted-foreground">
+            {EGRESS_POLICY.rules.map((r) => (
+              <li key={r}>· {r}</li>
+            ))}
+          </ul>
+        </div>
+        <p className="mt-4 font-mono text-[11px] text-muted-foreground">{MERE_CONDUIT.disclaimer}</p>
+      </section>
+
+
+
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-2">
           <div>
