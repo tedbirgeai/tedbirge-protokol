@@ -349,6 +349,7 @@ export function ContactsDialog({
               buradan tek dokunuşla kullanabilirsiniz.
             </p>
           </div>
+          </div>
         </DialogContent>
       </Dialog>
 

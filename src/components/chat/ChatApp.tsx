@@ -662,6 +662,23 @@ export function ChatApp() {
 
   useEffect(() => {
     setOnboarded(isOnboarded());
+    // Aynı telefon numarasıyla açılan her tarayıcı aynı kimliğe bağlanır:
+    // etkin oturum varsa katılım ekranı tekrar sorulmaz.
+    void (async () => {
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase.auth.getSession();
+        const sessionPhone = data.session?.user?.phone;
+        if (!sessionPhone) return;
+        const { getAlias: readAlias, setAlias, setPhone } = await import("@/lib/chat/profile");
+        const e164 = sessionPhone.startsWith("+") ? sessionPhone : `+${sessionPhone}`;
+        setPhone(e164);
+        setAlias(readAlias() || e164);
+        setOnboarded(true);
+      } catch {
+        /* çevrimdışı: yerel kimlik kullanılır */
+      }
+    })();
     void bootChat().then(() => setReady(true));
     // Gelen aramaların duyulabilmesi için sinyal dinleyicisi açılışta kurulur.
     bootCalls();
