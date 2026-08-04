@@ -16,6 +16,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setupOfflineSupport } from "../lib/pwa";
 import { OfflineBanner } from "../components/site/OfflineBanner";
 import { NodeDock } from "../components/site/NodeDock";
+import { CallHost } from "../components/chat/CallHost";
+
 import { bootNodeRuntime } from "../lib/node-runtime";
 import { bootAccessEngine } from "../lib/access-tiers";
 import { ensureOfflineGrant } from "../lib/offline-license";
@@ -162,9 +164,12 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {!embedded && <OfflineBanner />}
       {!embedded && <NodeDock />}
+      {/* Gelen arama her sayfada karşılanır (telefon mantığı). */}
+      <CallHost />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
 }
+
 
