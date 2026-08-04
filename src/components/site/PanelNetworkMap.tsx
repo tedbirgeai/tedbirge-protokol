@@ -106,7 +106,7 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
   const rttWindow = diag.rttSamples.slice(-40);
   const rttPeak = Math.max(1, ...rttWindow);
   const links = Object.values(bridge.links);
-  const liveKbps = links.reduce((a, l) => a + (l.throughputKbps ?? 0), 0);
+  const liveFrames = links.reduce((a, l) => a + l.frames + (l.rxPackets ?? 0), 0);
   const totalBytes = samples.reduce((a, s) => a + (s.bytes ?? 0), 0);
   const meshLive = runtime.peers.length > 0 || online.length > 0;
 
