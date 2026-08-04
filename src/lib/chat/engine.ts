@@ -352,6 +352,8 @@ export async function markRead(convId: string) {
 /* ------------------------------ gönderim ------------------------------ */
 
 async function targetsOf(conv: Conversation) {
+  // Not defteri ağa çıkmaz; mesaj yalnızca bu cihazda kalır.
+  if (isSelfConversation(conv.id)) return [];
   // WhatsApp modeli: kanal açıktır, güvenlik arka planda (E2EE + TOFU).
   return Array.from(new Set(conv.members));
 }
