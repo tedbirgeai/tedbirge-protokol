@@ -1,26 +1,19 @@
 /**
  * REHBER PANELİ — giriş yapıldığı an sohbet listesinin altında açılan,
- * kişileri ve yerel ağdaki düğümleri hazır gösteren bölüm.
+ * kişileri gerçek Ad Soyad ile gösteren bölüm.
  *
- * Üç kaynak birleştirilir:
- *  1) Kayıtlı kişiler (yerel rehber — cihazdan çıkmaz)
- *  2) Yerel ağdaki aktif Tedbirge düğümleri (P2P keşif)
- *  3) "Kendinize mesaj gönderin" not defteri
- *
- * Cihaz rehberi erişimi yalnızca kullanıcı dokunuşuyla istenir; tarayıcı
- * desteklemiyorsa rehber dosyası (.vcf) ile içe aktarma sunulur.
+ * Kurallar:
+ *  - Başlıkta asla teknik kimlik (mob-…, TBG-…) gösterilmez.
+ *  - Kullanıcı hiçbir butona basmaz; rehber izni girişte otomatik istenir.
+ *  - Rehber okunamazsa örnek (önizleme) kişileri listelenir.
  */
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { BookUser, Radio, Share2, StickyNote, Upload, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { Radio, StickyNote, User } from "lucide-react";
 
 import { useContacts, type Contact } from "@/lib/chat/contacts";
-import {
-  deviceContactsSupported,
-  importContacts,
-  parseVcards,
-  syncDeviceContacts,
-} from "@/lib/chat/directory";
+import { syncDeviceContacts } from "@/lib/chat/directory";
+import { isTechnicalLabel } from "@/lib/chat/display-name";
+import { DEMO_CONTACTS } from "@/lib/chat/demo-contacts";
 import type { PeerInfo } from "@/lib/browser-node";
 
 type Props = {
@@ -73,69 +66,59 @@ function Row({
   );
 }
 
+const SYNC_FLAG = "tedbirge.chat.autoSync";
+
 export function DirectoryPanel({
   query,
   peers,
   labelOf,
   onOpenPeer,
   onOpenSelfNote,
-  onShareInvite,
 }: Props) {
   const book = useContacts();
-  const [busy, setBusy] = useState(false);
+  const tried = useRef(false);
   const q = query.trim().toLocaleLowerCase("tr");
 
+  // Girişte rehberi arka planda otomatik eşitle (tek sefer, sessiz).
+  useEffect(() => {
+    if (tried.current) return;
+    tried.current = true;
+    try {
+      if (window.localStorage.getItem(SYNC_FLAG) === "1") return;
+      window.localStorage.setItem(SYNC_FLAG, "1");
+    } catch {
+      /* gizli mod */
+    }
+    void syncDeviceContacts().catch(() => null);
+  }, []);
+
+  // Yalnızca gerçek adı olan kişiler listelenir.
   const contacts = useMemo(() => {
-    const rows: Contact[] = book.contacts;
-    if (!q) return rows;
-    return rows.filter(
-      (c) =>
-        c.displayName.toLocaleLowerCase("tr").includes(q) ||
-        c.shortId.toLocaleLowerCase("tr").includes(q) ||
-        (c.claimedName ?? "").toLocaleLowerCase("tr").includes(q),
+    const rows: Contact[] = book.contacts.filter(
+      (c) => !isTechnicalLabel(c.nickname || c.claimedName || ""),
     );
+    if (!q) return rows;
+    return rows.filter((c) => c.displayName.toLocaleLowerCase("tr").includes(q));
   }, [book.contacts, q]);
 
   const nodes = useMemo(
     () =>
-      peers.filter((p) => !q || labelOf(p.nodeId).toLocaleLowerCase("tr").includes(q)),
+      peers
+        .map((p) => ({ p, name: labelOf(p.nodeId) }))
+        .filter((r) => !isTechnicalLabel(r.name))
+        .filter((r) => !q || r.name.toLocaleLowerCase("tr").includes(q)),
     [peers, q, labelOf],
   );
 
-  async function syncBook() {
-    setBusy(true);
-    try {
-      const res = await syncDeviceContacts();
-      if (!res) {
-        toast.info("Bu tarayıcı cihaz rehberini okuyamıyor", {
-          description: "Rehber dosyası (.vcf) yükleyerek kişilerinizi getirebilirsiniz.",
-        });
-        return;
-      }
-      toast.success(`${res.matched} kişi eşleşti`, {
-        description: `${res.checked} numara kontrol edildi. Numaralar cihazdan çıkmadı.`,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function importFile(file: File) {
-    setBusy(true);
-    try {
-      const rows = parseVcards(await file.text());
-      if (rows.length === 0) {
-        toast.error("Dosyada telefon numarası bulunamadı");
-        return;
-      }
-      const res = await importContacts(rows);
-      toast.success(`${res.matched} kişi eşleşti`, {
-        description: `${res.checked} numara kontrol edildi.`,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
+  const demo = useMemo(
+    () =>
+      contacts.length === 0
+        ? DEMO_CONTACTS.slice(1).filter(
+            (d) => !q || d.name.toLocaleLowerCase("tr").includes(q),
+          )
+        : [],
+    [contacts.length, q],
+  );
 
   return (
     <div style={{ borderTop: "1px solid var(--wa-border)" }}>
@@ -148,92 +131,45 @@ export function DirectoryPanel({
 
       {!q && (
         <Row
-          title="Kendinize mesaj gönderin"
+          title={DEMO_CONTACTS[0]!.name}
           subtitle="Notlar, bağlantılar — yalnızca bu cihazda"
           icon={<StickyNote className="h-4 w-4" />}
           onClick={onOpenSelfNote}
         />
       )}
 
-      {nodes.length > 0 && (
-        <>
-          <p className="px-4 pb-1 pt-2 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-            Yerel ağdaki cihazlar
-          </p>
-          {nodes.map((p) => (
-            <Row
-              key={`node_${p.nodeId}`}
-              title={labelOf(p.nodeId)}
-              subtitle="Çevrimiçi · yakındaki düğüm"
-              tone="var(--wa-accent)"
-              icon={<Radio className="h-4 w-4" />}
-              onClick={() => onOpenPeer(p.nodeId)}
-            />
-          ))}
-        </>
-      )}
+      {nodes.map((r) => (
+        <Row
+          key={`node_${r.p.nodeId}`}
+          title={r.name}
+          subtitle="Çevrimiçi"
+          tone="var(--wa-accent)"
+          icon={<Radio className="h-4 w-4" />}
+          onClick={() => onOpenPeer(r.p.nodeId)}
+        />
+      ))}
 
-      {contacts.length > 0 && (
-        <>
-          <p className="px-4 pb-1 pt-2 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-            Kayıtlı kişiler
-          </p>
-          {contacts.map((c) => (
-            <Row
-              key={`c_${c.peerId}`}
-              title={c.displayName}
-              subtitle={c.shortId}
-              icon={<BookUser className="h-4 w-4" />}
-              onClick={() => onOpenPeer(c.peerId, c.nickname ?? c.claimedName)}
-            />
-          ))}
-        </>
-      )}
+      {contacts.map((c) => (
+        <Row
+          key={`c_${c.peerId}`}
+          title={c.displayName}
+          subtitle="Rehberinizden eşleşti"
+          icon={<User className="h-4 w-4" />}
+          onClick={() => onOpenPeer(c.peerId, c.nickname ?? c.claimedName)}
+        />
+      ))}
 
-      {!q && (
-        <div className="flex flex-wrap gap-2 px-4 pb-4 pt-3">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void syncBook()}
-            className="wa-press flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
-            style={{ background: "var(--wa-accent)" }}
-          >
-            <UserPlus className="h-4 w-4" aria-hidden />
-            {deviceContactsSupported() ? "Rehberi eşitle" : "Rehber izni iste"}
-          </button>
+      {demo.map((d) => (
+        <Row
+          key={d.id}
+          title={d.name}
+          subtitle={d.note}
+          icon={<User className="h-4 w-4" />}
+          onClick={() => onOpenPeer(d.id, d.name)}
+        />
+      ))}
 
-          <label
-            className="wa-press flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[13px]"
-            style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-          >
-            <Upload className="h-4 w-4" aria-hidden />
-            Rehber dosyası
-            <input
-              type="file"
-              accept=".vcf,text/vcard,text/x-vcard"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = "";
-                if (f) void importFile(f);
-              }}
-            />
-          </label>
-
-          <button
-            type="button"
-            onClick={onShareInvite}
-            className="wa-press flex items-center gap-2 rounded-full px-4 py-2 text-[13px]"
-            style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-          >
-            <Share2 className="h-4 w-4" aria-hidden />
-            Davet linki
-          </button>
-        </div>
-      )}
-
-      <p className="px-4 pb-4 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+      <p className="px-4 pb-4 pt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
         Numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle yapılır.
       </p>
     </div>
