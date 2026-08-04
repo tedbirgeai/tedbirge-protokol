@@ -713,7 +713,7 @@ export const GATEWAY_CANDIDATES = [
 ] as const;
 
 /** Tek bir adayı kısa zaman aşımıyla yoklar. */
-function probeGateway(url: string, timeoutMs = 1200): Promise<boolean> {
+export function probeGateway(url: string, timeoutMs = 1200): Promise<boolean> {
   return new Promise((resolve) => {
     let done = false;
     let ws: WebSocket;
