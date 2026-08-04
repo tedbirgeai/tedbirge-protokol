@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
+import { MERE_CONDUIT } from "@/lib/regulation";
+import { EGRESS_POLICY } from "@/lib/egress-guard";
 
 const TITLE = "Güvenlik & Tehdit Modeli — Sıfır-Bilgi Geçidin Sınırları";
 const DESC =
