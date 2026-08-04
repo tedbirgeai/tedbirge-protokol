@@ -190,13 +190,7 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                   <button
                     type="button"
                     disabled={busy === c.id}
-                    onClick={() => {
-                      const url = window.prompt(
-                        "Yerel geçit adresi (Tedbirge daemon):",
-                        savedGatewayUrl() || "wss://192.168.1.1:8443",
-                      );
-                      if (url) void run(c.id, () => connectGatewayCarrier(url));
-                    }}
+                    onClick={() => void run(c.id, () => connectGatewayCarrier(gwUrl))}
                     className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary disabled:opacity-40"
                   >
                     Geçide bağlan
