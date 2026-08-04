@@ -19,6 +19,51 @@ import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
 
 type Step = "phone" | "code" | "contacts";
 
+/** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
+const COUNTRIES: { code: string; flag: string; name: string }[] = [
+  { code: "90", flag: "🇹🇷", name: "Türkiye" },
+  { code: "49", flag: "🇩🇪", name: "Almanya" },
+  { code: "1", flag: "🇺🇸", name: "ABD / Kanada" },
+  { code: "44", flag: "🇬🇧", name: "Birleşik Krallık" },
+  { code: "31", flag: "🇳🇱", name: "Hollanda" },
+  { code: "33", flag: "🇫🇷", name: "Fransa" },
+  { code: "39", flag: "🇮🇹", name: "İtalya" },
+  { code: "34", flag: "🇪🇸", name: "İspanya" },
+  { code: "32", flag: "🇧🇪", name: "Belçika" },
+  { code: "43", flag: "🇦🇹", name: "Avusturya" },
+  { code: "41", flag: "🇨🇭", name: "İsviçre" },
+  { code: "46", flag: "🇸🇪", name: "İsveç" },
+  { code: "45", flag: "🇩🇰", name: "Danimarka" },
+  { code: "47", flag: "🇳🇴", name: "Norveç" },
+  { code: "994", flag: "🇦🇿", name: "Azerbaycan" },
+  { code: "995", flag: "🇬🇪", name: "Gürcistan" },
+  { code: "7", flag: "🇷🇺", name: "Rusya / Kazakistan" },
+  { code: "380", flag: "🇺🇦", name: "Ukrayna" },
+  { code: "971", flag: "🇦🇪", name: "BAE" },
+  { code: "966", flag: "🇸🇦", name: "Suudi Arabistan" },
+  { code: "974", flag: "🇶🇦", name: "Katar" },
+  { code: "964", flag: "🇮🇶", name: "Irak" },
+  { code: "98", flag: "🇮🇷", name: "İran" },
+  { code: "20", flag: "🇪🇬", name: "Mısır" },
+  { code: "212", flag: "🇲🇦", name: "Fas" },
+  { code: "213", flag: "🇩🇿", name: "Cezayir" },
+  { code: "216", flag: "🇹🇳", name: "Tunus" },
+  { code: "218", flag: "🇱🇾", name: "Libya" },
+  { code: "234", flag: "🇳🇬", name: "Nijerya" },
+  { code: "27", flag: "🇿🇦", name: "Güney Afrika" },
+  { code: "91", flag: "🇮🇳", name: "Hindistan" },
+  { code: "92", flag: "🇵🇰", name: "Pakistan" },
+  { code: "62", flag: "🇮🇩", name: "Endonezya" },
+  { code: "60", flag: "🇲🇾", name: "Malezya" },
+  { code: "81", flag: "🇯🇵", name: "Japonya" },
+  { code: "82", flag: "🇰🇷", name: "Güney Kore" },
+  { code: "86", flag: "🇨🇳", name: "Çin" },
+  { code: "61", flag: "🇦🇺", name: "Avustralya" },
+  { code: "55", flag: "🇧🇷", name: "Brezilya" },
+  { code: "54", flag: "🇦🇷", name: "Arjantin" },
+  { code: "52", flag: "🇲🇽", name: "Meksika" },
+];
+
 export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<Step>("phone");
   const [name, setName] = useState("");
