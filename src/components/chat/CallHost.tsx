@@ -50,7 +50,6 @@ export function CallHost() {
           }
         })();
         if (!cancelled) setReady(true);
-
       } catch {
         /* tarayıcı kısıtlaması: sohbet sayfası yine de kendi başlatmasını yapar */
       }

@@ -237,7 +237,6 @@ export function ContactsDialog({
             <ContactImportPanel onDone={() => onOpenChange(false)} />
           </div>
 
-
           {/* Kendi kimlik kartım */}
           <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">
             {qr && (
