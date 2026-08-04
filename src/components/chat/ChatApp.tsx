@@ -97,7 +97,6 @@ import {
 } from "@/lib/chat/sounds";
 import { useNodeRuntime } from "@/lib/node-runtime";
 import { getPersonId, type PeerInfo } from "@/lib/browser-node";
-import { CallOverlay } from "@/components/chat/CallOverlay";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
