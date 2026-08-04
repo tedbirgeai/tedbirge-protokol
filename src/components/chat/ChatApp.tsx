@@ -791,7 +791,7 @@ export function ChatApp() {
       active.members.at(-1))
     : undefined;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
-  const nameOf = (id: string) => contactLabel(id, chat.aliases[id]);
+  const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "Kayıtsız kişi");
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
   /** Kayan pencere: çok uzun sohbetlerde yalnızca son N mesaj DOM'a basılır. */
   const shownMessages = useMemo(
@@ -1154,7 +1154,7 @@ export function ChatApp() {
                     style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                   >
                     <span className="truncate">
-                      {contactLabel(p.nodeId, chat.aliases[p.nodeId])}
+                      {humanName(contactLabel(p.nodeId, chat.aliases[p.nodeId]), "Kayıtsız cihaz")}
                     </span>
                     <span
                       className="text-[11px]"
