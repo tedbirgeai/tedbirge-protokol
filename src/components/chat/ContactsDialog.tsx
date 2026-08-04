@@ -327,7 +327,7 @@ export function ContactsDialog({
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Ada veya TBG- kimliğine göre ara"
+              placeholder="Ad veya soyada göre ara"
               className="h-10 w-full bg-transparent text-sm outline-none"
             />
           </div>

@@ -95,7 +95,7 @@ export function MarketingHome() {
               to="/chat"
               className="rounded-sm bg-primary px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
             >
-              Sohbete katıl / Uygulama
+              Web Terminalini Aç
             </Link>
             <Link
               to="/kur"
