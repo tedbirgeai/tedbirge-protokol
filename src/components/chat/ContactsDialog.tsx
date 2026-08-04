@@ -176,7 +176,41 @@ function ContactRow({
   );
 }
 
+/** Tek dokunuşla cihaz rehberini eşitler; elle numara girişi yoktur. */
+function SyncContactsRow() {
+  const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
+  if (!deviceContactsSupported()) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">Rehberimdeki kişiler</p>
+        <p className="text-xs text-muted-foreground">
+          {info ?? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."}
+        </p>
+      </div>
+      <Button
+        size="sm"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          void syncDeviceContacts()
+            .then((r) =>
+              setInfo(
+                r ? `${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eklendi.` : null,
+              ),
+            )
+            .finally(() => setBusy(false));
+        }}
+      >
+        {busy ? "Eşitleniyor…" : "Rehberi eşitle"}
+      </Button>
+    </div>
+  );
+}
+
 export function ContactsDialog({
+
   open,
   onOpenChange,
   onOpenChat,
