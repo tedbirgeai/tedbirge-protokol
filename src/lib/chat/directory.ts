@@ -79,6 +79,23 @@ export async function syncDeviceContacts(): Promise<ImportResult | null> {
 export type ImportResult = { checked: number; matched: number };
 
 /**
+ * Rehber dosyası (.vcf / vCard) çözümleyici — cihaz rehberine erişemeyen
+ * tarayıcılar için yedek yol. Dosya cihazda okunur, ağa gönderilmez.
+ */
+export function parseVcards(text: string): DeviceContact[] {
+  const out: DeviceContact[] = [];
+  for (const card of text.split(/END:VCARD/i)) {
+    if (!/BEGIN:VCARD/i.test(card)) continue;
+    const name = /(?:^|\n)FN[^:\n]*:(.+)/i.exec(card)?.[1]?.trim() ?? "";
+    for (const m of card.matchAll(/(?:^|\n)TEL[^:\n]*:(.+)/gi)) {
+      const phone = normalizePhone(m[1]?.trim() ?? "");
+      if (phone) out.push({ name: name || phone, phone });
+    }
+  }
+  return out;
+}
+
+/**
  * Kişileri eşleştirir ve bulunanları yerel rehbere ekler.
  * Rehberdeki ad yerel kalır; ağa gönderilmez.
  */

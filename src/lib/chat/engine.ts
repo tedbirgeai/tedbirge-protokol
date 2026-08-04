@@ -252,6 +252,32 @@ export function directConvId(a: string, b: string) {
   return `dm_${[a, b].sort().join("_")}`;
 }
 
+/** "Kendinize mesaj gönderin" — cihazda kalan kişisel not defteri. */
+export const SELF_CONV_ID = "self_notes";
+
+export function isSelfConversation(id: string) {
+  return id === SELF_CONV_ID;
+}
+
+/** Not defterini oluşturur (varsa dokunmaz) ve listeye getirir. */
+export async function ensureSelfConversation(title = "Ben (Siz)"): Promise<Conversation> {
+  const existing = await getConversation(SELF_CONV_ID);
+  if (existing) return existing;
+  const conv: Conversation = {
+    id: SELF_CONV_ID,
+    title,
+    members: [getBrowserNodeId()],
+    group: false,
+    lastTs: Date.now(),
+    lastText: "",
+    unread: 0,
+    pinned: true,
+  };
+  await putConversation(conv);
+  await refreshConversations();
+  return conv;
+}
+
 export async function ensureDirectConversation(
   peerId: string,
   title?: string,
@@ -326,6 +352,8 @@ export async function markRead(convId: string) {
 /* ------------------------------ gönderim ------------------------------ */
 
 async function targetsOf(conv: Conversation) {
+  // Not defteri ağa çıkmaz; mesaj yalnızca bu cihazda kalır.
+  if (isSelfConversation(conv.id)) return [];
   // WhatsApp modeli: kanal açıktır, güvenlik arka planda (E2EE + TOFU).
   return Array.from(new Set(conv.members));
 }
@@ -366,7 +394,7 @@ export async function sendText(
   await appendLocal(conv, msg);
   sentSound();
 
-  let delivered = false;
+  let delivered = isSelfConversation(convId);
   for (const peer of await targetsOf(conv)) {
     const ok = await sendMesh("chat", peer, {
       t: "text",
@@ -498,7 +526,7 @@ export async function sendLocation(convId: string, point: GeoPoint, note?: strin
   await appendLocal(conv, msg);
   sentSound();
 
-  let delivered = false;
+  let delivered = isSelfConversation(convId);
   for (const peer of await targetsOf(conv)) {
     // Harita karesi alıcı cihazda yeniden çizilir — paket küçük kalır.
     const ok = await sendMesh(
@@ -713,7 +741,7 @@ async function sendForwardedText(conv: Conversation, text: string, author: strin
     ...(ttlOf(conv.id) ? { expiresAt: Date.now() + ttlOf(conv.id) } : {}),
   };
   await appendLocal(conv, msg);
-  let delivered = false;
+  let delivered = isSelfConversation(conv.id);
   for (const peer of await targetsOf(conv)) {
     const ok = await sendMesh("chat", peer, {
       t: "text",

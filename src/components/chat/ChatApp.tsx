@@ -53,6 +53,7 @@ import {
   toggleStar,
   createGroup,
   ensureDirectConversation,
+  ensureSelfConversation,
   markRead,
   removeConversation,
   conversationTargets,
@@ -98,6 +99,7 @@ import {
 import { useNodeRuntime } from "@/lib/node-runtime";
 import { getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
+import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
@@ -1272,20 +1274,22 @@ export function ChatApp() {
               </li>
             );
           })}
-          {ready && conversations.length === 0 && (
-            <li className="px-4 py-8 text-center">
-              <p className="text-sm" style={{ color: "var(--wa-muted)" }}>
-                Henüz kimse yok. Davet linkini paylaşın — karşı taraf linke dokunduğunda sohbet
-                açılır.
-              </p>
-              <button
-                type="button"
-                onClick={() => void shareInvite()}
-                className="wa-press mt-4 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
-                style={{ background: "var(--wa-accent)" }}
-              >
-                Davet linki paylaş
-              </button>
+          {ready && (
+            <li>
+              <DirectoryPanel
+                query={query}
+                peers={peers}
+                labelOf={nameOf}
+                onOpenPeer={(pid, name) => {
+                  void ensureDirectConversation(pid, name ?? chat.aliases[pid]).then((c) =>
+                    setActiveId(c.id),
+                  );
+                }}
+                onOpenSelfNote={() => {
+                  void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
+                }}
+                onShareInvite={() => void shareInvite()}
+              />
             </li>
           )}
         </ul>
