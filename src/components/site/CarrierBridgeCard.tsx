@@ -5,9 +5,12 @@ import {
   connectGatewayCarrier,
   connectSerialCarrier,
   disconnectCarrier,
+  gatewayCertUrl,
+  gatewayUrl,
+  normalizeGatewayUrl,
   refreshBridgeSupport,
-  savedGatewayUrl,
   setBridgeLicense,
+  setGatewayUrl,
   useCarrierBridge,
   type CarrierId,
 } from "@/lib/carrier-bridge";
@@ -26,13 +29,31 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const { links, supported } = useCarrierBridge();
   const [busy, setBusy] = useState<CarrierId | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [gwUrl, setGwUrl] = useState(gatewayUrl());
+  const [editingGw, setEditingGw] = useState(false);
+  const [gwDraft, setGwDraft] = useState(gatewayUrl());
+  const [gwError, setGwError] = useState<string | null>(null);
 
   useEffect(() => {
     refreshBridgeSupport();
+    setGwUrl(gatewayUrl());
+    setGwDraft(gatewayUrl());
   }, []);
   useEffect(() => {
     setBridgeLicense(licenseKey);
   }, [licenseKey]);
+
+  const saveGateway = () => {
+    try {
+      const next = setGatewayUrl(gwDraft);
+      setGwUrl(next);
+      setGwDraft(next);
+      setGwError(null);
+      setEditingGw(false);
+    } catch (e) {
+      setGwError(e instanceof Error ? e.message : "Adres geçersiz.");
+    }
+  };
 
   const run = async (id: CarrierId, fn: () => Promise<void>) => {
     setBusy(id);
@@ -50,6 +71,7 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const liveCount = Object.keys(links).length;
   const spectrum = useCarrierScheduler();
   const dutyPct = Math.min(100, Math.round(spectrum.ratio * 100));
+
 
   return (
     <div className={box}>
@@ -71,10 +93,97 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
         </p>
       )}
       {msg && (
-        <p className="mt-3 rounded-sm border border-destructive/40 bg-destructive/10 p-3 font-mono text-[11px]">
+        <p className="mt-3 rounded-sm border border-border bg-background/60 p-3 font-mono text-[11px] text-muted-foreground">
           {msg}
         </p>
       )}
+
+      {/* Yerel geçit adresi — dinamik IP/port + sertifika izni */}
+      <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className={label}>Yerel geçit adresi</span>
+          {!editingGw && (
+            <button
+              type="button"
+              onClick={() => {
+                setGwDraft(gwUrl);
+                setEditingGw(true);
+              }}
+              className="rounded-sm border border-border px-2.5 py-1 font-mono text-[10px]"
+            >
+              Düzenle / IP değiştir
+            </button>
+          )}
+        </div>
+
+        {editingGw ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              value={gwDraft}
+              onChange={(e) => setGwDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveGateway()}
+              placeholder="192.168.0.1:8443"
+              className="w-full max-w-xs rounded-sm border border-border bg-background px-3 py-1.5 font-mono text-[11px] outline-none focus:border-primary"
+            />
+            <button
+              type="button"
+              onClick={saveGateway}
+              className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary"
+            >
+              Kaydet
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingGw(false);
+                setGwError(null);
+                setGwDraft(gwUrl);
+              }}
+              className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px]"
+            >
+              Vazgeç
+            </button>
+          </div>
+        ) : (
+          <p className="mt-2 font-mono text-[12px] text-foreground">{gwUrl}</p>
+        )}
+        {gwError && <p className="mt-2 font-mono text-[10px] text-destructive">{gwError}</p>}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <a
+            href={(() => {
+              try {
+                return gatewayCertUrl(gwUrl);
+              } catch {
+                return gatewayCertUrl();
+              }
+            })()}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px]"
+          >
+            🔗 Yerel sertifika iznini onayla
+          </a>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            Açılan sekmede “Gelişmiş → Yine de devam et” diyerek tek seferlik izin verin, sonra
+            bu sayfaya dönüp Geçide bağlan'a basın.
+          </span>
+        </div>
+        <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+          Adres yalnızca bu tarayıcıda saklanır (yerel depolama). IP veya port farklıysa
+          örn. <span className="text-foreground">10.0.0.1:8443</span> yazmanız yeterlidir;
+          {" "}
+          {(() => {
+            try {
+              normalizeGatewayUrl(gwDraft);
+              return "adres biçimi geçerli.";
+            } catch {
+              return "adres biçimini kontrol edin.";
+            }
+          })()}
+        </p>
+      </div>
+
 
       {/* Spektrum bütçesi — BTK/ETSI görev döngüsü yazılımsal tavanı */}
       <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
@@ -111,10 +220,20 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[12px]">{c.name}</span>
-                <span className={`font-mono text-[10px] uppercase ${live ? "text-primary" : "text-muted-foreground"}`}>
-                  {live ? "bağlı" : "bağlı değil"}
+                <span
+                  className={`font-mono text-[10px] uppercase ${
+                    link?.simulated ? "text-amber-500" : live ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {link?.simulated ? "sanal mod" : live ? "bağlı" : "bağlı değil"}
                 </span>
               </div>
+              {link?.simulated && (
+                <p className="mt-2 rounded-sm border border-amber-500/40 bg-amber-500/5 p-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                  ⚠️ Yerel geçit aranıyor… ({gwUrl}) — Sanal Mod Aktif. Fiziksel geçit ağa
+                  girdiğinde gerçek ölçüme otomatik geçilir.
+                </p>
+              )}
               <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{c.hint}</p>
 
               {c.requiresSubscription && (
@@ -168,13 +287,7 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                   <button
                     type="button"
                     disabled={busy === c.id}
-                    onClick={() => {
-                      const url = window.prompt(
-                        "Yerel geçit adresi (Tedbirge daemon):",
-                        savedGatewayUrl() || "wss://192.168.1.1:8443",
-                      );
-                      if (url) void run(c.id, () => connectGatewayCarrier(url));
-                    }}
+                    onClick={() => void run(c.id, () => connectGatewayCarrier(gwUrl))}
                     className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary disabled:opacity-40"
                   >
                     Geçide bağlan

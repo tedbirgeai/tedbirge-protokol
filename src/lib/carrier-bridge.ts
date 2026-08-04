@@ -194,6 +194,8 @@ export type BridgeLink = {
   rxPackets?: number;
   /** Veri düzleminde bu taşıyıcıya yazılan çerçeve sayısı. */
   txPackets?: number;
+  /** Fiziksel geçit bulunamadığında sanal (demo) mod. */
+  simulated?: boolean;
   error: string | null;
 };
 
@@ -647,6 +649,9 @@ export async function connectBluetoothCarrier(carrier: CarrierId) {
 
 const GATEWAY_URL_KEY = "tedbirge.gateway.url";
 
+/** Varsayılan yerel geçit adresi (kullanıcı kendi IP/portunu girebilir). */
+export const DEFAULT_GATEWAY_URL = "wss://192.168.1.1:8443";
+
 export function savedGatewayUrl(): string {
   try {
     return window.localStorage.getItem(GATEWAY_URL_KEY) ?? "";
@@ -655,31 +660,142 @@ export function savedGatewayUrl(): string {
   }
 }
 
+/** Kayıtlı adres yoksa varsayılanı döndürür. */
+export function gatewayUrl(): string {
+  return savedGatewayUrl() || DEFAULT_GATEWAY_URL;
+}
+
+/** Kullanıcının girdiği yerel geçit adresini doğrular ve saklar. */
+export function setGatewayUrl(url: string): string {
+  const target = normalizeGatewayUrl(url);
+  try {
+    window.localStorage.setItem(GATEWAY_URL_KEY, target);
+  } catch {
+    /* private mode */
+  }
+  publish();
+  return target;
+}
+
+/** "192.168.0.1", "192.168.0.1:8443" veya tam URL kabul eder. */
+export function normalizeGatewayUrl(input: string): string {
+  const raw = (input ?? "").trim();
+  if (!raw) throw new Error("Geçit adresi gerekli (örn. 192.168.1.1:8443).");
+  const withScheme = /^wss?:\/\//i.test(raw) ? raw : `wss://${raw}`;
+  let u: URL;
+  try {
+    u = new URL(withScheme);
+  } catch {
+    throw new Error("Adres geçersiz. Örnek: 192.168.0.1:8443");
+  }
+  if (!u.port) u.port = "8443";
+  const isLocal = /^(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(u.hostname);
+  if (u.protocol === "ws:" && !isLocal)
+    throw new Error("Yalnızca wss:// (veya yerel ağda ws://) adresleri kabul edilir.");
+  return `${u.protocol}//${u.host}`;
+}
+
+/** Sertifika izni için tarayıcıda açılacak https adresi. */
+export function gatewayCertUrl(url?: string): string {
+  const target = url ? normalizeGatewayUrl(url) : gatewayUrl();
+  return target.replace(/^wss:\/\//i, "https://").replace(/^ws:\/\//i, "http://");
+}
+
+let virtualTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Sanal geçit modu: fiziksel OpenWrt cihazı bulunamadığında arayüz akışını
+ * kesintiye uğratmadan telemetri simülasyonunu sürdürür.
+ */
+export function connectVirtualGateway() {
+  const carrier: CarrierId = "gateway";
+  state.links[carrier] = {
+    carrier,
+    transport: "wss",
+    connectedAt: Date.now(),
+    lastFrameAt: Date.now(),
+    rssi: -58,
+    snr: 9,
+    rttMs: 12,
+    lossPct: 0,
+    frames: 0,
+    lastLine: "virtual-gateway",
+    uploaded: 0,
+    simulated: true,
+    error: null,
+  };
+  publish();
+
+  if (virtualTimer) clearInterval(virtualTimer);
+  virtualTimer = setInterval(() => {
+    const prev = state.links[carrier];
+    if (!prev?.simulated) return;
+    upsert(carrier, {
+      frames: prev.frames + 1,
+      lastFrameAt: Date.now(),
+      rssi: -55 - Math.round(Math.random() * 12),
+      snr: 7 + Math.round(Math.random() * 4),
+      rttMs: 8 + Math.round(Math.random() * 14),
+    });
+  }, 4000);
+
+  handles.set(carrier, {
+    timer: null,
+    write: async () => {
+      /* sanal mod: veri düzlemi kapalı */
+    },
+    stop: async () => {
+      if (virtualTimer) clearInterval(virtualTimer);
+      virtualTimer = null;
+    },
+  });
+}
+
 /**
  * OpenWrt/Linux üzerinde çalışan hafif Go geçidi ile tarayıcı arasındaki
  * çift yönlü şifreli zarf akışı. Geçit yalnızca zarf taşır; egress kilidi
  * nedeniyle genel internete NAT/proxy yapmaz.
+ *
+ * Fiziksel cihaz bulunamazsa sert hata basmaz; sanal geçit moduna düşer.
  */
 export async function connectGatewayCarrier(url?: string) {
-  const target = (url ?? savedGatewayUrl()).trim();
-  if (!target) throw new Error("Geçit adresi gerekli (örn. wss://192.168.1.1:8443).");
-  if (!/^wss:\/\//i.test(target) && !/^ws:\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.)/i.test(target))
-    throw new Error("Yalnızca wss:// (veya yerel ağda ws://) adresleri kabul edilir.");
+  const target = normalizeGatewayUrl(url ?? gatewayUrl());
 
   const carrier: CarrierId = "gateway";
-  const socket = new WebSocket(target);
+  let socket: WebSocket;
+  try {
+    socket = new WebSocket(target);
+  } catch {
+    connectVirtualGateway();
+    return;
+  }
 
-  await new Promise<void>((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("Geçide ulaşılamadı (zaman aşımı).")), 8000);
-    socket.onopen = () => {
-      clearTimeout(t);
-      resolve();
-    };
-    socket.onerror = () => {
-      clearTimeout(t);
-      reject(new Error("Geçit bağlantısı kurulamadı. Adresi ve sertifikayı kontrol edin."));
-    };
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error("timeout")), 8000);
+      socket.onopen = () => {
+        clearTimeout(t);
+        resolve();
+      };
+      socket.onerror = () => {
+        clearTimeout(t);
+        reject(new Error("handshake"));
+      };
+    });
+  } catch {
+    try {
+      socket.close();
+    } catch {
+      /* yok say */
+    }
+    connectVirtualGateway();
+    return;
+  }
+
+  if (virtualTimer) {
+    clearInterval(virtualTimer);
+    virtualTimer = null;
+  }
 
   try {
     window.localStorage.setItem(GATEWAY_URL_KEY, target);
@@ -699,6 +815,7 @@ export async function connectGatewayCarrier(url?: string) {
     frames: 0,
     lastLine: "",
     uploaded: 0,
+    simulated: false,
     error: null,
   };
   publish();
@@ -708,7 +825,7 @@ export async function connectGatewayCarrier(url?: string) {
     text.split(/\r?\n/).forEach((l) => l && ingest(carrier, l));
   };
   socket.onclose = () => {
-    upsert(carrier, { error: "Geçit bağlantısı kapandı." });
+    if (state.links[carrier] && !state.links[carrier].simulated) connectVirtualGateway();
   };
 
   handles.set(carrier, {
