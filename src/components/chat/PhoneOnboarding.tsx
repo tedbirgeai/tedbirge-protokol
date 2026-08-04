@@ -6,10 +6,9 @@
  * 3) Kişi kimliği hesaba sabitlenir (Chrome/Edge/telefon aynı kimlik)
  * 4) İsteğe bağlı rehber eşleştirme
  *
- * SMS servisi kapalıysa akış kilitlenmez: kullanıcı yalnızca adıyla
- * yerel modda devam edebilir.
+ * Doğrulama %100 gerçek SMS ile yapılır; test/mock kod yoktur.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setPhone } from "@/lib/chat/profile";
