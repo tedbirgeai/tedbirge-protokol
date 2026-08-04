@@ -6,6 +6,24 @@
 
 const ALIAS_KEY = "tedbirge.chat.alias";
 const ONBOARD_KEY = "tedbirge.chat.onboarded";
+const PHONE_KEY = "tedbirge.chat.phone";
+
+/** Doğrulanmış telefon numarası (E.164) — yalnızca bu cihazda saklanır. */
+export function getPhone(): string {
+  try {
+    return window.localStorage.getItem(PHONE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setPhone(e164: string) {
+  try {
+    window.localStorage.setItem(PHONE_KEY, e164);
+  } catch {
+    /* gizli mod */
+  }
+}
 
 export function getAlias(): string {
   try {

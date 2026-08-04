@@ -25,7 +25,32 @@ export function CallHost() {
         await startNode();
         await chat.bootChat();
         bootCalls();
+        // Cihaz değişse de numaradan bulunabilirlik korunur: dizin kaydı tazelenir.
+        void (async () => {
+          try {
+            const { supabase } = await import("@/integrations/supabase/client");
+            const { data } = await supabase.auth.getSession();
+            if (!data.session) return;
+            const [{ syncPersonIdentity, getBrowserNodeId }, { syncMyDirectoryEntry }, profile] =
+              await Promise.all([
+                import("@/lib/browser-node"),
+                import("@/lib/directory.functions"),
+                import("@/lib/chat/profile"),
+              ]);
+            const personId = await syncPersonIdentity();
+            await syncMyDirectoryEntry({
+              data: {
+                personId,
+                nodeId: getBrowserNodeId(),
+                displayName: profile.getAlias() || undefined,
+              },
+            });
+          } catch {
+            /* çevrimdışı ya da oturum yok */
+          }
+        })();
         if (!cancelled) setReady(true);
+
       } catch {
         /* tarayıcı kısıtlaması: sohbet sayfası yine de kendi başlatmasını yapar */
       }

@@ -30,6 +30,7 @@ import {
   PeerVerifyDialog,
   TrustBadge,
   type PeerVerifyTarget,
+import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
 } from "@/components/site/PeerVerifyDialog";
 import {
   eraseAllContacts,
@@ -227,10 +228,15 @@ export function ContactsDialog({
           <DialogHeader>
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
-              Telefon numarası yoktur. Herkesin değişmeyen bir kısa kimliği vardır; adları siz
-              verirsiniz.
+              Herkesin değişmeyen bir kısa kimliği vardır; adları siz verirsiniz. Numarasıyla
+              katılanları telefon rehberinizden eşleştirebilirsiniz.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="rounded-md border border-border bg-card/50 p-4">
+            <ContactImportPanel onDone={() => onOpenChange(false)} />
+          </div>
+
 
           {/* Kendi kimlik kartım */}
           <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">

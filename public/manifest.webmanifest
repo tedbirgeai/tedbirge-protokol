@@ -1,5 +1,5 @@
 {
-  "name": "Tedbirge Protokol",
+  "name": "Tedbirge",
   "short_name": "Tedbirge",
   "description": "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı. Uçtan uca şifreli sohbet, sesli/görüntülü görüşme, saha pilotu ve uyum panosu.",
   "start_url": "/chat",
