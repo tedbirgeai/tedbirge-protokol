@@ -146,6 +146,9 @@ let localStream: MediaStream | null = null;
 let pendingOffers = new Map<string, PendingOffer>();
 let booted = false;
 let outgoingTimer: ReturnType<typeof setTimeout> | null = null;
+/** Giden aramada teklif tekrarlama sıklığı (ms). */
+const DIAL_RETRY_MS = 2500;
+let dialRetryTimer: ReturnType<typeof setInterval> | null = null;
 const incomingTimers = new Map<string, ReturnType<typeof setTimeout>>();
 let statsTimer: ReturnType<typeof setInterval> | null = null;
 const pendingIce = new Map<string, RTCIceCandidateInit[]>();
