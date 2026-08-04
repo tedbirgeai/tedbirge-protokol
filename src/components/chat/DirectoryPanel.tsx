@@ -132,7 +132,7 @@ export function DirectoryPanel({
       {!q && (
         <Row
           title={DEMO_CONTACTS[0]!.name}
-          subtitle="Notlar, bağlantılar — yalnızca bu cihazda"
+          subtitle={DEMO_CONTACTS[0]!.note}
           icon={<StickyNote className="h-4 w-4" />}
           onClick={onOpenSelfNote}
         />
