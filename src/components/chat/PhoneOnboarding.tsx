@@ -19,6 +19,51 @@ import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
 
 type Step = "phone" | "code" | "contacts";
 
+/** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
+const COUNTRIES: { code: string; flag: string; name: string }[] = [
+  { code: "90", flag: "🇹🇷", name: "Türkiye" },
+  { code: "49", flag: "🇩🇪", name: "Almanya" },
+  { code: "1", flag: "🇺🇸", name: "ABD / Kanada" },
+  { code: "44", flag: "🇬🇧", name: "Birleşik Krallık" },
+  { code: "31", flag: "🇳🇱", name: "Hollanda" },
+  { code: "33", flag: "🇫🇷", name: "Fransa" },
+  { code: "39", flag: "🇮🇹", name: "İtalya" },
+  { code: "34", flag: "🇪🇸", name: "İspanya" },
+  { code: "32", flag: "🇧🇪", name: "Belçika" },
+  { code: "43", flag: "🇦🇹", name: "Avusturya" },
+  { code: "41", flag: "🇨🇭", name: "İsviçre" },
+  { code: "46", flag: "🇸🇪", name: "İsveç" },
+  { code: "45", flag: "🇩🇰", name: "Danimarka" },
+  { code: "47", flag: "🇳🇴", name: "Norveç" },
+  { code: "994", flag: "🇦🇿", name: "Azerbaycan" },
+  { code: "995", flag: "🇬🇪", name: "Gürcistan" },
+  { code: "7", flag: "🇷🇺", name: "Rusya / Kazakistan" },
+  { code: "380", flag: "🇺🇦", name: "Ukrayna" },
+  { code: "971", flag: "🇦🇪", name: "BAE" },
+  { code: "966", flag: "🇸🇦", name: "Suudi Arabistan" },
+  { code: "974", flag: "🇶🇦", name: "Katar" },
+  { code: "964", flag: "🇮🇶", name: "Irak" },
+  { code: "98", flag: "🇮🇷", name: "İran" },
+  { code: "20", flag: "🇪🇬", name: "Mısır" },
+  { code: "212", flag: "🇲🇦", name: "Fas" },
+  { code: "213", flag: "🇩🇿", name: "Cezayir" },
+  { code: "216", flag: "🇹🇳", name: "Tunus" },
+  { code: "218", flag: "🇱🇾", name: "Libya" },
+  { code: "234", flag: "🇳🇬", name: "Nijerya" },
+  { code: "27", flag: "🇿🇦", name: "Güney Afrika" },
+  { code: "91", flag: "🇮🇳", name: "Hindistan" },
+  { code: "92", flag: "🇵🇰", name: "Pakistan" },
+  { code: "62", flag: "🇮🇩", name: "Endonezya" },
+  { code: "60", flag: "🇲🇾", name: "Malezya" },
+  { code: "81", flag: "🇯🇵", name: "Japonya" },
+  { code: "82", flag: "🇰🇷", name: "Güney Kore" },
+  { code: "86", flag: "🇨🇳", name: "Çin" },
+  { code: "61", flag: "🇦🇺", name: "Avustralya" },
+  { code: "55", flag: "🇧🇷", name: "Brezilya" },
+  { code: "54", flag: "🇦🇷", name: "Arjantin" },
+  { code: "52", flag: "🇲🇽", name: "Meksika" },
+];
+
 export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<Step>("phone");
   const [name, setName] = useState("");
@@ -88,7 +133,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
 
   return (
     <div
-      className="wa flex min-h-[100dvh] items-center justify-center p-4"
+      className="wa flex min-h-[100dvh] w-full items-center justify-center overflow-x-hidden overflow-y-auto p-4"
       style={{ background: "var(--wa-panel-soft)" }}
     >
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm sm:p-8">
@@ -116,21 +161,26 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             <label className="mt-4 block text-xs font-medium" style={{ color: "var(--wa-muted)" }}>
               Telefon numarası
             </label>
-            <div className="mt-1 grid grid-cols-[92px_minmax(0,1fr)] gap-2">
+            <div className="mt-1 grid grid-cols-[minmax(0,130px)_minmax(0,1fr)] gap-2">
               <div
-                className="flex items-center gap-1 rounded-lg border px-3"
+                className="relative flex items-center rounded-lg border px-3"
                 style={{ borderColor: "var(--wa-border)" }}
               >
-                <span className="text-sm" style={{ color: "var(--wa-muted)" }}>
-                  +
+                <span className="pointer-events-none truncate text-sm" style={{ color: "var(--wa-text)" }}>
+                  {COUNTRIES.find((c) => c.code === dial)?.flag ?? "🌐"} +{dial}
                 </span>
-                <input
+                <select
+                  aria-label="Ülke kodu"
                   value={dial}
-                  inputMode="numeric"
-                  onChange={(e) => setDial(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className="w-full bg-transparent py-3 text-sm outline-none"
-                  style={{ color: "var(--wa-text)" }}
-                />
+                  onChange={(e) => setDial(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={`${c.code}-${c.name}`} value={c.code}>
+                      {c.flag} {c.name} (+{c.code})
+                    </option>
+                  ))}
+                </select>
               </div>
               <input
                 value={phone}
@@ -141,6 +191,11 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
                 style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
               />
             </div>
+            {e164 && (
+              <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                Kimliğiniz: {e164}
+              </p>
+            )}
 
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
