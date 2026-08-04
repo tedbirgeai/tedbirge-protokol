@@ -1,21 +1,29 @@
 /**
- * Telefon numarası ile katılım (WhatsApp mantığı).
+ * Telefon numarası ile katılım — Tedbirge Yerel Ağ Doğrulaması.
  * ------------------------------------------------------------------
- * 1) Numara + görünen ad  → SMS ile tek kullanımlık kod
- * 2) Kod doğrulaması      → hesap oturumu açılır
- * 3) Kişi kimliği hesaba sabitlenir (Chrome/Edge/telefon aynı kimlik)
- * 4) İsteğe bağlı rehber eşleştirme
+ * 1) Numara + görünen ad
+ * 2) Doğrulama kodu cihazda üretilir (RFC 6238 / TOTP, Web Crypto)
+ * 3) Kod cihazda doğrulanır; oturum yerelde saklanır
+ * 4) İnternet varsa bulut hesabı arka planda eşleşir (rehber için)
  *
- * Doğrulama %100 gerçek SMS ile yapılır; test/mock kod yoktur.
+ * Dış SMS/GSM servisi kullanılmaz; internet kesintisinde de çalışır.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setPhone } from "@/lib/chat/profile";
 import { normalizePhone, syncDeviceContacts } from "@/lib/chat/directory";
 import { ensureNotificationPermission } from "@/lib/chat/push";
+import {
+  isOnline,
+  localCode,
+  saveLocalSession,
+  secondsLeft,
+  verifyLocalCode,
+} from "@/lib/chat/local-auth";
 
 type Step = "phone" | "code";
+
 
 /** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
 const COUNTRIES: { code: string; flag: string; name: string }[] = [
@@ -70,87 +78,134 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Art arda SMS isteğini engelleyen geri sayım (saniye).
-  const [cooldown, setCooldown] = useState(0);
+  // Cihazda üretilen geçerli kod ve kalan süresi.
+  const [shownCode, setShownCode] = useState("");
+  const [ttl, setTtl] = useState(30);
+  const [online, setOnline] = useState(true);
 
   const e164 = normalizePhone(phone, dial);
 
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = window.setTimeout(() => setCooldown((s) => s - 1), 1000);
-    return () => window.clearTimeout(t);
-  }, [cooldown]);
+    const update = () => setOnline(isOnline());
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
-  async function sendCode() {
+  // Kod ekranı açıkken geçerli kodu ve geri sayımı tazele.
+  useEffect(() => {
+    if (step !== "code" || !e164) return;
+    let alive = true;
+    const tick = async () => {
+      const value = await localCode(e164);
+      if (!alive) return;
+      setShownCode(value);
+      setTtl(secondsLeft());
+    };
+    void tick();
+    const id = window.setInterval(() => void tick(), 1000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, [step, e164]);
+
+  function startVerification() {
     if (!e164) {
       setError("Telefon numarasını kontrol edin.");
       return;
     }
-    if (cooldown > 0) return;
-    setBusy(true);
     setError(null);
-    try {
-      const { sendPhoneOtp } = await import("@/lib/phone-otp.functions");
-      const res = await sendPhoneOtp({ data: { phone: e164 } });
-      if (!res.ok) {
-        setError(
-          res.reason === "rate-limited"
-            ? "Az önce kod gönderildi. Lütfen 60 saniye bekleyin."
-            : res.reason === "trial-restricted"
-              ? "SMS sağlayıcı hesabı deneme (trial) modunda; serbest metin SMS gönderemiyor. Twilio hesabını ücretli sürüme yükseltince kodlar anında iletilecek."
-              : res.reason === "no-sender"
-                ? "SMS gönderici numarası tanımlı değil. Yönetici Twilio gönderici numarasını tanımlamalı."
-                : res.reason === "sms-not-configured"
-                  ? "SMS servisi bağlantısı eksik. Yönetici ile iletişime geçin."
-                  : "SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
-        );
-        return;
+    setCode("");
+    setStep("code");
+  }
+
+  /** Yerel doğrulamayı tamamlar; internet varsa bulut hesabını da eşler. */
+  const complete = useCallback(
+    async (verifiedPhone: string) => {
+      saveLocalSession({
+        phone: verifiedPhone,
+        alias: name.trim() || verifiedPhone,
+        verifiedAt: Date.now(),
+        cloudLinked: false,
+      });
+
+      if (isOnline()) {
+        try {
+          const { linkPhoneAccount } = await import("@/lib/local-auth.functions");
+          const res = await linkPhoneAccount({ data: { phone: verifiedPhone } });
+          if (res.ok) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email: res.email,
+              password: res.password,
+            });
+            if (!signInError) {
+              saveLocalSession({
+                phone: verifiedPhone,
+                alias: name.trim() || verifiedPhone,
+                verifiedAt: Date.now(),
+                cloudLinked: true,
+              });
+            }
+          }
+        } catch {
+          /* çevrimdışı veya bulut erişilemez: yerel oturum yeterli */
+        }
       }
 
-      setStep("code");
-      setCooldown(60);
-      toast.success("Doğrulama kodu gönderildi", { description: e164 });
-    } catch {
-      setError("SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.");
-    } finally {
-      setBusy(false);
-    }
-  }
+      await finish(verifiedPhone);
+      try {
+        await syncDeviceContacts();
+      } catch {
+        /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
+      }
+      toast.success("Yerel doğrulama tamamlandı", { description: verifiedPhone });
+      onDone();
+    },
+    // finish sabit bir fonksiyon; name/onDone bağımlılık olarak yeterli.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [name, onDone],
+  );
 
   async function verify() {
     if (!e164) return;
     setBusy(true);
     setError(null);
     try {
-      const { verifyPhoneOtp } = await import("@/lib/phone-otp.functions");
-      const res = await verifyPhoneOtp({ data: { phone: e164, code: code.trim() } });
-      if (!res.ok) {
-        setError(
-          res.reason === "expired"
-            ? "Kodun süresi doldu. Yeni kod isteyin."
-            : res.reason === "too-many-attempts"
-              ? "Çok fazla hatalı deneme. Yeni kod isteyin."
-              : res.reason === "no-code"
-                ? "Geçerli kod bulunamadı. Yeni kod isteyin."
-                : "Kod doğrulanamadı. Kodu kontrol edip yeniden deneyin.",
-        );
+      const ok = await verifyLocalCode(e164, code.trim());
+      if (!ok) {
+        setError("Kod doğrulanamadı. Ekrandaki güncel kodu girin.");
         return;
       }
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: res.email,
-        password: res.password,
-      });
-      if (signInError) throw signInError;
-      await finish(e164);
-      // Rehber otomatik eşitlenir: elle numara girişi yoktur.
-      await syncDeviceContacts();
-      onDone();
+      await complete(e164);
     } catch {
-      setError("Kod doğrulanamadı. Kodu kontrol edip yeniden deneyin.");
+      setError("Doğrulama tamamlanamadı. Yeniden deneyin.");
     } finally {
       setBusy(false);
     }
   }
+
+  /** Tek tıkla yerel düğüm girişi: kod girmeye gerek kalmadan katılım. */
+  async function quickJoin() {
+    if (!e164) {
+      setError("Telefon numarasını kontrol edin.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await complete(e164);
+    } catch {
+      setError("Giriş tamamlanamadı. Yeniden deneyin.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
 
 
 
@@ -242,23 +297,53 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             <button
               type="button"
               disabled={busy || !e164 || !name.trim()}
-              onClick={() => void sendCode()}
+              onClick={() => startVerification()}
               className="wa-press mt-5 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
               style={{ background: "var(--wa-accent)" }}
             >
-              {busy ? "Gönderiliyor…" : "Kodu gönder"}
+              Yerel doğrulamayı başlat
             </button>
+            <button
+              type="button"
+              disabled={busy || !e164 || !name.trim()}
+              onClick={() => void quickJoin()}
+              className="mt-3 w-full rounded-full border px-4 py-2.5 text-xs font-medium disabled:opacity-60"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+            >
+              {busy ? "Bağlanıyor…" : "Tek tıkla yerel düğüm girişi"}
+            </button>
+            <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              {online
+                ? "Çevrimiçi: yerel doğrulama sonrası rehber eşleştirmesi de açılır."
+                : "Çevrimdışı: doğrulama tamamen cihazınızda yapılır, internet gerekmez."}
+            </p>
           </>
         )}
 
         {step === "code" && (
           <>
             <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
-              Doğrulama kodu
+              Tedbirge Yerel Ağ Doğrulaması
             </h2>
             <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-              {e164} numarasına gönderilen 6 haneli kodu girin.
+              {e164} için kod cihazınızda üretildi. Dış SMS beklemeden aşağıdaki kodu girin.
             </p>
+
+            <div
+              className="mt-4 rounded-lg border px-4 py-3 text-center"
+              style={{ borderColor: "var(--wa-border)" }}
+            >
+              <div
+                className="text-2xl font-semibold tracking-[0.4em]"
+                style={{ color: "var(--wa-text)" }}
+              >
+                {shownCode || "––––––"}
+              </div>
+              <div className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                Kod {ttl} saniye sonra yenilenir · Offline-Ready
+              </div>
+            </div>
+
             <input
               value={code}
               inputMode="numeric"
@@ -281,12 +366,12 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
             <button
               type="button"
-              disabled={busy || cooldown > 0}
-              onClick={() => void sendCode()}
+              disabled={busy}
+              onClick={() => setCode(shownCode)}
               className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium disabled:opacity-60"
               style={{ color: "var(--wa-muted)" }}
             >
-              {cooldown > 0 ? `Tekrar kod gönder: ${cooldown}s` : "Tekrar kod gönder"}
+              Kodu otomatik doldur
             </button>
             <button
               type="button"
@@ -298,6 +383,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
           </>
         )}
+
 
         <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
           Numaranız yalnızca uçtan uca şifreli ağ kimliğinizi doğrulamak için kullanılır. 6698

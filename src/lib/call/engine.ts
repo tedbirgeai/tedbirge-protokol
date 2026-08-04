@@ -61,7 +61,7 @@ const ICE: RTCConfiguration = {
       urls: [
         "stun:stun.l.google.com:19302",
         "stun:stun1.l.google.com:19302",
-        "stun:global.stun.twilio.com:3478",
+        "stun:stun1.l.google.com:19302",
       ],
     },
     // Simetrik NAT / mobil operatör ağlarında doğrudan yol kurulamazsa
