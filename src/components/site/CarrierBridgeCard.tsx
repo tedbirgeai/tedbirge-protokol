@@ -188,25 +188,43 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
         )}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <a
-            href={(() => {
+          <button
+            type="button"
+            disabled={certChecking}
+            onClick={async () => {
+              setCertChecking(true);
+              setCertNote(null);
+              let target = gwUrl;
               try {
-                return gatewayCertUrl(gwUrl);
+                target = normalizeGatewayUrl(gwUrl);
               } catch {
-                return gatewayCertUrl();
+                /* mevcut adresi kullan */
               }
-            })()}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px]"
+              const reachable = await probeGateway(target, 1500);
+              setCertChecking(false);
+              if (reachable) {
+                setCertNote("Geçit bulundu, sertifika sekmesi açılıyor.");
+                window.open(gatewayCertUrl(target), "_blank", "noreferrer");
+              } else {
+                setCertNote(
+                  `Bu adreste (${target}) çalışan bir Tedbirge geçidi yok; bu yüzden sekme boş açılıyordu (ERR_CONNECTION_REFUSED). Sertifika izni yalnızca fiziksel OpenWrt geçidi ağa bağlandıktan sonra gerekir. Şu an sistem Sanal Geçit Modu ile sorunsuz çalışmaya devam ediyor.`,
+                );
+              }
+            }}
+            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[11px] disabled:opacity-60"
           >
-            🔗 Yerel sertifika iznini onayla
-          </a>
+            {certChecking ? "Geçit yoklanıyor…" : "🔗 Yerel sertifika iznini onayla"}
+          </button>
           <span className="font-mono text-[10px] text-muted-foreground">
-            Açılan sekmede “Gelişmiş → Yine de devam et” diyerek tek seferlik izin verin, sonra
-            bu sayfaya dönüp Geçide bağlan'a basın.
+            Geçit bulunursa sekme açılır; “Gelişmiş → Yine de devam et” diyerek tek seferlik izin
+            verin, sonra bu sayfaya dönüp Geçide bağlan'a basın.
           </span>
         </div>
+        {certNote && (
+          <p className="mt-2 rounded-sm border border-border bg-card/40 p-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
+            {certNote}
+          </p>
+        )}
 
         {/* Adresi bulma rehberi — herkesin doğru yazabilmesi için */}
         <details className="mt-4 rounded-sm border border-border/70 bg-card/40 p-3">
