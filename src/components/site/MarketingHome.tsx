@@ -91,12 +91,14 @@ export function MarketingHome() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
+            <InstallAppCta variant="primary" label="Uygulamayı Yükle" />
             <Link
               to="/chat"
-              className="rounded-sm bg-primary px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90"
+              className="rounded-sm border border-border px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary"
             >
-              Web Terminalini Aç
+              Uygulamaya Gir
             </Link>
+
             <Link
               to="/kur"
               className="rounded-sm border border-border px-6 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary"
