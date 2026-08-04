@@ -9,6 +9,7 @@ import {
   gatewayCertUrl,
   gatewayUrl,
   normalizeGatewayUrl,
+  probeGateway,
   refreshBridgeSupport,
   setBridgeLicense,
   setGatewayUrl,
@@ -36,6 +37,8 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const [gwError, setGwError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState<string | null>(null);
+  const [certChecking, setCertChecking] = useState(false);
+  const [certNote, setCertNote] = useState<string | null>(null);
 
   useEffect(() => {
     refreshBridgeSupport();
