@@ -162,9 +162,12 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {!embedded && <OfflineBanner />}
       {!embedded && <NodeDock />}
+      {/* Gelen arama her sayfada karşılanır (telefon mantığı). */}
+      <CallHost />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
 }
+
 
