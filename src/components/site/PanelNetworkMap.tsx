@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isDeviceOnline, sinceLabel } from "@/components/site/PanelLive";
 import { describeNode, useNodeRuntime } from "@/lib/node-runtime";
+import { useDiagnostics } from "@/lib/diagnostics";
+import { useCarrierBridge } from "@/lib/carrier-bridge";
+import { GlobalMeshMap } from "@/components/site/GlobalMeshMap";
+
 
 type MapDevice = {
   id: string;
@@ -35,8 +39,30 @@ function ringOf(d: MapDevice) {
 export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[]; refreshKey: number }) {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(0);
+  const [lastSync, setLastSync] = useState<number | null>(null);
   const runtime = useNodeRuntime();
   const runtimeStatus = describeNode(runtime);
+  const diag = useDiagnostics();
+  const bridge = useCarrierBridge();
+
+  /** 5 saniyede bir tazeleme + Realtime INSERT aboneliği: metrikler canlı akar. */
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 5000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("panel-telemetry")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "telemetry_samples" }, () =>
+        setTick((t) => t + 1),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -50,12 +76,13 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
         .limit(500);
       if (!active) return;
       setSamples((data as Sample[]) ?? []);
+      setLastSync(Date.now());
       setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, tick]);
 
   const buckets = useMemo(() => {
     const now = Date.now();
@@ -73,8 +100,16 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
   const peak = Math.max(1, ...buckets);
   const online = devices.filter((d) => isDeviceOnline(d));
   const rttValues = samples.map((s) => s.rtt_ms).filter((v): v is number => typeof v === "number");
-  const avgRtt = rttValues.length ? Math.round(rttValues.reduce((a, b) => a + b, 0) / rttValues.length) : null;
+  const dbAvgRtt = rttValues.length ? Math.round(rttValues.reduce((a, b) => a + b, 0) / rttValues.length) : null;
+  /** Canlı RTT: tarayıcı düğümünün ping/pong ölçümü öncelikli, yoksa telemetri ortalaması. */
+  const liveRtt = diag.rttAvg ?? dbAvgRtt;
+  const rttWindow = diag.rttSamples.slice(-40);
+  const rttPeak = Math.max(1, ...rttWindow);
+  const links = Object.values(bridge.links);
+  const liveFrames = links.reduce((a, l) => a + l.frames + (l.rxPackets ?? 0), 0);
   const totalBytes = samples.reduce((a, s) => a + (s.bytes ?? 0), 0);
+  const meshLive = runtime.peers.length > 0 || online.length > 0;
+
 
   const placed = useMemo(() => {
     const groups: MapDevice[][] = [[], [], []];
@@ -98,7 +133,12 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
           <h2 className="mt-2 text-xl font-semibold tracking-tight">Canlı mesh topolojisi</h2>
         </div>
         <div className="flex flex-wrap gap-2 font-mono text-[11px] uppercase tracking-[0.15em]">
-          <span className="rounded-sm border border-border px-3 py-1.5 text-primary">
+          <span
+            className={`flex items-center gap-2 rounded-sm border px-3 py-1.5 ${meshLive ? "border-primary/50 text-primary" : "border-border text-muted-foreground"}`}
+          >
+            <span
+              className={`inline-block size-2 rounded-full ${meshLive ? "animate-pulse bg-primary" : "bg-muted-foreground/50"}`}
+            />
             {online.length}/{devices.length} çevrimiçi
           </span>
           <span className="rounded-sm border border-border px-3 py-1.5 text-muted-foreground">
@@ -186,12 +226,56 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
         </div>
 
         <div className="space-y-3">
-          <Metric label="Ortalama RTT" value={avgRtt !== null ? `${avgRtt} ms` : "veri yok"} />
+          <div className="rounded-sm border border-border bg-background/70 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                Ortalama RTT (canlı)
+              </p>
+              <span
+                className={`flex items-center gap-1.5 font-mono text-[10px] uppercase ${meshLive ? "text-primary" : "text-muted-foreground"}`}
+              >
+                <span
+                  className={`inline-block size-2 rounded-full ${meshLive ? "animate-pulse bg-primary" : "bg-muted-foreground/50"}`}
+                />
+                {meshLive ? "çevrimiçi" : "beklemede"}
+              </span>
+            </div>
+            <p className="mt-1 font-mono text-lg text-foreground">
+              {liveRtt !== null ? `${liveRtt} ms` : "veri yok"}
+            </p>
+            <div className="mt-3 flex h-12 items-end gap-[2px]" aria-label="Canlı RTT penceresi">
+              {rttWindow.length === 0 ? (
+                <span className="font-mono text-[10px] text-muted-foreground">ping ölçümü bekleniyor…</span>
+              ) : (
+                rttWindow.map((v, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-sm bg-primary/70"
+                    style={{ height: `${Math.max(4, (v / rttPeak) * 100)}%` }}
+                    title={`${v} ms`}
+                  />
+                ))
+              )}
+            </div>
+            <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+              p95 {diag.rttP95 ?? "—"} ms · telemetri ort. {dbAvgRtt ?? "—"} ms
+            </p>
+          </div>
           <Metric
             label="Son 1 saat trafiği"
             value={totalBytes ? `${(totalBytes / 1024).toFixed(1)} KB` : "veri yok"}
+            hint={`canlı taşıyıcı çerçevesi ${liveFrames} · bağlı köprü ${links.length}`}
           />
-          <Metric label="Ölçüm sayısı" value={loading ? "yükleniyor…" : `${samples.length}`} />
+          <Metric
+            label="Ölçüm sayısı"
+            value={loading ? "yükleniyor…" : `${samples.length}`}
+            hint={
+              lastSync
+                ? `son eşitleme ${new Date(lastSync).toLocaleTimeString("tr-TR")} · 5 sn'de bir`
+                : undefined
+            }
+          />
+
           <div className="rounded-sm border border-border bg-background/70 p-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
               Canlı trafik (5 dk kova · kbps)
@@ -234,15 +318,20 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
           ))}
         </ul>
       )}
+
+      <div className="mt-6">
+        <GlobalMeshMap devices={devices} />
+      </div>
     </div>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-sm border border-border bg-background/70 p-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
       <p className="mt-1 font-mono text-lg text-foreground">{value}</p>
+      {hint && <p className="mt-1 font-mono text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
