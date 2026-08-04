@@ -39,8 +39,30 @@ function ringOf(d: MapDevice) {
 export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[]; refreshKey: number }) {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(0);
+  const [lastSync, setLastSync] = useState<number | null>(null);
   const runtime = useNodeRuntime();
   const runtimeStatus = describeNode(runtime);
+  const diag = useDiagnostics();
+  const bridge = useCarrierBridge();
+
+  /** 5 saniyede bir tazeleme + Realtime INSERT aboneliği: metrikler canlı akar. */
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 5000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("panel-telemetry")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "telemetry_samples" }, () =>
+        setTick((t) => t + 1),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -54,12 +76,13 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
         .limit(500);
       if (!active) return;
       setSamples((data as Sample[]) ?? []);
+      setLastSync(Date.now());
       setLoading(false);
     })();
     return () => {
       active = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, tick]);
 
   const buckets = useMemo(() => {
     const now = Date.now();
@@ -77,8 +100,16 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
   const peak = Math.max(1, ...buckets);
   const online = devices.filter((d) => isDeviceOnline(d));
   const rttValues = samples.map((s) => s.rtt_ms).filter((v): v is number => typeof v === "number");
-  const avgRtt = rttValues.length ? Math.round(rttValues.reduce((a, b) => a + b, 0) / rttValues.length) : null;
+  const dbAvgRtt = rttValues.length ? Math.round(rttValues.reduce((a, b) => a + b, 0) / rttValues.length) : null;
+  /** Canlı RTT: tarayıcı düğümünün ping/pong ölçümü öncelikli, yoksa telemetri ortalaması. */
+  const liveRtt = diag.rttAvg ?? dbAvgRtt;
+  const rttWindow = diag.rttSamples.slice(-40);
+  const rttPeak = Math.max(1, ...rttWindow);
+  const links = Object.values(bridge.links);
+  const liveKbps = links.reduce((a, l) => a + (l.throughputKbps ?? 0), 0);
   const totalBytes = samples.reduce((a, s) => a + (s.bytes ?? 0), 0);
+  const meshLive = runtime.peers.length > 0 || online.length > 0;
+
 
   const placed = useMemo(() => {
     const groups: MapDevice[][] = [[], [], []];
