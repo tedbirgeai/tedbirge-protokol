@@ -234,9 +234,8 @@ export function ContactsDialog({
           </DialogHeader>
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 pt-4">
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <ContactImportPanel onDone={() => onOpenChange(false)} />
-          </div>
+          <SyncContactsRow />
+
 
           {/* Kendi kimlik kartım */}
           <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">
