@@ -1686,10 +1686,12 @@ export function ChatApp() {
                 e.preventDefault();
                 submitDraft();
               }}
-              className="flex items-center gap-1.5 p-2.5"
+              className="flex w-full max-w-full flex-nowrap items-center gap-0.5 overflow-x-hidden p-2 sm:gap-1.5 sm:p-2.5"
               style={{
                 background: "var(--wa-panel-soft)",
                 borderTop: "1px solid var(--wa-border)",
+                boxSizing: "border-box",
+                paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))",
               }}
             >
               <input
