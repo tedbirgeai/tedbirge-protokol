@@ -133,10 +133,20 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[12px]">{c.name}</span>
-                <span className={`font-mono text-[10px] uppercase ${live ? "text-primary" : "text-muted-foreground"}`}>
-                  {live ? "bağlı" : "bağlı değil"}
+                <span
+                  className={`font-mono text-[10px] uppercase ${
+                    link?.simulated ? "text-amber-500" : live ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {link?.simulated ? "sanal mod" : live ? "bağlı" : "bağlı değil"}
                 </span>
               </div>
+              {link?.simulated && (
+                <p className="mt-2 rounded-sm border border-amber-500/40 bg-amber-500/5 p-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                  ⚠️ Yerel geçit aranıyor… ({gwUrl}) — Sanal Mod Aktif. Fiziksel geçit ağa
+                  girdiğinde gerçek ölçüme otomatik geçilir.
+                </p>
+              )}
               <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{c.hint}</p>
 
               {c.requiresSubscription && (
