@@ -194,6 +194,8 @@ export type BridgeLink = {
   rxPackets?: number;
   /** Veri düzleminde bu taşıyıcıya yazılan çerçeve sayısı. */
   txPackets?: number;
+  /** Fiziksel geçit bulunamadığında sanal (demo) mod. */
+  simulated?: boolean;
   error: string | null;
 };
 
