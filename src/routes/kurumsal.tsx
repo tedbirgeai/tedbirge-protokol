@@ -29,7 +29,7 @@ export const Route = createFileRoute("/kurumsal")({
 const stats = [
   { value: "2 tıkla", label: "kurulum — dosya indirme yok" },
   { value: "%99,9", label: "hedeflenen bağlantı sürekliliği" },
-  { value: "9 taşıyıcı", label: "Ethernet · Wi-Fi · LoRa · Uydu · Hücresel" },
+  { value: "10 taşıyıcı", label: "Yerel geçit · Ethernet · Wi-Fi · LoRa · Uydu · Hücresel" },
   { value: "E2EE", label: "uçtan uca şifreli, sıfır-bilgi" },
 ];
 

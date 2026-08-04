@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "İnternet kesildiğinde de çalışmaya devam eden kurumsal ağ altyapısı: uçtan uca şifreli mesh haberleşme, 9 taşıyıcı ve Resilience-as-a-Service abonelik modeli.",
+          "İnternet kesildiğinde de çalışmaya devam eden kurumsal ağ altyapısı: uçtan uca şifreli mesh haberleşme, 10 taşıyıcı ve Resilience-as-a-Service abonelik modeli.",
       },
       { property: "og:title", content: "Tedbirge Protocol — İnternet Kesilse de Çalışan Ağ" },
       {

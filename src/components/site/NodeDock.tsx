@@ -102,6 +102,15 @@ export function NodeDock() {
         )}
       </div>
 
+      {state.notice && (
+        <div className="border-t border-border/60 bg-secondary/40">
+          <p className="mx-auto max-w-6xl px-4 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            {state.notice}
+          </p>
+        </div>
+      )}
+
+
       {open && (
         <div className="border-t border-border/60 bg-card/60">
           <div className="mx-auto max-w-6xl space-y-4 px-4 py-4">

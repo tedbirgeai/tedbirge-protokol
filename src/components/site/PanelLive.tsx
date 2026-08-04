@@ -85,7 +85,7 @@ export function CarrierLiveBoard({ devices }: { devices: LiveDevice[] }) {
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">Anlık taşıyıcı durumu</h2>
         <span className="font-mono text-[11px] text-muted-foreground">
-          {activeCount}/9 taşıyıcı canlı · fiziksel düğüm telemetrisi
+          {activeCount}/10 taşıyıcı canlı · fiziksel düğüm telemetrisi
         </span>
       </div>
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">

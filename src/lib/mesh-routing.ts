@@ -1,7 +1,7 @@
 /**
  * Çok atlamalı (multi-hop) yönlendirme — Dijkstra en kısa yol motoru.
  * ------------------------------------------------------------------
- * 9 taşıyıcı katmanının her biri farklı gecikme/bant/enerji maliyetine
+ * 10 taşıyıcı katmanının her biri farklı gecikme/bant/enerji maliyetine
  * sahiptir. Ağ grafiği düğümler (cihazlar) ve kenarlardan (taşıyıcı
  * bağlantıları) oluşur; motor kaynaktan hedefe toplam maliyeti en
  * düşük yolu hesaplar. Paket gövdesi uçtan uca şifreli kaldığı için
@@ -33,7 +33,7 @@ export type TransportDef = {
   penalty: number;
 };
 
-/** 9 taşıyıcı katmanı — sıralama, tercih önceliğini yansıtır. */
+/** 10 taşıyıcı katmanı — sıralama, tercih önceliğini yansıtır. */
 export const TRANSPORTS: TransportDef[] = [
   { id: "openwrt-gateway", label: "Yerel geçit (OpenWrt)", hint: "Şebeke beslemeli, 7/24 açık ev/bina geçidi", latencyMs: 10, kbps: 50000, penalty: 0 },
   { id: "cloud-webrtc", label: "Bulut WebRTC", hint: "İnternet varken doğrudan eş bağlantısı", latencyMs: 60, kbps: 20000, penalty: 0 },

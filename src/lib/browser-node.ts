@@ -18,6 +18,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { getAlias, setAlias } from "@/lib/chat/profile";
+import { assertNoEgress } from "@/lib/egress-guard";
 import { ensureIdentity, type Identity } from "@/lib/crypto/identity";
 import {
   createEnvelope,
@@ -28,6 +29,7 @@ import {
   openEnvelope,
   verifyEnvelope,
   witnessClock,
+  TTL_EXHAUSTED_NOTICE,
   type EnvelopeKind,
   type MeshEnvelopeV2,
 } from "@/lib/mesh-envelope";
@@ -166,6 +168,8 @@ export type BrowserNodeState = {
   fingerprint: string;
   /** İmzası doğrulanamadığı için düşürülen paket sayısı. */
   droppedUnsigned: number;
+  /** Kullanıcıya gösterilecek son otonom durum metni (ör. menzil dışı). */
+  notice: string | null;
 };
 
 /** Geriye dönük tip (v1 zarfı) — yalnızca eski istemcileri tanımak için. */
@@ -314,6 +318,7 @@ export class BrowserNode {
       discovery: "none",
       fingerprint: "",
       droppedUnsigned: 0,
+      notice: null,
     };
   }
 
@@ -951,7 +956,11 @@ export class BrowserNode {
       if (fwd) {
         this.broadcastRaw(encodeEnvelope(fwd), from);
         recordRelay();
-        this.emit({ lastRelayAt: new Date().toISOString() });
+        this.emit({ lastRelayAt: new Date().toISOString(), notice: null });
+      } else {
+        // TTL tükendi: paket sessizce kaybolmaz, arayüzde durum kodu üretir.
+        this.emit({ notice: TTL_EXHAUSTED_NOTICE });
+        void appendEvent("mesh", TTL_EXHAUSTED_NOTICE);
       }
     }
   }
@@ -1032,6 +1041,8 @@ export class BrowserNode {
     allowEnqueue = true,
   ) {
     const prio = priority ?? defaultPriority(kind);
+    // Egress kilidi: hedef yalnızca overlay düğüm kimliği olabilir (5651 kapalı devre).
+    assertNoEgress(to);
     if (!this.identity) this.identity = await ensureIdentity(this.nodeId);
 
     const targets = this.openPeers()
@@ -1087,6 +1098,7 @@ export class BrowserNode {
       // üretmemelidir. Aksi halde her başarısız tur kuyruğu katlayarak büyütür.
       if (!allowEnqueue) return false;
       await this.enqueue({ t: "intent", kind, to, payload, priority: prio });
+      this.emit({ notice: TTL_EXHAUSTED_NOTICE });
       return false;
     }
 

@@ -30,7 +30,7 @@ export const Route = createFileRoute("/karsilastirma")({
               name: "Tedbirge ile Meshtastic arasındaki fark nedir?",
               acceptedAnswer: {
                 "@type": "Answer",
-                text: "Meshtastic yalnızca LoRa radyoları üzerinde çalışan tüketici odaklı bir projedir. Tedbirge dokuz farklı fiziksel taşıyıcıyı tek yönlendirici altında birleştirir, kullanım muhasebesi ve kurumsal yönetim katmanı içerir.",
+                text: "Meshtastic yalnızca LoRa radyoları üzerinde çalışan tüketici odaklı bir projedir. Tedbirge on farklı fiziksel taşıyıcıyı tek yönlendirici altında birleştirir, kullanım muhasebesi ve kurumsal yönetim katmanı içerir.",
               },
             },
             {

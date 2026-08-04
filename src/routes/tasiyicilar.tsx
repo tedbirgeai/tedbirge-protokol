@@ -6,17 +6,18 @@ import { CarrierBridgeCard } from "@/components/site/CarrierBridgeCard";
 export const Route = createFileRoute("/tasiyicilar")({
   head: () => ({
     meta: [
-      { title: "9 Taşıyıcı — Tedbirge Off-Grid Fiziksel Katmanlar" },
+      { title: "10 Taşıyıcı — Tedbirge Off-Grid Fiziksel Katmanlar" },
       {
         name: "description",
         content:
-          "Tedbirge Protokol'ün desteklediği dokuz taşıyıcı: Ethernet, Wi-Fi, hücresel, uydu, WiGig 60GHz, FSO lazer, Wi-Fi HaLow, TVWS, LoRa ISM ve Zero-KVKK RF çerçeveleme.",
+          "Tedbirge Protokol'ün desteklediği on taşıyıcı: OpenWrt WSS yerel geçit, Ethernet, Wi-Fi, hücresel, uydu, WiGig 60GHz, FSO lazer, Wi-Fi HaLow, TVWS ve LoRa ISM.",
       },
       { property: "og:title", content: "Tedbirge Taşıyıcı Matrisi" },
       {
         property: "og:description",
-        content: "Menzil, bant genişliği, gecikme ve yasal statüsüyle dokuz fiziksel taşıyıcı.",
+        content: "Menzil, bant genişliği, gecikme ve yasal statüsüyle on fiziksel taşıyıcı.",
       },
+
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/tasiyicilar" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -148,7 +149,20 @@ const carriers: Carrier[] = [
     license: "ISM · görev döngüsü sınırlarına tabi",
     use: "Tam off-grid mesh omurgası; RadioHead RH_RF95 uyumlu çerçeveleme, SX1262 dongle.",
   },
+  {
+    no: "10",
+    name: "OpenWrt / WSS yerel geçit",
+    kind: "openwrt-gateway",
+    band: "Duvar içi IP (Ethernet · PLC · MoCA · Wi-Fi)",
+    range: "Bina/site geneli — şebeke beslemeli 7/24 düğüm",
+    bandwidth: "50 Mbps – 1 Gbps",
+    latency: "~10 ms",
+    status: "ACTIVE",
+    license: "Lisans gerekmez · kapalı devre (egress kilitli)",
+    use: "Ev/bina geçidi olarak sürekli açık röle; şifreli zarfı WSS üzerinden taşır, genel internete NAT/proxy yapmaz.",
+  },
 ];
+
 
 const statusLabel: Record<Carrier["status"], string> = {
   ACTIVE: "Üretimde aktif",
@@ -179,7 +193,7 @@ function Carriers() {
         <div className="mx-auto max-w-6xl px-6 py-16">
           <SectionLabel>Taşıyıcı matrisi</SectionLabel>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
-            Dokuz taşıyıcı, tek yönlendirici
+            On taşıyıcı, tek yönlendirici
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
             Tedbirge Protokol her bağlantıyı <span className="text-foreground">RTT × taşıyıcı ağırlığı</span>{" "}
