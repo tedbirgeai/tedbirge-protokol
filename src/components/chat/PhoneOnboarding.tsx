@@ -6,10 +6,9 @@
  * 3) Kişi kimliği hesaba sabitlenir (Chrome/Edge/telefon aynı kimlik)
  * 4) İsteğe bağlı rehber eşleştirme
  *
- * SMS servisi kapalıysa akış kilitlenmez: kullanıcı yalnızca adıyla
- * yerel modda devam edebilir.
+ * Doğrulama %100 gerçek SMS ile yapılır; test/mock kod yoktur.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setPhone } from "@/lib/chat/profile";
@@ -71,30 +70,38 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // SMS servisi kapalıysa akış kilitlenmez: yerel doğrulama koduyla devam edilir.
-  const [testMode, setTestMode] = useState(false);
+  // Art arda SMS isteğini engelleyen geri sayım (saniye).
+  const [cooldown, setCooldown] = useState(0);
 
   const e164 = normalizePhone(phone, dial);
-  const FALLBACK_CODE = "123456";
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setTimeout(() => setCooldown((s) => s - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldown]);
 
   async function sendCode() {
     if (!e164) {
       setError("Telefon numarasını kontrol edin.");
       return;
     }
+    if (cooldown > 0) return;
     setBusy(true);
     setError(null);
     try {
       const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
       if (error) throw error;
-      setTestMode(false);
       setStep("code");
+      setCooldown(60);
       toast.success("Doğrulama kodu gönderildi", { description: e164 });
-    } catch {
-      // SMS sağlayıcısı yoksa kullanıcı beklemez: test kodu ile devam eder.
-      setTestMode(true);
-      setStep("code");
-      toast.info("Test modu", { description: `Doğrulama kodunuz: ${FALLBACK_CODE}` });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      setError(
+        /provider|not enabled|unsupported/i.test(raw)
+          ? "SMS doğrulama servisi şu anda etkin değil. Lütfen kısa süre sonra tekrar deneyin."
+          : "Kod gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
+      );
     } finally {
       setBusy(false);
     }
@@ -105,19 +112,12 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      if (testMode) {
-        if (code.trim() !== FALLBACK_CODE) {
-          setError(`Test modu kodu: ${FALLBACK_CODE}`);
-          return;
-        }
-      } else {
-        const { error } = await supabase.auth.verifyOtp({
-          phone: e164,
-          token: code.trim(),
-          type: "sms",
-        });
-        if (error) throw error;
-      }
+      const { error } = await supabase.auth.verifyOtp({
+        phone: e164,
+        token: code.trim(),
+        type: "sms",
+      });
+      if (error) throw error;
       await finish(e164);
       // Rehber otomatik eşitlenir: elle numara girişi yoktur.
       await syncDeviceContacts();
@@ -128,6 +128,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   }
+
 
   async function finish(verifiedPhone: string | null) {
     setAlias(name.trim() || verifiedPhone || "Ben");
@@ -232,22 +233,22 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
               Doğrulama kodu
             </h2>
             <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-              {testMode
-                ? `Test modu: doğrulama kodunuz ${FALLBACK_CODE}. Kodu girip devam edin.`
-                : `${e164} numarasına gönderilen 6 haneli kodu girin.`}
+              {e164} numarasına gönderilen 6 haneli kodu girin.
             </p>
             <input
               value={code}
               inputMode="numeric"
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              placeholder="123456"
+              autoComplete="one-time-code"
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="––––––"
               className="mt-5 w-full rounded-lg border px-4 py-3 text-center text-lg tracking-[0.4em] outline-none"
               style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
             />
+
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <button
               type="button"
-              disabled={busy || code.length < 4}
+              disabled={busy || code.length < 6}
               onClick={() => void verify()}
               className="wa-press mt-4 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
               style={{ background: "var(--wa-accent)" }}
@@ -256,14 +257,29 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
             <button
               type="button"
+              disabled={busy || cooldown > 0}
+              onClick={() => void sendCode()}
+              className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium disabled:opacity-60"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              {cooldown > 0 ? `Tekrar kod gönder: ${cooldown}s` : "Tekrar kod gönder"}
+            </button>
+            <button
+              type="button"
               onClick={() => setStep("phone")}
-              className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium"
+              className="mt-1 w-full rounded-full px-4 py-2.5 text-xs font-medium"
               style={{ color: "var(--wa-muted)" }}
             >
               Numarayı değiştir
             </button>
           </>
         )}
+
+        <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
+          Numaranız yalnızca uçtan uca şifreli ağ kimliğinizi doğrulamak için kullanılır. 6698
+          sayılı KVKK kapsamında numaranız 3. taraflarla asla paylaşılmaz.
+        </p>
+
 
       </div>
     </div>
