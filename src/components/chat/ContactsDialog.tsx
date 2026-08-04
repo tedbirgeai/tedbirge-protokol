@@ -83,9 +83,8 @@ function ContactRow({
               </span>
             )}
           </div>
-          <p className="mt-1 font-mono text-[11px] tracking-wider text-muted-foreground">
-            {c.shortId}
-            {c.claimedName && !c.nickname ? ` · beyan: ${c.claimedName}` : ""}
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {c.claimedName && !c.nickname ? `Beyan edilen ad: ${c.claimedName}` : "Doğrulanmış kişi"}
           </p>
           {c.nickname && c.claimedName && c.nickname !== c.claimedName && (
             <p className="text-[11px] text-muted-foreground">Kendi beyanı: {c.claimedName}</p>
