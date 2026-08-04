@@ -122,8 +122,8 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       // Rehber otomatik eşitlenir: elle numara girişi yoktur.
       await syncDeviceContacts();
       onDone();
-    } catch (err) {
-      setError(err instanceof Error ? `Kod doğrulanamadı: ${err.message}` : "Kod doğrulanamadı.");
+    } catch {
+      setError("Kod doğrulanamadı. Kodu kontrol edip yeniden deneyin.");
     } finally {
       setBusy(false);
     }
