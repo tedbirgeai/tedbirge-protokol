@@ -1,21 +1,29 @@
 /**
- * Telefon numarası ile katılım (WhatsApp mantığı).
+ * Telefon numarası ile katılım — Tedbirge Yerel Ağ Doğrulaması.
  * ------------------------------------------------------------------
- * 1) Numara + görünen ad  → SMS ile tek kullanımlık kod
- * 2) Kod doğrulaması      → hesap oturumu açılır
- * 3) Kişi kimliği hesaba sabitlenir (Chrome/Edge/telefon aynı kimlik)
- * 4) İsteğe bağlı rehber eşleştirme
+ * 1) Numara + görünen ad
+ * 2) Doğrulama kodu cihazda üretilir (RFC 6238 / TOTP, Web Crypto)
+ * 3) Kod cihazda doğrulanır; oturum yerelde saklanır
+ * 4) İnternet varsa bulut hesabı arka planda eşleşir (rehber için)
  *
- * Doğrulama %100 gerçek SMS ile yapılır; test/mock kod yoktur.
+ * Dış SMS/GSM servisi kullanılmaz; internet kesintisinde de çalışır.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setPhone } from "@/lib/chat/profile";
 import { normalizePhone, syncDeviceContacts } from "@/lib/chat/directory";
 import { ensureNotificationPermission } from "@/lib/chat/push";
+import {
+  isOnline,
+  localCode,
+  saveLocalSession,
+  secondsLeft,
+  verifyLocalCode,
+} from "@/lib/chat/local-auth";
 
 type Step = "phone" | "code";
+
 
 /** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
 const COUNTRIES: { code: string; flag: string; name: string }[] = [
