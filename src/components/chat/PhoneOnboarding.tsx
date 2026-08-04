@@ -70,30 +70,38 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // SMS servisi kapalıysa akış kilitlenmez: yerel doğrulama koduyla devam edilir.
-  const [testMode, setTestMode] = useState(false);
+  // Art arda SMS isteğini engelleyen geri sayım (saniye).
+  const [cooldown, setCooldown] = useState(0);
 
   const e164 = normalizePhone(phone, dial);
-  const FALLBACK_CODE = "123456";
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setTimeout(() => setCooldown((s) => s - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldown]);
 
   async function sendCode() {
     if (!e164) {
       setError("Telefon numarasını kontrol edin.");
       return;
     }
+    if (cooldown > 0) return;
     setBusy(true);
     setError(null);
     try {
       const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
       if (error) throw error;
-      setTestMode(false);
       setStep("code");
+      setCooldown(60);
       toast.success("Doğrulama kodu gönderildi", { description: e164 });
-    } catch {
-      // SMS sağlayıcısı yoksa kullanıcı beklemez: test kodu ile devam eder.
-      setTestMode(true);
-      setStep("code");
-      toast.info("Test modu", { description: `Doğrulama kodunuz: ${FALLBACK_CODE}` });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      setError(
+        /provider|not enabled|unsupported/i.test(raw)
+          ? "SMS doğrulama servisi şu anda etkin değil. Lütfen kısa süre sonra tekrar deneyin."
+          : "Kod gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
+      );
     } finally {
       setBusy(false);
     }
@@ -104,19 +112,12 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      if (testMode) {
-        if (code.trim() !== FALLBACK_CODE) {
-          setError(`Test modu kodu: ${FALLBACK_CODE}`);
-          return;
-        }
-      } else {
-        const { error } = await supabase.auth.verifyOtp({
-          phone: e164,
-          token: code.trim(),
-          type: "sms",
-        });
-        if (error) throw error;
-      }
+      const { error } = await supabase.auth.verifyOtp({
+        phone: e164,
+        token: code.trim(),
+        type: "sms",
+      });
+      if (error) throw error;
       await finish(e164);
       // Rehber otomatik eşitlenir: elle numara girişi yoktur.
       await syncDeviceContacts();
@@ -127,6 +128,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   }
+
 
   async function finish(verifiedPhone: string | null) {
     setAlias(name.trim() || verifiedPhone || "Ben");
