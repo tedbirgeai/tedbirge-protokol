@@ -91,8 +91,13 @@ export const sendPhoneOtp = createServerFn({ method: "POST" })
     if (!res.ok) {
       const detail = await res.text();
       console.error(`[otp] twilio send failed [${res.status}]: ${detail}`);
+      // Twilio deneme (trial) hesabı serbest metin SMS göndermeye izin vermez.
+      if (detail.includes("572006") || /trial account/i.test(detail)) {
+        return { ok: false as const, reason: "trial-restricted" as const };
+      }
       return { ok: false as const, reason: "send-failed" as const, status: res.status };
     }
+
 
     await supabaseAdmin.from("phone_otp_codes").insert({
       phone_hash: ph,
