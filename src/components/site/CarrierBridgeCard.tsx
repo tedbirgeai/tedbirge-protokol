@@ -33,6 +33,8 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const [editingGw, setEditingGw] = useState(false);
   const [gwDraft, setGwDraft] = useState(gatewayUrl());
   const [gwError, setGwError] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanStatus, setScanStatus] = useState<string | null>(null);
 
   useEffect(() => {
     refreshBridgeSupport();
@@ -42,6 +44,27 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   useEffect(() => {
     setBridgeLicense(licenseKey);
   }, [licenseKey]);
+
+  const autoDetect = async () => {
+    setScanning(true);
+    setGwError(null);
+    setScanStatus("Yerel ağ taranıyor…");
+    try {
+      const found = await discoverGatewayUrl((c) => setScanStatus(`Deneniyor: ${c}`));
+      if (found) {
+        setGwUrl(found);
+        setGwDraft(found);
+        setEditingGw(false);
+        setScanStatus(`Geçit bulundu ve kaydedildi: ${found}`);
+      } else {
+        setScanStatus(
+          "Bu ağda Tedbirge geçidi bulunamadı. Aşağıdaki adımlarla modem adresini elle girebilirsiniz.",
+        );
+      }
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const saveGateway = () => {
     try {
@@ -54,6 +77,7 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
       setGwError(e instanceof Error ? e.message : "Adres geçersiz.");
     }
   };
+
 
   const run = async (id: CarrierId, fn: () => Promise<void>) => {
     setBusy(id);
