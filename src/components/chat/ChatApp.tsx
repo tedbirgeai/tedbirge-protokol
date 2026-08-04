@@ -1712,7 +1712,7 @@ export function ChatApp() {
                   pressFeedback();
                   setEmojiOpen((v) => !v);
                 }}
-                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                className="wa-press shrink-0 rounded-full p-1.5 hover:bg-black/5 sm:p-2.5"
                 style={{ color: emojiOpen ? "var(--wa-accent)" : "var(--wa-muted)" }}
                 aria-label="Emoji ekle"
               >
@@ -1724,7 +1724,7 @@ export function ChatApp() {
                   pressFeedback();
                   fileRef.current?.click();
                 }}
-                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                className="wa-press shrink-0 rounded-full p-1.5 hover:bg-black/5 sm:p-2.5"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Dosya ekle"
               >
@@ -1736,7 +1736,7 @@ export function ChatApp() {
                   pressFeedback();
                   setEmergencyOpen(true);
                 }}
-                className="wa-press rounded-full p-2.5 hover:bg-black/5"
+                className="wa-press shrink-0 rounded-full p-1.5 hover:bg-black/5 sm:p-2.5"
                 style={{ color: "#e03131" }}
                 aria-label="Konum paylaş veya acil durum yayını"
                 title="Konum paylaş · Acil durum yayını (SOS)"
@@ -1746,7 +1746,7 @@ export function ChatApp() {
 
               {recording ? (
                 <div
-                  className="flex flex-1 items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2.5 text-sm sm:px-4"
                   style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
                 >
                   <span
@@ -1768,7 +1768,7 @@ export function ChatApp() {
                     if (active) void sendTyping(active.id, e.target.value.length > 0);
                   }}
                   placeholder="Bir mesaj yazın"
-                  className="flex-1 rounded-lg px-4 py-2.5 text-sm outline-none"
+                  className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-sm outline-none sm:px-4"
                   style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
                 />
               )}
@@ -1781,7 +1781,7 @@ export function ChatApp() {
                 onPointerUp={() => void pttUp()}
                 onPointerLeave={() => void pttUp()}
                 onPointerCancel={() => void pttUp()}
-                className={`wa-press rounded-full p-2.5 ${ptt ? "wa-ring text-white" : ""}`}
+                className={`wa-press shrink-0 rounded-full p-1.5 sm:p-2.5 ${ptt ? "wa-ring text-white" : ""}`}
                 style={{
                   color: ptt ? "#fff" : "var(--wa-muted)",
                   background: ptt ? "#e03131" : "transparent",
@@ -1794,7 +1794,7 @@ export function ChatApp() {
               {draft.trim() ? (
                 <button
                   type="submit"
-                  className="wa-press rounded-full p-2.5 text-white"
+                  className="wa-press shrink-0 rounded-full p-2 text-white sm:p-2.5"
                   style={{ background: "var(--wa-accent)" }}
                   aria-label="Gönder"
                 >
@@ -1804,7 +1804,7 @@ export function ChatApp() {
                 <button
                   type="button"
                   onClick={() => void toggleRecording()}
-                  className={`wa-press rounded-full p-2.5 text-white ${recording ? "wa-ring" : ""}`}
+                  className={`wa-press shrink-0 rounded-full p-2 text-white sm:p-2.5 ${recording ? "wa-ring" : ""}`}
                   style={{ background: recording ? "#e03131" : "var(--wa-accent)" }}
                   aria-label={recording ? "Kaydı bitir ve gönder" : "Sesli not kaydet"}
                 >
