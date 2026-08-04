@@ -5,7 +5,7 @@
  * Kurallar:
  *  - Başlıkta asla teknik kimlik (mob-…, TBG-…) gösterilmez.
  *  - Kullanıcı hiçbir butona basmaz; rehber izni girişte otomatik istenir.
- *  - Rehber okunamazsa örnek (önizleme) kişileri listelenir.
+ *  - Eşleşme yoksa sahte kişi üretilmez; temiz bir boş durum gösterilir.
  */
 import { useEffect, useMemo, useRef } from "react";
 import { Radio, StickyNote, User } from "lucide-react";
@@ -13,7 +13,6 @@ import { Radio, StickyNote, User } from "lucide-react";
 import { useContacts, type Contact } from "@/lib/chat/contacts";
 import { syncDeviceContacts } from "@/lib/chat/directory";
 import { isTechnicalLabel } from "@/lib/chat/display-name";
-import { DEMO_CONTACTS } from "@/lib/chat/demo-contacts";
 import type { PeerInfo } from "@/lib/browser-node";
 
 type Props = {
@@ -110,15 +109,7 @@ export function DirectoryPanel({
     [peers, q, labelOf],
   );
 
-  const demo = useMemo(
-    () =>
-      contacts.length === 0
-        ? DEMO_CONTACTS.slice(1).filter(
-            (d) => !q || d.name.toLocaleLowerCase("tr").includes(q),
-          )
-        : [],
-    [contacts.length, q],
-  );
+  const empty = contacts.length === 0 && nodes.length === 0;
 
   return (
     <div style={{ borderTop: "1px solid var(--wa-border)" }}>
@@ -131,8 +122,8 @@ export function DirectoryPanel({
 
       {!q && (
         <Row
-          title={DEMO_CONTACTS[0]!.name}
-          subtitle={DEMO_CONTACTS[0]!.note}
+          title="Kendinize not"
+          subtitle="Notlar ve bağlantılar"
           icon={<StickyNote className="h-4 w-4" />}
           onClick={onOpenSelfNote}
         />
@@ -159,15 +150,11 @@ export function DirectoryPanel({
         />
       ))}
 
-      {demo.map((d) => (
-        <Row
-          key={d.id}
-          title={d.name}
-          subtitle={d.note}
-          icon={<User className="h-4 w-4" />}
-          onClick={() => onOpenPeer(d.id, d.name)}
-        />
-      ))}
+      {empty && (
+        <p className="px-4 py-3 text-[13px]" style={{ color: "var(--wa-muted)" }}>
+          Ağda eşleşen kayıtlı kişi bulunamadı.
+        </p>
+      )}
 
       <p className="px-4 pb-4 pt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
         Numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle yapılır.
