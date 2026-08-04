@@ -90,18 +90,25 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
-      if (error) throw error;
+      const { sendPhoneOtp } = await import("@/lib/phone-otp.functions");
+      const res = await sendPhoneOtp({ data: { phone: e164 } });
+      if (!res.ok) {
+        setError(
+          res.reason === "rate-limited"
+            ? "Az önce kod gönderildi. Lütfen 60 saniye bekleyin."
+            : res.reason === "no-sender"
+              ? "SMS gönderici numarası tanımlı değil. Yönetici Twilio gönderici numarasını tanımlamalı."
+              : res.reason === "sms-not-configured"
+                ? "SMS servisi bağlantısı eksik. Yönetici ile iletişime geçin."
+                : "SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
+        );
+        return;
+      }
       setStep("code");
       setCooldown(60);
       toast.success("Doğrulama kodu gönderildi", { description: e164 });
-    } catch (err) {
-      const raw = err instanceof Error ? err.message : "";
-      setError(
-        /provider|not enabled|unsupported/i.test(raw)
-          ? "SMS doğrulama servisi şu anda etkin değil. Lütfen kısa süre sonra tekrar deneyin."
-          : "Kod gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
-      );
+    } catch {
+      setError("SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.");
     } finally {
       setBusy(false);
     }
@@ -112,12 +119,25 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: e164,
-        token: code.trim(),
-        type: "sms",
+      const { verifyPhoneOtp } = await import("@/lib/phone-otp.functions");
+      const res = await verifyPhoneOtp({ data: { phone: e164, code: code.trim() } });
+      if (!res.ok) {
+        setError(
+          res.reason === "expired"
+            ? "Kodun süresi doldu. Yeni kod isteyin."
+            : res.reason === "too-many-attempts"
+              ? "Çok fazla hatalı deneme. Yeni kod isteyin."
+              : res.reason === "no-code"
+                ? "Geçerli kod bulunamadı. Yeni kod isteyin."
+                : "Kod doğrulanamadı. Kodu kontrol edip yeniden deneyin.",
+        );
+        return;
+      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: res.email,
+        password: res.password,
       });
-      if (error) throw error;
+      if (signInError) throw signInError;
       await finish(e164);
       // Rehber otomatik eşitlenir: elle numara girişi yoktur.
       await syncDeviceContacts();
@@ -128,6 +148,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   }
+
 
 
   async function finish(verifiedPhone: string | null) {
