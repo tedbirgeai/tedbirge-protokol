@@ -59,16 +59,40 @@ export async function pickDeviceContacts(): Promise<DeviceContact[]> {
   return out;
 }
 
+const LOCAL_BOOK_KEY = "tedbirge.chat.localBook";
+
 /**
- * Cihaz rehberini otomatik eşitler: izin verilirse seçilen kişiler
- * arka planda özetlenip Tedbirge ağıyla eşleştirilir. Elle numara
- * yazma/yapıştırma yoktur.
+ * Cihaz rehberini YALNIZCA bu cihazda saklar (KVKK: ham numara/ad
+ * hiçbir zaman sunucuya veya ağa gönderilmez).
+ */
+export function saveLocalBook(list: DeviceContact[]): void {
+  try {
+    window.localStorage.setItem(LOCAL_BOOK_KEY, JSON.stringify(list.slice(0, 1000)));
+  } catch {
+    /* gizli mod / kota */
+  }
+}
+
+export function loadLocalBook(): DeviceContact[] {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_BOOK_KEY);
+    return raw ? (JSON.parse(raw) as DeviceContact[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Cihaz rehberini otomatik eşitler: izin verilirse kişiler önce bu
+ * cihazın yerel hafızasına yazılır, ardından yalnızca geri döndürülemez
+ * özetlerle Tedbirge ağıyla eşleştirilir. Elle numara yazma yoktur.
  */
 export async function syncDeviceContacts(): Promise<ImportResult | null> {
   if (!deviceContactsSupported()) return null;
   try {
     const picked = await pickDeviceContacts();
     if (picked.length === 0) return { checked: 0, matched: 0 };
+    saveLocalBook(picked);
     return await importContacts(picked);
   } catch {
     return null;
