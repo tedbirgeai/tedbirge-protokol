@@ -252,6 +252,32 @@ export function directConvId(a: string, b: string) {
   return `dm_${[a, b].sort().join("_")}`;
 }
 
+/** "Kendinize mesaj gönderin" — cihazda kalan kişisel not defteri. */
+export const SELF_CONV_ID = "self_notes";
+
+export function isSelfConversation(id: string) {
+  return id === SELF_CONV_ID;
+}
+
+/** Not defterini oluşturur (varsa dokunmaz) ve listeye getirir. */
+export async function ensureSelfConversation(title = "Ben (Siz)"): Promise<Conversation> {
+  const existing = await getConversation(SELF_CONV_ID);
+  if (existing) return existing;
+  const conv: Conversation = {
+    id: SELF_CONV_ID,
+    title,
+    members: [getBrowserNodeId()],
+    group: false,
+    lastTs: Date.now(),
+    lastText: "",
+    unread: 0,
+    pinned: true,
+  };
+  await putConversation(conv);
+  await refreshConversations();
+  return conv;
+}
+
 export async function ensureDirectConversation(
   peerId: string,
   title?: string,
