@@ -53,6 +53,7 @@ import {
   toggleStar,
   createGroup,
   ensureDirectConversation,
+  ensureSelfConversation,
   markRead,
   removeConversation,
   conversationTargets,
