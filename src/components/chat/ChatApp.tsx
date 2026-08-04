@@ -99,6 +99,7 @@ import {
 import { useNodeRuntime } from "@/lib/node-runtime";
 import { getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
+import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
