@@ -98,22 +98,32 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
         </p>
       )}
 
-      {/* Yerel geçit adresi — dinamik IP/port + sertifika izni */}
+      {/* Yerel geçit adresi — otomatik bulma + dinamik IP/port + sertifika izni */}
       <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className={label}>Yerel geçit adresi</span>
-          {!editingGw && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                setGwDraft(gwUrl);
-                setEditingGw(true);
-              }}
-              className="rounded-sm border border-border px-2.5 py-1 font-mono text-[10px]"
+              onClick={autoDetect}
+              disabled={scanning}
+              className="rounded-sm border border-primary/60 px-2.5 py-1 font-mono text-[10px] text-primary disabled:opacity-60"
             >
-              Düzenle / IP değiştir
+              {scanning ? "Taranıyor…" : "Otomatik bul"}
             </button>
-          )}
+            {!editingGw && (
+              <button
+                type="button"
+                onClick={() => {
+                  setGwDraft(gwUrl);
+                  setEditingGw(true);
+                }}
+                className="rounded-sm border border-border px-2.5 py-1 font-mono text-[10px]"
+              >
+                Elle gir / IP değiştir
+              </button>
+            )}
+          </div>
         </div>
 
         {editingGw ? (
@@ -148,6 +158,9 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
           <p className="mt-2 font-mono text-[12px] text-foreground">{gwUrl}</p>
         )}
         {gwError && <p className="mt-2 font-mono text-[10px] text-destructive">{gwError}</p>}
+        {scanStatus && (
+          <p className="mt-2 font-mono text-[10px] text-muted-foreground">{scanStatus}</p>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <a
@@ -169,20 +182,51 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
             bu sayfaya dönüp Geçide bağlan'a basın.
           </span>
         </div>
-        <p className="mt-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
-          Adres yalnızca bu tarayıcıda saklanır (yerel depolama). IP veya port farklıysa
-          örn. <span className="text-foreground">10.0.0.1:8443</span> yazmanız yeterlidir;
-          {" "}
-          {(() => {
-            try {
-              normalizeGatewayUrl(gwDraft);
-              return "adres biçimi geçerli.";
-            } catch {
-              return "adres biçimini kontrol edin.";
-            }
-          })()}
-        </p>
+
+        {/* Adresi bulma rehberi — herkesin doğru yazabilmesi için */}
+        <details className="mt-4 rounded-sm border border-border/70 bg-card/40 p-3">
+          <summary className="cursor-pointer font-mono text-[11px] text-foreground">
+            Geçit adresimi nasıl bulurum? (3 adım)
+          </summary>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-[12px] leading-relaxed text-muted-foreground">
+            <li>
+              <span className="text-foreground">En kolayı:</span> yukarıdaki{" "}
+              <span className="text-foreground">Otomatik bul</span> düğmesine basın. Aynı Wi-Fi
+              ağındaki yaygın modem adresleri sırayla denenir; geçit bulunursa adres kendiliğinden
+              yazılır ve saklanır.
+            </li>
+            <li>
+              <span className="text-foreground">Bulunamazsa modemin adresini yazın.</span>{" "}
+              Windows: <span className="text-foreground">Başlat → cmd → ipconfig</span> yazın,
+              “Varsayılan Ağ Geçidi” satırındaki IP'yi alın. macOS:{" "}
+              <span className="text-foreground">Sistem Ayarları → Ağ → Ayrıntılar → TCP/IP</span>.
+              Android: <span className="text-foreground">Wi-Fi → bağlı ağ → Gelişmiş</span>. iPhone:{" "}
+              <span className="text-foreground">Ayarlar → Wi-Fi → (i) → Yönlendirici</span>.
+            </li>
+            <li>
+              Bulduğunuz IP'yi <span className="text-foreground">Elle gir</span> kutusuna
+              yapıştırın; port yazmanıza gerek yok, örn.{" "}
+              <span className="text-foreground">192.168.1.1</span> yeterlidir —{" "}
+              <span className="text-foreground">:8443</span> otomatik eklenir. Kaydet'e basıp
+              sertifika iznini onaylayın.
+            </li>
+          </ol>
+          <p className="mt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
+            Adres yalnızca bu tarayıcıda saklanır (yerel depolama). Modem henüz kurulmadıysa
+            sistem <span className="text-foreground">Sanal Geçit Modu</span> ile çalışmaya devam
+            eder; hiçbir işlem yarıda kalmaz.{" "}
+            {(() => {
+              try {
+                normalizeGatewayUrl(gwDraft);
+                return "Girilen adres biçimi geçerli.";
+              } catch {
+                return "Girilen adres biçimini kontrol edin.";
+              }
+            })()}
+          </p>
+        </details>
       </div>
+
 
 
       {/* Spektrum bütçesi — BTK/ETSI görev döngüsü yazılımsal tavanı */}
