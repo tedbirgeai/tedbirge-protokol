@@ -277,13 +277,24 @@ function MobileMenu({ activePath }: { activePath: string }) {
             </div>
           </div>
 
-          <Link
-            to="/iletisim"
-            onClick={() => setOpen(false)}
-            className="mt-6 block rounded-sm bg-primary px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground"
-          >
-            Pilot Başlat
-          </Link>
+          <div className="mt-6 grid gap-3">
+            <InstallAppCta variant="primary" label="Uygulamayı Yükle" className="justify-center" />
+            <Link
+              to="/chat"
+              onClick={() => setOpen(false)}
+              className="block rounded-sm border border-border px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground"
+            >
+              Uygulamaya Gir
+            </Link>
+            <Link
+              to="/iletisim"
+              onClick={() => setOpen(false)}
+              className="block rounded-sm bg-primary px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground"
+            >
+              Pilot Başlat
+            </Link>
+          </div>
+
         </div>
       )}
     </div>
