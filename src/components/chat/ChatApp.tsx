@@ -781,7 +781,7 @@ export function ChatApp() {
   const activeName = active
     ? active.group
       ? active.title
-      : contactLabel(active.members[0] ?? active.title, active.title)
+      : humanName(contactLabel(active.members[0] ?? active.title, active.title), "Kayıtsız kişi")
     : "";
   // Mükerrer sohbetler birleştirildiğinde üyelerde eski cihaz kimlikleri de
   // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
