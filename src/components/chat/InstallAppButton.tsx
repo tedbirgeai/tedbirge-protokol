@@ -1,77 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Download, Share, X } from "lucide-react";
 
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
-
-function isStandalone() {
-  if (typeof window === "undefined") return false;
-  const iosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone;
-  return Boolean(window.matchMedia?.("(display-mode: standalone)").matches || iosStandalone);
-}
-
-function isIos() {
-  if (typeof navigator === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent);
-}
-
-function isPublishedOrigin() {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return (
-    window.location.protocol === "https:" &&
-    !host.startsWith("id-preview--") &&
-    !host.startsWith("preview--") &&
-    !host.endsWith(".lovableproject.com") &&
-    window.self === window.top
-  );
-}
+import { isPublishedOrigin, promptInstall, useInstallState } from "@/lib/pwa-install";
 
 /**
  * "Uygulamayı yükle" düğmesi — telefon, tablet ve bilgisayarda ana ekrana
- * / uygulama listesine ekler. iOS'ta tarayıcı otomatik kurulumu desteklemediği
- * için adım adım yönerge gösterilir.
+ * / uygulama listesine ekler. Kurulum olayı sayfa açılışında küresel depoda
+ * yakalandığı için tek tıkla yerel kurulum penceresi açılır. iOS'ta tarayıcı
+ * otomatik kurulumu desteklemediğinden adım adım yönerge gösterilir.
  */
 export function InstallAppButton({ compact = false }: { compact?: boolean }) {
-  const promptRef = useRef<InstallPromptEvent | null>(null);
-  const [ready, setReady] = useState(false);
-  const [installed, setInstalled] = useState(false);
+  const { installed, ios } = useInstallState();
   const [help, setHelp] = useState(false);
-  const published = isPublishedOrigin();
-
-  useEffect(() => {
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      promptRef.current = e as InstallPromptEvent;
-      setReady(true);
-    };
-    const onInstalled = () => {
-      setInstalled(true);
-      setReady(false);
-      promptRef.current = null;
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", onInstalled);
-    setInstalled(isStandalone());
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
 
   const install = useCallback(async () => {
-    const evt = promptRef.current;
-    if (!evt) {
-      setHelp(true);
-      return;
-    }
-    await evt.prompt();
-    const choice = await evt.userChoice;
-    promptRef.current = null;
-    setReady(false);
-    if (choice.outcome === "accepted") setInstalled(true);
+    const result = await promptInstall();
+    if (result === "unavailable") setHelp(true);
   }, []);
 
   if (installed) return null;
@@ -92,7 +36,6 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
       >
         <Download className="h-[18px] w-[18px]" aria-hidden />
         {!compact && <span>Uygulamayı yükle</span>}
-        {!compact || ready ? null : null}
       </button>
 
       {help && (
@@ -123,7 +66,7 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
               className="mt-3 space-y-2 text-[13.5px] leading-relaxed"
               style={{ color: "var(--wa-muted)" }}
             >
-              {isIos() ? (
+              {ios ? (
                 <>
                   <li>
                     1. Alt çubuktaki <Share className="inline h-3.5 w-3.5" aria-hidden /> Paylaş
@@ -134,7 +77,7 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
                 </>
               ) : (
                 <>
-                  {!published && (
+                  {!isPublishedOrigin() && (
                     <li>Önce yayınlanmış Tedbirge adresini yeni sekmede açın.</li>
                   )}
                   <li>1. Tarayıcı menüsünü (⋮ veya …) açın.</li>

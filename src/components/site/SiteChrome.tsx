@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
+import { InstallAppCta } from "@/components/site/InstallAppCta";
+
 import brandMark from "@/assets/tedbirge-mark.png.asset.json";
 
 const navGroups = [
@@ -275,13 +277,24 @@ function MobileMenu({ activePath }: { activePath: string }) {
             </div>
           </div>
 
-          <Link
-            to="/iletisim"
-            onClick={() => setOpen(false)}
-            className="mt-6 block rounded-sm bg-primary px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground"
-          >
-            Pilot Başlat
-          </Link>
+          <div className="mt-6 grid gap-3">
+            <InstallAppCta variant="primary" label="Uygulamayı Yükle" className="justify-center" />
+            <Link
+              to="/chat"
+              onClick={() => setOpen(false)}
+              className="block rounded-sm border border-border px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground"
+            >
+              Uygulamaya Gir
+            </Link>
+            <Link
+              to="/iletisim"
+              onClick={() => setOpen(false)}
+              className="block rounded-sm bg-primary px-4 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground"
+            >
+              Pilot Başlat
+            </Link>
+          </div>
+
         </div>
       )}
     </div>
@@ -324,12 +337,15 @@ export function SiteHeader() {
           <span aria-hidden className="hidden h-5 w-px bg-border/70 sm:block" />
           <LanguageSwitcher />
 
+          <InstallAppCta variant="nav" label="Uygulamayı Yükle" className="hidden md:inline-flex" />
+
           <Link
             to="/chat"
             className="hidden rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90 sm:block"
           >
-            Platforma Giriş Yap
+            Uygulamaya Gir
           </Link>
+
 
           <Link
             to="/iletisim"
