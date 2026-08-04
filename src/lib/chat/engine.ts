@@ -526,7 +526,7 @@ export async function sendLocation(convId: string, point: GeoPoint, note?: strin
   await appendLocal(conv, msg);
   sentSound();
 
-  let delivered = false;
+  let delivered = isSelfConversation(convId);
   for (const peer of await targetsOf(conv)) {
     // Harita karesi alıcı cihazda yeniden çizilir — paket küçük kalır.
     const ok = await sendMesh(
@@ -741,7 +741,7 @@ async function sendForwardedText(conv: Conversation, text: string, author: strin
     ...(ttlOf(conv.id) ? { expiresAt: Date.now() + ttlOf(conv.id) } : {}),
   };
   await appendLocal(conv, msg);
-  let delivered = false;
+  let delivered = isSelfConversation(conv.id);
   for (const peer of await targetsOf(conv)) {
     const ok = await sendMesh("chat", peer, {
       t: "text",
