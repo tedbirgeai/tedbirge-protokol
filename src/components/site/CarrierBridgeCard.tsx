@@ -5,9 +5,12 @@ import {
   connectGatewayCarrier,
   connectSerialCarrier,
   disconnectCarrier,
+  gatewayCertUrl,
+  gatewayUrl,
+  normalizeGatewayUrl,
   refreshBridgeSupport,
-  savedGatewayUrl,
   setBridgeLicense,
+  setGatewayUrl,
   useCarrierBridge,
   type CarrierId,
 } from "@/lib/carrier-bridge";
@@ -26,13 +29,31 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const { links, supported } = useCarrierBridge();
   const [busy, setBusy] = useState<CarrierId | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [gwUrl, setGwUrl] = useState(gatewayUrl());
+  const [editingGw, setEditingGw] = useState(false);
+  const [gwDraft, setGwDraft] = useState(gatewayUrl());
+  const [gwError, setGwError] = useState<string | null>(null);
 
   useEffect(() => {
     refreshBridgeSupport();
+    setGwUrl(gatewayUrl());
+    setGwDraft(gatewayUrl());
   }, []);
   useEffect(() => {
     setBridgeLicense(licenseKey);
   }, [licenseKey]);
+
+  const saveGateway = () => {
+    try {
+      const next = setGatewayUrl(gwDraft);
+      setGwUrl(next);
+      setGwDraft(next);
+      setGwError(null);
+      setEditingGw(false);
+    } catch (e) {
+      setGwError(e instanceof Error ? e.message : "Adres geçersiz.");
+    }
+  };
 
   const run = async (id: CarrierId, fn: () => Promise<void>) => {
     setBusy(id);
@@ -50,6 +71,7 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const liveCount = Object.keys(links).length;
   const spectrum = useCarrierScheduler();
   const dutyPct = Math.min(100, Math.round(spectrum.ratio * 100));
+
 
   return (
     <div className={box}>
