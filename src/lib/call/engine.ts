@@ -801,6 +801,7 @@ async function onCallSignal(from: string, raw: unknown) {
     if (!leg) return;
     if (outgoingTimer) clearTimeout(outgoingTimer);
     outgoingTimer = null;
+    stopDialRetry();
     if (p.alias) leg.alias = p.alias;
     await leg.pc.setRemoteDescription({ type: "answer", sdp: p.sdp });
     await applyPendingIce(from, leg.pc);

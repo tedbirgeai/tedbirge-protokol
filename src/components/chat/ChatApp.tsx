@@ -941,7 +941,6 @@ export function ChatApp() {
       style={{ background: "var(--wa-panel-soft)" }}
     >
 
-      <CallOverlay />
       <PairingDialog nameOf={nameOf} />
       <ForwardDialog
         message={forwardMsg}
