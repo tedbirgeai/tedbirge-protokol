@@ -26,12 +26,20 @@ import {
 import { decodeEnvelope } from "@/lib/mesh-envelope";
 import type { Priority } from "@/lib/store/idb";
 
-export type CarrierId = "lora" | "halow" | "tvws" | "wigig" | "fso" | "cellular" | "satellite";
+export type CarrierId =
+  | "gateway"
+  | "lora"
+  | "halow"
+  | "tvws"
+  | "wigig"
+  | "fso"
+  | "cellular"
+  | "satellite";
 
 export type CarrierDef = {
   id: CarrierId;
   name: string;
-  transport: ("serial" | "bluetooth")[];
+  transport: ("serial" | "bluetooth" | "wss")[];
   baud: number;
   hint: string;
   /** Operatör aboneliği/hat beyanı olmadan veri düzlemine açılmaz. */
@@ -45,6 +53,16 @@ export type CarrierDef = {
 };
 
 export const BRIDGEABLE_CARRIERS: CarrierDef[] = [
+  {
+    id: "gateway",
+    name: "Yerel geçit (OpenWrt)",
+    transport: ["wss"],
+    baud: 0,
+    hint: "Şebeke beslemeli ev/bina modeminde çalışan Tedbirge geçidi — wss://192.168.1.1:8443",
+    typLatencyMs: 10,
+    costPerMb: 0,
+    capacityKbps: 50000,
+  },
   {
     id: "lora",
     name: "LoRa sub-GHz",
@@ -162,7 +180,7 @@ export function carrierAuthorized(carrier: CarrierId) {
 
 export type BridgeLink = {
   carrier: CarrierId;
-  transport: "serial" | "bluetooth";
+  transport: "serial" | "bluetooth" | "wss";
   connectedAt: number;
   lastFrameAt: number | null;
   rssi: number | null;
@@ -617,6 +635,91 @@ export async function connectBluetoothCarrier(carrier: CarrierId) {
         await tx.stopNotifications();
         tx.removeEventListener("characteristicvaluechanged", onValue);
         device.gatt.disconnect();
+      } catch {
+        /* yok say */
+      }
+    },
+  });
+  startUplink(carrier);
+}
+
+/* --------------------- 10. taşıyıcı: yerel geçit --------------------- */
+
+const GATEWAY_URL_KEY = "tedbirge.gateway.url";
+
+export function savedGatewayUrl(): string {
+  try {
+    return window.localStorage.getItem(GATEWAY_URL_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * OpenWrt/Linux üzerinde çalışan hafif Go geçidi ile tarayıcı arasındaki
+ * çift yönlü şifreli zarf akışı. Geçit yalnızca zarf taşır; egress kilidi
+ * nedeniyle genel internete NAT/proxy yapmaz.
+ */
+export async function connectGatewayCarrier(url?: string) {
+  const target = (url ?? savedGatewayUrl()).trim();
+  if (!target) throw new Error("Geçit adresi gerekli (örn. wss://192.168.1.1:8443).");
+  if (!/^wss:\/\//i.test(target) && !/^ws:\/\/(localhost|127\.0\.0\.1|192\.168\.|10\.)/i.test(target))
+    throw new Error("Yalnızca wss:// (veya yerel ağda ws://) adresleri kabul edilir.");
+
+  const carrier: CarrierId = "gateway";
+  const socket = new WebSocket(target);
+
+  await new Promise<void>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("Geçide ulaşılamadı (zaman aşımı).")), 8000);
+    socket.onopen = () => {
+      clearTimeout(t);
+      resolve();
+    };
+    socket.onerror = () => {
+      clearTimeout(t);
+      reject(new Error("Geçit bağlantısı kurulamadı. Adresi ve sertifikayı kontrol edin."));
+    };
+  });
+
+  try {
+    window.localStorage.setItem(GATEWAY_URL_KEY, target);
+  } catch {
+    /* private mode */
+  }
+
+  state.links[carrier] = {
+    carrier,
+    transport: "wss",
+    connectedAt: Date.now(),
+    lastFrameAt: null,
+    rssi: null,
+    snr: null,
+    rttMs: null,
+    lossPct: null,
+    frames: 0,
+    lastLine: "",
+    uploaded: 0,
+    error: null,
+  };
+  publish();
+
+  socket.onmessage = (ev) => {
+    const text = typeof ev.data === "string" ? ev.data : "";
+    text.split(/\r?\n/).forEach((l) => l && ingest(carrier, l));
+  };
+  socket.onclose = () => {
+    upsert(carrier, { error: "Geçit bağlantısı kapandı." });
+  };
+
+  handles.set(carrier, {
+    timer: null,
+    write: async (payload: string) => {
+      if (socket.readyState !== WebSocket.OPEN) throw new Error("Geçit kapalı.");
+      socket.send(payload);
+    },
+    stop: async () => {
+      try {
+        socket.close();
       } catch {
         /* yok say */
       }

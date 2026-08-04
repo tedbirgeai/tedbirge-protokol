@@ -25,6 +25,24 @@ import type { Priority } from "@/lib/store/idb";
 export const ENVELOPE_VERSION = 2 as const;
 export const DEFAULT_TTL = 4;
 
+/**
+ * Dinamik TTL — sabit 4 atlama, acil trafiği menzil dışında sessizce
+ * düşürüyordu. Trafik sınıfına göre atlama bütçesi ayrılır.
+ *  · acil/sinyal : 8 atlama (can güvenliği, en geniş menzil)
+ *  · sohbet/medya: 6 atlama
+ *  · yayın/keşif : 3 atlama (fırtına önleme)
+ */
+export function ttlForKind(kind: EnvelopeKind): number {
+  if (kind === "alert" || kind === "call" || kind === "signal") return 8;
+  if (kind === "chat" || kind === "text" || kind === "media" || kind === "receipt") return 6;
+  if (kind === "ping" || kind === "pong" || kind === "presence") return 3;
+  return 4;
+}
+
+/** TTL tükendiğinde arayüzde gösterilecek otonom durum metni. */
+export const TTL_EXHAUSTED_NOTICE =
+  "Menzil dışı — şebeke bekletiliyor. Mesaj cihazınızda saklandı, bir düğüm menzile girdiğinde otomatik iletilecek.";
+
 export type EnvelopeKind =
   | "ping"
   | "pong"
@@ -165,7 +183,7 @@ export async function createEnvelope(input: CreateInput): Promise<MeshEnvelopeV2
   } satisfies Omit<MeshHeader, "sig" | "ttl" | "hops">;
 
   const sig = await signBytes(input.from, signingBytes(base, body));
-  return { h: { ...base, ttl: input.ttl ?? DEFAULT_TTL, hops: 0, sig }, b: body };
+  return { h: { ...base, ttl: input.ttl ?? ttlForKind(input.kind), hops: 0, sig }, b: body };
 }
 
 export function defaultPriority(kind: EnvelopeKind): Priority {
