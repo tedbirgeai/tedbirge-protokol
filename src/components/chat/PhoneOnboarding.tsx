@@ -133,7 +133,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
 
   return (
     <div
-      className="wa flex min-h-[100dvh] items-center justify-center p-4"
+      className="wa flex min-h-[100dvh] w-full items-center justify-center overflow-x-hidden overflow-y-auto p-4"
       style={{ background: "var(--wa-panel-soft)" }}
     >
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-sm sm:p-8">

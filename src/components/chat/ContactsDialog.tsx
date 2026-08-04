@@ -224,8 +224,8 @@ export function ContactsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:w-full">
+          <DialogHeader className="shrink-0 border-b border-border p-6 pb-4">
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
               Herkesin değişmeyen bir kısa kimliği vardır; adları siz verirsiniz. Numarasıyla
@@ -233,6 +233,7 @@ export function ContactsDialog({
             </DialogDescription>
           </DialogHeader>
 
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 pt-4">
           <div className="rounded-md border border-border bg-card/50 p-4">
             <ContactImportPanel onDone={() => onOpenChange(false)} />
           </div>
