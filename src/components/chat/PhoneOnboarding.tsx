@@ -297,23 +297,53 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             <button
               type="button"
               disabled={busy || !e164 || !name.trim()}
-              onClick={() => void sendCode()}
+              onClick={() => startVerification()}
               className="wa-press mt-5 w-full rounded-full px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
               style={{ background: "var(--wa-accent)" }}
             >
-              {busy ? "Gönderiliyor…" : "Kodu gönder"}
+              Yerel doğrulamayı başlat
             </button>
+            <button
+              type="button"
+              disabled={busy || !e164 || !name.trim()}
+              onClick={() => void quickJoin()}
+              className="mt-3 w-full rounded-full border px-4 py-2.5 text-xs font-medium disabled:opacity-60"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+            >
+              {busy ? "Bağlanıyor…" : "Tek tıkla yerel düğüm girişi"}
+            </button>
+            <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              {online
+                ? "Çevrimiçi: yerel doğrulama sonrası rehber eşleştirmesi de açılır."
+                : "Çevrimdışı: doğrulama tamamen cihazınızda yapılır, internet gerekmez."}
+            </p>
           </>
         )}
 
         {step === "code" && (
           <>
             <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
-              Doğrulama kodu
+              Tedbirge Yerel Ağ Doğrulaması
             </h2>
             <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-              {e164} numarasına gönderilen 6 haneli kodu girin.
+              {e164} için kod cihazınızda üretildi. Dış SMS beklemeden aşağıdaki kodu girin.
             </p>
+
+            <div
+              className="mt-4 rounded-lg border px-4 py-3 text-center"
+              style={{ borderColor: "var(--wa-border)" }}
+            >
+              <div
+                className="text-2xl font-semibold tracking-[0.4em]"
+                style={{ color: "var(--wa-text)" }}
+              >
+                {shownCode || "––––––"}
+              </div>
+              <div className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                Kod {ttl} saniye sonra yenilenir · Offline-Ready
+              </div>
+            </div>
+
             <input
               value={code}
               inputMode="numeric"
@@ -336,12 +366,12 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
             <button
               type="button"
-              disabled={busy || cooldown > 0}
-              onClick={() => void sendCode()}
+              disabled={busy}
+              onClick={() => setCode(shownCode)}
               className="mt-3 w-full rounded-full px-4 py-2.5 text-xs font-medium disabled:opacity-60"
               style={{ color: "var(--wa-muted)" }}
             >
-              {cooldown > 0 ? `Tekrar kod gönder: ${cooldown}s` : "Tekrar kod gönder"}
+              Kodu otomatik doldur
             </button>
             <button
               type="button"
@@ -353,6 +383,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
           </>
         )}
+
 
         <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
           Numaranız yalnızca uçtan uca şifreli ağ kimliğinizi doğrulamak için kullanılır. 6698
