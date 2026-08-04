@@ -1233,7 +1233,7 @@ export function ChatApp() {
             </li>
           ))}
           {conversations.map((c) => {
-            const name = titleOf(c);
+            const name = humanName(titleOf(c));
             return (
               <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
                 <div
