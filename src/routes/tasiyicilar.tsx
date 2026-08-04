@@ -193,7 +193,7 @@ function Carriers() {
         <div className="mx-auto max-w-6xl px-6 py-16">
           <SectionLabel>Taşıyıcı matrisi</SectionLabel>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-5xl">
-            Dokuz taşıyıcı, tek yönlendirici
+            On taşıyıcı, tek yönlendirici
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
             Tedbirge Protokol her bağlantıyı <span className="text-foreground">RTT × taşıyıcı ağırlığı</span>{" "}
