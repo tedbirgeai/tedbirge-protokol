@@ -30,8 +30,8 @@ import {
   PeerVerifyDialog,
   TrustBadge,
   type PeerVerifyTarget,
-import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
 } from "@/components/site/PeerVerifyDialog";
+import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
 import {
   eraseAllContacts,
   eraseContact,
