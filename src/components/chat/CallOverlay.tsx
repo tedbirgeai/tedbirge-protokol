@@ -26,6 +26,7 @@ import {
   pressFeedback,
   startRingback,
   startRingtone,
+  startSearching,
   stopRing,
 } from "@/lib/chat/sounds";
 
@@ -115,13 +116,14 @@ export function CallOverlay() {
   /** Zil / çalıyor tonu — geleneksel telefon deneyimi. */
   useEffect(() => {
     if (call.phase === "ringing") startRingtone();
-    else if (call.phase === "outgoing") startRingback();
+    else if (call.phase === "outgoing")
+      call.remoteRinging ? startRingback() : startSearching();
     else {
       stopRing();
       if (call.phase === "ended") callEndSound();
     }
     return () => stopRing();
-  }, [call.phase]);
+  }, [call.phase, call.remoteRinging]);
 
   if (call.phase === "idle") return null;
 
@@ -129,7 +131,9 @@ export function CallOverlay() {
     call.phase === "ringing"
       ? "Gelen arama"
       : call.phase === "outgoing"
-        ? "Aranıyor…"
+        ? call.remoteRinging
+          ? "Çalıyor…"
+          : "Aranıyor…"
         : call.phase === "reconnecting"
           ? "Bağlantı yeniden kuruluyor…"
           : call.phase === "ended"

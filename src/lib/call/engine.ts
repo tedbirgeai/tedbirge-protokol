@@ -51,6 +51,8 @@ export type CallState = {
   reconnects: number;
   /** Uzak medya izi değiştiğinde oynatıcıyı yeniden bağlamak için artar. */
   streamVersion: number;
+  /** Karşı cihaz teklifi aldı ve telefonu çalıyor (ağ ulaştı). */
+  remoteRinging: boolean;
 };
 
 const ICE: RTCConfiguration = {
@@ -131,6 +133,7 @@ let state: CallState = {
   quality: IDLE_QUALITY,
   reconnects: 0,
   streamVersion: 0,
+  remoteRinging: false,
 };
 
 const listeners = new Set<() => void>();
@@ -422,6 +425,7 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     conference: false,
     reconnects: 0,
     quality: IDLE_QUALITY,
+    remoteRinging: false,
   });
   try {
     await dial(peerId, alias ?? peerId, video);
@@ -460,6 +464,7 @@ export async function startConference(
     conference: true,
     reconnects: 0,
     quality: IDLE_QUALITY,
+    remoteRinging: false,
   });
   try {
     for (const p of list) await dial(p.peerId, p.alias ?? p.peerId, video);
@@ -523,7 +528,7 @@ export function endCall(reason?: string) {
   const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
   for (const peerId of peers) void sendMesh("call", peerId, { t: "bye", at: Date.now() });
   cleanup();
-  publish({ phase: reason ? "ended" : "idle", error: reason ?? null });
+  publish({ phase: reason ? "ended" : "idle", error: reason ?? null, remoteRinging: false });
   setTimeout(() => {
     if (state.phase === "ended")
       publish({
@@ -729,6 +734,8 @@ async function onCallSignal(from: string, raw: unknown) {
       error: null,
       conference: pendingOffers.size > 1,
     });
+    // Arayan tarafa "telefonun çaldı" bilgisi: ekranda ARANIYOR yerine ÇALIYOR yazar.
+    void sendMesh("call", from, { t: "ring", at: Date.now() });
     const previousTimer = incomingTimers.get(from);
     if (previousTimer) clearTimeout(previousTimer);
     incomingTimers.set(
@@ -748,6 +755,13 @@ async function onCallSignal(from: string, raw: unknown) {
     return;
   }
 
+  if (p.t === "ring") {
+    if (state.phase === "outgoing" && (legs.has(from) || state.peerId === from)) {
+      publish({ remoteRinging: true, error: null });
+    }
+    return;
+  }
+
   if (p.t === "answer" && p.sdp) {
     const leg = legs.get(from);
     if (!leg) return;
@@ -756,7 +770,7 @@ async function onCallSignal(from: string, raw: unknown) {
     if (p.alias) leg.alias = p.alias;
     await leg.pc.setRemoteDescription({ type: "answer", sdp: p.sdp });
     await applyPendingIce(from, leg.pc);
-    publish({ phase: "active", startedAt: state.startedAt ?? Date.now() });
+    publish({ phase: "active", startedAt: state.startedAt ?? Date.now(), remoteRinging: false });
     syncParticipants();
     startStats();
     return;
