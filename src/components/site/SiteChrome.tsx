@@ -324,12 +324,15 @@ export function SiteHeader() {
           <span aria-hidden className="hidden h-5 w-px bg-border/70 sm:block" />
           <LanguageSwitcher />
 
+          <InstallAppCta variant="nav" label="Uygulamayı Yükle" className="hidden md:inline-flex" />
+
           <Link
             to="/chat"
             className="hidden rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90 sm:block"
           >
-            Platforma Giriş Yap
+            Uygulamaya Gir
           </Link>
+
 
           <Link
             to="/iletisim"
