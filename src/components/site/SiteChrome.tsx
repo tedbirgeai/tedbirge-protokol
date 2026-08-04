@@ -328,7 +328,7 @@ export function SiteHeader() {
             to="/chat"
             className="hidden rounded-sm bg-primary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground transition-opacity hover:opacity-90 sm:block"
           >
-            Sohbete Katıl
+            Platforma Giriş Yap
           </Link>
 
           <Link

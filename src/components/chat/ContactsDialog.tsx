@@ -83,9 +83,8 @@ function ContactRow({
               </span>
             )}
           </div>
-          <p className="mt-1 font-mono text-[11px] tracking-wider text-muted-foreground">
-            {c.shortId}
-            {c.claimedName && !c.nickname ? ` · beyan: ${c.claimedName}` : ""}
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {c.claimedName && !c.nickname ? `Beyan edilen ad: ${c.claimedName}` : "Doğrulanmış kişi"}
           </p>
           {c.nickname && c.claimedName && c.nickname !== c.claimedName && (
             <p className="text-[11px] text-muted-foreground">Kendi beyanı: {c.claimedName}</p>
@@ -327,7 +326,7 @@ export function ContactsDialog({
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Ada veya TBG- kimliğine göre ara"
+              placeholder="Ad veya soyada göre ara"
               className="h-10 w-full bg-transparent text-sm outline-none"
             />
           </div>
