@@ -759,11 +759,15 @@ export function ChatApp() {
     () =>
       allConversations.filter((c) => {
         const f = folderOf(c.id);
-        if (folder === "") return f !== ARCHIVE;
-        return f === folder;
+        if (folder === "" ? f === ARCHIVE : f !== folder) return false;
+        // Arayüzde teknik kimlik başlığı gösterilmez: adı olmayan ve hiç
+        // mesajı bulunmayan kayıtlar listede yer almaz.
+        if (isTechnicalLabel(titleOf(c)) && !c.lastText) return false;
+        return true;
       }),
     [allConversations, folder, folderVersion],
   );
+
   const archivedCount = useMemo(
     () => allConversations.filter((c) => isArchived(c.id)).length,
     [allConversations, folderVersion],
