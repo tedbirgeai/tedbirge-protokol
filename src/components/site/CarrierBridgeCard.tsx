@@ -5,6 +5,7 @@ import {
   connectGatewayCarrier,
   connectSerialCarrier,
   disconnectCarrier,
+  discoverGatewayUrl,
   gatewayCertUrl,
   gatewayUrl,
   normalizeGatewayUrl,
