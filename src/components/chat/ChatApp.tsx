@@ -102,6 +102,8 @@ import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
+import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
+
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
 
 function timeOf(ts: number) {
@@ -759,11 +761,15 @@ export function ChatApp() {
     () =>
       allConversations.filter((c) => {
         const f = folderOf(c.id);
-        if (folder === "") return f !== ARCHIVE;
-        return f === folder;
+        if (folder === "" ? f === ARCHIVE : f !== folder) return false;
+        // Arayüzde teknik kimlik başlığı gösterilmez: adı olmayan ve hiç
+        // mesajı bulunmayan kayıtlar listede yer almaz.
+        if (isTechnicalLabel(titleOf(c)) && !c.lastText) return false;
+        return true;
       }),
     [allConversations, folder, folderVersion],
   );
+
   const archivedCount = useMemo(
     () => allConversations.filter((c) => isArchived(c.id)).length,
     [allConversations, folderVersion],
@@ -775,7 +781,7 @@ export function ChatApp() {
   const activeName = active
     ? active.group
       ? active.title
-      : contactLabel(active.members[0] ?? active.title, active.title)
+      : humanName(contactLabel(active.members[0] ?? active.title, active.title), "Kayıtsız kişi")
     : "";
   // Mükerrer sohbetler birleştirildiğinde üyelerde eski cihaz kimlikleri de
   // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
@@ -1227,7 +1233,7 @@ export function ChatApp() {
             </li>
           ))}
           {conversations.map((c) => {
-            const name = titleOf(c);
+            const name = humanName(titleOf(c));
             return (
               <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
                 <div
