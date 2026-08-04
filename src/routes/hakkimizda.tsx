@@ -65,7 +65,7 @@ const principles = [
 const timeline = [
   ["2024", "Tünel proxy motoru ve AES-256-GCM chunk şifrelemesi ile ilk çekirdek."],
   ["2025", "Mesh yönlendirme, gossip keşfi ve off-grid imzalı fiş defterinin eklenmesi."],
-  ["2026", "Dokuz taşıyıcı matrisi, gömülü yönetim paneli ve v0.6a turnkey dağıtımı."],
+  ["2026", "On taşıyıcı matrisi, gömülü yönetim paneli ve v0.6a turnkey dağıtımı."],
 ];
 
 const facts = [

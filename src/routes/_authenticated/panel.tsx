@@ -799,7 +799,7 @@ function Panel() {
                   <Row k="Gizlilik" v="Sıfır-bilgi ölçüm" />
                   <Row k="Anahtar yenileme" v="Otomatik · Güvenlik sekmesi" />
                   <Row k="Çevrimdışı" v="Kuyruk aktif, kayıpsız" />
-                  <Row k="Taşıyıcı" v="9 taşıyıcı · otomatik seçim" />
+                  <Row k="Taşıyıcı" v="10 taşıyıcı · otomatik seçim" />
                 </dl>
 
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">

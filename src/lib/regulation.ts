@@ -212,7 +212,7 @@ export const REG_PILLARS: Pillar[] = [
   },
   {
     no: "02",
-    t: "Spektrum rejimi — 9 taşıyıcı",
+    t: "Spektrum rejimi — 10 taşıyıcı",
     b: "Lisanssız: Wi-Fi 2.4/5/6 GHz, WiGig 60 GHz, HaLow, LoRa sub-GHz, FSO (spektrum dışı). Operatör/lisanslı: hücresel, uydu. Koşullu: TVWS — çoğu ülkede geolokasyon veri tabanı zorunlu. Bölge kilitleri profil dosyasında zorlanır.",
     refs: "ETSI EN 300 220 · FCC 15.247 · BTK KEGY",
     to: "/uyumluluk",

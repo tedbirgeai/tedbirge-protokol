@@ -47,7 +47,7 @@ function Compliance() {
             Her bölgede yasal sınırlar içinde çalışan taşıyıcı profilleri
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Protokol dokuz fiziksel katmanı destekler, ancak hepsi her ülkede
+            Tedbirge Protokol on fiziksel katmanı destekler, ancak hepsi her ülkede
             lisanssız değildir. Aşağıdaki matris, üretim profillerinin bölgeye göre nasıl
             sınırlandırıldığını gösterir.
           </p>

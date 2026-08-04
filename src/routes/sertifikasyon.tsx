@@ -245,7 +245,7 @@ function Certification() {
       <section className="mx-auto max-w-6xl px-6 py-20">
         <SectionLabel>3 · Kapsam boşlukları</SectionLabel>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-          Dokuz taşıyıcının dışında kalan ve değerlendirilmesi gereken katmanlar
+          On taşıyıcının dışında kalan ve değerlendirilmesi gereken katmanlar
         </h2>
         <div className="mt-10 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2">
           {gaps.map((g) => (
