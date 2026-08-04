@@ -9,6 +9,7 @@
  */
 
 export type TransportId =
+  | "openwrt-gateway"
   | "cloud-webrtc"
   | "lan-ws"
   | "broadcast-channel"
@@ -34,6 +35,7 @@ export type TransportDef = {
 
 /** 9 taşıyıcı katmanı — sıralama, tercih önceliğini yansıtır. */
 export const TRANSPORTS: TransportDef[] = [
+  { id: "openwrt-gateway", label: "Yerel geçit (OpenWrt)", hint: "Şebeke beslemeli, 7/24 açık ev/bina geçidi", latencyMs: 10, kbps: 50000, penalty: 0 },
   { id: "cloud-webrtc", label: "Bulut WebRTC", hint: "İnternet varken doğrudan eş bağlantısı", latencyMs: 60, kbps: 20000, penalty: 0 },
   { id: "lan-ws", label: "Yerel LAN", hint: "Aynı Wi-Fi ağındaki saha geçidi", latencyMs: 15, kbps: 40000, penalty: 0 },
   { id: "broadcast-channel", label: "Cihaz içi kanal", hint: "Aynı cihazdaki sekmeler ve uygulama", latencyMs: 2, kbps: 100000, penalty: 0 },

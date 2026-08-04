@@ -469,11 +469,113 @@ export function SiteFooter() {
 }
 
 
+const CRUMB_LABELS: Record<string, string> = {
+  protokol: "7 Katmanlı Mimari",
+  urun: "Ürün",
+  demo: "Demo",
+  tasiyicilar: "Taşıyıcılar",
+  "afet-kamu": "Afet & Kamu",
+  mevzuat: "Regülasyon",
+  guvenlik: "Güvenlik",
+  chat: "Sohbet & Görüşme",
+  sohbet: "Sohbet",
+  kur: "Kolay Kurulum",
+  katil: "Ağa Katıl",
+  saha: "Saha",
+  rehber: "Rehber",
+  fiyatlandirma: "Fiyatlandırma",
+  dokumanlar: "Dokümanlar",
+  panel: "Panel",
+  yonetim: "Yönetim",
+  enerji: "Enerji & Saha",
+  kapsama: "Kapsama",
+  "hibrit-model": "Hibrit Model",
+  karsilastirma: "Karşılaştırma",
+  uyumluluk: "Uyum",
+  sertifikasyon: "Sertifikasyon",
+  "turkiye-mevzuat": "Türkiye Mevzuatı",
+  izinler: "İzinler",
+  "ihracat-uyum": "İhracat Uyumu",
+  yasal: "Yasal",
+  gizlilik: "Gizlilik",
+  kosullar: "Koşullar",
+  iletisim: "İletişim",
+  hakkimizda: "Hakkımızda",
+  "saha-raporu": "Saha Raporu",
+  "pilot-panosu": "Pilot Panosu",
+  "kablosuz-sarj": "Kablosuz Şarj",
+  "api-dokumantasyon": "Telemetri API'si",
+  cevrimdisi: "Çevrimdışı",
+  giris: "Giriş",
+  kayit: "Kayıt",
+  kurumsal: "Kurumsal",
+  iade: "İade",
+};
+
+function crumbLabel(segment: string) {
+  return (
+    CRUMB_LABELS[segment] ??
+    segment.replace(/-/g, " ").replace(/^\p{Ll}/u, (c) => c.toUpperCase())
+  );
+}
+
+/** 0 sürtünmeli gezinme: her alt sayfada geri düğmesi + ekmek kırıntısı. */
+function BackBar() {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const segments = pathname.split("/").filter(Boolean);
+  if (!segments.length) return null;
+
+  return (
+    <nav
+      aria-label="Sayfa yolu"
+      className="border-b border-border/60 bg-background/80 backdrop-blur"
+    >
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 py-2.5">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) window.history.back();
+            else void navigate({ to: "/" });
+          }}
+          className="rounded-sm border border-border px-2.5 py-1 font-mono text-[11px] text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          ← Geri
+        </button>
+        <ol className="flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+          <li>
+            <Link to="/" className="transition-colors hover:text-primary">
+              Ana sayfa
+            </Link>
+          </li>
+          {segments.map((seg, i) => {
+            const last = i === segments.length - 1;
+            const href = `/${segments.slice(0, i + 1).join("/")}`;
+            return (
+              <li key={href} className="flex items-center gap-1.5">
+                <span aria-hidden>/</span>
+                {last ? (
+                  <span className="text-foreground">{crumbLabel(seg)}</span>
+                ) : (
+                  <Link to={href as string as never} className="transition-colors hover:text-primary">
+                    {crumbLabel(seg)}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </nav>
+  );
+}
+
 export function SitePage({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <PaymentTestModeBanner />
       <SiteHeader />
+      <BackBar />
       <main className="flex-1">{children}</main>
       <SiteFooter />
       <AiAdvisor />

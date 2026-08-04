@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import {
   BRIDGEABLE_CARRIERS,
   connectBluetoothCarrier,
+  connectGatewayCarrier,
   connectSerialCarrier,
   disconnectCarrier,
   refreshBridgeSupport,
+  savedGatewayUrl,
   setBridgeLicense,
   useCarrierBridge,
   type CarrierId,
@@ -162,6 +164,22 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
               )}
 
               <div className="mt-3 flex flex-wrap gap-2">
+                {!live && c.transport.includes("wss") && (
+                  <button
+                    type="button"
+                    disabled={busy === c.id}
+                    onClick={() => {
+                      const url = window.prompt(
+                        "Yerel geçit adresi (Tedbirge daemon):",
+                        savedGatewayUrl() || "wss://192.168.1.1:8443",
+                      );
+                      if (url) void run(c.id, () => connectGatewayCarrier(url));
+                    }}
+                    className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary disabled:opacity-40"
+                  >
+                    Geçide bağlan
+                  </button>
+                )}
                 {!live &&
                   c.transport.includes("serial") && (
                     <button

@@ -284,6 +284,25 @@ export const LIABILITY_5651 = {
   ],
 };
 
+/**
+ * "Mere Conduit" (salt aktarıcı) zırhı — 6563 s.K. m.5 ve 5651 s.K. m.6/2
+ * kıyasen. Overlay yalnızca şifreli zarf taşır; egress kilidi nedeniyle
+ * genel internete çıkış yoktur.
+ */
+export const MERE_CONDUIT = {
+  title: "Mere Conduit — Salt Aktarıcı Statüsü ve Sorumluluk Sınırlandırması",
+  badge: "Salt aktarıcı · egress kilidi açık",
+  clauses: [
+    "Tedbirge düğümü, taşınan iletinin başlatıcısı değildir, alıcısını seçmez ve içeriğini değiştirmez. 6563 sayılı Kanun'un 5. maddesi ve 5651 sayılı Kanun'un 6/2 hükmü kıyasen, düğüm işleteni salt aktarıcı (mere conduit) konumundadır.",
+    "Aktarım teknik olarak zorunlu süre boyunca ve otomatik biçimde yapılır; ara düğümde kalıcı içerik saklama amacı yoktur. Gövde uçtan uca şifrelidir; röle düğüm içeriği çözemez, okuyamaz, arşivleyemez.",
+    "Egress/Exit Block kuralı derleme zamanında sabittir: overlay genel internete NAT, proxy, DNS veya exit-node hizmeti vermez. Bu nedenle düğüm sahibi kendiliğinden erişim sağlayıcı sıfatı kazanmaz.",
+    "CE/FCC/BTK spektrum uygunluğu, bağlanan üçüncü taraf radyo donanımının üreticisine aittir. Tedbirge yazılımı yalnızca bölge profili tavanlarını zorlar; harici donanım için uygunluk beyanı vermez.",
+    "Kullanıcının kendi internet aboneliği üzerinden gerçekleştirdiği kişisel kullanımdan doğan yükümlülükler kullanıcıya aittir. Tedbirge, kullanıcı IP adresine ilişkin trafik verisine erişemez ve kopyasını tutmaz.",
+  ],
+  disclaimer:
+    "Bu metin bilgilendirme amaçlıdır, hukuki mütalaa değildir. Kurumsal dağıtım öncesi bağımsız hukuki danışmanlık alınmalıdır.",
+};
+
 /** Harici donanıma özel firmware yüklenmesi hâlinde spektrum sorumluluğu. */
 export const FIRMWARE_SPECTRUM_WARNING = {
   title: "Uyarı — Harici Donanım ve Özel Firmware Spektrum Sorumluluğu",
