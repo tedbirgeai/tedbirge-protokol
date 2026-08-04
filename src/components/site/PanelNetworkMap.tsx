@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isDeviceOnline, sinceLabel } from "@/components/site/PanelLive";
 import { describeNode, useNodeRuntime } from "@/lib/node-runtime";
+import { useDiagnostics } from "@/lib/diagnostics";
+import { useCarrierBridge } from "@/lib/carrier-bridge";
+import { GlobalMeshMap } from "@/components/site/GlobalMeshMap";
+
 
 type MapDevice = {
   id: string;
