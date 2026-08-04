@@ -31,7 +31,7 @@ import {
   TrustBadge,
   type PeerVerifyTarget,
 } from "@/components/site/PeerVerifyDialog";
-import { ContactImportPanel } from "@/components/chat/ContactImportPanel";
+import { deviceContactsSupported, syncDeviceContacts } from "@/lib/chat/directory";
 import {
   eraseAllContacts,
   eraseContact,
@@ -176,7 +176,41 @@ function ContactRow({
   );
 }
 
+/** Tek dokunuşla cihaz rehberini eşitler; elle numara girişi yoktur. */
+function SyncContactsRow() {
+  const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
+  if (!deviceContactsSupported()) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">Rehberimdeki kişiler</p>
+        <p className="text-xs text-muted-foreground">
+          {info ?? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."}
+        </p>
+      </div>
+      <Button
+        size="sm"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          void syncDeviceContacts()
+            .then((r) =>
+              setInfo(
+                r ? `${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eklendi.` : null,
+              ),
+            )
+            .finally(() => setBusy(false));
+        }}
+      >
+        {busy ? "Eşitleniyor…" : "Rehberi eşitle"}
+      </Button>
+    </div>
+  );
+}
+
 export function ContactsDialog({
+
   open,
   onOpenChange,
   onOpenChat,
@@ -234,9 +268,8 @@ export function ContactsDialog({
           </DialogHeader>
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 pt-4">
-          <div className="rounded-md border border-border bg-card/50 p-4">
-            <ContactImportPanel onDone={() => onOpenChange(false)} />
-          </div>
+          <SyncContactsRow />
+
 
           {/* Kendi kimlik kartım */}
           <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">
