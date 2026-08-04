@@ -96,14 +96,17 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
         setError(
           res.reason === "rate-limited"
             ? "Az önce kod gönderildi. Lütfen 60 saniye bekleyin."
-            : res.reason === "no-sender"
-              ? "SMS gönderici numarası tanımlı değil. Yönetici Twilio gönderici numarasını tanımlamalı."
-              : res.reason === "sms-not-configured"
-                ? "SMS servisi bağlantısı eksik. Yönetici ile iletişime geçin."
-                : "SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
+            : res.reason === "trial-restricted"
+              ? "SMS sağlayıcı hesabı deneme (trial) modunda; serbest metin SMS gönderemiyor. Twilio hesabını ücretli sürüme yükseltince kodlar anında iletilecek."
+              : res.reason === "no-sender"
+                ? "SMS gönderici numarası tanımlı değil. Yönetici Twilio gönderici numarasını tanımlamalı."
+                : res.reason === "sms-not-configured"
+                  ? "SMS servisi bağlantısı eksik. Yönetici ile iletişime geçin."
+                  : "SMS gönderilemedi. Numaranızı kontrol edip yeniden deneyin.",
         );
         return;
       }
+
       setStep("code");
       setCooldown(60);
       toast.success("Doğrulama kodu gönderildi", { description: e164 });
