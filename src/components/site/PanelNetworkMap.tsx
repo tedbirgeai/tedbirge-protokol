@@ -133,7 +133,12 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
           <h2 className="mt-2 text-xl font-semibold tracking-tight">Canlı mesh topolojisi</h2>
         </div>
         <div className="flex flex-wrap gap-2 font-mono text-[11px] uppercase tracking-[0.15em]">
-          <span className="rounded-sm border border-border px-3 py-1.5 text-primary">
+          <span
+            className={`flex items-center gap-2 rounded-sm border px-3 py-1.5 ${meshLive ? "border-primary/50 text-primary" : "border-border text-muted-foreground"}`}
+          >
+            <span
+              className={`inline-block size-2 rounded-full ${meshLive ? "animate-pulse bg-primary" : "bg-muted-foreground/50"}`}
+            />
             {online.length}/{devices.length} çevrimiçi
           </span>
           <span className="rounded-sm border border-border px-3 py-1.5 text-muted-foreground">
@@ -313,15 +318,20 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
           ))}
         </ul>
       )}
+
+      <div className="mt-6">
+        <GlobalMeshMap devices={devices} />
+      </div>
     </div>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-sm border border-border bg-background/70 p-4">
       <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
       <p className="mt-1 font-mono text-lg text-foreground">{value}</p>
+      {hint && <p className="mt-1 font-mono text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
