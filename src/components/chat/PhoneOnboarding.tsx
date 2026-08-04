@@ -233,18 +233,18 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
               Doğrulama kodu
             </h2>
             <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
-              {testMode
-                ? `Test modu: doğrulama kodunuz ${FALLBACK_CODE}. Kodu girip devam edin.`
-                : `${e164} numarasına gönderilen 6 haneli kodu girin.`}
+              {e164} numarasına gönderilen 6 haneli kodu girin.
             </p>
             <input
               value={code}
               inputMode="numeric"
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              placeholder="123456"
+              autoComplete="one-time-code"
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="––––––"
               className="mt-5 w-full rounded-lg border px-4 py-3 text-center text-lg tracking-[0.4em] outline-none"
               style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
             />
+
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <button
               type="button"
