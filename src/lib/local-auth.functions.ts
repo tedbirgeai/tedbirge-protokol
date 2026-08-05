@@ -14,7 +14,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { deriveAccountPassword, hashPhoneForAccount } from "@/lib/local-auth.server";
+import { deriveAccountPassword } from "@/lib/local-auth.server";
 
 /** Numaraya bağlı kalıcı hesabı hazırlar ve tek kullanımlık giriş bilgisi döndürür. */
 export const linkPhoneAccount = createServerFn({ method: "POST" })
