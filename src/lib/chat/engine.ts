@@ -1415,6 +1415,25 @@ async function onSync(from: string, raw: unknown) {
   }
 }
 
+/**
+ * Adı çözülemeyen eşlere ad talebi gönderir. Yanıt gelince geçmiş
+ * sohbet ve arama kayıtlarının başlıkları geriye dönük düzelir.
+ */
+export async function requestMissingNames(): Promise<number> {
+  const peers = new Set<string>();
+  for (const conv of state.conversations) {
+    if (conv.group) continue;
+    for (const member of conv.members) {
+      if (!member || member === getBrowserNodeId()) continue;
+      if (resolveDisplayName(member)) continue;
+      peers.add(member);
+    }
+  }
+  for (const peer of peers) await requestNameFrom(peer);
+  return peers.size;
+}
+
+
 /** Yeni eş göründüğünde Merkle kök özetlerini yollar (arka planda). */
 export async function announceDigests(peerId?: string) {
   const all = await listAllMessages();
