@@ -44,6 +44,9 @@ import { deleteMessageRecord } from "@/lib/store/idb";
 import { getPrivacy } from "@/lib/chat/privacy";
 import { collectEmergency, geoText, offlineMapFrame, type GeoPoint } from "@/lib/chat/location";
 import { bootBackupTransfer } from "@/lib/chat/transfer";
+import { isMuted } from "@/lib/chat/mute";
+import { safeTitleOf } from "@/lib/chat/safe-title";
+import { markSeen } from "@/lib/chat/last-seen";
 
 export type ChatState = {
   conversations: Conversation[];
@@ -370,7 +373,36 @@ async function appendLocal(conv: Conversation, msg: ChatMessage) {
   await refreshMessages(conv.id);
 }
 
+/**
+ * Yerel sistem mesajı ekler (arama kaydı, bilgi satırı).
+ * Ağa gönderilmez; yalnızca bu cihazın sohbet akışında görünür.
+ */
+export async function addSystemMessage(
+  convId: string,
+  text: string,
+  kind: "system" | "call" = "call",
+): Promise<void> {
+  const conv = await getConversation(convId);
+  if (!conv) return;
+  const msg: ChatMessage = {
+    id: newId("sys"),
+    convId,
+    from: getBrowserNodeId(),
+    to: convId,
+    kind,
+    text,
+    ts: Date.now(),
+    outgoing: true,
+    status: "read",
+  };
+  await putMessage(msg);
+  await putConversation({ ...conv, lastTs: msg.ts, lastText: text });
+  await refreshConversations();
+  await refreshMessages(convId);
+}
+
 export async function sendText(
+
   convId: string,
   text: string,
   replyTo?: { id: string; text: string; author: string },
@@ -937,7 +969,9 @@ function rememberAlias(peerId: string, alias?: string) {
   publish({ aliases: next });
 }
 
-function notify(title: string, body: string) {
+function notify(title: string, body: string, convId?: string) {
+  // Sessize alınmış sohbette bildirim/ses üretilmez (rozet görünmeye devam eder).
+  if (convId && isMuted(convId)) return;
   void showChatNotification({ title, body, kind: "message" });
 }
 
@@ -1116,10 +1150,13 @@ async function onChat(from: string, raw: unknown) {
   };
   await appendLocal(conv, msg);
   clearTyping(convId);
-  receivedSound();
-  vibrate(14);
+  if (!isMuted(conv.id)) {
+    receivedSound();
+    vibrate(14);
+  }
+  markSeen(from);
   void sendMesh("receipt", from, { t: "receipt", id: msg.id, status: "delivered", convId });
-  notify(conv.title, p.text);
+  notify(safeTitleOf(conv), p.text, conv.id);
 }
 
 async function onReceipt(_from: string, raw: unknown) {
@@ -1187,7 +1224,7 @@ async function onMedia(from: string, raw: unknown) {
   });
   void sendMesh("receipt", from, { t: "receipt", id: result.mid, status: "delivered", convId });
   receivedSound();
-  notify(conv.title, `📎 ${result.name}`);
+  notify(safeTitleOf(conv), `📎 ${result.name}`, conv.id);
 }
 
 /* --------------------- Merkle çevrimdışı eşitleme --------------------- */
