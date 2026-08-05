@@ -119,13 +119,21 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   const extraMatches = useMemo(() => {
     const known = new Set(book.contacts.map((c) => c.peerId));
     const knownNames = new Set(book.contacts.map((c) => normalizedPersonName(c.displayName)));
-    return matchedPeople.filter(
-      (p) =>
-        !known.has(p.peerId) &&
-        !knownNames.has(normalizedPersonName(p.name)) &&
-        (!q || p.name.toLocaleLowerCase("tr").includes(q)) &&
-        !isTechnicalLabel(p.name),
-    );
+    const rows: typeof matchedPeople = [];
+    for (const person of matchedPeople) {
+      const nameKey = normalizedPersonName(person.name);
+      if (
+        known.has(person.peerId) ||
+        knownNames.has(nameKey) ||
+        (q && !person.name.toLocaleLowerCase("tr").includes(q)) ||
+        isTechnicalLabel(person.name)
+      ) {
+        continue;
+      }
+      knownNames.add(nameKey);
+      rows.push(person);
+    }
+    return rows;
   }, [book.contacts, matchedPeople, q]);
   const empty = contacts.length === 0 && extraMatches.length === 0;
 
