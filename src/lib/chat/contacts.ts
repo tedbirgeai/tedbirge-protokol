@@ -184,17 +184,20 @@ function buildContact(
 function collapsePersons(rows: Contact[]): Contact[] {
   const groups = new Map<string, Contact[]>();
   for (const row of rows) {
-    // Sıra: numara çıpası (personId) → imza anahtarı → ad → cihaz kimliği.
+    // Sıra: NUMARA ÖZETİ → kişi kimliği → imza anahtarı → ad → cihaz kimliği.
     // Aynı numaraya bağlı cihazlar adları farklı olsa da tek kartta toplanır;
     // kimliği bilinen iki ayrı kişi aynı adı taşısa bile ayrı kalır.
     const nameKey = normalizedPersonName(row.displayName);
-    const key = row.personId
-      ? `p:${row.personId}`
-      : row.signPublic
-        ? `k:${row.signPublic}`
-        : nameKey
-          ? `n:${nameKey}`
-          : row.peerId;
+    const key = row.phoneHash
+      ? `h:${row.phoneHash}`
+      : row.personId
+        ? `p:${row.personId}`
+        : row.signPublic
+          ? `k:${row.signPublic}`
+          : nameKey
+            ? `n:${nameKey}`
+            : row.peerId;
+
     const bucket = groups.get(key);
     if (bucket) bucket.push(row);
     else groups.set(key, [row]);
