@@ -18,6 +18,22 @@ export const ALIAS_KEY = "tedbirge.chat.aliases";
 /** düğüm kimliği → kişi kimliği eşlemesi (yerel). */
 export const PERSON_MAP_KEY = "tedbirge.chat.personMap";
 
+/**
+ * Rehber tekilleştirme anahtarı. Büyük/küçük harf, Türkçe karakter,
+ * noktalama ve gereksiz boşluk farkları aynı kişiyi ayrı satıra bölmez.
+ */
+export function normalizedPersonName(value: string | undefined | null): string {
+  return (value ?? "")
+    .trim()
+    .toLocaleLowerCase("tr")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 export function readMap(key: string): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {

@@ -145,7 +145,13 @@ let state: CallState = {
 const listeners = new Set<() => void>();
 
 type Leg = { pc: RTCPeerConnection; stream: MediaStream; alias: string; polite: boolean };
-type PendingOffer = { desc: RTCSessionDescriptionInit; alias: string; video: boolean };
+type ConferencePeer = { peerId: string; alias?: string };
+type PendingOffer = {
+  desc: RTCSessionDescriptionInit;
+  alias: string;
+  video: boolean;
+  conferencePeers: ConferencePeer[];
+};
 
 const legs = new Map<string, Leg>();
 let localStream: MediaStream | null = null;
@@ -503,6 +509,7 @@ async function sendInvite(
   sdp: string,
   video: boolean,
   callId: string,
+  conferencePeers: ConferencePeer[] = [],
 ): Promise<boolean> {
   const payload = {
     t: "offer",
@@ -510,6 +517,7 @@ async function sendInvite(
     video,
     alias: getAlias(),
     callId,
+    conferencePeers,
     at: Date.now(),
   };
   const [meshOk, wakeOk] = await Promise.all([
@@ -526,7 +534,12 @@ async function sendInvite(
   return meshOk || wakeOk;
 }
 
-async function dial(peerId: string, alias: string, video: boolean) {
+async function dial(
+  peerId: string,
+  alias: string,
+  video: boolean,
+  conferencePeers: ConferencePeer[] = [],
+) {
   const stream = await ensureMedia(video);
   const leg = createLeg(peerId, alias);
   attachLocal(leg.pc, stream, video);
@@ -535,7 +548,7 @@ async function dial(peerId: string, alias: string, video: boolean) {
 
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
-  return sendInvite(peerId, offer.sdp ?? "", video, currentCallId ?? peerId);
+  return sendInvite(peerId, offer.sdp ?? "", video, currentCallId ?? peerId, conferencePeers);
 }
 
 /**
@@ -626,8 +639,15 @@ export async function startConference(
 ) {
   bootCalls();
   if (state.phase !== "idle" && state.phase !== "ended") return;
-  const list = peers.filter((p) => p.peerId && p.peerId !== nodeSelf()).slice(0, 5); // kendinizle birlikte en fazla 6 kişi
+  const list = Array.from(
+    new Map(
+      peers
+        .filter((p) => p.peerId && p.peerId !== nodeSelf())
+        .map((p) => [p.peerId, p] as const),
+    ).values(),
+  ).slice(0, 5); // kendinizle birlikte en fazla 6 kişi
   if (!list.length) return;
+  currentCallId = `${nodeSelf()}-${Date.now().toString(36)}`;
   publish({
     phase: "outgoing",
     peerId: list[0]!.peerId,
@@ -643,7 +663,16 @@ export async function startConference(
     remoteRinging: false,
   });
   try {
-    for (const p of list) await dial(p.peerId, p.alias ?? p.peerId, video);
+    await Promise.all(
+      list.map((p) =>
+        dial(
+          p.peerId,
+          p.alias ?? p.peerId,
+          video,
+          list.filter((member) => member.peerId !== p.peerId),
+        ),
+      ),
+    );
     if (outgoingTimer) clearTimeout(outgoingTimer);
     outgoingTimer = setTimeout(() => {
       if (state.phase === "outgoing") endCall("Kimse katılmadı.");
@@ -665,6 +694,10 @@ export async function acceptCall() {
   try {
     const stream = await ensureMedia(state.video);
     let accepted = 0;
+    const conferenceRoster = new Map<string, ConferencePeer>();
+    for (const [, offer] of entries) {
+      for (const peer of offer.conferencePeers) conferenceRoster.set(peer.peerId, peer);
+    }
     for (const [peerId, offer] of entries) {
       try {
       const leg = createLeg(peerId, offer.alias || peerId);
@@ -692,7 +725,25 @@ export async function acceptCall() {
       }
     }
     if (!accepted) throw new Error("no accepted leg");
-    publish({ phase: "active", startedAt: Date.now() });
+    publish({
+      phase: "active",
+      startedAt: Date.now(),
+      conference: conferenceRoster.size > 0 || accepted > 1,
+    });
+    // Konferansın tüm uçları birbirini duysun/görsün: her çiftte yalnız
+    // sözlük sırasındaki küçük kimlik yeni hattı açar, çift bağlantı oluşmaz.
+    const extraPeers = Array.from(conferenceRoster.values()).filter(
+      (peer) =>
+        peer.peerId &&
+        peer.peerId !== nodeSelf() &&
+        !legs.has(peer.peerId) &&
+        nodeSelf().localeCompare(peer.peerId) < 0,
+    );
+    await Promise.all(
+      extraPeers.map((peer) =>
+        dial(peer.peerId, peer.alias ?? peer.peerId, state.video, Array.from(conferenceRoster.values())),
+      ),
+    );
     startStats();
   } catch {
     endCall("Görüşme başlatılamadı.");
@@ -923,6 +974,7 @@ type CallSignal = {
   alias?: string;
   restart?: boolean;
   callId?: string;
+  conferencePeers?: ConferencePeer[];
   at?: number;
 };
 
@@ -1040,7 +1092,12 @@ async function onCallSignal(from: string, raw: unknown) {
       void sendMesh("call", from, { t: "busy", at: Date.now() });
       return;
     }
-    pendingOffers.set(from, { desc, alias: p.alias ?? from, video: Boolean(p.video) });
+    pendingOffers.set(from, {
+      desc,
+      alias: p.alias ?? from,
+      video: Boolean(p.video),
+      conferencePeers: Array.isArray(p.conferencePeers) ? p.conferencePeers.slice(0, 5) : [],
+    });
     if (!callMeta) callMeta = { peerId: from, video: Boolean(p.video), direction: "incoming" };
     publish({
       phase: "ringing",
@@ -1048,7 +1105,7 @@ async function onCallSignal(from: string, raw: unknown) {
       peerAlias: p.alias ?? from,
       video: Boolean(p.video) || Array.from(pendingOffers.values()).some((offer) => offer.video),
       error: null,
-      conference: pendingOffers.size > 1,
+      conference: pendingOffers.size > 1 || Boolean(p.conferencePeers?.length),
     });
     // Arayan tarafa "telefonun çaldı" bilgisi: ekranda ARANIYOR yerine ÇALIYOR yazar.
     void sendMesh("call", from, { t: "ring", at: Date.now() });

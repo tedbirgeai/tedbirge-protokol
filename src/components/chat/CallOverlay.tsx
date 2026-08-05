@@ -16,6 +16,7 @@ import {
   acceptCall,
   endCall,
   getLocalStream,
+  getPeerStream,
   getRemoteStream,
   switchCamera,
   toggleCamera,
@@ -33,6 +34,16 @@ import {
   stopRing,
 } from "@/lib/chat/sounds";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+
+function ParticipantVideo({ peerId, version }: { peerId: string; version: number }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.srcObject = getPeerStream(peerId);
+    void ref.current.play().catch(() => undefined);
+  }, [peerId, version]);
+  return <video ref={ref} autoPlay playsInline className="h-full w-full object-cover" />;
+}
 
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
@@ -161,7 +172,7 @@ export function CallOverlay() {
       style={{ zIndex: 9999 }}
     >
       {/* Görüntülü kip: kamera görüntüsü tam ekran arka plan */}
-      {call.video && (
+      {call.video && !call.conference && (
         <>
           <video
             ref={remoteRef}
@@ -182,6 +193,27 @@ export function CallOverlay() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
         </>
+      )}
+      {call.video && call.conference && call.phase === "active" && (
+        <div className="absolute inset-0 grid auto-rows-fr grid-cols-2 gap-1 bg-zinc-950 p-1 sm:grid-cols-3">
+          <div className="relative min-h-0 overflow-hidden rounded-lg bg-zinc-800">
+            <video ref={localRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+            <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs">Siz</span>
+          </div>
+          {call.participants.map((participant) => (
+            <div
+              key={participant.peerId}
+              className={`relative min-h-0 overflow-hidden rounded-lg bg-zinc-800 ${
+                call.speakingPeerId === participant.peerId ? "ring-2 ring-emerald-300" : ""
+              }`}
+            >
+              <ParticipantVideo peerId={participant.peerId} version={call.streamVersion} />
+              <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs">
+                {participant.alias}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
       {!call.video && (
         <div
@@ -227,7 +259,7 @@ export function CallOverlay() {
             </div>
           ))}
         {!call.video && <video ref={remoteRef} autoPlay playsInline className="hidden" />}
-        {call.conference && call.participants.length > 0 && (
+        {call.conference && !call.video && call.participants.length > 0 && (
           <ul className="flex flex-wrap justify-center gap-2 px-6">
             {call.participants.map((p) => (
               <li

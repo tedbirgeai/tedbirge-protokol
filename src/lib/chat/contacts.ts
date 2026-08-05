@@ -45,6 +45,7 @@ import {
   readMap,
   resolveClaimedName,
   resolveNickname,
+  normalizedPersonName,
   writeNickname,
 } from "@/lib/chat/name-resolver";
 
@@ -175,7 +176,10 @@ function buildContact(
 function collapsePersons(rows: Contact[]): Contact[] {
   const groups = new Map<string, Contact[]>();
   for (const row of rows) {
-    const key = row.personId || row.peerId;
+    // Telefon rehberi kullanıcıya tek kişi gösterir: kişi kimliği eksik ya da
+    // eski cihazlarda farklı olsa bile aynı normalize ad tek kartta birleşir.
+    const nameKey = normalizedPersonName(row.displayName);
+    const key = nameKey ? `name:${nameKey}` : row.personId || row.peerId;
     const bucket = groups.get(key);
     if (bucket) bucket.push(row);
     else groups.set(key, [row]);
@@ -183,7 +187,8 @@ function collapsePersons(rows: Contact[]): Contact[] {
   const out: Contact[] = [];
   for (const bucket of groups.values()) {
     const sorted = [...bucket].sort((a, b) => b.lastSeen - a.lastSeen);
-    const primary = sorted[0]!;
+    const primary = sorted[0];
+    if (!primary) continue;
     const linked = sorted.slice(1);
     if (linked.length > 0) {
       primary.linkedNodes = linked.map((c) => c.peerId);
@@ -191,6 +196,9 @@ function collapsePersons(rows: Contact[]): Contact[] {
       if (!primary.nickname) primary.nickname = linked.find((c) => c.nickname)?.nickname;
       if (!primary.claimedName) primary.claimedName = linked.find((c) => c.claimedName)?.claimedName;
       primary.displayName = primary.nickname || primary.claimedName || "";
+      const anchor = bucket.find((c) => c.personId)?.personId ?? primary.personId ?? primary.peerId;
+      primary.personId = anchor;
+      for (const contact of bucket) linkNodeToPerson(contact.peerId, anchor);
     }
     out.push(primary);
   }

@@ -15,6 +15,7 @@ import { autoSyncContacts } from "@/lib/chat/directory";
 
 import { isTechnicalLabel } from "@/lib/chat/display-name";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+import { normalizedPersonName } from "@/lib/chat/name-resolver";
 
 import type { PeerInfo } from "@/lib/browser-node";
 
@@ -117,9 +118,11 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   // Eşleşen kişi zaten rehberde varsa tek kayıt gösterilir (çift satır yok).
   const extraMatches = useMemo(() => {
     const known = new Set(book.contacts.map((c) => c.peerId));
+    const knownNames = new Set(book.contacts.map((c) => normalizedPersonName(c.displayName)));
     return matchedPeople.filter(
       (p) =>
         !known.has(p.peerId) &&
+        !knownNames.has(normalizedPersonName(p.name)) &&
         (!q || p.name.toLocaleLowerCase("tr").includes(q)) &&
         !isTechnicalLabel(p.name),
     );
