@@ -176,6 +176,29 @@ export async function mergePersonDuplicates(): Promise<number> {
     else buckets.set(key, [node]);
   }
 
+  // İkinci geçiş: farklı imza anahtarı yüzünden ayrı düşen ama aynı adı
+  // taşıyan kümeler birleşir. Numara özetleri çakışıyorsa birleşme olmaz.
+  const byName = new Map<string, string>();
+  for (const [key, bucket] of Array.from(buckets.entries())) {
+    const name = normalizedPersonName(
+      bucket.map((n) => resolveDisplayName(n.nodeId) || n.alias || "").find((v) => v.trim()) ?? "",
+    );
+    if (!name) continue;
+    const target = byName.get(name);
+    if (!target) {
+      byName.set(name, key);
+      continue;
+    }
+    const other = buckets.get(target);
+    if (!other) continue;
+    const hashA = bucket.find((n) => n.phoneHash)?.phoneHash;
+    const hashB = other.find((n) => n.phoneHash)?.phoneHash;
+    if (hashA && hashB && hashA !== hashB) continue;
+    other.push(...bucket);
+    buckets.delete(key);
+  }
+
+
   let merged = 0;
   for (const [key, bucket] of buckets) {
     // Kişi kimliği: kayıtlardan biri taşıyorsa o, yoksa en eski düğüm.
