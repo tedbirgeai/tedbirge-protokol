@@ -109,6 +109,20 @@ export async function runDirectorySync(force = false): Promise<boolean> {
     const flushed = await flushEnrollment();
     const { autoSyncContacts } = await import("@/lib/chat/directory");
     const result = await autoSyncContacts();
+    // Rehber kasası her turda çift yönlü eşitlenir: önce hesaptaki şifreli
+    // yedek bu cihaza indirilir, sonra bu cihazın güncel hâli yedeklenir.
+    // Böylece telefonda kayıtlı kişiler bilgisayarda da görünür.
+    try {
+      const { getAnchorPhone } = await import("@/lib/chat/anchor");
+      const phone = await getAnchorPhone();
+      if (phone) {
+        const vault = await import("@/lib/chat/vault");
+        await vault.restoreContacts(phone).catch(() => 0);
+        await vault.backupContacts(phone).catch(() => false);
+      }
+    } catch {
+      /* çevrimdışı: bir sonraki turda denenir */
+    }
     const ok = flushed !== "queued" && result.source !== "none";
     if (ok) markSynced();
     return ok;
@@ -116,6 +130,7 @@ export async function runDirectorySync(force = false): Promise<boolean> {
     return false;
   }
 }
+
 
 function schedule(delay: number) {
   if (timer) clearTimeout(timer);
