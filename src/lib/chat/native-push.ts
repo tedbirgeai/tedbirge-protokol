@@ -22,6 +22,42 @@ export function isNativeApp(): boolean {
   }
 }
 
+async function reportToken(token: string): Promise<void> {
+  try {
+    const { getBrowserNodeId } = await import("@/lib/browser-node");
+    const cap = (globalThis as { Capacitor?: { getPlatform?: () => string } }).Capacitor;
+    const platform = cap?.getPlatform?.() === "ios" ? "ios" : cap?.getPlatform?.() === "android" ? "android" : "unknown";
+    await fetch("/api/public/push", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "native-subscribe",
+        nodeId: getBrowserNodeId(),
+        token,
+        platform,
+      }),
+    });
+  } catch {
+    /* çevrimdışı: jeton bir sonraki açılışta bildirilir */
+  }
+}
+
+/** Uygulama silinirken/çıkışta jetonu sunucudan düşürür. */
+export async function disableNativePush(): Promise<void> {
+  const token = nativePushToken();
+  if (!token) return;
+  try {
+    await fetch("/api/public/push", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "native-unsubscribe", token }),
+    });
+    window.localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* çevrimdışı */
+  }
+}
+
 export function nativePushToken(): string {
   try {
     return window.localStorage.getItem(TOKEN_KEY) ?? "";
@@ -53,6 +89,8 @@ export async function enableNativePush(): Promise<boolean> {
       } catch {
         /* gizli mod */
       }
+      // Jetonu web push ile aynı gönderim hattına kaydet.
+      void reportToken(token.value);
     });
     await PushNotifications.addListener("registrationError", () => {
       /* sertifika/yapılandırma eksik: uygulama yine de çalışır */
