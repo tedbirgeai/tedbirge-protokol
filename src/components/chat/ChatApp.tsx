@@ -781,9 +781,8 @@ export function ChatApp() {
       allConversations.filter((c) => {
         const f = folderOf(c.id);
         if (folder === "" ? f === ARCHIVE : f !== folder) return false;
-        // Arayüzde teknik kimlik başlığı gösterilmez: adı olmayan ve hiç
-        // mesajı bulunmayan kayıtlar listede yer almaz.
-        if (isTechnicalLabel(titleOf(c)) && !c.lastText) return false;
+        // KVKK: adı bilinmeyen (anonim) kayıtlar sohbet listesinde gösterilmez.
+        if (isTechnicalLabel(titleOf(c)) && c.id !== SELF_CONV_ID) return false;
         return true;
       }),
     [allConversations, folder, folderVersion],
@@ -810,7 +809,12 @@ export function ChatApp() {
       active.members.at(-1))
     : undefined;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
+  /** Çevrim içi / son görülme yalnızca rehberde eşleşmiş kişilerde gösterilir. */
+  const peerKnown = Boolean(
+    active && !active.group && !isTechnicalLabel(contactLabel(active.members[0] ?? "", "")),
+  );
   const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "Kayıtsız kişi");
+
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
   /** Kayan pencere: çok uzun sohbetlerde yalnızca son N mesaj DOM'a basılır. */
   const shownMessages = useMemo(
