@@ -866,6 +866,17 @@ export function ChatApp() {
         if (!isNamed(c)) return false;
         // Son güvenlik ağı: başlık yine de nötr etikete düşüyorsa listelenmez.
         if (!c.group && safeTitleOf(c) === UNKNOWN_TITLE) return false;
+        // Kendi diğer cihazlarım ayrı sohbet satırı açmaz ("Kendinize not" hariç).
+        if (
+          !c.group &&
+          isSelfPerson({
+            id: c.members?.[0],
+            personId: nameKeyOf(c.members?.[0] ?? ""),
+            phoneHash: resolvePhoneHash(c.members?.[0] ?? ""),
+            name: safeTitleOf(c),
+          })
+        )
+          return false;
         return true;
       });
       // TEK KİŞİ = TEK SATIR. Aynı kişinin farklı cihazlarıyla açılmış
