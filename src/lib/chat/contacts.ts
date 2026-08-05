@@ -148,8 +148,9 @@ function buildContact(
   const signPublic = peer?.knownSignPublic ?? peer?.verifyKey;
   // Ad tek kanaldan okunur: kişi kimliği varsa onun üzerinden.
   linkNodeToPerson(peerId, trusted?.personId);
-  const nickname = resolveNickname(peerId) || undefined;
-  const claimedName = (resolveClaimedName(peerId) || trusted?.alias || "").trim() || undefined;
+  const nickname = cleanPersonLabel(resolveNickname(peerId)) || undefined;
+  const claimedName =
+    cleanPersonLabel(resolveClaimedName(peerId) || trusted?.alias || "") || undefined;
   const shortId = shortIdOf(signPublic ?? peerId);
   return {
     peerId,
@@ -163,10 +164,12 @@ function buildContact(
     ambiguous: false,
     method: trusted?.method,
     personId: trusted?.personId,
+    phoneHash: trusted?.phoneHash,
     pairedAt: trusted?.pairedAt,
     lastSeen: Math.max(peer?.lastSeen ?? 0, trusted?.pairedAt ?? 0),
   };
 }
+
 
 
 /**
