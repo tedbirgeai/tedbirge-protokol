@@ -61,7 +61,11 @@ export const syncMyDirectoryEntry = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Telefon özetlerini Tedbirge kullanıcılarıyla eşleştirir. */
+/**
+ * Telefon özetlerini Tedbirge kullanıcılarıyla eşleştirir.
+ * Bir kişinin birden çok cihazı varsa hepsi döner; istemci bunları tek
+ * kişi kartında birleştirir ve en son görülen cihazı birincil sayar.
+ */
 export const matchDirectoryContacts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => MatchInput.parse(input))
@@ -70,8 +74,9 @@ export const matchDirectoryContacts = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("phone_accounts")
-      .select("phone_hash, person_id, node_id, display_name, user_id")
-      .in("phone_hash", data.hashes);
+      .select("phone_hash, person_id, node_id, display_name, user_id, last_seen_at")
+      .in("phone_hash", data.hashes)
+      .order("last_seen_at", { ascending: false });
     if (error) {
       console.error("[directory] match failed", error.message);
       return { matches: [] };
@@ -84,6 +89,7 @@ export const matchDirectoryContacts = createServerFn({ method: "POST" })
           personId: r.person_id,
           nodeId: r.node_id,
           displayName: r.display_name,
+          lastSeen: r.last_seen_at ? Date.parse(r.last_seen_at) : 0,
         })),
     };
   });
