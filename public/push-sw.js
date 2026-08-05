@@ -75,3 +75,22 @@ self.addEventListener("notificationclick", (event) => {
     })(),
   );
 });
+
+/* ------------------------------------------------------------------
+ * ARKA PLAN EŞİTLEME (Background Sync)
+ * Ağ geri geldiğinde tarayıcı bu olayı tetikler; açık sekmelere
+ * "kuyruğu boşalt" mesajı gider. Sekme yoksa bir sonraki açılışta
+ * kuyruk zaten kendiliğinden işlenir.
+ * ------------------------------------------------------------------ */
+async function wakeClientsForSync() {
+  const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  for (const client of list) client.postMessage({ type: "tedbirge-sync" });
+}
+
+self.addEventListener("sync", (event) => {
+  if (event.tag === "tedbirge-outbox") event.waitUntil(wakeClientsForSync());
+});
+
+self.addEventListener("periodicsync", (event) => {
+  if (event.tag === "tedbirge-outbox") event.waitUntil(wakeClientsForSync());
+});
