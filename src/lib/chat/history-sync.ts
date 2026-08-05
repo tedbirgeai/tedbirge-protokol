@@ -390,11 +390,13 @@ export async function syncNow(): Promise<boolean> {
       });
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("[sync] tur başarısız", message);
+      const raw = error instanceof Error ? error.message : String(error);
+      const message = friendlyError(raw);
+      console.error("[sync] tur başarısız", raw);
       writeStr(LAST_ERROR, message);
       publish({ lastError: message });
       return false;
+
     } finally {
       publish({ running: false });
       inFlight = null;
