@@ -145,15 +145,21 @@ export async function mergePersonDuplicates(): Promise<number> {
   ]);
   const keyOf = new Map(peers.map((p) => [p.peerId, p.knownSignPublic ?? p.verifyKey] as const));
 
-  // Küme anahtarı: personId → imza anahtarı → görünen ad.
+  // Küme anahtarı sırası: numara çıpası (personId) → imza anahtarı → ad.
+  // Numarası bilinen iki kişi aynı adı taşısa bile birleşmez; ad yalnızca
+  // her iki tarafta da kimlik bilinmiyorken birleştirme sebebidir.
   type TrustedRow = (typeof trusted)[number];
   const buckets = new Map<string, TrustedRow[]>();
   for (const node of trusted) {
     const signKey = keyOf.get(node.nodeId);
     const name = normalizedPersonName(resolveDisplayName(node.nodeId) || node.alias || "");
-    // Görünür adı bulunan eski kayıtlar önce ad üzerinden birleşir. Böylece
-    // geçmişte hatalı üretilmiş farklı personId değerleri aynı kişiyi çoğaltmaz.
-    const key = name ? `n:${name}` : node.personId || (signKey ? `k:${signKey}` : `s:${node.nodeId}`);
+    const key = node.personId
+      ? `p:${node.personId}`
+      : signKey
+        ? `k:${signKey}`
+        : name
+          ? `n:${name}`
+          : `s:${node.nodeId}`;
     const bucket = buckets.get(key);
     if (bucket) bucket.push(node);
     else buckets.set(key, [node]);
@@ -162,9 +168,8 @@ export async function mergePersonDuplicates(): Promise<number> {
   let merged = 0;
   for (const [key, bucket] of buckets) {
     // Kişi kimliği: kayıtlardan biri taşıyorsa o, yoksa en eski düğüm.
-    const personId =
-      bucket.find((n) => n.personId)?.personId ??
-      (key.startsWith("k:") || key.startsWith("n:") || key.startsWith("s:") ? "" : key);
+    const personId = bucket.find((n) => n.personId)?.personId ?? (key.startsWith("p:") ? key.slice(2) : "");
+
     const sorted = [...bucket].sort((a, b) => (b.pairedAt ?? 0) - (a.pairedAt ?? 0));
     const primary = sorted[0];
     if (!primary) continue;

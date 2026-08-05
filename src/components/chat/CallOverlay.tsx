@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Mic,
   MicOff,
@@ -11,9 +11,13 @@ import {
   SwitchCamera,
   MonitorUp,
   MonitorX,
+  UserPlus,
+  X,
 } from "lucide-react";
+
 import {
   acceptCall,
+  addParticipant,
   endCall,
   getLocalStream,
   getPeerStream,
@@ -23,6 +27,7 @@ import {
   toggleMute,
   toggleScreenShare,
   useCall,
+  CONFERENCE_LIMIT,
 } from "@/lib/call/engine";
 import type { CallQuality } from "@/lib/call/engine";
 import {
@@ -34,6 +39,8 @@ import {
   stopRing,
 } from "@/lib/chat/sounds";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+import { useContacts } from "@/lib/chat/contacts";
+
 
 function ParticipantVideo({ peerId, version }: { peerId: string; version: number }) {
   const ref = useRef<HTMLVideoElement>(null);
