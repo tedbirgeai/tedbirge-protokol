@@ -1002,8 +1002,13 @@ export function ChatApp() {
         />
         <div
           className="flex flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4"
-          style={{ background: "var(--wa-panel-soft)", borderBottom: "1px solid var(--wa-border)" }}
+          style={{
+            background: "var(--wa-panel-soft)",
+            borderBottom: "1px solid var(--wa-border)",
+            paddingTop: "calc(0.625rem + env(safe-area-inset-top))",
+          }}
         >
+
           <button
             type="button"
             onClick={() => myAvatarInput.current?.click()}
@@ -1400,6 +1405,7 @@ export function ChatApp() {
               style={{
                 background: "var(--wa-panel-soft)",
                 borderBottom: "1px solid var(--wa-border)",
+                paddingTop: "calc(0.5rem + env(safe-area-inset-top))",
               }}
             >
               <button
