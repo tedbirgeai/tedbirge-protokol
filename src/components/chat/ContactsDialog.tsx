@@ -4,7 +4,7 @@
  * okunmaz; tüm veri yalnızca bu cihazda kalır (KVKK / GDPR uyumlu).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
@@ -15,6 +15,7 @@ import {
   Search,
   ShieldAlert,
   Trash2,
+  Upload,
   UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,9 @@ import {
 import {
   autoSyncContacts,
   deviceContactsSupported,
+  importContactsFile,
 } from "@/lib/chat/directory";
+
 import {
   eraseAllContacts,
   eraseContact,
