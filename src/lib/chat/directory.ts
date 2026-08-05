@@ -91,7 +91,7 @@ export async function syncDeviceContacts(): Promise<ImportResult | null> {
   if (!deviceContactsSupported()) return null;
   try {
     const picked = await pickDeviceContacts();
-    if (picked.length === 0) return { checked: 0, matched: 0 };
+    if (picked.length === 0) return { checked: 0, matched: 0, people: [] };
     saveLocalBook(picked);
     return await importContacts(picked);
   } catch {
@@ -142,17 +142,21 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
     if (phone) {
       const vault = await import("@/lib/chat/vault");
       const restored = await vault.restoreContacts(phone).catch(() => 0);
-      if (restored > 0) return { checked: restored, matched: restored, source: "vault" };
+      if (restored > 0)
+        return { checked: restored, matched: restored, people: [], source: "vault" };
     }
   } catch {
     /* yedek yok */
   }
 
-  return { checked: 0, matched: 0, source: "none" };
+  return { checked: 0, matched: 0, people: [], source: "none" };
 }
 
 
-export type ImportResult = { checked: number; matched: number };
+/** Eşleşen kişinin arayüzde gösterilecek özeti. */
+export type MatchedContact = { peerId: string; name: string; shortId: string };
+
+export type ImportResult = { checked: number; matched: number; people: MatchedContact[] };
 
 /**
  * Rehber dosyası (.vcf / vCard) çözümleyici — cihaz rehberine erişemeyen
@@ -179,7 +183,7 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   const unique = new Map<string, DeviceContact>();
   for (const c of list) if (!unique.has(c.phone)) unique.set(c.phone, c);
   const rows = Array.from(unique.values()).slice(0, 500);
-  if (rows.length === 0) return { checked: 0, matched: 0 };
+  if (rows.length === 0) return { checked: 0, matched: 0, people: [] };
 
   const hashes = await Promise.all(rows.map((r) => hashPhone(r.phone)));
   const byHash = new Map(hashes.map((h, i) => [h, rows[i]!] as const));
@@ -188,16 +192,25 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   // eşleştirme fonksiyonunu çağırmak 401 üretmemeli; sonraki açılışta yeniden denenir.
   const { supabase } = await import("@/integrations/supabase/client");
   const { data } = await supabase.auth.getSession();
-  if (!data.session) return { checked: rows.length, matched: 0 };
+  if (!data.session) return { checked: rows.length, matched: 0, people: [] };
 
   const { matchDirectoryContacts } = await import("@/lib/directory.functions");
   const { matches } = await matchDirectoryContacts({ data: { hashes } });
 
+  const { getBrowserNodeId } = await import("@/lib/browser-node");
+  const { shortIdOf } = await import("@/lib/chat/contacts");
+  const self = getBrowserNodeId();
+  const { getPhone } = await import("@/lib/chat/profile");
+  const myPhone = getPhone();
+  const myHash = myPhone ? await hashPhone(myPhone) : null;
+
+  const people: MatchedContact[] = [];
   let matched = 0;
   for (const m of matches) {
     const local = byHash.get(m.hash);
     const target = m.nodeId || m.personId;
-    if (!target) continue;
+    // Kendi numaranız eşleşse bile rehberde kişi olarak gösterilmez.
+    if (!target || target === self || (myHash && m.hash === myHash)) continue;
     await putTrustedNode({
       nodeId: target,
       alias: m.displayName ?? local?.name ?? undefined,
@@ -206,7 +219,12 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
     });
     if (local?.name) setNickname(target, local.name);
     matched += 1;
+    people.push({
+      peerId: target,
+      name: local?.name || m.displayName || shortIdOf(target),
+      shortId: shortIdOf(target),
+    });
   }
   await refreshContacts();
-  return { checked: rows.length, matched };
+  return { checked: rows.length, matched, people };
 }
