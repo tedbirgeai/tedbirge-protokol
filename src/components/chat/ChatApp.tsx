@@ -873,7 +873,13 @@ export function ChatApp() {
           out.push(c);
           continue;
         }
-        const key = resolvePhoneHash(member) || nameKeyOf(member) || member;
+        // Anahtar sırası: numara özeti → kişi kimliği → normalize edilmiş ad.
+        // Aynı kişinin iki cihazıyla açılmış sohbet tek satırda toplanır.
+        const linked = nameKeyOf(member);
+        const nameKey = normalizedPersonName(safeTitleOf(c));
+        const key =
+          resolvePhoneHash(member) || (linked !== member ? linked : "") || nameKey || member;
+
         const current = byPerson.get(key);
         if (!current || (c.lastTs ?? 0) > (current.lastTs ?? 0)) byPerson.set(key, c);
       }
