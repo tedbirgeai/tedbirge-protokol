@@ -1088,12 +1088,29 @@ type ChatPayload = {
   geo?: MessageGeo;
   forwarded?: boolean;
   forwardedFrom?: string;
+  /** Numara-çıpalı kişi kimliği — ad tek kanalda birleşsin diye taşınır. */
+  personId?: string;
 };
 
 async function onChat(from: string, raw: unknown) {
   const p = raw as ChatPayload;
   if (!p || typeof p !== "object") return;
   rememberAlias(from, p.alias);
+
+  // Ad talebi / ad beyanı: başlıklar her cihazda aynı görünsün.
+  if (isNameExchange(p)) {
+    const changed = applyRemoteName(from, p.alias, p.personId);
+    if (p.t === "name-req") void answerNameTo(from);
+    if (changed) {
+      await refreshConversations();
+      for (const convId of Object.keys(state.messages)) await refreshMessages(convId);
+    }
+    return;
+  }
+  // Her mesajla gelen kimlik bilgisi de tek ad kanalına işlenir.
+  if (p.personId || p.alias) applyRemoteName(from, p.alias, p.personId);
+
+
 
   if (p.t === "typing" || p.t === "stop-typing") {
     const conv =
