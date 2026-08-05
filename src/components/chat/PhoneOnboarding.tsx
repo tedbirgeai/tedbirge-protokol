@@ -169,18 +169,50 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       }
 
       await finish(verifiedPhone);
+      // Eski cihazdan şifreli rehber yedeği varsa geri yüklenir.
+      try {
+        const count = await restoreContacts(verifiedPhone);
+        setRestored(count);
+      } catch {
+        /* yedek yok veya çevrimdışı */
+      }
       try {
         await syncDeviceContacts();
       } catch {
         /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
       }
+      // Kalıcı kimlik kartı (TBG kodu + karekod) gösterilir.
+      try {
+        const state = await refreshContacts().then(() => undefined);
+        void state;
+      } catch {
+        /* yoksay */
+      }
+      try {
+        const { getIdentity } = await import("@/lib/crypto/identity");
+        const { getBrowserNodeId } = await import("@/lib/browser-node");
+        const nodeId = getBrowserNodeId();
+        const identity = await getIdentity(nodeId).catch(() => null);
+        const short = shortIdOf(identity?.signPublic ?? nodeId);
+        setMyShortId(short);
+        if (identity?.signPublic) {
+          const url = await QRCode.toDataURL(qrPayload(nodeId, identity.signPublic), {
+            margin: 1,
+            width: 220,
+          }).catch(() => null);
+          setMyQr(url);
+        }
+      } catch {
+        /* kimlik kartı gösterilemezse akış engellenmez */
+      }
       toast.success("Yerel doğrulama tamamlandı", { description: verifiedPhone });
-      onDone();
+      setStep("done");
     },
     // finish sabit bir fonksiyon; name/onDone bağımlılık olarak yeterli.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [name, onDone],
   );
+
 
   async function verify() {
     if (!e164) return;
