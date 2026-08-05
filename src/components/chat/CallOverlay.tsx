@@ -239,7 +239,9 @@ export function CallOverlay() {
               <ParticipantVideo peerId={participant.peerId} version={call.streamVersion} />
               <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs">
                 {participant.alias}
+                {participant.reconnecting ? " · yeniden bağlanıyor" : ""}
               </span>
+
             </div>
           ))}
         </div>
