@@ -167,8 +167,10 @@ export async function backupContacts(phone?: string): Promise<boolean> {
 
     const { saveContactVault } = await import("@/lib/vault.functions");
     const res = await saveContactVault({ data: { ciphertext: blob } });
+    if (!res.ok) console.error("[vault] yedek yazılamadı");
     return res.ok;
-  } catch {
+  } catch (error) {
+    console.error("[vault] yedekleme hatası", error);
     return false;
   }
 }
@@ -235,7 +237,8 @@ export async function restoreContacts(phone?: string): Promise<number> {
     }
     await refreshContacts();
     return restored;
-  } catch {
+  } catch (error) {
+    console.error("[vault] geri yükleme hatası", error);
     return 0;
   }
 }

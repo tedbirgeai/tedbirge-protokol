@@ -1467,7 +1467,7 @@ export async function bootChat() {
   setInterval(() => {
     void import("@/lib/chat/leader")
       .then((m) => (m.isLeaderTab() ? pumpRetryQueue() : 0))
-      .catch(() => 0);
+      .catch((error: unknown) => console.error("[chat] yeniden gönderim turu başarısız", error));
   }, 15_000);
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();

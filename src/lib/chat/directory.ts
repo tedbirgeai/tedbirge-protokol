@@ -143,7 +143,10 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
     const phone = await getAnchorPhone();
     if (phone) {
       const vault = await import("@/lib/chat/vault");
-      const restored = await vault.restoreContacts(phone).catch(() => 0);
+      const restored = await vault.restoreContacts(phone).catch((error: unknown) => {
+        console.error("[sync] kasa geri yüklenemedi", error);
+        return 0;
+      });
       if (restored > 0) {
         // Yedekten gelen cihaz rehberi varsa hemen eşleştirilir.
         const book = loadLocalBook();
