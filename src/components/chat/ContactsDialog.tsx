@@ -4,7 +4,7 @@
  * okunmaz; tüm veri yalnızca bu cihazda kalır (KVKK / GDPR uyumlu).
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
@@ -33,9 +33,7 @@ import {
 } from "@/components/site/PeerVerifyDialog";
 import {
   autoSyncContacts,
-  importContacts,
-  parseVcards,
-  saveLocalBook,
+  deviceContactsSupported,
 } from "@/lib/chat/directory";
 import {
   eraseAllContacts,
@@ -190,7 +188,6 @@ function ContactRow({
 function SyncContactsRow() {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   // Açılışta otomatik eşitleme: kullanıcı hiçbir butona basmadan
   // rehberi yeniden eşleştirilir.
@@ -208,8 +205,11 @@ function SyncContactsRow() {
     void autoSyncContacts()
       .then((r) => {
         if (r.source === "none") {
-          setInfo("Bu tarayıcı rehbere erişemiyor; rehber dosyanızı seçin.");
-          fileRef.current?.click();
+          setInfo(
+            deviceContactsSupported()
+              ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
+              : "Bu cihazın tarayıcısı otomatik rehber erişimini desteklemiyor; dosya penceresi açılmadı.",
+          );
           return;
         }
         setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
@@ -232,28 +232,6 @@ function SyncContactsRow() {
       <Button size="sm" disabled={busy} onClick={runAuto}>
         {busy ? "Eşitleniyor…" : "Şimdi eşitle"}
       </Button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".vcf,text/vcard,text/x-vcard"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (!file) return;
-          setBusy(true);
-          void file
-            .text()
-            .then(async (text) => {
-              const list = parseVcards(text);
-              if (list.length === 0) return;
-              saveLocalBook(list);
-              const r = await importContacts(list);
-              setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
-            })
-            .finally(() => setBusy(false));
-        }}
-      />
     </div>
   );
 }
