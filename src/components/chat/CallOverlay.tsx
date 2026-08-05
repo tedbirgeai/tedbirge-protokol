@@ -75,6 +75,9 @@ export function CallOverlay() {
   const [speaker, setSpeaker] = useState(true);
   const [playBlocked, setPlayBlocked] = useState(false);
   const elapsed = useElapsed(call.phase === "active" ? call.startedAt : null);
+  useAvatars();
+  const peerAvatar = getAvatar(call.peerId);
+
 
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
