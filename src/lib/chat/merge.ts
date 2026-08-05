@@ -160,8 +160,9 @@ export async function mergePersonDuplicates(): Promise<number> {
   for (const node of trusted) {
     const signKey = keyOf.get(node.nodeId);
     const name = normalizedPersonName(resolveDisplayName(node.nodeId) || node.alias || "");
-    const key = node.phoneHash
-      ? `h:${node.phoneHash}`
+    const hash = node.phoneHash || resolvePhoneHash(node.nodeId);
+    const key = hash
+      ? `h:${hash}`
       : node.personId
         ? `p:${node.personId}`
         : signKey
@@ -169,6 +170,7 @@ export async function mergePersonDuplicates(): Promise<number> {
           : name
             ? `n:${name}`
             : `s:${node.nodeId}`;
+
     const bucket = buckets.get(key);
     if (bucket) bucket.push(node);
     else buckets.set(key, [node]);
