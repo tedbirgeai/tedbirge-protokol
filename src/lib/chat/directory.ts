@@ -99,6 +99,43 @@ export async function syncDeviceContacts(): Promise<ImportResult | null> {
   }
 }
 
+export type AutoSyncResult = ImportResult & { source: "device" | "saved" | "vault" | "none" };
+
+/**
+ * OTONOM REHBER EŞİTLEME — kullanıcı hiçbir seçim yapmaz.
+ * Sırasıyla: (1) cihaz rehberi izni varsa doğrudan okunur,
+ * (2) daha önce bu cihazda saklanan rehber yeniden eşleştirilir
+ * (araya yeni katılan tanıdıklar böylece kendiliğinden belirir),
+ * (3) hiçbiri yoksa şifreli hesap yedeğinden geri yüklenir.
+ * Yalnızca üçü de boşsa arayüz dosya seçimine düşer.
+ */
+export async function autoSyncContacts(): Promise<AutoSyncResult> {
+  if (deviceContactsSupported()) {
+    const r = await syncDeviceContacts();
+    if (r && r.checked > 0) return { ...r, source: "device" };
+  }
+
+  const saved = loadLocalBook();
+  if (saved.length > 0) {
+    const r = await importContacts(saved);
+    return { ...r, source: "saved" };
+  }
+
+  try {
+    const { getPhone } = await import("@/lib/chat/profile");
+    const phone = getPhone();
+    if (phone) {
+      const vault = await import("@/lib/chat/vault");
+      const restored = await vault.restoreContacts(phone).catch(() => 0);
+      if (restored > 0) return { checked: restored, matched: restored, source: "vault" };
+    }
+  } catch {
+    /* yedek yok */
+  }
+
+  return { checked: 0, matched: 0, source: "none" };
+}
+
 
 export type ImportResult = { checked: number; matched: number };
 

@@ -32,11 +32,10 @@ import {
   type PeerVerifyTarget,
 } from "@/components/site/PeerVerifyDialog";
 import {
-  deviceContactsSupported,
+  autoSyncContacts,
   importContacts,
   parseVcards,
   saveLocalBook,
-  syncDeviceContacts,
 } from "@/lib/chat/directory";
 import {
   eraseAllContacts,
@@ -192,46 +191,47 @@ function SyncContactsRow() {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const native = deviceContactsSupported();
 
-  const run = (task: Promise<{ checked: number; matched: number } | null>) => {
+  // Açılışta otomatik eşitleme: kullanıcı hiçbir butona basmadan
+  // rehberi yeniden eşleştirilir.
+  useEffect(() => {
+    void autoSyncContacts()
+      .then((r) => {
+        if (r.checked > 0)
+          setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
+      })
+      .catch(() => null);
+  }, []);
+
+  const runAuto = () => {
     setBusy(true);
-    void task
-      .then((r) =>
-        setInfo(
-          r ? `${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eklendi.` : null,
-        ),
-      )
+    void autoSyncContacts()
+      .then((r) => {
+        if (r.source === "none") {
+          setInfo("Bu tarayıcı rehbere erişemiyor; rehber dosyanızı seçin.");
+          fileRef.current?.click();
+          return;
+        }
+        setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
+        toast.success("Rehber eşitlendi");
+      })
+      .catch(() => setInfo("Eşitleme başarısız oldu, tekrar deneyin."))
       .finally(() => setBusy(false));
   };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium">Telefon rehberimi yükle</p>
+        <p className="text-sm font-medium">Rehberim otomatik eşitlenir</p>
         <p className="text-xs text-muted-foreground">
           {info ??
-            (native
-              ? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."
-              : "iPhone ve masaüstü tarayıcıları rehbere doğrudan erişemez. iPhone’da: Kişiler → kişileri seçin → Paylaş → “Kartı Paylaş” ile .vcf dosyasını kaydedin, sonra aşağıdan seçin. Dosya yalnızca bu cihazda okunur.")}
+            "Her açılışta arka planda çalışır; tanıdıklarınız katıldıkça kendiliğinden eklenir. Numaralar cihazdan çıkmaz."}
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {native && (
-          <Button size="sm" disabled={busy} onClick={() => run(syncDeviceContacts())}>
-            {busy ? "Eşitleniyor…" : "Rehberi eşitle"}
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant={native ? "outline" : "default"}
-          disabled={busy}
-          onClick={() => fileRef.current?.click()}
-        >
-          Rehber dosyası (.vcf)
-        </Button>
-      </div>
+      <Button size="sm" disabled={busy} onClick={runAuto}>
+        {busy ? "Eşitleniyor…" : "Şimdi eşitle"}
+      </Button>
       <input
         ref={fileRef}
         type="file"
@@ -241,14 +241,17 @@ function SyncContactsRow() {
           const file = e.target.files?.[0];
           e.target.value = "";
           if (!file) return;
-          run(
-            file.text().then(async (text) => {
+          setBusy(true);
+          void file
+            .text()
+            .then(async (text) => {
               const list = parseVcards(text);
-              if (list.length === 0) return { checked: 0, matched: 0 };
+              if (list.length === 0) return;
               saveLocalBook(list);
-              return importContacts(list);
-            }),
-          );
+              const r = await importContacts(list);
+              setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
+            })
+            .finally(() => setBusy(false));
         }}
       />
     </div>
