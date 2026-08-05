@@ -101,3 +101,38 @@ npx cap open android  # Build > Generate Signed Bundle (.aab)
 
 Mağaza sürümünde `capacitor.config.ts` içindeki `server.url` bloğunu
 kaldırmayı unutmayın.
+
+## Push jetonunun sunucuya kaydı (hazır)
+
+Uygulama izin verildiği anda cihaz jetonunu `/api/public/push`
+adresine `native-subscribe` isteğiyle gönderir ve jeton
+`native_push_tokens` tablosunda saklanır. Sunucu, web push ile **aynı
+gönderim hattından** (`notifyNode`) hem tarayıcı hem mobil cihazları
+uyandırır. Bildirim yükü asla mesaj içeriği taşımaz.
+
+Yalnızca sizin yapmanız gereken adım:
+
+1. Firebase konsolunda projeyi açın, **Cloud Messaging** sunucu
+   anahtarını kopyalayın.
+2. Bu anahtarı arka uç gizli değeri olarak `FCM_SERVER_KEY` adıyla
+   ekleyin. Anahtar tanımlanmadıkça mobil push sessizce devre dışı
+   kalır; tarayıcı bildirimleri çalışmaya devam eder.
+3. iOS için APNs anahtarını (.p8) Firebase > Project Settings > Cloud
+   Messaging > **APNs Authentication Key** alanına yükleyin. Böylece
+   iOS cihazlar da aynı FCM hattından uyandırılır.
+
+### iOS sessiz push (uygulama kapalıyken uyandırma)
+
+Sunucu her bildirimde `content_available: true` gönderir; bu, iOS'ta
+uygulamayı arka planda kısa süre uyandırıp bekleyen şifreli zarfların
+çekilmesini sağlar. Xcode'da şunlar açık olmalıdır:
+
+- `Signing & Capabilities > Push Notifications`
+- `Signing & Capabilities > Background Modes > Remote notifications`
+
+### Arka plan eşitleme (web)
+
+Servis çalışanı `tedbirge-outbox` etiketiyle Background Sync dinler:
+ağ geri geldiğinde bekleyen mesajlar kendiliğinden gönderilir.
+iOS Safari bu API'yi desteklemez; orada kuyruk 15 saniyelik
+zamanlayıcı ve üstel geri çekilme ile işlenir.

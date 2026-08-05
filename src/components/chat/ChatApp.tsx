@@ -39,6 +39,9 @@ import {
   Volume2,
   VolumeX,
   X,
+  Bell,
+  BellOff,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   bootChat,
@@ -68,6 +71,9 @@ import {
   retryMessage,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
+import { CallHistory } from "@/components/chat/CallHistory";
+import { MediaGallery } from "@/components/chat/MediaGallery";
+import { lastSeenLabel } from "@/lib/chat/last-seen";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
 import { ForwardDialog } from "@/components/chat/ForwardDialog";
 import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
@@ -117,7 +123,14 @@ import { isNamed, safeTitleOf } from "@/lib/chat/safe-title";
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
 import { bootLeader } from "@/lib/chat/leader";
 import { bootSessions } from "@/lib/chat/sessions";
-import { isMuted, onMuteChange } from "@/lib/chat/mute";
+import {
+  MUTE_OPTIONS,
+  isMuted,
+  muteConversation,
+  muteUntilLabel,
+  onMuteChange,
+  unmuteConversation,
+} from "@/lib/chat/mute";
 import { IDB_BLOCKED_EVENT } from "@/lib/store/idb";
 
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
@@ -648,6 +661,8 @@ function MenuItem({
   );
 }
 
+const CALLS_TAB = "__calls";
+
 export function ChatApp() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -675,6 +690,8 @@ export function ChatApp() {
   const [editing, setEditing] = useState<ChatMessage | null>(null);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [folder, setFolder] = useState<string>("");
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [muteMenu, setMuteMenu] = useState(false);
   const [folderVersion, setFolderVersion] = useState(0);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -998,6 +1015,12 @@ export function ChatApp() {
         authorName={forwardMsg?.outgoing ? me : nameOf(forwardMsg?.from ?? "")}
         onClose={() => setForwardMsg(null)}
       />
+      <MediaGallery
+        open={galleryOpen}
+        convId={activeId}
+        title={active ? titleOf(active) : ""}
+        onClose={() => setGalleryOpen(false)}
+      />
       <EmergencyDialog
         open={emergencyOpen}
         convId={activeId}
@@ -1215,6 +1238,20 @@ export function ChatApp() {
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setFolder(CALLS_TAB);
+            }}
+            className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+            style={{
+              background: folder === CALLS_TAB ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+              color: folder === CALLS_TAB ? "#fff" : "var(--wa-muted)",
+            }}
+          >
+            Aramalar
+          </button>
         </div>
 
         {groupMode && (
@@ -1306,7 +1343,21 @@ export function ChatApp() {
           </div>
         )}
 
-        <ul className="flex-1 overflow-y-auto">
+        {folder === CALLS_TAB && (
+          <div className="flex-1 overflow-y-auto">
+            <CallHistory
+              onCall={(peer, video) => {
+                void ensureDirectConversation(peer).then((c) => {
+                  setActiveId(c.id);
+                  void startCall(peer, video, nameOf(peer));
+                });
+              }}
+            />
+          </div>
+        )}
+
+        <ul className={`flex-1 overflow-y-auto ${folder === CALLS_TAB ? "hidden" : ""}`}>
+
           {pairing.incoming.map((req) => (
             <li
               key={`req_${req.nodeId}`}
@@ -1528,7 +1579,9 @@ export function ChatApp() {
                         ? "uçtan uca şifreli"
                         : peerOnline
                           ? "çevrimiçi"
-                          : "son görülme bilinmiyor"}
+                          : privacy.hideLastSeen
+                            ? "uçtan uca şifreli"
+                            : lastSeenLabel(peerId ?? "")}
                 </p>
               </div>
               <button
@@ -1569,6 +1622,73 @@ export function ChatApp() {
               >
                 <Video className="h-6 w-6" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setGalleryOpen(true);
+                }}
+                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Medya ve belgeler"
+                title="Medya ve belgeler"
+              >
+                <ImageIcon className="h-5 w-5" />
+              </button>
+              <div className="relative hidden lg:block">
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setMuteMenu((v) => !v);
+                  }}
+                  className="wa-press flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"
+                  style={{ color: isMuted(active.id) ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                  aria-label={isMuted(active.id) ? "Sesi aç" : "Sessize al"}
+                  title={isMuted(active.id) ? muteUntilLabel(active.id) : "Sessize al"}
+                >
+                  {isMuted(active.id) ? (
+                    <BellOff className="h-5 w-5" />
+                  ) : (
+                    <Bell className="h-5 w-5" />
+                  )}
+                </button>
+                {muteMenu && (
+                  <div
+                    className="absolute right-0 top-12 z-30 w-44 overflow-hidden rounded-lg shadow-lg"
+                    style={{ background: "var(--wa-panel)", border: "1px solid var(--wa-border)" }}
+                  >
+                    {isMuted(active.id) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          unmuteConversation(active.id);
+                          setMuteMenu(false);
+                        }}
+                        className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
+                        style={{ color: "var(--wa-text)" }}
+                      >
+                        Bildirimleri aç
+                      </button>
+                    ) : (
+                      MUTE_OPTIONS.map((o) => (
+                        <button
+                          key={o.id}
+                          type="button"
+                          onClick={() => {
+                            muteConversation(active.id, o.id);
+                            setMuteMenu(false);
+                          }}
+                          className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
+                          style={{ color: "var(--wa-text)" }}
+                        >
+                          {o.label}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => void togglePin(active.id)}

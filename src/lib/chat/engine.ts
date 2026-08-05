@@ -880,6 +880,70 @@ export async function retryMessage(messageId: string): Promise<boolean> {
   return delivered;
 }
 
+/* ------------------ üstel geri çekilmeli otomatik yeniden gönderim ------------------ */
+
+/**
+ * Bekleyen mesajlar sessizce beklemez: 5 sn, 10 sn, 20 sn… şeklinde
+ * artan aralıklarla yeniden denenir. En fazla RETRY_MAX deneme yapılır;
+ * ardından mesaj "iletilemedi" olarak işaretlenir ve kullanıcı tek
+ * dokunuşla kendisi tekrar deneyebilir.
+ */
+const RETRY_BASE_MS = 5_000;
+const RETRY_MAX = 6;
+type RetryState = { attempts: number; nextAt: number };
+const retryState = new Map<string, RetryState>();
+
+function retryDelay(attempts: number): number {
+  return Math.min(RETRY_BASE_MS * 2 ** attempts, 5 * 60_000);
+}
+
+/** Ağ geri geldiğinde tarayıcının kuyruğu uyandırmasını ister. */
+async function requestBackgroundSync(): Promise<void> {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    const reg = (await navigator.serviceWorker.ready) as ServiceWorkerRegistration & {
+      sync?: { register: (tag: string) => Promise<void> };
+    };
+    await reg.sync?.register("tedbirge-outbox");
+  } catch {
+    /* Background Sync desteklenmiyor (iOS Safari): kuyruk zamanlayıcı ile işlenir. */
+  }
+}
+
+/** Kuyruktaki mesajları sırayla, geri çekilmeli olarak yeniden dener. */
+export async function pumpRetryQueue(): Promise<number> {
+  const now = Date.now();
+  const rows = await listAllMessages();
+  let tried = 0;
+  for (const m of rows) {
+    if (!m.outgoing || m.status !== "pending") continue;
+    const st = retryState.get(m.id) ?? { attempts: 0, nextAt: m.ts + RETRY_BASE_MS };
+    if (now < st.nextAt) {
+      retryState.set(m.id, st);
+      continue;
+    }
+    if (st.attempts >= RETRY_MAX) {
+      retryState.delete(m.id);
+      await putMessage({ ...m, status: "failed" });
+      await refreshMessages(m.convId);
+      continue;
+    }
+    tried += 1;
+    const ok = await retryMessage(m.id).catch(() => false);
+    if (ok) retryState.delete(m.id);
+    else {
+      retryState.set(m.id, {
+        attempts: st.attempts + 1,
+        nextAt: Date.now() + retryDelay(st.attempts + 1),
+      });
+      void requestBackgroundSync();
+    }
+  }
+  return tried;
+}
+
+
+
 function clearTyping(convId: string) {
   if (state.typing[convId] === undefined) return;
   const { [convId]: _drop, ...rest } = state.typing;
@@ -1337,6 +1401,8 @@ export async function bootChat() {
       if (type === "tedbirge-push" || type === "tedbirge-push-open") {
         window.dispatchEvent(new CustomEvent("tedbirge:relay-poll-now"));
       }
+      // Arka plan eşitleme: ağ geri geldi, bekleyen mesajları gönder.
+      if (type === "tedbirge-sync") void pumpRetryQueue();
     });
   }
 
@@ -1372,6 +1438,12 @@ export async function bootChat() {
   // Kuyrukta çok bekleyen mesajlar sessizce düşmez; "iletilemedi" olur.
   void sweepStalePending();
   setInterval(() => void sweepStalePending(), 60_000);
+  // Üstel geri çekilmeli otomatik yeniden gönderim (yalnızca lider sekmede).
+  setInterval(() => {
+    void import("@/lib/chat/leader")
+      .then((m) => (m.isLeaderTab() ? pumpRetryQueue() : 0))
+      .catch(() => 0);
+  }, 15_000);
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();
   await cleanDuplicateConversations();

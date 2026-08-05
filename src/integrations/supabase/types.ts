@@ -756,6 +756,39 @@ export type Database = {
           },
         ]
       }
+      native_push_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          failure_count: number
+          id: string
+          last_seen_at: string
+          node_id: string
+          platform: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          failure_count?: number
+          id?: string
+          last_seen_at?: string
+          node_id: string
+          platform?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          failure_count?: number
+          id?: string
+          last_seen_at?: string
+          node_id?: string
+          platform?: string
+          token?: string
+        }
+        Relationships: []
+      }
       node_enrollments: {
         Row: {
           carrier: string
