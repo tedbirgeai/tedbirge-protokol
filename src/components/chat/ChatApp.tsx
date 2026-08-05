@@ -113,6 +113,12 @@ import {
 } from "@/lib/chat/avatars";
 
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
+import { isNamed, safeTitleOf } from "@/lib/chat/safe-title";
+import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
+import { bootLeader } from "@/lib/chat/leader";
+import { bootSessions } from "@/lib/chat/sessions";
+import { isMuted, onMuteChange } from "@/lib/chat/mute";
+import { IDB_BLOCKED_EVENT } from "@/lib/store/idb";
 
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
 
@@ -716,7 +722,16 @@ export function ChatApp() {
         /* çevrimdışı: yerel kimlik kullanılır */
       }
     })();
-    void bootChat().then(() => setReady(true));
+    void bootChat().then(() => {
+      setReady(true);
+      bootSessions();
+    });
+    bootLeader();
+    const onBlocked = () =>
+      toast.warning("Tedbirge başka bir sekmede açık", {
+        description: "Güncellemenin tamamlanması için diğer sekmeyi kapatın.",
+      });
+    window.addEventListener(IDB_BLOCKED_EVENT, onBlocked);
     // Gelen aramaların duyulabilmesi için sinyal dinleyicisi açılışta kurulur.
     bootCalls();
     bootLock();
@@ -727,6 +742,7 @@ export function ChatApp() {
     return () => {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
+      window.removeEventListener(IDB_BLOCKED_EVENT, onBlocked);
     };
   }, []);
 
@@ -753,6 +769,7 @@ export function ChatApp() {
     setReplyTo(null);
     setEmojiOpen(false);
     setVisibleCount(60);
+    setDraft(getDraft(activeId));
     inputRef.current?.focus();
   }, [activeId]);
 
@@ -763,6 +780,14 @@ export function ChatApp() {
   useEffect(() => {
     if (activeId) void markRead(activeId);
   }, [activeId, messages.length]);
+
+  // Taslak kalıcıdır: sohbetten çıkılsa da yazılan metin kaybolmaz.
+  useEffect(() => {
+    persistDraft(activeId, draft);
+  }, [draft, activeId]);
+
+  // Sessize alma değişince liste rozetleri tazelenir.
+  useEffect(() => onMuteChange(() => setFolderVersion((v) => v + 1)), []);
 
   const pairing = usePairing();
   const contactBook = useContacts();
@@ -775,8 +800,7 @@ export function ChatApp() {
   }, [chat.conversations.length, node.peers?.length, pairing.trusted]);
 
   /** Sohbet başlığını üç katmanlı rehber adıyla gösterir. */
-  const titleOf = (c: { group: boolean; title: string; members: string[] }) =>
-    c.group ? c.title : contactLabel(c.members[0] ?? c.title, c.title);
+  const titleOf = (c: { group: boolean; title: string; members: string[] }) => safeTitleOf(c);
 
   const allConversations = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("tr");
@@ -798,7 +822,7 @@ export function ChatApp() {
         const f = folderOf(c.id);
         if (folder === "" ? f === ARCHIVE : f !== folder) return false;
         // KVKK: adı bilinmeyen (anonim) kayıtlar sohbet listesinde gösterilmez.
-        if (isTechnicalLabel(titleOf(c)) && c.id !== SELF_CONV_ID) return false;
+        if (!isNamed(c) && c.id !== SELF_CONV_ID) return false;
         return true;
       }),
     [allConversations, folder, folderVersion],
@@ -1340,6 +1364,13 @@ export function ChatApp() {
                           />
                         )}
                         {name}
+                        {isMuted(c.id) && (
+                          <VolumeX
+                            className="ml-1 inline h-3 w-3"
+                            style={{ color: "var(--wa-muted)" }}
+                            aria-hidden
+                          />
+                        )}
                       </p>
                       <span className="shrink-0 text-[11px]" style={{ color: "var(--wa-muted)" }}>
                         {c.lastTs ? timeOf(c.lastTs) : ""}
