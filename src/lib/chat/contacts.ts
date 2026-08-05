@@ -207,12 +207,21 @@ export async function refreshContacts(): Promise<Contact[]> {
   const ids = new Set<string>([...peers.map((p) => p.peerId), ...trusted.map((t) => t.nodeId)]);
   const self = getBrowserNodeId();
   ids.delete(self);
+  // Kendi numaraya çıpalı kimliğim rehberde kişi olarak görünmez.
+  try {
+    const mine = window.localStorage.getItem("tedbirge.person.id");
+    if (mine) ids.delete(mine);
+  } catch {
+    /* gizli mod */
+  }
 
   const peerMap = new Map(peers.map((p) => [p.peerId, p] as const));
   const trustMap = new Map(trusted.map((t) => [t.nodeId, t] as const));
 
-  const rows = Array.from(ids).map((id) =>
-    buildContact(peerMap.get(id), trustMap.get(id), id, nicknames, aliases),
+  const rows = collapsePersons(
+    Array.from(ids).map((id) =>
+      buildContact(peerMap.get(id), trustMap.get(id), id, nicknames, aliases),
+    ),
   );
 
   // İsim çakışması: aynı beyan adını taşıyan birden çok kişi varsa uyarı ver.
