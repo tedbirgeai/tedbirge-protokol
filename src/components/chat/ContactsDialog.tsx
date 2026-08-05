@@ -395,10 +395,32 @@ export function ContactsDialog({
             ))}
             {rows.length === 0 && (
               <li className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Rehber boş. Kimliğinizi paylaşın; karşı taraf size yazdığında kişi otomatik eklenir.
+                Rehberinizde adıyla eşleşen kişi yok. Telefon rehberinizi yükleyin ya da kimliğinizi
+                paylaşın.
               </li>
             )}
           </ul>
+
+          {unnamed.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+              <span>
+                {unnamed.length} adsız kayıt gizlendi (adı bilinmeyen cihazlar listelenmez).
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] text-destructive"
+                onClick={() => {
+                  void Promise.all(unnamed.map((c) => eraseContact(c.peerId))).then(() =>
+                    toast(`${unnamed.length} adsız kayıt silindi`),
+                  );
+                }}
+              >
+                <Trash2 className="mr-1 h-3 w-3" /> Temizle
+              </Button>
+            </div>
+          )}
+
 
           {/* KVKK / GDPR */}
           <div className="rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
