@@ -148,7 +148,7 @@ export function CallOverlay() {
       : label;
 
   const ctlBase =
-    "wa-press flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20";
+    "wa-press flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20";
 
   const connecting = call.phase !== "active";
 
@@ -247,7 +247,7 @@ export function CallOverlay() {
       </div>
 
       {/* Alt kontrol barı */}
-      <div className="relative z-10 flex items-center justify-center gap-4 pb-12">
+      <div className="relative z-10 flex items-center justify-center gap-3 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:gap-4 sm:pb-12">
         {call.phase === "ringing" ? (
           <>
             <button
@@ -256,7 +256,7 @@ export function CallOverlay() {
                 pressFeedback();
                 void acceptCall();
               }}
-              className="wa-press wa-ring flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white"
+               className="wa-press wa-ring flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white"
               aria-label="Aramayı kabul et"
             >
               <PhoneIncoming className="h-7 w-7" />
