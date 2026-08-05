@@ -1538,7 +1538,18 @@ export async function bootChat() {
     if (knownPeerIds().length) void announceDigests();
   }, 30_000);
   setTimeout(() => void announceDigests(), 4_000);
+  // Ad uyumu: adımızı duyur, adı bilinmeyenlerden ad iste.
+  setTimeout(() => {
+    void announceName();
+    void requestMissingNames();
+  }, 6_000);
+  setInterval(() => void requestMissingNames(), 45_000);
+  // Açılış sağlık denetimi ve otonom onarım.
+  void import("@/lib/chat/self-heal")
+    .then((m) => m.runSelfHeal())
+    .catch((error: unknown) => console.error("[chat] sağlık denetimi başarısız", error));
 }
+
 
 /** Süresi dolan (kaybolan) mesajları siler ve arayüzü tazeler. */
 export async function sweepEphemeral(): Promise<number> {
