@@ -329,6 +329,14 @@ export class BrowserNode {
   private relayAck: string[] = [];
   private relayFailures = 0;
   private flushBusy = false;
+  /** Kuyruk yeniden deneme gecikmesi (üstel geri çekilme). */
+  private queueBackoff = 0;
+  /** Hedef → bağlı cihazlar önbelleği; dizin sorgusu tekrarını önler. */
+  private deviceCache = new Map<
+    string,
+    { devices: { nodeId: string; boxPublic: string }[]; until: number }
+  >();
+
 
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
