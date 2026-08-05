@@ -163,8 +163,8 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
               });
             }
           }
-        } catch {
-          /* çevrimdışı veya bulut erişilemez: yerel oturum yeterli */
+        } catch (cloudError) {
+          console.error("[onboarding] bulut hesabı bağlanamadı", cloudError);
         }
       }
 
@@ -173,8 +173,8 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       try {
         const count = await restoreContacts(verifiedPhone);
         setRestored(count);
-      } catch {
-        /* yedek yok veya çevrimdışı */
+      } catch (restoreError) {
+        console.error("[onboarding] rehber kasası geri yüklenemedi", restoreError);
       }
       try {
         // Tek adımda: cihaz rehberi + yerel defter + bulut yedeği taranır,
@@ -182,16 +182,16 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
         const { autoSyncContacts } = await import("@/lib/chat/directory");
         const auto = await autoSyncContacts();
         if (auto.matched > 0) setRestored((prev) => Math.max(prev, auto.matched));
-      } catch {
-        /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
+      } catch (directoryError) {
+        console.error("[onboarding] rehber eşleştirilemedi", directoryError);
       }
       try {
         // Bu cihazdaki rehber hemen şifreli olarak hesaba yedeklenir; aynı
         // numarayla açılan diğer ortamlar (bilgisayar/PWA) anında görür.
         const { backupContacts } = await import("@/lib/chat/vault");
         await backupContacts(verifiedPhone);
-      } catch {
-        /* çevrimdışı: bir sonraki eşitlemede yedeklenir */
+      } catch (backupError) {
+        console.error("[onboarding] rehber kasası güncellenemedi", backupError);
       }
 
       // Kalıcı kimlik kartı (TBG kodu + karekod) gösterilir.

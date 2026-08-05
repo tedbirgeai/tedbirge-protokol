@@ -45,8 +45,9 @@ export function CallHost() {
           });
           await queue.flushEnrollment().catch(() => "queued" as const);
 
-          const { data } = await supabase.auth.getSession();
-          if (!data.session) return;
+          const { ensureCloudSession } = await import("@/lib/chat/history-sync");
+          const cloudReady = await ensureCloudSession();
+          if (!cloudReady) return;
           // Rehber kalıcılığı: uygulama silinip yeniden kurulsa da şifreli
           // yedekten geri gelir, sonrasında güncel hâli tekrar yedeklenir.
           // Çıpa numarası yerel oturumdan da okunur; böylece bulut oturumu
@@ -55,17 +56,23 @@ export function CallHost() {
           const phone = (await getAnchorPhone()) || profile.getPhone();
           if (phone) {
             const vault = await import("@/lib/chat/vault");
-            await vault.restoreContacts(phone).catch(() => 0);
-            await vault.backupContacts(phone).catch(() => false);
+            await vault.restoreContacts(phone);
+            const { autoSyncContacts } = await import("@/lib/chat/directory");
+            await autoSyncContacts();
+            await vault.backupContacts(phone);
           }
 
         };
-        await syncDirectory().catch(() => undefined);
+        await syncDirectory().catch((error) => console.error("[sync] açılış eşitlemesi başarısız", error));
         // Otonom eşitleme: ön plana gelişte, ağ dönüşünde ve 6 saatte bir.
         const { startDirectorySync } = await import("@/lib/chat/enroll-queue");
         const stopSync = startDirectorySync();
         const auth = supabase.auth.onAuthStateChange((_event, session) => {
-          if (session) void syncDirectory().catch(() => undefined);
+          if (session) {
+            void syncDirectory().catch((error) =>
+              console.error("[sync] oturum eşitlemesi başarısız", error),
+            );
+          }
         });
         unsubscribe = () => {
           stopSync();
