@@ -75,8 +75,25 @@ export const Route = createFileRoute("/api/public/relay")({
           return json({ ok: false, error: "gecersiz_istek" }, 400);
         }
 
+        // Kota cihaz (düğüm) başına uygulanır: aynı ev/ofis ağındaki tüm
+        // cihazlar tek IP kotasını paylaşıp birbirini kilitlemez. IP başına
+        // yalnız kötüye kullanımı durduran yüksek bir tavan kalır.
+        const actor =
+          parsed.action === "push" ? (parsed.items[0]?.from ?? "anonim") : parsed.nodeId;
+        const readOnly = parsed.action === "lookup" || parsed.action === "pull";
+
         const { checkApiRateLimit } = await import("@/lib/api-rate-limit.server");
-        const limit = await checkApiRateLimit("relay", clientKey(request));
+        const perNode = await checkApiRateLimit("relay:node", actor, {
+          perMinute: readOnly ? 300 : 180,
+          perDay: 200_000,
+        });
+        const perIp = perNode.ok
+          ? await checkApiRateLimit("relay:ip", clientKey(request), {
+              perMinute: 3_000,
+              perDay: 1_000_000,
+            })
+          : perNode;
+        const limit = perNode.ok ? perIp : perNode;
         if (!limit.ok) {
           return new Response(JSON.stringify({ ok: false, error: limit.message }), {
             status: 429,
@@ -87,6 +104,7 @@ export const Route = createFileRoute("/api/public/relay")({
             },
           });
         }
+
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

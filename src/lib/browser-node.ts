@@ -62,6 +62,10 @@ const CHANNEL = "tedbirge-mesh-v1";
 /** Yerel keşif kanalı: aynı cihaz/aynı origin üzerindeki sekme ve PWA örnekleri. */
 const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
 const LOCAL_ANNOUNCE_MS = 4_000;
+/** Dizin sorgusu önbelleği: başarılı sonuç 5 dk, boş sonuç 20 sn saklanır. */
+const DEVICE_CACHE_MS = 300_000;
+const DEVICE_CACHE_MISS_MS = 20_000;
+
 const MAX_TTL = 4;
 /** Bulutsuz (Katman B) el sıkışma için yerel ajan WebSocket sinyalleşme adresleri. */
 const LAN_SIGNAL_PORT = 8787;
@@ -329,6 +333,14 @@ export class BrowserNode {
   private relayAck: string[] = [];
   private relayFailures = 0;
   private flushBusy = false;
+  /** Kuyruk yeniden deneme gecikmesi (üstel geri çekilme). */
+  private queueBackoff = 0;
+  /** Hedef → bağlı cihazlar önbelleği; dizin sorgusu tekrarını önler. */
+  private deviceCache = new Map<
+    string,
+    { devices: { nodeId: string; boxPublic: string }[]; until: number }
+  >();
+
 
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
@@ -466,7 +478,7 @@ export class BrowserNode {
       // Bekleyen mesajlar yalnız olay anında değil, düzenli olarak da denenir.
       void this.flushQueue();
     }, 60_000);
-    this.retryTimer = setInterval(() => void this.flushQueue(), 12_000);
+    this.scheduleQueueFlush();
 
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
     void this.publishDirectory();
@@ -609,24 +621,46 @@ export class BrowserNode {
    * Hedefin ulaşılabilir cihazlarını çözer. Hedef ister cihaz düğümü
    * (mob-…) ister kişi kimliği (TBG-…) olsun aynı yanıt döner; kişinin
    * TÜM bağlı cihazlarına ayrı ayrı şifreli zarf gider (çoklu cihaz).
+   *
+   * Sonuç cihazda önbelleğe alınır: aynı hedef için saniyede onlarca dizin
+   * sorgusu atılmaz, böylece bulut kotası boşa harcanmaz.
    */
   private async resolveDevices(
     to: string,
   ): Promise<{ nodeId: string; boxPublic: string }[]> {
+    const now = Date.now();
+    const cached = this.deviceCache.get(to);
+    if (cached && cached.until > now) return cached.devices;
+
     const out = new Map<string, { nodeId: string; boxPublic: string }>();
     const local = this.peerKeys.get(to)?.bpk ?? (await getPeer(to))?.publicKey;
     if (local) out.set(to, { nodeId: to, boxPublic: local });
+    let looked = false;
     try {
       const { lookupRelayDevices } = await import("@/lib/relay-cloud");
       for (const d of await lookupRelayDevices(to)) {
         if (d.nodeId === this.nodeId) continue;
         out.set(d.nodeId, { nodeId: d.nodeId, boxPublic: d.boxPublic });
+        looked = true;
       }
     } catch {
       /* dizin okunamadı: yerel anahtarla devam */
     }
-    return Array.from(out.values());
+    const devices = Array.from(out.values());
+    // Başarılı çözümleme uzun, boş sonuç kısa süre saklanır (kişi az sonra
+    // ağa bağlanabilir).
+    this.deviceCache.set(to, {
+      devices,
+      until: now + (looked && devices.length ? DEVICE_CACHE_MS : DEVICE_CACHE_MISS_MS),
+    });
+    if (this.deviceCache.size > 200) {
+      for (const [key, value] of this.deviceCache) {
+        if (value.until <= now) this.deviceCache.delete(key);
+      }
+    }
+    return devices;
   }
+
 
   /**
    * Çevrimiçi iki cihaz arasında, veri kanalı henüz kurulmamış olsa bile
@@ -845,7 +879,10 @@ export class BrowserNode {
   private handleOnline = () => {
     this.emit({ online: true });
     void appendEvent("uplink", "İnternet geri geldi — kuyruk boşaltılıyor.");
+    this.queueBackoff = 0;
+    this.deviceCache.clear();
     void this.flushQueue();
+
     void this.heartbeat();
     void this.publishDirectory();
     void this.pollRelay();
@@ -1288,12 +1325,37 @@ export class BrowserNode {
     return this.send("alert", "*", { text, at: Date.now() }, 0);
   }
 
+  /**
+   * Kuyruk yeniden denemesi sabit aralıklı değildir: teslim edilecek paket
+   * yoksa ya da bulut kotası soğuma penceresindeyse tur atlanır ve bekleme
+   * üstel olarak büyür (12 sn → 2 dk). Böylece boşa istek üretilmez.
+   */
+  private scheduleQueueFlush() {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    const delay = Math.min(12_000 * 2 ** this.queueBackoff, 120_000);
+    this.retryTimer = setTimeout(async () => {
+      this.retryTimer = null;
+      await this.flushQueue();
+      if (this.state.running) this.scheduleQueueFlush();
+    }, delay);
+  }
+
   private async flushQueue() {
     if (this.flushBusy) return;
+    const { relayCooldownRemainingMs } = await import("@/lib/relay-cloud");
+    if (relayCooldownRemainingMs() > 0) {
+      this.queueBackoff = Math.min(this.queueBackoff + 1, 4);
+      return;
+    }
     this.flushBusy = true;
+    let delivered = 0;
     try {
       const rows = await getPackets();
-      if (!rows.length) return;
+      if (!rows.length) {
+        this.queueBackoff = Math.min(this.queueBackoff + 1, 4);
+        return;
+      }
+
       const durable: typeof rows = [];
       const uniqueIntents = new Set<string>();
       for (const row of rows) {
@@ -1325,7 +1387,8 @@ export class BrowserNode {
 
       // Tek turda sınırlı sayıda kalıcı öğe gönderilir; büyük eski kuyruklar
       // API'yi tekrar 429'a sürüklemeden kontrollü biçimde boşalır.
-      for (const row of durable.slice(0, 100)) {
+      for (const row of durable.slice(0, 25)) {
+        if (relayCooldownRemainingMs() > 0) break;
         const item = row.env as QueuedItem;
         if (item.t === "fwd") {
           if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
@@ -1339,6 +1402,7 @@ export class BrowserNode {
         }
         const sent = await this.send(item.kind, item.to, item.payload, item.priority, false);
         if (sent) {
+          delivered += 1;
           await deletePacket(row.pktId);
           const messageId = (item.payload as { id?: unknown } | null)?.id;
           if (typeof messageId === "string") {
@@ -1350,9 +1414,12 @@ export class BrowserNode {
       }
     } finally {
       this.flushBusy = false;
+      // İlerleme varsa hızlı tur, yoksa kademeli bekleme.
+      this.queueBackoff = delivered > 0 ? 0 : Math.min(this.queueBackoff + 1, 4);
       await this.refreshQueueCount();
     }
   }
+
 
   private async postTelemetry(body: Record<string, unknown>) {
     if (this.demoMode) return false;
