@@ -28,7 +28,11 @@ export function CallHistory({ onCall }: { onCall: (peerId: string, video: boolea
 
   useEffect(() => {
     // Adı çözülemeyen kayıt listede hiç görünmez (hayalet satır yasağı).
-    const sync = () => setRows(listCalls().filter((r) => isNamedPeer(r.peerId)));
+    const sync = () =>
+      setRows(
+        listCalls().filter((r) => Boolean(r.peerId) && safeNameOf(r.peerId) !== UNKNOWN_TITLE),
+      );
+
     sync();
     return onCallLogChange(sync);
   }, []);
