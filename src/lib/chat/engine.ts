@@ -897,6 +897,19 @@ function retryDelay(attempts: number): number {
   return Math.min(RETRY_BASE_MS * 2 ** attempts, 5 * 60_000);
 }
 
+/** Ağ geri geldiğinde tarayıcının kuyruğu uyandırmasını ister. */
+async function requestBackgroundSync(): Promise<void> {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    const reg = (await navigator.serviceWorker.ready) as ServiceWorkerRegistration & {
+      sync?: { register: (tag: string) => Promise<void> };
+    };
+    await reg.sync?.register("tedbirge-outbox");
+  } catch {
+    /* Background Sync desteklenmiyor (iOS Safari): kuyruk zamanlayıcı ile işlenir. */
+  }
+}
+
 /** Kuyruktaki mesajları sırayla, geri çekilmeli olarak yeniden dener. */
 export async function pumpRetryQueue(): Promise<number> {
   const now = Date.now();
@@ -918,11 +931,13 @@ export async function pumpRetryQueue(): Promise<number> {
     tried += 1;
     const ok = await retryMessage(m.id).catch(() => false);
     if (ok) retryState.delete(m.id);
-    else
+    else {
       retryState.set(m.id, {
         attempts: st.attempts + 1,
         nextAt: Date.now() + retryDelay(st.attempts + 1),
       });
+      void requestBackgroundSync();
+    }
   }
   return tried;
 }
@@ -1386,6 +1401,8 @@ export async function bootChat() {
       if (type === "tedbirge-push" || type === "tedbirge-push-open") {
         window.dispatchEvent(new CustomEvent("tedbirge:relay-poll-now"));
       }
+      // Arka plan eşitleme: ağ geri geldi, bekleyen mesajları gönder.
+      if (type === "tedbirge-sync") void pumpRetryQueue();
     });
   }
 
