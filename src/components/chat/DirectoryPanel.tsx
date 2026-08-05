@@ -84,7 +84,7 @@ function Row({
   );
 }
 
-const SYNC_FLAG = "tedbirge.chat.autoSync";
+
 
 export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Props) {
   const book = useContacts();
