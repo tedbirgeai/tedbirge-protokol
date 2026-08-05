@@ -403,13 +403,26 @@ function stopStats() {
 
 /* ------------------------------ eylemler ------------------------------ */
 
+/** Yerel akışı bağlar; izin yoksa yalnız-dinleme hatları açılır. */
+function attachLocal(pc: RTCPeerConnection, stream: MediaStream | null, video: boolean) {
+  if (stream) {
+    stream.getTracks().forEach((t) => {
+      if (!pc.getSenders().some((s) => s.track === t)) pc.addTrack(t, stream);
+    });
+    return;
+  }
+  if (pc.getTransceivers().length === 0) {
+    pc.addTransceiver("audio", { direction: "recvonly" });
+    if (video) pc.addTransceiver("video", { direction: "recvonly" });
+  }
+}
+
 async function dial(peerId: string, alias: string, video: boolean) {
   const stream = await ensureMedia(video);
   const leg = createLeg(peerId, alias);
-  stream.getTracks().forEach((t) => {
-    if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
-  });
+  attachLocal(leg.pc, stream, video);
   await tuneSenders(leg.pc);
+
 
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
