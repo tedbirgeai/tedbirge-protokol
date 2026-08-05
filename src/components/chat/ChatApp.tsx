@@ -203,7 +203,17 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]!;
 }
 
-function Avatar({ name, size = 44 }: { name: string; size?: number }) {
+function Avatar({ name, size = 44, src }: { name: string; size?: number; src?: string }) {
+  if (src)
+    return (
+      <img
+        src={src}
+        alt=""
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
@@ -214,6 +224,7 @@ function Avatar({ name, size = 44 }: { name: string; size?: number }) {
     </span>
   );
 }
+
 
 function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
