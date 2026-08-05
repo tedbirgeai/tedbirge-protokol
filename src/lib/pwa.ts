@@ -102,12 +102,17 @@ export function setupOfflineSupport() {
 
   navigator.serviceWorker.addEventListener("controllerchange", reloadOnce);
 
-  window.addEventListener("load", () => {
+  const register = () => {
     void navigator.serviceWorker
       .register(SW_URL, { scope: "/", updateViaCache: "none" })
       .then(armUpdateSignals)
       .catch(() => {
         if (intervalId) window.clearInterval(intervalId);
       });
-  });
+  };
+
+  // React hydration çoğu mobil cihazda window.load olayından sonra tamamlanır.
+  // Bu durumda yalnız load dinlemek servis çalışanını hiç kaydetmiyordu.
+  if (document.readyState === "complete") register();
+  else window.addEventListener("load", register, { once: true });
 }

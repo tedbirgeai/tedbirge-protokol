@@ -866,9 +866,10 @@ export function ChatApp() {
       inputRef.current?.focus();
       return;
     }
+    const message = draft;
     void sendText(
       active.id,
-      draft,
+      message,
       replyTo
         ? {
             id: replyTo.id,
@@ -876,7 +877,10 @@ export function ChatApp() {
             author: replyTo.outgoing ? me : displayName(active.title),
           }
         : undefined,
-    );
+    ).catch((err: Error) => {
+      setError(err.message || "Mesaj gönderilemedi. Yeniden deneyin.");
+      setDraft((current) => current || message);
+    });
     setDraft("");
     setReplyTo(null);
     setEmojiOpen(false);
@@ -1390,7 +1394,7 @@ export function ChatApp() {
         ) : (
           <>
             <header
-              className="flex items-center gap-3 px-4 py-2"
+              className="grid min-h-16 grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] items-center gap-1 px-2 py-2 sm:gap-2 sm:px-4"
               style={{
                 background: "var(--wa-panel-soft)",
                 borderBottom: "1px solid var(--wa-border)",
@@ -1399,13 +1403,13 @@ export function ChatApp() {
               <button
                 type="button"
                 onClick={() => setActiveId(null)}
-                className="rounded-full p-2 hover:bg-black/5 md:hidden"
+                className="wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/5 md:hidden"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Listeye dön"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <Avatar name={activeName} size={40} src={getAvatar(peerId)} />
+              <Avatar name={activeName} size={44} src={getAvatar(peerId)} />
               <div className="min-w-0 flex-1">
                 <p
                   className="truncate text-[15px] font-semibold"
@@ -1439,11 +1443,11 @@ export function ChatApp() {
                   else if (peerId) void startCall(peerId, false, activeName);
                 }}
                 disabled={!peerId}
-                className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
+                className="wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sesli ara"
               >
-                <Phone className="h-5 w-5" />
+                <Phone className="h-6 w-6" />
               </button>
               <button
                 type="button"
@@ -1458,16 +1462,16 @@ export function ChatApp() {
                   else if (peerId) void startCall(peerId, true, activeName);
                 }}
                 disabled={!peerId}
-                className="wa-press rounded-full p-2 hover:bg-black/5 disabled:opacity-40"
+                className="wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full hover:bg-black/5 disabled:opacity-40"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Görüntülü ara"
               >
-                <Video className="h-5 w-5" />
+                <Video className="h-6 w-6" />
               </button>
               <button
                 type="button"
                 onClick={() => void togglePin(active.id)}
-                className="wa-press rounded-full p-2 hover:bg-black/5"
+                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sabitle"
               >
@@ -1480,7 +1484,7 @@ export function ChatApp() {
                   toggleArchive(active.id);
                   setActiveId(null);
                 }}
-                className="wa-press rounded-full p-2 hover:bg-black/5"
+                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
                 title={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
@@ -1494,7 +1498,7 @@ export function ChatApp() {
                   void removeConversation(active.id);
                   setActiveId(null);
                 }}
-                className="wa-press rounded-full p-2 hover:bg-black/5"
+                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Sohbeti sil"
               >
@@ -1745,7 +1749,7 @@ export function ChatApp() {
                 e.preventDefault();
                 submitDraft();
               }}
-              className="flex w-full max-w-full flex-nowrap items-center gap-0.5 overflow-x-hidden p-2 sm:gap-1.5 sm:p-2.5"
+              className="grid w-full max-w-full grid-cols-[44px_44px_44px_minmax(0,1fr)_44px_48px] items-center gap-1 overflow-x-hidden p-2 sm:grid-cols-[48px_48px_48px_minmax(0,1fr)_48px_48px] sm:gap-1.5 sm:p-2.5"
               style={{
                 background: "var(--wa-panel-soft)",
                 borderTop: "1px solid var(--wa-border)",
@@ -1771,7 +1775,7 @@ export function ChatApp() {
                   pressFeedback();
                   setEmojiOpen((v) => !v);
                 }}
-                className="wa-press shrink-0 rounded-full p-1.5 hover:bg-black/5 sm:p-2.5"
+                className="wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/5 sm:h-12 sm:w-12"
                 style={{ color: emojiOpen ? "var(--wa-accent)" : "var(--wa-muted)" }}
                 aria-label="Emoji ekle"
               >
@@ -1783,7 +1787,7 @@ export function ChatApp() {
                   pressFeedback();
                   fileRef.current?.click();
                 }}
-                className="wa-press shrink-0 rounded-full p-1.5 hover:bg-black/5 sm:p-2.5"
+                className="wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/5 sm:h-12 sm:w-12"
                 style={{ color: "var(--wa-muted)" }}
                 aria-label="Dosya ekle"
               >
@@ -1795,7 +1799,7 @@ export function ChatApp() {
                   pressFeedback();
                   setEmergencyOpen(true);
                 }}
-                className="wa-press shrink-0 rounded-full p-1.5 hover:bg-black/5 sm:p-2.5"
+                className="wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/5 sm:h-12 sm:w-12"
                 style={{ color: "#e03131" }}
                 aria-label="Konum paylaş veya acil durum yayını"
                 title="Konum paylaş · Acil durum yayını (SOS)"
@@ -1827,7 +1831,7 @@ export function ChatApp() {
                     if (active) void sendTyping(active.id, e.target.value.length > 0);
                   }}
                   placeholder="Bir mesaj yazın"
-                  className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-sm outline-none sm:px-4"
+                  className="h-12 min-w-0 w-full rounded-lg px-3 text-base outline-none sm:px-4 sm:text-sm"
                   style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
                 />
               )}
@@ -1840,7 +1844,7 @@ export function ChatApp() {
                 onPointerUp={() => void pttUp()}
                 onPointerLeave={() => void pttUp()}
                 onPointerCancel={() => void pttUp()}
-                className={`wa-press shrink-0 rounded-full p-1.5 sm:p-2.5 ${ptt ? "wa-ring text-white" : ""}`}
+                className={`wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${ptt ? "wa-ring text-white" : ""}`}
                 style={{
                   color: ptt ? "#fff" : "var(--wa-muted)",
                   background: ptt ? "#e03131" : "transparent",
@@ -1853,21 +1857,21 @@ export function ChatApp() {
               {draft.trim() ? (
                 <button
                   type="submit"
-                  className="wa-press shrink-0 rounded-full p-2 text-white sm:p-2.5"
+                  className="wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white"
                   style={{ background: "var(--wa-accent)" }}
                   aria-label="Gönder"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5" />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => void toggleRecording()}
-                  className={`wa-press shrink-0 rounded-full p-2 text-white sm:p-2.5 ${recording ? "wa-ring" : ""}`}
+                  className={`wa-press flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white ${recording ? "wa-ring" : ""}`}
                   style={{ background: recording ? "#e03131" : "var(--wa-accent)" }}
                   aria-label={recording ? "Kaydı bitir ve gönder" : "Sesli not kaydet"}
                 >
-                  {recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {recording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </button>
               )}
             </form>

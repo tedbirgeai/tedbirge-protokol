@@ -132,6 +132,12 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   const hashes = await Promise.all(rows.map((r) => hashPhone(r.phone)));
   const byHash = new Map(hashes.map((h, i) => [h, rows[i]!] as const));
 
+  // Yerel doğrulama çevrimdışı çalışabilir. Bulut oturumu yokken korumalı
+  // eşleştirme fonksiyonunu çağırmak 401 üretmemeli; sonraki açılışta yeniden denenir.
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return { checked: rows.length, matched: 0 };
+
   const { matchDirectoryContacts } = await import("@/lib/directory.functions");
   const { matches } = await matchDirectoryContacts({ data: { hashes } });
 
