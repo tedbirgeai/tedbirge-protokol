@@ -96,8 +96,12 @@ async function bindSecret(phone: string, version: 1 | 2 = 2): Promise<Uint8Array
 }
 
 /** Belirli bir zaman adımı için 6 haneli kodu üretir (RFC 6238). */
-export async function localCodeAt(phone: string, counter: number): Promise<string> {
-  const key = await bindSecret(phone);
+export async function localCodeAt(
+  phone: string,
+  counter: number,
+  version: 1 | 2 = 2,
+): Promise<string> {
+  const key = await bindSecret(phone, version);
   const mac = await hmacSha1(key, counterBytes(counter));
   const offset = (mac[mac.length - 1] ?? 0) & 0x0f;
   const binary =
@@ -127,8 +131,10 @@ export async function verifyLocalCode(phone: string, code: string): Promise<bool
   const clean = code.replace(/\D/g, "");
   if (clean.length !== DIGITS) return false;
   const base = currentCounter();
-  for (const c of [base, base - 1, base + 1]) {
-    if ((await localCodeAt(phone, c)) === clean) return true;
+  for (const version of [2, 1] as const) {
+    for (const c of [base, base - 1, base + 1]) {
+      if ((await localCodeAt(phone, c, version)) === clean) return true;
+    }
   }
   return false;
 }
