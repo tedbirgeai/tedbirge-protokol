@@ -102,6 +102,14 @@ import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
+import {
+  fileToAvatarDataUrl,
+  getAvatar,
+  getMyAvatar,
+  setMyAvatar,
+  useAvatars,
+} from "@/lib/chat/avatars";
+
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
 
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
