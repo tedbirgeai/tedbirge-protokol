@@ -55,7 +55,9 @@ export type EnvelopeKind =
   | "call"
   | "media"
   | "sync"
+  | "session"
   | "presence";
+
 
 export type MeshHeader = {
   v: 2;
