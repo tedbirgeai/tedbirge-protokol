@@ -73,8 +73,19 @@ function counterBytes(counter: number): Uint8Array {
   return buf;
 }
 
-/** Telefon numarasına bağlanmış cihaz anahtarı (numara değişince kod da değişir). */
-async function bindSecret(phone: string): Promise<Uint8Array> {
+/**
+ * v2 — anahtar YALNIZCA numaradan türer. Böylece aynı numarayla Chrome,
+ * Edge, PWA veya mobil uygulamada aynı doğrulama kodu görünür; kullanıcı
+ * her ortamda ayrı bir "hesap" gibi karşılanmaz.
+ */
+async function bindSecret(phone: string, version: 1 | 2 = 2): Promise<Uint8Array> {
+  if (version === 2) {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(`tedbirge/local-auth/v2:${phone}`),
+    );
+    return new Uint8Array(digest).slice(0, 20);
+  }
   const secret = getDeviceSecret();
   const salt = new TextEncoder().encode(`tedbirge/local-auth/v1:${phone}`);
   const material = new Uint8Array(secret.length + salt.length);
@@ -85,8 +96,12 @@ async function bindSecret(phone: string): Promise<Uint8Array> {
 }
 
 /** Belirli bir zaman adımı için 6 haneli kodu üretir (RFC 6238). */
-export async function localCodeAt(phone: string, counter: number): Promise<string> {
-  const key = await bindSecret(phone);
+export async function localCodeAt(
+  phone: string,
+  counter: number,
+  version: 1 | 2 = 2,
+): Promise<string> {
+  const key = await bindSecret(phone, version);
   const mac = await hmacSha1(key, counterBytes(counter));
   const offset = (mac[mac.length - 1] ?? 0) & 0x0f;
   const binary =
@@ -116,8 +131,10 @@ export async function verifyLocalCode(phone: string, code: string): Promise<bool
   const clean = code.replace(/\D/g, "");
   if (clean.length !== DIGITS) return false;
   const base = currentCounter();
-  for (const c of [base, base - 1, base + 1]) {
-    if ((await localCodeAt(phone, c)) === clean) return true;
+  for (const version of [2, 1] as const) {
+    for (const c of [base, base - 1, base + 1]) {
+      if ((await localCodeAt(phone, c, version)) === clean) return true;
+    }
   }
   return false;
 }

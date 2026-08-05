@@ -118,6 +118,10 @@ export type Contact = {
   /** Aynı beyan adını taşıyan başka kişi var mı? (isim çakışması uyarısı) */
   ambiguous: boolean;
   method?: TrustedNode["method"];
+  /** Numaraya çıpalanmış kişi kimliği (aynı kişinin tüm cihazları). */
+  personId?: string;
+  /** Bu kişinin diğer bağlı cihazları — arayüzde tek kart gösterilir. */
+  linkedNodes?: string[];
   pairedAt?: number;
   lastSeen: number;
 };
@@ -159,9 +163,39 @@ function buildContact(
     displayName: nickname || claimedName || shortId,
     ambiguous: false,
     method: trusted?.method,
+    personId: trusted?.personId,
     pairedAt: trusted?.pairedAt,
     lastSeen: Math.max(peer?.lastSeen ?? 0, trusted?.pairedAt ?? 0),
   };
+}
+
+/**
+ * Aynı kişiye ait cihazları tek karta indirir: en son görülen cihaz
+ * birincil olur, diğerleri linkedNodes listesinde saklanır.
+ */
+function collapsePersons(rows: Contact[]): Contact[] {
+  const groups = new Map<string, Contact[]>();
+  for (const row of rows) {
+    const key = row.personId || row.peerId;
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(row);
+    else groups.set(key, [row]);
+  }
+  const out: Contact[] = [];
+  for (const bucket of groups.values()) {
+    const sorted = [...bucket].sort((a, b) => b.lastSeen - a.lastSeen);
+    const primary = sorted[0]!;
+    const linked = sorted.slice(1);
+    if (linked.length > 0) {
+      primary.linkedNodes = linked.map((c) => c.peerId);
+      // Ad yalnızca bir cihazda kayıtlıysa tüm karta yansısın.
+      if (!primary.nickname) primary.nickname = linked.find((c) => c.nickname)?.nickname;
+      if (!primary.claimedName) primary.claimedName = linked.find((c) => c.claimedName)?.claimedName;
+      primary.displayName = primary.nickname || primary.claimedName || primary.shortId;
+    }
+    out.push(primary);
+  }
+  return out;
 }
 
 /** Rehberi IndexedDB + yerel adlardan yeniden kurar. */
@@ -173,12 +207,21 @@ export async function refreshContacts(): Promise<Contact[]> {
   const ids = new Set<string>([...peers.map((p) => p.peerId), ...trusted.map((t) => t.nodeId)]);
   const self = getBrowserNodeId();
   ids.delete(self);
+  // Kendi numaraya çıpalı kimliğim rehberde kişi olarak görünmez.
+  try {
+    const mine = window.localStorage.getItem("tedbirge.person.id");
+    if (mine) ids.delete(mine);
+  } catch {
+    /* gizli mod */
+  }
 
   const peerMap = new Map(peers.map((p) => [p.peerId, p] as const));
   const trustMap = new Map(trusted.map((t) => [t.nodeId, t] as const));
 
-  const rows = Array.from(ids).map((id) =>
-    buildContact(peerMap.get(id), trustMap.get(id), id, nicknames, aliases),
+  const rows = collapsePersons(
+    Array.from(ids).map((id) =>
+      buildContact(peerMap.get(id), trustMap.get(id), id, nicknames, aliases),
+    ),
   );
 
   // İsim çakışması: aynı beyan adını taşıyan birden çok kişi varsa uyarı ver.

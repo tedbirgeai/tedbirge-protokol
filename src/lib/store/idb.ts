@@ -361,6 +361,8 @@ export type TrustedNode = {
   alias?: string;
   /** Eşleşme anındaki genel anahtar (varsa) — değişirse güven düşer. */
   publicKey?: string;
+  /** Numaraya çıpalanmış kişi kimliği: aynı kişinin tüm cihazları eşit. */
+  personId?: string;
   method: "pin" | "qr" | "auto";
   pairedAt: number;
 };

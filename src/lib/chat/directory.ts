@@ -137,13 +137,22 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
   }
 
   try {
-    const { getPhone } = await import("@/lib/chat/profile");
-    const phone = getPhone();
+    // Çıpa numarası: yerel oturum → profil → hesap. Yeni bir ortamda
+    // rehber yedeği bu numarayla otomatik geri yüklenir.
+    const { getAnchorPhone } = await import("@/lib/chat/anchor");
+    const phone = await getAnchorPhone();
     if (phone) {
       const vault = await import("@/lib/chat/vault");
       const restored = await vault.restoreContacts(phone).catch(() => 0);
-      if (restored > 0)
+      if (restored > 0) {
+        // Yedekten gelen cihaz rehberi varsa hemen eşleştirilir.
+        const book = loadLocalBook();
+        if (book.length > 0) {
+          const r = await importContacts(book);
+          return { ...r, source: "vault" };
+        }
         return { checked: restored, matched: restored, people: [], source: "vault" };
+      }
     }
   } catch {
     /* yedek yok */
@@ -206,6 +215,9 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
 
   const people: MatchedContact[] = [];
   let matched = 0;
+  // Aynı kişinin birden çok cihazı varsa tek kişi olarak sayılır; en son
+  // görülen cihaz birincil kabul edilir (WhatsApp bağlı-cihaz modeli).
+  const seenPersons = new Set<string>();
   for (const m of matches) {
     const local = byHash.get(m.hash);
     const target = m.nodeId || m.personId;
@@ -214,16 +226,27 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
     await putTrustedNode({
       nodeId: target,
       alias: m.displayName ?? local?.name ?? undefined,
+      personId: m.personId || undefined,
       method: "auto",
       pairedAt: Date.now(),
     });
     if (local?.name) setNickname(target, local.name);
+    const personKey = m.personId || target;
+    if (seenPersons.has(personKey)) continue;
+    seenPersons.add(personKey);
     matched += 1;
     people.push({
       peerId: target,
       name: local?.name || m.displayName || shortIdOf(target),
       shortId: shortIdOf(target),
     });
+  }
+  // Eski ortamlardan kalan, adı çözülemeyen hayalet kayıtlar budanır.
+  try {
+    const { pruneGhostContacts } = await import("@/lib/chat/merge");
+    await pruneGhostContacts();
+  } catch {
+    /* temizlik zorunlu değil */
   }
   await refreshContacts();
   return { checked: rows.length, matched, people };

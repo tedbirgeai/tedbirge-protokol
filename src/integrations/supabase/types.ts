@@ -978,7 +978,8 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
-          node_id: string | null
+          last_seen_at: string
+          node_id: string
           person_id: string
           phone_hash: string
           updated_at: string
@@ -988,7 +989,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          node_id?: string | null
+          last_seen_at?: string
+          node_id: string
           person_id: string
           phone_hash: string
           updated_at?: string
@@ -998,7 +1000,8 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          node_id?: string | null
+          last_seen_at?: string
+          node_id?: string
           person_id?: string
           phone_hash?: string
           updated_at?: string

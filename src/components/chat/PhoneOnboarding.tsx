@@ -13,7 +13,7 @@ import QRCode from "qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setEmail, setPhone } from "@/lib/chat/profile";
-import { normalizePhone, syncDeviceContacts } from "@/lib/chat/directory";
+import { normalizePhone } from "@/lib/chat/directory";
 import { ensureNotificationPermission } from "@/lib/chat/push";
 import { refreshContacts, shortIdOf } from "@/lib/chat/contacts";
 import { qrPayload } from "@/lib/peer-trust";
@@ -177,7 +177,11 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
         /* yedek yok veya çevrimdışı */
       }
       try {
-        await syncDeviceContacts();
+        // Tek adımda: cihaz rehberi + yerel defter + bulut yedeği taranır,
+        // eşleşen kişiler otomatik eklenir. Kullanıcı düğmeye basmaz.
+        const { autoSyncContacts } = await import("@/lib/chat/directory");
+        const auto = await autoSyncContacts();
+        if (auto.matched > 0) setRestored((prev) => Math.max(prev, auto.matched));
       } catch {
         /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
       }
