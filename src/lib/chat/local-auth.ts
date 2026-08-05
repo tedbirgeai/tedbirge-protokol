@@ -73,8 +73,19 @@ function counterBytes(counter: number): Uint8Array {
   return buf;
 }
 
-/** Telefon numarasına bağlanmış cihaz anahtarı (numara değişince kod da değişir). */
-async function bindSecret(phone: string): Promise<Uint8Array> {
+/**
+ * v2 — anahtar YALNIZCA numaradan türer. Böylece aynı numarayla Chrome,
+ * Edge, PWA veya mobil uygulamada aynı doğrulama kodu görünür; kullanıcı
+ * her ortamda ayrı bir "hesap" gibi karşılanmaz.
+ */
+async function bindSecret(phone: string, version: 1 | 2 = 2): Promise<Uint8Array> {
+  if (version === 2) {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(`tedbirge/local-auth/v2:${phone}`),
+    );
+    return new Uint8Array(digest).slice(0, 20);
+  }
   const secret = getDeviceSecret();
   const salt = new TextEncoder().encode(`tedbirge/local-auth/v1:${phone}`);
   const material = new Uint8Array(secret.length + salt.length);
