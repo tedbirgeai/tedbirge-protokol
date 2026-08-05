@@ -417,9 +417,21 @@ export class BrowserNode {
     this.cloudReady = new Promise<void>((resolve) => {
       this.resolveCloudReady = resolve;
     });
+    // Aynı konuya ait eski kanal (sıcak yeniden yükleme, ikinci başlatma)
+    // kalmışsa kaldırılır: abone olunmuş kanala dinleyici eklenemez.
+    try {
+      for (const ch of supabase.getChannels()) {
+        if (ch.topic === `realtime:${CHANNEL}` || ch.topic === CHANNEL) {
+          await supabase.removeChannel(ch);
+        }
+      }
+    } catch {
+      /* kanal listesi alınamadı: yeni kanal yine de kurulur */
+    }
     this.channel = supabase.channel(CHANNEL, {
       config: { broadcast: { self: false }, presence: { key: this.nodeId } },
     });
+
 
     this.channel
       .on("presence", { event: "sync" }, () => void this.dialNewPeers())
