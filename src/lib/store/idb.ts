@@ -123,11 +123,41 @@ export function openDb(): Promise<IDBDatabase> {
         s.createIndex("ts", "ts");
       }
     };
-    req.onsuccess = () => resolve(req.result);
+    // Başka bir sekme eski sürümü açık tutuyorsa yükseltme bloke olur:
+    // kullanıcıya anlaşılır uyarı gösterilir, kilitlenme yaşanmaz.
+    req.onblocked = () => {
+      notifyBlocked();
+    };
+    req.onsuccess = () => {
+      const db = req.result;
+      // Başka sekme yeni sürüme geçerse bu bağlantı kibarca kapanır.
+      db.onversionchange = () => {
+        db.close();
+        dbPromise = null;
+        notifyBlocked();
+      };
+      resolve(db);
+    };
     req.onerror = () => reject(req.error ?? new Error("IndexedDB açılamadı"));
   });
   return dbPromise;
 }
+
+/** IndexedDB kilit uyarısı — arayüz bu olayı dinleyip kullanıcıyı uyarır. */
+export const IDB_BLOCKED_EVENT = "tedbirge:idb-blocked";
+
+let blockedNotified = 0;
+function notifyBlocked() {
+  const now = Date.now();
+  if (now - blockedNotified < 10_000) return;
+  blockedNotified = now;
+  try {
+    window.dispatchEvent(new CustomEvent(IDB_BLOCKED_EVENT));
+  } catch {
+    /* pencere yok (SSR) */
+  }
+}
+
 
 function tx<T>(store: string, mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>) {
   return openDb().then(
