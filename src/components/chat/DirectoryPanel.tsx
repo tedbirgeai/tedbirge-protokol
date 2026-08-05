@@ -13,6 +13,8 @@ import { Radio, StickyNote, User } from "lucide-react";
 import { useContacts, type Contact } from "@/lib/chat/contacts";
 import { syncDeviceContacts } from "@/lib/chat/directory";
 import { isTechnicalLabel } from "@/lib/chat/display-name";
+import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+
 import type { PeerInfo } from "@/lib/browser-node";
 
 type Props = {
