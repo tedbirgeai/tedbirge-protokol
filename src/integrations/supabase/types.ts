@@ -240,6 +240,27 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_vaults: {
+        Row: {
+          ciphertext: string
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ciphertext: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ciphertext?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           active_uplink: boolean
