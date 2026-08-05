@@ -159,17 +159,37 @@ function notifyBlocked() {
 }
 
 
-function tx<T>(store: string, mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>) {
-  return openDb().then(
-    (db) =>
-      new Promise<T>((resolve, reject) => {
-        const t = db.transaction(store, mode);
-        const req = run(t.objectStore(store));
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error ?? new Error("IndexedDB işlemi başarısız"));
-      }),
-  );
+function runTx<T>(
+  db: IDBDatabase,
+  store: string,
+  mode: IDBTransactionMode,
+  run: (s: IDBObjectStore) => IDBRequest<T>,
+) {
+  return new Promise<T>((resolve, reject) => {
+    const t = db.transaction(store, mode);
+    const req = run(t.objectStore(store));
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error("IndexedDB işlemi başarısız"));
+  });
 }
+
+async function tx<T>(
+  store: string,
+  mode: IDBTransactionMode,
+  run: (s: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
+  try {
+    return await runTx(await openDb(), store, mode, run);
+  } catch (err) {
+    // Bağlantı kapanıyorsa (başka sekme sürüm yükseltti veya depo silindi)
+    // önbelleği düşür, yeniden bağlan ve işlemi bir kez daha dene.
+    const name = (err as { name?: string } | null)?.name;
+    if (name !== "InvalidStateError" && name !== "TransactionInactiveError") throw err;
+    dbPromise = null;
+    return runTx(await openDb(), store, mode, run);
+  }
+}
+
 
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try {
