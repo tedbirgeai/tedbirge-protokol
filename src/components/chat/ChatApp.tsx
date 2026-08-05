@@ -68,6 +68,10 @@ import {
   retryMessage,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
+import { CallHistory } from "@/components/chat/CallHistory";
+import { MediaGallery } from "@/components/chat/MediaGallery";
+import { lastSeenLabel } from "@/lib/chat/last-seen";
+import { MUTE_OPTIONS, isMuted, muteConversation, muteUntilLabel, unmuteConversation } from "@/lib/chat/mute";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
 import { ForwardDialog } from "@/components/chat/ForwardDialog";
 import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
@@ -675,6 +679,8 @@ export function ChatApp() {
   const [editing, setEditing] = useState<ChatMessage | null>(null);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [folder, setFolder] = useState<string>("");
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [muteMenu, setMuteMenu] = useState(false);
   const [folderVersion, setFolderVersion] = useState(0);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
