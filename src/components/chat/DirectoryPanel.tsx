@@ -12,10 +12,10 @@ import { Radio, StickyNote, User } from "lucide-react";
 
 import { useContacts, type Contact } from "@/lib/chat/contacts";
 import {
+  autoSyncContacts,
   importContacts,
   parseVcards,
   saveLocalBook,
-  syncDeviceContacts,
 } from "@/lib/chat/directory";
 
 import { isTechnicalLabel } from "@/lib/chat/display-name";
