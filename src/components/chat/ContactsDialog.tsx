@@ -4,7 +4,7 @@
  * okunmaz; tüm veri yalnızca bu cihazda kalır (KVKK / GDPR uyumlu).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
@@ -31,7 +31,13 @@ import {
   TrustBadge,
   type PeerVerifyTarget,
 } from "@/components/site/PeerVerifyDialog";
-import { deviceContactsSupported, syncDeviceContacts } from "@/lib/chat/directory";
+import {
+  deviceContactsSupported,
+  importContacts,
+  parseVcards,
+  saveLocalBook,
+  syncDeviceContacts,
+} from "@/lib/chat/directory";
 import {
   eraseAllContacts,
   eraseContact,
@@ -43,6 +49,8 @@ import {
   type Contact,
 } from "@/lib/chat/contacts";
 import { qrPayload } from "@/lib/peer-trust";
+import { getPhone } from "@/lib/chat/profile";
+import { backupContacts, restoreContacts } from "@/lib/chat/vault";
 
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -175,38 +183,77 @@ function ContactRow({
   );
 }
 
-/** Tek dokunuşla cihaz rehberini eşitler; elle numara girişi yoktur. */
+/**
+ * Cihaz rehberini eşitler. Tarayıcı rehbere doğrudan erişemiyorsa
+ * (iPhone/Safari, masaüstü) rehber dosyası (.vcf) ile aynı eşleştirme
+ * yapılır. Numaralar cihazdan çıkmaz.
+ */
 function SyncContactsRow() {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
-  if (!deviceContactsSupported()) return null;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const native = deviceContactsSupported();
+
+  const run = (task: Promise<{ checked: number; matched: number } | null>) => {
+    setBusy(true);
+    void task
+      .then((r) =>
+        setInfo(
+          r ? `${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eklendi.` : null,
+        ),
+      )
+      .finally(() => setBusy(false));
+  };
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
       <div className="min-w-0">
         <p className="text-sm font-medium">Rehberimdeki kişiler</p>
         <p className="text-xs text-muted-foreground">
-          {info ?? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."}
+          {info ??
+            (native
+              ? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."
+              : "Bu tarayıcı rehbere doğrudan erişemiyor. Telefonunuzdan dışa aktardığınız rehber dosyasını (.vcf) seçin; dosya cihazınızda okunur.")}
         </p>
       </div>
-      <Button
-        size="sm"
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          void syncDeviceContacts()
-            .then((r) =>
-              setInfo(
-                r ? `${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eklendi.` : null,
-              ),
-            )
-            .finally(() => setBusy(false));
+      <div className="flex flex-wrap gap-2">
+        {native && (
+          <Button size="sm" disabled={busy} onClick={() => run(syncDeviceContacts())}>
+            {busy ? "Eşitleniyor…" : "Rehberi eşitle"}
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant={native ? "outline" : "default"}
+          disabled={busy}
+          onClick={() => fileRef.current?.click()}
+        >
+          Rehber dosyası (.vcf)
+        </Button>
+      </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".vcf,text/vcard,text/x-vcard"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (!file) return;
+          run(
+            file.text().then(async (text) => {
+              const list = parseVcards(text);
+              if (list.length === 0) return { checked: 0, matched: 0 };
+              saveLocalBook(list);
+              return importContacts(list);
+            }),
+          );
         }}
-      >
-        {busy ? "Eşitleniyor…" : "Rehberi eşitle"}
-      </Button>
+      />
     </div>
   );
 }
+
 
 export function ContactsDialog({
 
@@ -363,6 +410,41 @@ export function ContactsDialog({
               >
                 <Download className="mr-1.5 h-3.5 w-3.5" /> Verilerimi indir
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const phone = getPhone();
+                  if (!phone) {
+                    toast("Yedekleme için numaranızla katılmanız gerekir");
+                    return;
+                  }
+                  void backupContacts(phone).then((ok) =>
+                    ok
+                      ? toast.success("Rehber şifreli olarak yedeklendi")
+                      : toast("Yedekleme şu anda yapılamadı"),
+                  );
+                }}
+              >
+                Rehberi yedekle
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const phone = getPhone();
+                  if (!phone) {
+                    toast("Geri yükleme için numaranızla katılmanız gerekir");
+                    return;
+                  }
+                  void restoreContacts(phone).then((n) =>
+                    n > 0 ? toast.success(`${n} kişi geri yüklendi`) : toast("Yedek bulunamadı"),
+                  );
+                }}
+              >
+                Yedeği geri yükle
+              </Button>
+
               <Button
                 size="sm"
                 variant="outline"

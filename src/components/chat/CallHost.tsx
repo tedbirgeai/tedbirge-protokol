@@ -46,6 +46,15 @@ export function CallHost() {
               displayName: profile.getAlias() || undefined,
             },
           });
+          // Rehber kalıcılığı: uygulama silinip yeniden kurulsa da şifreli
+          // yedekten geri gelir, sonrasında güncel hâli tekrar yedeklenir.
+          const phone = profile.getPhone();
+          if (phone) {
+            const vault = await import("@/lib/chat/vault");
+            await vault.restoreContacts(phone).catch(() => 0);
+            await vault.backupContacts(phone).catch(() => false);
+          }
+
         };
         await syncDirectory().catch(() => undefined);
         const auth = supabase.auth.onAuthStateChange((_event, session) => {

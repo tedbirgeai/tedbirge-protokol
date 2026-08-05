@@ -1001,7 +1001,7 @@ export function ChatApp() {
           }}
         />
         <div
-          className="flex items-center gap-3 px-4 py-2.5"
+          className="flex flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4"
           style={{ background: "var(--wa-panel-soft)", borderBottom: "1px solid var(--wa-border)" }}
         >
           <button
@@ -1036,25 +1036,26 @@ export function ChatApp() {
               {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : `${getPersonId()} · Bağlı`}
             </p>
           </div>
+          <div className="order-last flex w-full items-center justify-between gap-1 border-t pt-2 sm:order-none sm:w-auto sm:justify-end sm:border-0 sm:pt-0" style={{ borderColor: "var(--wa-border)" }}>
           <Link
             to="/"
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-medium hover:bg-black/5"
+            className="flex h-12 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-medium hover:bg-black/5 sm:h-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Web sitesine dön"
             title="Web sitesine dön"
           >
-            <Home className="h-[18px] w-[18px]" />
+            <Home className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
             <span className="hidden sm:inline">Web sitesi</span>
           </Link>
 
           <Link
             to="/kurumsal"
-            className="wa-press rounded-full p-2 hover:bg-black/5"
+            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Hakkında"
             title="Hakkında"
           >
-            <Globe className="h-[18px] w-[18px]" />
+            <Globe className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </Link>
           <button
             type="button"
@@ -1062,12 +1063,12 @@ export function ChatApp() {
               pressFeedback();
               setSearchOpen(true);
             }}
-            className="wa-press rounded-full p-2 hover:bg-black/5"
+            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Mesajlarda ara"
             title="Mesajlarda ara"
           >
-            <Search className="h-[18px] w-[18px]" />
+            <Search className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </button>
           <button
             type="button"
@@ -1075,12 +1076,12 @@ export function ChatApp() {
               pressFeedback();
               setSettingsOpen(true);
             }}
-            className="wa-press rounded-full p-2 hover:bg-black/5"
+            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Gizlilik ve yedekleme"
             title="Gizlilik ve yedekleme"
           >
-            <Settings className="h-[18px] w-[18px]" />
+            <Settings className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </button>
           <button
             type="button"
@@ -1088,12 +1089,12 @@ export function ChatApp() {
               pressFeedback();
               setContactsOpen(true);
             }}
-            className="wa-press rounded-full p-2 hover:bg-black/5"
+            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Rehber"
             title={`Rehber · ${contactBook.contacts.length} kişi`}
           >
-            <BookUser className="h-[18px] w-[18px]" />
+            <BookUser className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </button>
           <button
             type="button"
@@ -1103,15 +1104,15 @@ export function ChatApp() {
               setSoundOff(next);
               if (!next) pressFeedback();
             }}
-            className="wa-press rounded-full p-2 hover:bg-black/5"
+            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label={soundOff ? "Sesleri aç" : "Sesleri kapat"}
             title={soundOff ? "Sesleri aç" : "Sesleri kapat"}
           >
             {soundOff ? (
-              <VolumeX className="h-[18px] w-[18px]" />
+              <VolumeX className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
             ) : (
-              <Volume2 className="h-[18px] w-[18px]" />
+              <Volume2 className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
             )}
           </button>
           <button
@@ -1120,12 +1121,13 @@ export function ChatApp() {
               pressFeedback();
               setGroupMode((v) => !v);
             }}
-            className="wa-press rounded-full p-2 hover:bg-black/5"
+            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
             aria-label="Yeni sohbet veya grup"
           >
-            <Plus className="h-[18px] w-[18px]" />
+            <Plus className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </button>
+          </div>
         </div>
 
         <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--wa-border)" }}>

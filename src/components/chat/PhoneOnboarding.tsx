@@ -9,11 +9,15 @@
  * Dış SMS/GSM servisi kullanılmaz; internet kesintisinde de çalışır.
  */
 import { useCallback, useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { setAlias, setPhone } from "@/lib/chat/profile";
+import { setAlias, setEmail, setPhone } from "@/lib/chat/profile";
 import { normalizePhone, syncDeviceContacts } from "@/lib/chat/directory";
 import { ensureNotificationPermission } from "@/lib/chat/push";
+import { refreshContacts, shortIdOf } from "@/lib/chat/contacts";
+import { qrPayload } from "@/lib/peer-trust";
+import { restoreContacts } from "@/lib/chat/vault";
 import {
   isOnline,
   localCode,
@@ -22,7 +26,8 @@ import {
   verifyLocalCode,
 } from "@/lib/chat/local-auth";
 
-type Step = "phone" | "code";
+type Step = "phone" | "code" | "done";
+
 
 
 /** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
@@ -73,6 +78,7 @@ const COUNTRIES: { code: string; flag: string; name: string }[] = [
 export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<Step>("phone");
   const [name, setName] = useState("");
+  const [email, setEmailInput] = useState("");
   const [dial, setDial] = useState("90");
   const [phone, setPhoneInput] = useState("");
   const [code, setCode] = useState("");
@@ -82,6 +88,11 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [shownCode, setShownCode] = useState("");
   const [ttl, setTtl] = useState(30);
   const [online, setOnline] = useState(true);
+  // Katılım sonrası gösterilen kalıcı kimlik kartı.
+  const [myShortId, setMyShortId] = useState("");
+  const [myQr, setMyQr] = useState<string | null>(null);
+  const [restored, setRestored] = useState(0);
+
 
   const e164 = normalizePhone(phone, dial);
 
@@ -158,18 +169,50 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       }
 
       await finish(verifiedPhone);
+      // Eski cihazdan şifreli rehber yedeği varsa geri yüklenir.
+      try {
+        const count = await restoreContacts(verifiedPhone);
+        setRestored(count);
+      } catch {
+        /* yedek yok veya çevrimdışı */
+      }
       try {
         await syncDeviceContacts();
       } catch {
         /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
       }
+      // Kalıcı kimlik kartı (TBG kodu + karekod) gösterilir.
+      try {
+        const state = await refreshContacts().then(() => undefined);
+        void state;
+      } catch {
+        /* yoksay */
+      }
+      try {
+        const { getIdentity } = await import("@/lib/crypto/identity");
+        const { getBrowserNodeId } = await import("@/lib/browser-node");
+        const nodeId = getBrowserNodeId();
+        const identity = await getIdentity(nodeId).catch(() => null);
+        const short = shortIdOf(identity?.signPublic ?? nodeId);
+        setMyShortId(short);
+        if (identity?.signPublic) {
+          const url = await QRCode.toDataURL(qrPayload(nodeId, identity.signPublic), {
+            margin: 1,
+            width: 220,
+          }).catch(() => null);
+          setMyQr(url);
+        }
+      } catch {
+        /* kimlik kartı gösterilemezse akış engellenmez */
+      }
       toast.success("Yerel doğrulama tamamlandı", { description: verifiedPhone });
-      onDone();
+      setStep("done");
     },
     // finish sabit bir fonksiyon; name/onDone bağımlılık olarak yeterli.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [name, onDone],
   );
+
 
   async function verify() {
     if (!e164) return;
@@ -212,6 +255,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   async function finish(verifiedPhone: string | null) {
     setAlias(name.trim() || verifiedPhone || "Ben");
     if (verifiedPhone) setPhone(verifiedPhone);
+    setEmail(email);
     void ensureNotificationPermission();
     if (!verifiedPhone) return;
     try {
@@ -291,6 +335,22 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
                 Kimliğiniz: {e164}
               </p>
             )}
+
+            <label className="mt-4 block text-xs font-medium" style={{ color: "var(--wa-muted)" }}>
+              E-posta (isteğe bağlı)
+            </label>
+            <input
+              value={email}
+              inputMode="email"
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="ornek@eposta.com"
+              className="mt-1 w-full rounded-lg border px-4 py-3 text-sm outline-none"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+            />
+            <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              E-posta yalnızca bu cihazda saklanır; katılım için zorunlu değildir.
+            </p>
+
 
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
@@ -383,6 +443,93 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             </button>
           </>
         )}
+
+        {step === "done" && (
+          <>
+            <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
+              Kimliğiniz hazır
+            </h2>
+            <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
+              {name.trim() || "Ben"} · {e164}
+              {email.trim() ? ` · ${email.trim()}` : ""}
+            </p>
+
+            <div
+              className="mt-4 flex flex-col items-center gap-3 rounded-xl border p-4"
+              style={{ borderColor: "var(--wa-border)" }}
+            >
+              {myQr ? (
+                <img
+                  src={myQr}
+                  alt="Kimlik karekodunuz"
+                  width={180}
+                  height={180}
+                  className="rounded border"
+                />
+              ) : (
+                <div
+                  className="flex h-[180px] w-[180px] items-center justify-center rounded border text-xs"
+                  style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+                >
+                  Karekod hazırlanıyor…
+                </div>
+              )}
+              <p
+                className="font-mono text-lg tracking-[0.18em]"
+                style={{ color: "var(--wa-text)" }}
+              >
+                {myShortId || "TBG-••••-••••"}
+              </p>
+              <p className="text-center text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                Bu kod cihaz değiştirseniz de aynı kalır. Karşı taraf karekodu okutarak sizi
+                doğrulayabilir.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(myShortId);
+                    toast("Kimliğiniz kopyalandı");
+                  }}
+                  className="wa-press rounded-full border px-4 py-2 text-xs font-medium"
+                  style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+                >
+                  Kimliği kopyala
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${window.location.origin}/chat`;
+                    const text = `Tedbirge kimliğim: ${myShortId} — ${url}`;
+                    if (navigator.share) void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
+                    else void navigator.clipboard?.writeText(text).then(() => toast("Davet kopyalandı"));
+                  }}
+                  className="wa-press rounded-full border px-4 py-2 text-xs font-medium"
+                  style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+                >
+                  Paylaş
+                </button>
+              </div>
+            </div>
+
+            {restored > 0 && (
+              <p className="mt-3 text-center text-xs" style={{ color: "var(--wa-accent)" }}>
+                Önceki yedeğinizden {restored} kişi geri yüklendi.
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => onDone()}
+              className="wa-press mt-5 w-full rounded-full px-4 py-3 text-sm font-semibold text-white"
+              style={{ background: "var(--wa-accent)" }}
+            >
+              Sohbete başla
+            </button>
+          </>
+        )}
+
+
 
 
         <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>

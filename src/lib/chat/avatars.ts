@@ -66,9 +66,18 @@ export function setMyAvatar(dataUrl: string) {
   emit();
 }
 
-/** Seçilen görseli kareye kırpıp küçülterek data URL üretir. */
+/**
+ * Seçilen görseli kareye kırpıp küçülterek data URL üretir.
+ * Telefon kameralarının yön (EXIF) bilgisi dikkate alınır; aksi hâlde
+ * dikey çekilen fotoğraflar ters/yan görünür.
+ */
 export async function fileToAvatarDataUrl(file: File, size = 256): Promise<string> {
-  const bitmap = await createImageBitmap(file);
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    bitmap = await createImageBitmap(file);
+  }
   const side = Math.min(bitmap.width, bitmap.height);
   const canvas = document.createElement("canvas");
   canvas.width = size;
