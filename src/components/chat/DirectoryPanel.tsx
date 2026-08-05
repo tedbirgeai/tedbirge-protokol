@@ -104,7 +104,7 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
     } catch {
       /* gizli mod */
     }
-    void syncDeviceContacts().catch(() => null);
+    void autoSyncContacts().catch(() => null);
   }, []);
 
   // KVKK: yalnızca gerçek adı bilinen (rehberde eşleşmiş) kişiler listelenir.
