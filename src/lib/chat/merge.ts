@@ -203,6 +203,3 @@ export async function mergePersonDuplicates(): Promise<number> {
   }
   return merged;
 }
-
-  return merged;
-}
