@@ -26,6 +26,7 @@ import {
 import { knownPeerIds, sendMesh, startNode } from "@/lib/node-runtime";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { getAlias } from "@/lib/chat/profile";
+import { getStoredPersonId } from "@/lib/chat/anchor";
 import {
   collectChunk,
   fileToDataUrl,
@@ -47,6 +48,15 @@ import { bootBackupTransfer } from "@/lib/chat/transfer";
 import { isMuted } from "@/lib/chat/mute";
 import { safeTitleOf } from "@/lib/chat/safe-title";
 import { markSeen } from "@/lib/chat/last-seen";
+import {
+  announceName,
+  answerNameTo,
+  applyRemoteName,
+  isNameExchange,
+  requestNameFrom,
+} from "@/lib/chat/name-exchange";
+import { resolveDisplayName } from "@/lib/chat/name-resolver";
+
 
 export type ChatState = {
   conversations: Conversation[];
@@ -340,7 +350,7 @@ export async function createGroup(title: string, members: string[]): Promise<Con
       convId: conv.id,
       title: conv.title,
       members: conv.members,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
   return conv;
@@ -462,7 +472,7 @@ export async function sendText(
         members: conv.group ? conv.members : undefined,
         text: msg.text,
         ts: msg.ts,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
         replyTo,
         ttlMs: ttlOf(convId) || undefined,
       });
@@ -543,7 +553,7 @@ export async function sendMedia(
     for (let i = 0; i < chunks.length; i += 1) {
       const sent = await sendMesh("media", peer, {
         ...chunks[i]!,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
         group: conv.group,
         transcript,
       });
@@ -602,7 +612,7 @@ export async function sendLocation(convId: string, point: GeoPoint, note?: strin
         group: conv.group,
         text: msg.text,
         ts: msg.ts,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
         geo: { ...geo, frame: undefined },
         ttlMs: ttlOf(convId) || undefined,
       },
@@ -736,7 +746,7 @@ export async function editMessage(messageId: string, text: string): Promise<void
       id: messageId,
       convId: msg.convId,
       text: clean,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -753,7 +763,7 @@ export async function pinMessage(convId: string, messageId: string | null): Prom
       t: "pin",
       id: next ?? "",
       convId,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -815,7 +825,7 @@ async function sendForwardedText(conv: Conversation, text: string, author: strin
       members: conv.group ? conv.members : undefined,
       text,
       ts: msg.ts,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
       forwarded: true,
       forwardedFrom: author,
       ttlMs: ttlOf(conv.id) || undefined,
@@ -891,7 +901,7 @@ export async function retryMessage(messageId: string): Promise<boolean> {
         members: conv.group ? conv.members : undefined,
         text: msg.text ?? "",
         ts: msg.ts,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
       });
       delivered = delivered || ok;
     } catch {
@@ -987,7 +997,7 @@ export async function sendTyping(convId: string, active = true) {
       t: active ? "typing" : "stop-typing",
       convId,
       group: conv.group,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -1011,7 +1021,7 @@ export async function reactToMessage(messageId: string, emoji: string) {
       id: messageId,
       emoji: next,
       convId: msg.convId,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -1034,7 +1044,7 @@ export async function deleteMessage(messageId: string, forEveryone = true) {
       t: "delete",
       id: messageId,
       convId: msg.convId,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -1079,12 +1089,29 @@ type ChatPayload = {
   geo?: MessageGeo;
   forwarded?: boolean;
   forwardedFrom?: string;
+  /** Numara-çıpalı kişi kimliği — ad tek kanalda birleşsin diye taşınır. */
+  personId?: string;
 };
 
 async function onChat(from: string, raw: unknown) {
   const p = raw as ChatPayload;
   if (!p || typeof p !== "object") return;
   rememberAlias(from, p.alias);
+
+  // Ad talebi / ad beyanı: başlıklar her cihazda aynı görünsün.
+  if (isNameExchange(p)) {
+    const changed = applyRemoteName(from, p.alias, p.personId);
+    if (p.t === "name-req") void answerNameTo(from);
+    if (changed) {
+      await refreshConversations();
+      for (const convId of Object.keys(state.messages)) await refreshMessages(convId);
+    }
+    return;
+  }
+  // Her mesajla gelen kimlik bilgisi de tek ad kanalına işlenir.
+  if (p.personId || p.alias) applyRemoteName(from, p.alias, p.personId);
+
+
 
   if (p.t === "typing" || p.t === "stop-typing") {
     const conv =
@@ -1389,6 +1416,25 @@ async function onSync(from: string, raw: unknown) {
   }
 }
 
+/**
+ * Adı çözülemeyen eşlere ad talebi gönderir. Yanıt gelince geçmiş
+ * sohbet ve arama kayıtlarının başlıkları geriye dönük düzelir.
+ */
+export async function requestMissingNames(): Promise<number> {
+  const peers = new Set<string>();
+  for (const conv of state.conversations) {
+    if (conv.group) continue;
+    for (const member of conv.members) {
+      if (!member || member === getBrowserNodeId()) continue;
+      if (resolveDisplayName(member)) continue;
+      peers.add(member);
+    }
+  }
+  for (const peer of peers) await requestNameFrom(peer);
+  return peers.size;
+}
+
+
 /** Yeni eş göründüğünde Merkle kök özetlerini yollar (arka planda). */
 export async function announceDigests(peerId?: string) {
   const all = await listAllMessages();
@@ -1469,6 +1515,20 @@ export async function bootChat() {
       .then((m) => (m.isLeaderTab() ? pumpRetryQueue() : 0))
       .catch((error: unknown) => console.error("[chat] yeniden gönderim turu başarısız", error));
   }, 15_000);
+  // Ağ geri geldiğinde ya da uygulamaya dönüldüğünde kuyruk hemen boşalır:
+  // "çevrimdışı — n mesaj bekliyor" durumu sonsuza kadar takılı kalmaz.
+  const flushNow = () => {
+    void pumpRetryQueue().catch((error: unknown) =>
+      console.error("[chat] kuyruk boşaltılamadı", error),
+    );
+    void requestMissingNames();
+  };
+  window.addEventListener("online", flushNow);
+  window.addEventListener("focus", flushNow);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") flushNow();
+  });
+
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();
   await cleanDuplicateConversations();
@@ -1479,7 +1539,18 @@ export async function bootChat() {
     if (knownPeerIds().length) void announceDigests();
   }, 30_000);
   setTimeout(() => void announceDigests(), 4_000);
+  // Ad uyumu: adımızı duyur, adı bilinmeyenlerden ad iste.
+  setTimeout(() => {
+    void announceName();
+    void requestMissingNames();
+  }, 6_000);
+  setInterval(() => void requestMissingNames(), 45_000);
+  // Açılış sağlık denetimi ve otonom onarım.
+  void import("@/lib/chat/self-heal")
+    .then((m) => m.runSelfHeal())
+    .catch((error: unknown) => console.error("[chat] sağlık denetimi başarısız", error));
 }
+
 
 /** Süresi dolan (kaybolan) mesajları siler ve arayüzü tazeler. */
 export async function sweepEphemeral(): Promise<number> {

@@ -7,7 +7,18 @@
  * şeridi gösterilir.
  */
 import { useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw, CloudOff, Cloud, RotateCcw } from "lucide-react";
+import {
+  AlertTriangle,
+  RefreshCw,
+  CloudOff,
+  Cloud,
+  RotateCcw,
+  ShieldCheck,
+  UserSearch,
+} from "lucide-react";
+import { getHealthReport, runSelfHeal, type HealthReport } from "@/lib/chat/self-heal";
+import { requestMissingNames } from "@/lib/chat/engine";
+
 import {
   formatBytes,
   fullResync,
@@ -46,7 +57,75 @@ const LEVEL_COLOR: Record<SyncLogEntry["level"], string> = {
   hata: "#b91c1c",
 };
 
+/** Açılış sağlık denetimi — bozuk katman varsa tek cümlelik çözüm önerisi. */
+function HealthSection() {
+  const [report, setReport] = useState<HealthReport | null>(() => getHealthReport());
+  const [busy, setBusy] = useState(false);
+  const check = () => {
+    setBusy(true);
+    void runSelfHeal()
+      .then(setReport)
+      .finally(() => setBusy(false));
+  };
+  useEffect(() => {
+    if (!getHealthReport()) check();
+    else setReport(getHealthReport());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <section className="mt-5">
+      <h4 className="flex items-center gap-2 text-[13px] font-semibold">
+        <ShieldCheck className="h-4 w-4" aria-hidden />
+        Sağlık denetimi
+      </h4>
+      {report && report.ok && (
+        <p className="mt-1 text-[12px]" style={{ color: "var(--wa-muted)" }}>
+          Kimlik, depolama, eşitleme ve bildirim katmanları çalışıyor.
+        </p>
+      )}
+      {report && !report.ok && (
+        <ul className="mt-2 space-y-2 text-[12px]">
+          {report.issues.map((i) => (
+            <li key={i.title} className="rounded-lg p-2" style={{ background: "var(--wa-panel, rgba(0,0,0,.04))" }}>
+              <strong className="block font-semibold">{i.title}</strong>
+              <span style={{ color: "var(--wa-muted)" }}>{i.advice}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            check();
+          }}
+          disabled={busy}
+          className="wa-press inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-[13px] font-semibold disabled:opacity-60"
+          style={{ border: "1px solid var(--wa-line, currentColor)" }}
+        >
+          <ShieldCheck className={`h-4 w-4 ${busy ? "animate-pulse" : ""}`} aria-hidden />
+          {busy ? "Denetleniyor…" : "Şimdi denetle"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            void requestMissingNames();
+          }}
+          className="wa-press inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-[13px] font-semibold"
+          style={{ border: "1px solid var(--wa-line, currentColor)" }}
+        >
+          <UserSearch className="h-4 w-4" aria-hidden />
+          Adları eşitle
+        </button>
+      </div>
+    </section>
+  );
+}
+
 /** Ayarlar > Eşitleme sekmesi içeriği. */
+
 export function SyncStatusSection() {
   const s = useSyncState();
   const log = useSyncLog();
@@ -124,7 +203,10 @@ export function SyncStatusSection() {
         {syncStatusLabel(s)}
       </p>
 
+      <HealthSection />
+
       <h4 className="mt-5 text-[13px] font-semibold">Eşitleme günlüğü (son 20 olay)</h4>
+
       <ul className="mt-2 space-y-1 text-[12px]">
         {log.length === 0 && (
           <li style={{ color: "var(--wa-muted)" }}>Henüz kayıt yok.</li>
