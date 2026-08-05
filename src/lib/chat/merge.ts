@@ -136,8 +136,16 @@ export function groupByPerson<T extends { peerId: string; personId?: string; las
  */
 export async function mergePersonDuplicates(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  const { linkNodeToPerson, normalizedPersonName, resolveDisplayName, writeNickname, cleanPersonLabel } =
-    await import("@/lib/chat/name-resolver");
+  const {
+    linkNodeToPerson,
+    normalizedPersonName,
+    resolveDisplayName,
+    writeNickname,
+    cleanPersonLabel,
+    resolvePhoneHash,
+    writePhoneHash,
+  } = await import("@/lib/chat/name-resolver");
+
   const [trusted, peers] = await Promise.all([
     listTrustedNodes().catch(() => []),
     listPeers().catch(() => []),
