@@ -150,9 +150,18 @@ export function startDirectorySync(): () => void {
   window.addEventListener("online", onOnline);
   schedule(3_000);
 
+  // Yerel (iOS/Android) kabukta ön plana geliş olayı ayrıca bağlanır ve
+  // sistem push kanalı (APNs/FCM) etkinleştirilir.
+  let unbindNative: () => void = () => undefined;
+  void import("@/lib/chat/native-push").then(async (m) => {
+    unbindNative = await m.bindNativeForeground(() => void runDirectorySync(false));
+    await m.enableNativePush();
+  });
+
   return () => {
     started = false;
     if (timer) clearTimeout(timer);
+    unbindNative();
     document.removeEventListener("visibilitychange", onForeground);
     window.removeEventListener("online", onOnline);
   };
