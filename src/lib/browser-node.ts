@@ -212,10 +212,9 @@ export function getBrowserNodeId() {
 }
 
 /**
- * Kişi kimliği hesap düzeyindedir; Edge/Chrome/PWA değişse de aynıdır.
- * Düğüm kimliği ise oturum çakışmalarını ve anahtar paylaşımını önlemek için
- * cihaz başına ayrı kalır. Bu, modern mesajlaşmadaki hesap + bağlı cihaz
- * ayrımıdır.
+ * Kişi kimliği GSM NUMARASINA çıpalanır: aynı numara Chrome, Edge, PWA,
+ * iOS ve Android'de aynı TBG kodunu üretir. Düğüm kimliği ise cihaz
+ * başına ayrı kalır (WhatsApp'taki hesap + bağlı cihaz modeli).
  */
 export function getPersonId(): string {
   if (typeof window === "undefined") return "";
@@ -229,6 +228,27 @@ export function getPersonId(): string {
 export async function syncPersonIdentity(): Promise<string> {
   if (typeof window === "undefined") return "";
   try {
+    // (1) Birincil çıpa: doğrulanmış telefon numarası — çevrimdışı da çalışır.
+    const { getAnchorPhone, anchorIdentityToPhone } = await import("@/lib/chat/anchor");
+    const phone = await getAnchorPhone();
+    if (phone) {
+      const { personId, previous, changed } = await anchorIdentityToPhone(phone);
+      if (changed && previous) {
+        // Geriye dönük göç: eski cihaz tabanlı kimliğe bağlı kayıtlar
+        // yeni kişi kimliğine taşınır, hiçbir veri silinmez.
+        const { migrateIdentity } = await import("@/lib/chat/merge");
+        await migrateIdentity(previous, personId).catch(() => undefined);
+      }
+      const { data } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const fullName =
+        typeof data.user?.user_metadata?.["full_name"] === "string"
+          ? (data.user.user_metadata["full_name"] as string).trim()
+          : "";
+      if (fullName && !getAlias()) setAlias(fullName);
+      return personId;
+    }
+
+    // (2) Numara yoksa hesap kimliğinden türet (eski davranış).
     const { data } = await supabase.auth.getUser();
     if (!data.user) return getPersonId();
     // Görünen ad hesap profilinden gelir; yerel kayıt yalnız çevrimdışı önbellektir.
