@@ -12,19 +12,60 @@ export type RelayDevice = RelayKeys;
 
 const ENDPOINT = "/api/public/relay";
 
+/**
+ * Bulut rölesi kotayı aştığında (429) tüm istekler ortak bir soğuma
+ * penceresi boyunca durur. Aksi hâlde her yeniden deneme kotayı yeniden
+ * tüketir ve teslimat hattı kendi kendini kilitler.
+ */
+let cooldownUntil = 0;
+let cooldownStep = 0;
+let lastNoticeAt = 0;
+
+export function relayCooldownRemainingMs(): number {
+  return Math.max(0, cooldownUntil - Date.now());
+}
+
+async function noteBusy(seconds: number) {
+  cooldownStep = Math.min(cooldownStep + 1, 5);
+  const wait = Math.max(seconds * 1000, 5_000 * 2 ** (cooldownStep - 1));
+  cooldownUntil = Date.now() + Math.min(wait, 120_000);
+  if (Date.now() - lastNoticeAt < 30_000) return;
+  lastNoticeAt = Date.now();
+  try {
+    const { logSync } = await import("@/lib/chat/sync-log");
+    logSync(
+      "uyarı",
+      "Bulut rölesi yoğun",
+      `Bağlantı yoğun; bekleyen mesajlar ${Math.round(
+        (cooldownUntil - Date.now()) / 1000,
+      )} saniye içinde yeniden denenecek.`,
+    );
+  } catch {
+    /* günlük yazılamadı — teslimat akışı etkilenmez */
+  }
+}
+
 async function call<T>(body: unknown): Promise<T | null> {
+  if (relayCooldownRemainingMs() > 0) return null;
   try {
     const res = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (res.status === 429) {
+      const retry = Number(res.headers.get("retry-after") ?? "0");
+      void noteBusy(Number.isFinite(retry) && retry > 0 ? retry : 10);
+      return null;
+    }
     if (!res.ok) return null;
+    cooldownStep = 0;
     return (await res.json()) as T;
   } catch {
     return null;
   }
 }
+
 
 export async function publishRelayKeys(
   keys: RelayKeys & { personId?: string },
