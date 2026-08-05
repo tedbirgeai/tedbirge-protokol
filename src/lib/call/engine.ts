@@ -186,7 +186,11 @@ export function getPeerStream(peerId: string) {
   return legs.get(peerId)?.stream ?? null;
 }
 
-async function ensureMedia(video: boolean) {
+/**
+ * Mikrofon/kamera açar. İzin verilmezse ya da cihaz yoksa görüşme
+ * DÜŞMEZ: arama ekranı açık kalır, yalnızca dinleme kipinde sürer.
+ */
+async function ensureMedia(video: boolean): Promise<MediaStream | null> {
   if (localStream) return localStream;
   const videoConstraints: MediaTrackConstraints = {
     width: { ideal: 1280, max: 1920 },
@@ -195,21 +199,35 @@ async function ensureMedia(video: boolean) {
     aspectRatio: { ideal: 16 / 9 },
     facingMode: "user",
   };
+  const audio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      audio,
       video: video ? videoConstraints : false,
     });
+    return localStream;
   } catch {
-    // Kamera istenen çözünürlüğü desteklemiyorsa varsayılana düş.
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video,
-    });
+    /* istenen çözünürlük desteklenmiyor olabilir */
   }
-  return localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio, video });
+    return localStream;
+  } catch {
+    /* izin yok */
+  }
+  if (video) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio, video: false });
+      return localStream;
+    } catch {
+      /* mikrofon da yok */
+    }
+  }
+  localStream = null;
+  return null;
 }
+
 
 
 function createLeg(peerId: string, alias: string) {
