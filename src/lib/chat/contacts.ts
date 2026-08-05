@@ -207,6 +207,33 @@ function collapsePersons(rows: Contact[]): Contact[] {
     else groups.set(key, [row]);
   }
 
+  // İKİNCİ GEÇİŞ — AYNI AD = AYNI KİŞİ.
+  // Aynı kişinin iki cihazı farklı imza anahtarı taşıdığı için ilk geçişte
+  // ayrı kümelere düşebiliyordu. Numara özeti çakışmadığı sürece aynı ada
+  // sahip kümeler tek kişide birleşir ("MEHMET" = "mehmet dinç" değil;
+  // yalnızca normalize edilmiş ad birebir aynıysa birleşir).
+  const byName = new Map<string, string>();
+  for (const [key, bucket] of Array.from(groups.entries())) {
+    const name = normalizedPersonName(
+      bucket.map((c) => c.displayName).find((v) => v.trim()) ?? "",
+    );
+    if (!name) continue;
+    const target = byName.get(name);
+    if (!target) {
+      byName.set(name, key);
+      continue;
+    }
+    const other = groups.get(target);
+    if (!other) continue;
+    const hashA = bucket.find((c) => c.phoneHash)?.phoneHash;
+    const hashB = other.find((c) => c.phoneHash)?.phoneHash;
+    // İki farklı numaraya çıpalı kişi aynı adı taşıyorsa ASLA birleşmez.
+    if (hashA && hashB && hashA !== hashB) continue;
+    other.push(...bucket);
+    groups.delete(key);
+  }
+
+
   const out: Contact[] = [];
   for (const bucket of groups.values()) {
     const sorted = [...bucket].sort((a, b) => b.lastSeen - a.lastSeen);
