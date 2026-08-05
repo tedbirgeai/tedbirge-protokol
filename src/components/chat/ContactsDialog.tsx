@@ -49,6 +49,8 @@ import {
   type Contact,
 } from "@/lib/chat/contacts";
 import { qrPayload } from "@/lib/peer-trust";
+import { getPhone } from "@/lib/chat/profile";
+import { backupContacts, restoreContacts } from "@/lib/chat/vault";
 
 function download(name: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
