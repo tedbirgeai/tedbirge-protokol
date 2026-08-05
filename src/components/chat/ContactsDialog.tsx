@@ -288,16 +288,27 @@ export function ContactsDialog({
     };
   }, [open, me?.peerId, me?.signPublic]);
 
+  // Adı bilinmeyen (yalnızca teknik kimlikten ibaret) kayıtlar listelenmez.
+  const named = useMemo(
+    () => contacts.filter((c) => c.displayName !== c.shortId),
+    [contacts],
+  );
+  const unnamed = useMemo(
+    () => contacts.filter((c) => c.displayName === c.shortId),
+    [contacts],
+  );
+
   const rows = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
-    if (!needle) return contacts;
-    return contacts.filter((c) =>
-      [c.displayName, c.claimedName ?? "", c.shortId, c.peerId]
+    if (!needle) return named;
+    return named.filter((c) =>
+      [c.displayName, c.claimedName ?? "", c.shortId]
         .join(" ")
         .toLocaleLowerCase("tr")
         .includes(needle),
     );
-  }, [contacts, q]);
+  }, [named, q]);
+
 
   const myShort = me?.shortId ?? shortIdOf("local");
 
