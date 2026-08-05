@@ -245,9 +245,15 @@ export async function refreshContacts(): Promise<Contact[]> {
   let me = state.me;
   if (!me) {
     const identity = await getIdentity(self).catch(() => null);
+    let anchoredPersonId = "";
+    try {
+      anchoredPersonId = window.localStorage.getItem("tedbirge.person.id") ?? "";
+    } catch {
+      anchoredPersonId = "";
+    }
     me = {
       peerId: self,
-      shortId: shortIdOf(identity?.signPublic ?? self),
+      shortId: anchoredPersonId || shortIdOf(identity?.signPublic ?? self),
       signPublic: identity?.signPublic,
       fingerprint: identity?.fingerprint,
     };

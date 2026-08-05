@@ -66,7 +66,7 @@ export function SyncStatusSection() {
         </div>
         <div className="flex items-start justify-between gap-3">
           <dt style={{ color: "var(--wa-muted)" }}>Son hata</dt>
-          <dd className="max-w-[60%] text-right font-medium" style={{ color: s.lastError ? "#e03131" : undefined }}>
+          <dd className={`max-w-[60%] text-right font-medium ${s.lastError ? "text-destructive" : ""}`}>
             {s.lastError || "Yok"}
           </dd>
         </div>
@@ -100,8 +100,7 @@ export function SyncWarningBar() {
   return (
     <div
       role="status"
-      className="flex items-center gap-2 px-3 py-2 text-[12px]"
-      style={{ background: "rgba(224,49,49,0.12)", color: "#e03131" }}
+      className="flex items-center gap-2 bg-destructive/10 px-3 py-2 text-[12px] text-destructive"
     >
       <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1 truncate">Eşitleme hatası: {s.lastError}</span>

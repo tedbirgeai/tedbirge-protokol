@@ -107,24 +107,25 @@ export async function runDirectorySync(force = false): Promise<boolean> {
   if (typeof window === "undefined") return false;
   if (!force && Date.now() - lastDirectorySync() < RESYNC_INTERVAL_MS) return true;
   try {
+    const { ensureCloudSession } = await import("@/lib/chat/history-sync");
+    const cloudReady = await ensureCloudSession();
+    if (!cloudReady) return false;
     const flushed = await flushEnrollment();
-    const { autoSyncContacts } = await import("@/lib/chat/directory");
-    const result = await autoSyncContacts();
     // Rehber kasası her turda çift yönlü eşitlenir: önce hesaptaki şifreli
     // yedek bu cihaza indirilir, sonra bu cihazın güncel hâli yedeklenir.
     // Böylece telefonda kayıtlı kişiler bilgisayarda da görünür.
-    try {
-      const { getAnchorPhone } = await import("@/lib/chat/anchor");
-      const phone = await getAnchorPhone();
-      if (phone) {
-        const vault = await import("@/lib/chat/vault");
-        await vault.restoreContacts(phone);
-        await vault.backupContacts(phone);
-      }
-    } catch (error) {
-      console.error("[sync] rehber kasası eşitlenemedi", error);
+    const { getAnchorPhone } = await import("@/lib/chat/anchor");
+    const phone = await getAnchorPhone();
+    if (!phone) return false;
+    const vault = await import("@/lib/chat/vault");
+    await vault.restoreContacts(phone);
+    const { autoSyncContacts } = await import("@/lib/chat/directory");
+    const result = await autoSyncContacts();
+    const backedUp = await vault.backupContacts(phone);
+    if (!backedUp && result.checked > 0) {
+      console.warn("[sync] rehber kasası güncellenemedi");
     }
-    const ok = flushed !== "queued" && result.source !== "none";
+    const ok = flushed !== "queued";
     if (ok) markSynced();
     return ok;
   } catch (error) {

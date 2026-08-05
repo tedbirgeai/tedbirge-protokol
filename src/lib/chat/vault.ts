@@ -156,7 +156,11 @@ export async function backupContacts(phone?: string): Promise<boolean> {
     if (!session.session) return false;
 
     const payload = await snapshot();
-    const hasPrefs = Object.values(payload.prefs ?? {}).some((v) => v !== undefined);
+    const hasPrefs = Object.values(payload.prefs ?? {}).some((value) =>
+      Array.isArray(value)
+        ? value.length > 0
+        : Boolean(value && typeof value === "object" && Object.keys(value).length > 0),
+    );
     if (payload.nodes.length === 0 && !hasPrefs) return false;
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const key = await keyFor(anchor);
