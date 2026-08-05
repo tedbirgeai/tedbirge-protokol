@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Mic,
   MicOff,
@@ -11,9 +11,13 @@ import {
   SwitchCamera,
   MonitorUp,
   MonitorX,
+  UserPlus,
+  X,
 } from "lucide-react";
+
 import {
   acceptCall,
+  addParticipant,
   endCall,
   getLocalStream,
   getPeerStream,
@@ -23,6 +27,7 @@ import {
   toggleMute,
   toggleScreenShare,
   useCall,
+  CONFERENCE_LIMIT,
 } from "@/lib/call/engine";
 import type { CallQuality } from "@/lib/call/engine";
 import {
@@ -34,6 +39,8 @@ import {
   stopRing,
 } from "@/lib/chat/sounds";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+import { useContacts } from "@/lib/chat/contacts";
+
 
 function ParticipantVideo({ peerId, version }: { peerId: string; version: number }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -99,9 +106,21 @@ export function CallOverlay() {
   const remoteRef = useRef<HTMLVideoElement>(null);
   const [speaker, setSpeaker] = useState(true);
   const [playBlocked, setPlayBlocked] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const elapsed = useElapsed(call.phase === "active" ? call.startedAt : null);
   useAvatars();
   const peerAvatar = getAvatar(call.peerId);
+  const { contacts } = useContacts();
+  const inCall = useMemo(
+    () => new Set([call.peerId, ...call.participants.map((p) => p.peerId)].filter(Boolean)),
+    [call.peerId, call.participants],
+  );
+  const addable = useMemo(
+    () => contacts.filter((c) => c.displayName && !inCall.has(c.peerId)).slice(0, 40),
+    [contacts, inCall],
+  );
+  const roomFull = call.participants.length + 1 >= CONFERENCE_LIMIT;
+
 
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
@@ -220,7 +239,9 @@ export function CallOverlay() {
               <ParticipantVideo peerId={participant.peerId} version={call.streamVersion} />
               <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs">
                 {participant.alias}
+                {participant.reconnecting ? " · yeniden bağlanıyor" : ""}
               </span>
+
             </div>
           ))}
         </div>
@@ -291,12 +312,15 @@ export function CallOverlay() {
                 }`}
               >
                 {call.speakingPeerId === p.peerId ? "🔊 " : ""}
-                {p.alias} · {p.connected ? "bağlı" : "bekliyor"}
+                {p.alias} ·{" "}
+                {p.connected ? "bağlı" : p.reconnecting ? "yeniden bağlanıyor" : "bekliyor"}
               </li>
             ))}
           </ul>
         )}
+        {call.notice && <p className="px-8 text-center text-sm text-white/70">{call.notice}</p>}
         {call.error && <p className="px-8 text-center text-sm text-amber-300">{call.error}</p>}
+
         {playBlocked && call.phase === "active" && (
           <button
             type="button"
@@ -403,6 +427,21 @@ export function CallOverlay() {
             >
               {call.muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
+            {(call.phase === "active" || call.phase === "outgoing") && (
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setAddOpen(true);
+                }}
+                className={ctlBase}
+                disabled={roomFull}
+                aria-label="Görüşmeye kişi ekle"
+                title={roomFull ? `En fazla ${CONFERENCE_LIMIT} kişi` : "Görüşmeye kişi ekle"}
+              >
+                <UserPlus className="h-5 w-5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -417,7 +456,52 @@ export function CallOverlay() {
           </>
         )}
       </div>
+
+      {addOpen && (
+        <div className="absolute inset-0 z-20 flex items-end bg-black/70">
+          <div className="max-h-[70vh] w-full overflow-y-auto rounded-t-3xl bg-zinc-900 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-base font-semibold">Görüşmeye kişi ekle</p>
+              <button
+                type="button"
+                onClick={() => setAddOpen(false)}
+                className="wa-press flex h-11 w-11 items-center justify-center rounded-full bg-white/10"
+                aria-label="Kapat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {addable.length === 0 ? (
+              <p className="py-6 text-center text-sm text-white/60">
+                Eklenebilecek kayıtlı kişi yok.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {addable.map((c) => (
+                  <li key={c.peerId}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pressFeedback();
+                        setAddOpen(false);
+                        void addParticipant(c.peerId, c.displayName);
+                      }}
+                      className="wa-press flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left hover:bg-white/10"
+                    >
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-sm font-semibold">
+                        {c.displayName.slice(0, 2).toUpperCase()}
+                      </span>
+                      <span className="text-sm">{c.displayName}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
 

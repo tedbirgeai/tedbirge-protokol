@@ -32,7 +32,14 @@ export type CallQuality = {
   label: string;
 };
 
-export type Participant = { peerId: string; alias: string; connected: boolean };
+export type Participant = {
+  peerId: string;
+  alias: string;
+  connected: boolean;
+  /** Bağlantısı koptu, yeniden bağlanmaya çalışılıyor. */
+  reconnecting?: boolean;
+};
+
 
 export type CallState = {
   phase: CallPhase;
@@ -46,6 +53,11 @@ export type CallState = {
   /** Konferans katılımcıları (birebir görüşmede tek eleman). */
   participants: Participant[];
   conference: boolean;
+  /** Konferans odasının tekil kimliği — tüm davetler bunu taşır. */
+  roomId: string | null;
+  /** Bilgilendirme satırı (hata değil): "X görüşmeden düştü." gibi. */
+  notice: string | null;
+
   quality: CallQuality;
   /** Kaçıncı yeniden bağlanma denemesi. */
   reconnects: number;
@@ -134,6 +146,9 @@ let state: CallState = {
   error: null,
   participants: [],
   conference: false,
+  roomId: null,
+  notice: null,
+
   quality: IDLE_QUALITY,
   reconnects: 0,
   streamVersion: 0,
@@ -167,6 +182,8 @@ const pendingIce = new Map<string, RTCIceCandidateInit[]>();
 const reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const restarting = new Set<string>();
 const MAX_RECONNECTS = 3;
+/** Konferansta katılımcı başına yeniden bağlanma sayacı. */
+const peerReconnects = new Map<string, number>();
 const RING_TIMEOUT_MS = 45_000;
 /** Hiçbir kanaldan "çalıyor" onayı gelmezse aramayı temiz kapatma süresi. */
 const UNREACHABLE_MS = 30_000;
@@ -174,8 +191,30 @@ const UNREACHABLE_MS = 30_000;
 const MISSED_AFTER_MS = 10_000;
 /** Bu turdaki giden aramanın tekil kimliği (tekrar davetleri tekilleştirir). */
 let currentCallId: string | null = null;
+/**
+ * Konferans odasının kimliği. Tüm davetler, yeniden davetler ve yeniden
+ * bağlanmalar bu kimliği taşır; iki taraf aynı anda arama başlatırsa küçük
+ * kimlik kazanır ve tek oda kalır.
+ */
+let currentRoomId: string | null = null;
+/** Konferans katılımcı defteri — görüşme sırasında eklenenler dahil. */
+const roster = new Map<string, ConferencePeer>();
 /** Karşılanan davet kimlikleri — aynı çağrı iki kanaldan gelirse bir kez çalar. */
 const handledCallIds = new Set<string>();
+
+function newRoomId(): string {
+  return `${nodeSelf()}-${Date.now().toString(36)}`;
+}
+
+/** Oda kimliğini benimser; iki oda çakışırsa sözlük sırasında küçük olan kalır. */
+function adoptRoom(incoming?: string) {
+  if (!incoming) return;
+  if (!currentRoomId || incoming.localeCompare(currentRoomId) < 0) {
+    currentRoomId = incoming;
+    publish({ roomId: currentRoomId });
+  }
+}
+
 
 /* --------------------------- arama geçmişi kaydı --------------------------- */
 
@@ -243,7 +282,9 @@ function syncParticipants() {
       peerId,
       alias: leg.alias,
       connected: leg.pc.connectionState === "connected",
+      reconnecting: (peerReconnects.get(peerId) ?? 0) > 0 && leg.pc.connectionState !== "connected",
     })),
+
   });
 }
 
@@ -337,19 +378,33 @@ function createLeg(peerId: string, alias: string) {
       const reconnectTimer = reconnectTimers.get(peerId);
       if (reconnectTimer) clearTimeout(reconnectTimer);
       reconnectTimers.delete(peerId);
+      peerReconnects.delete(peerId);
       publish({ phase: "active", startedAt: state.startedAt ?? Date.now(), error: null });
       startStats();
     } else if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
-      if (!anyConnected) {
-        publish({
-          phase: "reconnecting",
-          reconnects: state.reconnects + 1,
-          error: pc.connectionState === "failed" ? "Bağlantı zayıf — yeniden deneniyor." : null,
-        });
+      const attempts = (peerReconnects.get(peerId) ?? 0) + 1;
+      peerReconnects.set(peerId, attempts);
+      // Konferansta bir kişinin düşmesi görüşmeyi bitirmez: yalnız o hat
+      // yeniden kurulmaya çalışılır, olmazsa o kişi ızgaradan düşer.
+      if (anyConnected && legs.size > 1) {
+        syncParticipants();
+        if (attempts <= MAX_RECONNECTS) void restartIce(peerId);
+        else {
+          const who = leg.alias || peerId;
+          dropParticipant(peerId);
+          publish({ notice: `${who} görüşmeden düştü.` });
+        }
+        return;
       }
+      publish({
+        phase: "reconnecting",
+        reconnects: state.reconnects + 1,
+        error: pc.connectionState === "failed" ? "Bağlantı zayıf — yeniden deneniyor." : null,
+      });
       if (state.reconnects < MAX_RECONNECTS) void restartIce(peerId);
       else endCall("Bağlantı yeniden kurulamadı.");
     }
+
   };
   legs.set(peerId, leg);
   syncParticipants();
@@ -385,23 +440,41 @@ async function restartIce(peerId: string) {
       video: state.video,
       alias: getAlias(),
       restart: true,
+      callId: currentCallId ?? undefined,
+      roomId: currentRoomId ?? undefined,
       at: Date.now(),
     });
+
     const previous = reconnectTimers.get(peerId);
     if (previous) clearTimeout(previous);
     reconnectTimers.set(
       peerId,
       setTimeout(() => {
         const current = legs.get(peerId);
-        if (current && current.pc.connectionState !== "connected") {
-          if (state.reconnects >= MAX_RECONNECTS) endCall("Bağlantı yeniden kurulamadı.");
+        if (!current || current.pc.connectionState === "connected") return;
+        // Konferansta yalnız o katılımcı yeniden denenir; görüşme sürer.
+        const others = Array.from(legs.values()).some(
+          (l) => l !== current && l.pc.connectionState === "connected",
+        );
+        if (others) {
+          const attempts = (peerReconnects.get(peerId) ?? 0) + 1;
+          peerReconnects.set(peerId, attempts);
+          if (attempts <= MAX_RECONNECTS) void restartIce(peerId);
           else {
-            publish({ reconnects: state.reconnects + 1 });
-            void restartIce(peerId);
+            const who = current.alias || peerId;
+            dropParticipant(peerId);
+            publish({ notice: `${who} görüşmeden düştü.` });
           }
+          return;
+        }
+        if (state.reconnects >= MAX_RECONNECTS) endCall("Bağlantı yeniden kurulamadı.");
+        else {
+          publish({ reconnects: state.reconnects + 1 });
+          void restartIce(peerId);
         }
       }, 8_000),
     );
+
   } catch {
     publish({ error: "Bağlantı kurulamadı. Mesaj olarak göndermeyi deneyin." });
   } finally {
@@ -517,9 +590,11 @@ async function sendInvite(
     video,
     alias: getAlias(),
     callId,
+    roomId: currentRoomId ?? callId,
     conferencePeers,
     at: Date.now(),
   };
+
   const [meshOk, wakeOk] = await Promise.all([
     sendMesh("call", peerId, payload).catch(() => false),
     import("@/lib/chat/webpush")
@@ -598,7 +673,12 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     speakingPeerId: null,
   });
   callMeta = { peerId, video, direction: "outgoing" };
-  currentCallId = `${nodeSelf()}-${Date.now().toString(36)}`;
+  currentCallId = newRoomId();
+  currentRoomId = currentCallId;
+  roster.clear();
+  roster.set(peerId, { peerId, alias });
+  publish({ roomId: currentRoomId, notice: null });
+
   // Dürüst durum: 30 saniye içinde hiçbir kanaldan "çalıyor" onayı gelmezse
   // arama sonsuza dek "Aranıyor" kalmaz, temiz biter ve cevapsız yazılır.
   const armTimers = () => {
@@ -649,21 +729,27 @@ export async function startConference(
   if (!list.length) return;
   const firstPeer = list[0];
   if (!firstPeer) return;
-  currentCallId = `${nodeSelf()}-${Date.now().toString(36)}`;
+  currentCallId = newRoomId();
+  currentRoomId = currentCallId;
+  roster.clear();
+  for (const p of list) roster.set(p.peerId, { peerId: p.peerId, alias: p.alias });
   publish({
     phase: "outgoing",
     peerId: firstPeer.peerId,
     peerAlias: title,
     video,
     error: null,
+    notice: null,
     startedAt: null,
     muted: false,
     cameraOff: false,
     conference: true,
+    roomId: currentRoomId,
     reconnects: 0,
     quality: IDLE_QUALITY,
     remoteRinging: false,
   });
+
   try {
     await Promise.all(
       list.map((p) =>
@@ -687,6 +773,50 @@ export async function startConference(
     );
   }
 }
+
+/** Konferansa en fazla kaç kişi katılabilir (kendiniz dahil). */
+export const CONFERENCE_LIMIT = 6;
+
+/** Görüşme sürerken konferansa yeni kişi ekler. */
+export async function addParticipant(peerId: string, alias?: string): Promise<boolean> {
+  if (state.phase !== "active" && state.phase !== "outgoing") return false;
+  if (!peerId || peerId === nodeSelf() || legs.has(peerId)) return false;
+  if (legs.size + 1 >= CONFERENCE_LIMIT) {
+    publish({ notice: `Konferansa en fazla ${CONFERENCE_LIMIT} kişi katılabilir.` });
+    return false;
+  }
+  if (!currentRoomId) {
+    currentRoomId = currentCallId ?? newRoomId();
+    currentCallId = currentCallId ?? currentRoomId;
+  }
+  roster.set(peerId, { peerId, alias });
+  publish({ conference: true, roomId: currentRoomId, notice: null });
+  try {
+    // Yeni kişiye mevcut oda kimliği ve tam katılımcı listesiyle davet gider;
+    // diğer katılımcılar bu listeden yeni kişiyi kendiliğinden bağlar.
+    const others = Array.from(legs.keys()).map((id) => ({
+      peerId: id,
+      alias: legs.get(id)?.alias,
+    }));
+    await dial(peerId, alias ?? peerId, state.video, others);
+    for (const [id] of legs) {
+      if (id === peerId) continue;
+      void sendMesh("call", id, {
+        t: "roster",
+        roomId: currentRoomId,
+        conferencePeers: Array.from(roster.values()),
+        at: Date.now(),
+      });
+    }
+    syncParticipants();
+    return true;
+  } catch {
+    publish({ notice: "Kişi eklenemedi — cihazı şu anda erişilebilir değil." });
+    return false;
+  }
+}
+
+
 
 export async function acceptCall() {
   const entries = Array.from(pendingOffers.entries());
@@ -789,6 +919,10 @@ function cleanup() {
   finalizeCallLog();
   stopSpeakerDetection();
   stopScreenShare();
+  currentRoomId = null;
+  roster.clear();
+  peerReconnects.clear();
+
   if (outgoingTimer) clearTimeout(outgoingTimer);
   stopDialRetry();
   outgoingTimer = null;
@@ -976,8 +1110,10 @@ type CallSignal = {
   alias?: string;
   restart?: boolean;
   callId?: string;
+  roomId?: string;
   conferencePeers?: ConferencePeer[];
   at?: number;
+
 };
 
 /** Bayat teklif penceresi: bundan eski sinyaller çalmaz (kuyruk tekrarı). */
@@ -1021,10 +1157,27 @@ async function onCallSignal(from: string, raw: unknown) {
   }
 
 
-
+  // Görüşme sürerken gelen katılımcı listesi: yeni kişilere kendiliğinden
+  // bağlanılır, böylece konferansa sonradan eklenen herkes herkesi görür.
+  if (p.t === "roster") {
+    if (state.phase !== "active" && state.phase !== "outgoing") return;
+    adoptRoom(p.roomId);
+    for (const member of p.conferencePeers ?? []) {
+      if (!member?.peerId || member.peerId === nodeSelf() || legs.has(member.peerId)) continue;
+      roster.set(member.peerId, member);
+      // Çift teklif olmasın: yalnız kimliği küçük olan uç arar.
+      if (nodeSelf().localeCompare(member.peerId) < 0) {
+        void dial(member.peerId, member.alias ?? member.peerId, state.video).catch(() => {});
+      }
+    }
+    publish({ conference: legs.size > 1 });
+    return;
+  }
 
   if (p.t === "offer" && p.sdp) {
     if (!currentCallId && p.callId) currentCallId = p.callId;
+    adoptRoom(p.roomId ?? p.callId);
+
     const desc: RTCSessionDescriptionInit = { type: "offer", sdp: p.sdp };
     const leg = legs.get(from);
     if (p.restart && leg) {

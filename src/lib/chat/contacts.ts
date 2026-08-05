@@ -176,14 +176,22 @@ function buildContact(
 function collapsePersons(rows: Contact[]): Contact[] {
   const groups = new Map<string, Contact[]>();
   for (const row of rows) {
-    // Telefon rehberi kullanıcıya tek kişi gösterir: kişi kimliği eksik ya da
-    // eski cihazlarda farklı olsa bile aynı normalize ad tek kartta birleşir.
+    // Sıra: numara çıpası (personId) → imza anahtarı → ad → cihaz kimliği.
+    // Aynı numaraya bağlı cihazlar adları farklı olsa da tek kartta toplanır;
+    // kimliği bilinen iki ayrı kişi aynı adı taşısa bile ayrı kalır.
     const nameKey = normalizedPersonName(row.displayName);
-    const key = nameKey ? `name:${nameKey}` : row.personId || row.peerId;
+    const key = row.personId
+      ? `p:${row.personId}`
+      : row.signPublic
+        ? `k:${row.signPublic}`
+        : nameKey
+          ? `n:${nameKey}`
+          : row.peerId;
     const bucket = groups.get(key);
     if (bucket) bucket.push(row);
     else groups.set(key, [row]);
   }
+
   const out: Contact[] = [];
   for (const bucket of groups.values()) {
     const sorted = [...bucket].sort((a, b) => b.lastSeen - a.lastSeen);
@@ -196,10 +204,23 @@ function collapsePersons(rows: Contact[]): Contact[] {
       if (!primary.nickname) primary.nickname = linked.find((c) => c.nickname)?.nickname;
       if (!primary.claimedName) primary.claimedName = linked.find((c) => c.claimedName)?.claimedName;
       primary.displayName = primary.nickname || primary.claimedName || "";
+      // Doğrulama rozeti kartın en güçlü halkasını gösterir; bir cihaz elle
+      // onaylanmışsa kişi "Manuel onaylı" görünür.
+      const rank: Record<TrustStatus, number> = {
+        changed: 3,
+        manual: 2,
+        auto: 1,
+        unknown: 0,
+      } as Record<TrustStatus, number>;
+      for (const c of bucket) {
+        if ((rank[c.trust] ?? 0) > (rank[primary.trust] ?? 0)) primary.trust = c.trust;
+      }
+      if (!primary.method) primary.method = bucket.find((c) => c.method)?.method;
       const anchor = bucket.find((c) => c.personId)?.personId ?? primary.personId ?? primary.peerId;
       primary.personId = anchor;
       for (const contact of bucket) linkNodeToPerson(contact.peerId, anchor);
     }
+
     out.push(primary);
   }
   // Adı gerçekten bilinmeyen kayıt listeye HİÇ yazılmaz (gizlenmez — oluşturulmaz).
