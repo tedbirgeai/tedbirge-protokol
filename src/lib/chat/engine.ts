@@ -26,6 +26,7 @@ import {
 import { knownPeerIds, sendMesh, startNode } from "@/lib/node-runtime";
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { getAlias } from "@/lib/chat/profile";
+import { getStoredPersonId } from "@/lib/chat/anchor";
 import {
   collectChunk,
   fileToDataUrl,
@@ -349,7 +350,7 @@ export async function createGroup(title: string, members: string[]): Promise<Con
       convId: conv.id,
       title: conv.title,
       members: conv.members,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
   return conv;
@@ -471,7 +472,7 @@ export async function sendText(
         members: conv.group ? conv.members : undefined,
         text: msg.text,
         ts: msg.ts,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
         replyTo,
         ttlMs: ttlOf(convId) || undefined,
       });
@@ -552,7 +553,7 @@ export async function sendMedia(
     for (let i = 0; i < chunks.length; i += 1) {
       const sent = await sendMesh("media", peer, {
         ...chunks[i]!,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
         group: conv.group,
         transcript,
       });
@@ -611,7 +612,7 @@ export async function sendLocation(convId: string, point: GeoPoint, note?: strin
         group: conv.group,
         text: msg.text,
         ts: msg.ts,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
         geo: { ...geo, frame: undefined },
         ttlMs: ttlOf(convId) || undefined,
       },
@@ -745,7 +746,7 @@ export async function editMessage(messageId: string, text: string): Promise<void
       id: messageId,
       convId: msg.convId,
       text: clean,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -762,7 +763,7 @@ export async function pinMessage(convId: string, messageId: string | null): Prom
       t: "pin",
       id: next ?? "",
       convId,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -824,7 +825,7 @@ async function sendForwardedText(conv: Conversation, text: string, author: strin
       members: conv.group ? conv.members : undefined,
       text,
       ts: msg.ts,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
       forwarded: true,
       forwardedFrom: author,
       ttlMs: ttlOf(conv.id) || undefined,
@@ -900,7 +901,7 @@ export async function retryMessage(messageId: string): Promise<boolean> {
         members: conv.group ? conv.members : undefined,
         text: msg.text ?? "",
         ts: msg.ts,
-        alias: getAlias(),
+        alias: getAlias(), personId: getStoredPersonId(),
       });
       delivered = delivered || ok;
     } catch {
@@ -996,7 +997,7 @@ export async function sendTyping(convId: string, active = true) {
       t: active ? "typing" : "stop-typing",
       convId,
       group: conv.group,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -1020,7 +1021,7 @@ export async function reactToMessage(messageId: string, emoji: string) {
       id: messageId,
       emoji: next,
       convId: msg.convId,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
@@ -1043,7 +1044,7 @@ export async function deleteMessage(messageId: string, forEveryone = true) {
       t: "delete",
       id: messageId,
       convId: msg.convId,
-      alias: getAlias(),
+      alias: getAlias(), personId: getStoredPersonId(),
     });
   }
 }
