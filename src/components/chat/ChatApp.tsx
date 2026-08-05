@@ -1188,8 +1188,11 @@ export function ChatApp() {
                   Henüz yakında cihaz yok — karekod ile davet edin.
                 </p>
               )}
-              {peers.map((p) => {
+              {peers
+                .filter((p) => !isTechnicalLabel(contactLabel(p.nodeId, chat.aliases[p.nodeId])))
+                .map((p) => {
                 const paired = Boolean(pairing.trusted[p.nodeId]);
+
                 return (
                   <button
                     key={p.nodeId}
