@@ -609,24 +609,46 @@ export class BrowserNode {
    * Hedefin ulaşılabilir cihazlarını çözer. Hedef ister cihaz düğümü
    * (mob-…) ister kişi kimliği (TBG-…) olsun aynı yanıt döner; kişinin
    * TÜM bağlı cihazlarına ayrı ayrı şifreli zarf gider (çoklu cihaz).
+   *
+   * Sonuç cihazda önbelleğe alınır: aynı hedef için saniyede onlarca dizin
+   * sorgusu atılmaz, böylece bulut kotası boşa harcanmaz.
    */
   private async resolveDevices(
     to: string,
   ): Promise<{ nodeId: string; boxPublic: string }[]> {
+    const now = Date.now();
+    const cached = this.deviceCache.get(to);
+    if (cached && cached.until > now) return cached.devices;
+
     const out = new Map<string, { nodeId: string; boxPublic: string }>();
     const local = this.peerKeys.get(to)?.bpk ?? (await getPeer(to))?.publicKey;
     if (local) out.set(to, { nodeId: to, boxPublic: local });
+    let looked = false;
     try {
       const { lookupRelayDevices } = await import("@/lib/relay-cloud");
       for (const d of await lookupRelayDevices(to)) {
         if (d.nodeId === this.nodeId) continue;
         out.set(d.nodeId, { nodeId: d.nodeId, boxPublic: d.boxPublic });
+        looked = true;
       }
     } catch {
       /* dizin okunamadı: yerel anahtarla devam */
     }
-    return Array.from(out.values());
+    const devices = Array.from(out.values());
+    // Başarılı çözümleme uzun, boş sonuç kısa süre saklanır (kişi az sonra
+    // ağa bağlanabilir).
+    this.deviceCache.set(to, {
+      devices,
+      until: now + (looked && devices.length ? DEVICE_CACHE_MS : DEVICE_CACHE_MISS_MS),
+    });
+    if (this.deviceCache.size > 200) {
+      for (const [key, value] of this.deviceCache) {
+        if (value.until <= now) this.deviceCache.delete(key);
+      }
+    }
+    return devices;
   }
+
 
   /**
    * Çevrimiçi iki cihaz arasında, veri kanalı henüz kurulmamış olsa bile
