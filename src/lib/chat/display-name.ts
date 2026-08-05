@@ -24,7 +24,10 @@ export function isTechnicalLabel(label: string | undefined | null): boolean {
 }
 
 /** Görünür başlık: insan adı yoksa nötr bir etiket döner. */
-export function humanName(label: string | undefined | null, fallback = "Kayıtsız kişi"): string {
+export function humanName(
+  label: string | undefined | null,
+  fallback = "Tedbirge kullanıcısı",
+): string {
   const s = (label ?? "").trim();
   return isTechnicalLabel(s) ? fallback : s;
 }
