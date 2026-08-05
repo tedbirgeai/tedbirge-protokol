@@ -312,12 +312,15 @@ export function CallOverlay() {
                 }`}
               >
                 {call.speakingPeerId === p.peerId ? "🔊 " : ""}
-                {p.alias} · {p.connected ? "bağlı" : "bekliyor"}
+                {p.alias} ·{" "}
+                {p.connected ? "bağlı" : p.reconnecting ? "yeniden bağlanıyor" : "bekliyor"}
               </li>
             ))}
           </ul>
         )}
+        {call.notice && <p className="px-8 text-center text-sm text-white/70">{call.notice}</p>}
         {call.error && <p className="px-8 text-center text-sm text-amber-300">{call.error}</p>}
+
         {playBlocked && call.phase === "active" && (
           <button
             type="button"
