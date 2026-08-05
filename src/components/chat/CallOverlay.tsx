@@ -427,6 +427,21 @@ export function CallOverlay() {
             >
               {call.muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
+            {(call.phase === "active" || call.phase === "outgoing") && (
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setAddOpen(true);
+                }}
+                className={ctlBase}
+                disabled={roomFull}
+                aria-label="Görüşmeye kişi ekle"
+                title={roomFull ? `En fazla ${CONFERENCE_LIMIT} kişi` : "Görüşmeye kişi ekle"}
+              >
+                <UserPlus className="h-5 w-5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -441,7 +456,52 @@ export function CallOverlay() {
           </>
         )}
       </div>
+
+      {addOpen && (
+        <div className="absolute inset-0 z-20 flex items-end bg-black/70">
+          <div className="max-h-[70vh] w-full overflow-y-auto rounded-t-3xl bg-zinc-900 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-base font-semibold">Görüşmeye kişi ekle</p>
+              <button
+                type="button"
+                onClick={() => setAddOpen(false)}
+                className="wa-press flex h-11 w-11 items-center justify-center rounded-full bg-white/10"
+                aria-label="Kapat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {addable.length === 0 ? (
+              <p className="py-6 text-center text-sm text-white/60">
+                Eklenebilecek kayıtlı kişi yok.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {addable.map((c) => (
+                  <li key={c.peerId}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pressFeedback();
+                        setAddOpen(false);
+                        void addParticipant(c.peerId, c.displayName);
+                      }}
+                      className="wa-press flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left hover:bg-white/10"
+                    >
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-sm font-semibold">
+                        {c.displayName.slice(0, 2).toUpperCase()}
+                      </span>
+                      <span className="text-sm">{c.displayName}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
 
