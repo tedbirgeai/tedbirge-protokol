@@ -149,7 +149,7 @@ export function CallOverlay() {
     "wa-press flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground hover:bg-accent";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur">
+    <div className="wa-call-overlay fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur">
       <div className="relative flex w-full max-w-3xl flex-1 items-center justify-center p-6">
         {call.video ? (
           <>
@@ -172,15 +172,24 @@ export function CallOverlay() {
           </>
         ) : (
           <div className="text-center">
-            <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border border-primary/40 bg-primary/10 font-mono text-3xl text-primary">
-              {(call.peerAlias || "?").slice(0, 2).toUpperCase()}
-            </div>
+            {peerAvatar ? (
+              <img
+                src={peerAvatar}
+                alt=""
+                className="mx-auto h-40 w-40 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border border-primary/40 bg-primary/10 font-mono text-3xl text-primary">
+                {(call.peerAlias || "?").slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <video ref={remoteRef} autoPlay playsInline className="hidden" />
             <p className="mt-6 text-xl font-semibold text-foreground">{call.peerAlias}</p>
             <p className="mt-1 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
               {statusLine}
               {call.phase === "active" && <QualityBars q={call.quality} />}
             </p>
+
             {call.phase === "active" && (
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Bağlantı: {call.quality.label}
