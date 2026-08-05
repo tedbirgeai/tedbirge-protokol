@@ -234,7 +234,6 @@ function Avatar({ name, size = 44, src }: { name: string; size?: number; src?: s
   );
 }
 
-
 function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
   if (msg.status === "pending")
@@ -756,7 +755,6 @@ export function ChatApp() {
   useAvatars();
   const myAvatarInput = useRef<HTMLInputElement>(null);
 
-
   // Rehber, yeni eş ya da yeni sohbet göründüğünde kendini tazeler.
   useEffect(() => {
     void refreshContacts();
@@ -1191,33 +1189,38 @@ export function ChatApp() {
               {peers
                 .filter((p) => !isTechnicalLabel(contactLabel(p.nodeId, chat.aliases[p.nodeId])))
                 .map((p) => {
-                const paired = Boolean(pairing.trusted[p.nodeId]);
+                  const paired = Boolean(pairing.trusted[p.nodeId]);
 
-                return (
-                  <button
-                    key={p.nodeId}
-                    type="button"
-                    onClick={() => {
-                      void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
-                        setActiveId(c.id);
-                        setGroupMode(false);
-                      });
-                    }}
-                    className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
-                    style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-                  >
-                    <span className="truncate">
-                      {humanName(contactLabel(p.nodeId, chat.aliases[p.nodeId]), "Kayıtsız cihaz")}
-                    </span>
-                    <span
-                      className="text-[11px]"
-                      style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                  return (
+                    <button
+                      key={p.nodeId}
+                      type="button"
+                      onClick={() => {
+                        void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then(
+                          (c) => {
+                            setActiveId(c.id);
+                            setGroupMode(false);
+                          },
+                        );
+                      }}
+                      className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                      style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                     >
-                      {paired ? "çevrimiçi" : "yakında"}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span className="truncate">
+                        {humanName(
+                          contactLabel(p.nodeId, chat.aliases[p.nodeId]),
+                          "Kayıtsız cihaz",
+                        )}
+                      </span>
+                      <span
+                        className="text-[11px]"
+                        style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                      >
+                        {paired ? "çevrimiçi" : "yakında"}
+                      </span>
+                    </button>
+                  );
+                })}
             </div>
             <div className="mt-3 flex gap-2">
               <input
@@ -1297,10 +1300,7 @@ export function ChatApp() {
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
-                  <Avatar
-                    name={name}
-                    src={c.group ? undefined : getAvatar(c.members[0])}
-                  />
+                  <Avatar name={name} src={c.group ? undefined : getAvatar(c.members[0])} />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
@@ -1422,9 +1422,8 @@ export function ChatApp() {
                       : !peerKnown
                         ? "uçtan uca şifreli"
                         : peerOnline
-
-                        ? "çevrimiçi"
-                        : "son görülme bilinmiyor"}
+                          ? "çevrimiçi"
+                          : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button

@@ -78,7 +78,6 @@ function Row({
   );
 }
 
-
 const SYNC_FLAG = "tedbirge.chat.autoSync";
 
 export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Props) {
@@ -86,7 +85,6 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   useAvatars();
   const tried = useRef(false);
   const q = query.trim().toLocaleLowerCase("tr");
-
 
   // Girişte rehberi arka planda otomatik eşitle (tek sefer, sessiz).
   useEffect(() => {
@@ -152,7 +150,6 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
           Ağda eşleşen kayıtlı kişi bulunamadı.
         </p>
       )}
-
 
       <p className="px-4 pb-4 pt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
         Numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle yapılır.

@@ -31,7 +31,6 @@ import {
 } from "@/lib/chat/sounds";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
 
-
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -80,7 +79,6 @@ export function CallOverlay() {
   useAvatars();
   const peerAvatar = getAvatar(call.peerId);
 
-
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
     const remote = remoteRef.current;
@@ -121,8 +119,7 @@ export function CallOverlay() {
   /** Zil / çalıyor tonu — geleneksel telefon deneyimi. */
   useEffect(() => {
     if (call.phase === "ringing") startRingtone();
-    else if (call.phase === "outgoing")
-      call.remoteRinging ? startRingback() : startSearching();
+    else if (call.phase === "outgoing") call.remoteRinging ? startRingback() : startSearching();
     else {
       stopRing();
       if (call.phase === "ended") callEndSound();
