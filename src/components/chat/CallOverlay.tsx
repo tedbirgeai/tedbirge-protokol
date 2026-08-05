@@ -29,6 +29,8 @@ import {
   startSearching,
   stopRing,
 } from "@/lib/chat/sounds";
+import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+
 
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
