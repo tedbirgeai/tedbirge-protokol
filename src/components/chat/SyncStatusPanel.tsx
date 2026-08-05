@@ -124,7 +124,10 @@ export function SyncStatusSection() {
         {syncStatusLabel(s)}
       </p>
 
+      <HealthSection />
+
       <h4 className="mt-5 text-[13px] font-semibold">Eşitleme günlüğü (son 20 olay)</h4>
+
       <ul className="mt-2 space-y-1 text-[12px]">
         {log.length === 0 && (
           <li style={{ color: "var(--wa-muted)" }}>Henüz kayıt yok.</li>
