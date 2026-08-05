@@ -148,26 +148,45 @@ export function personGroupKey(p: {
 }
 
 /**
+ * Ad varyantı kontrolü. "mehmet" ile "mehmet dinç" aynı kişidir:
+ * bir adın tüm sözcükleri diğerinin sözcük kümesinde geçiyorsa
+ * (ve en az bir sözcük ortaksa) aynı kişi sayılır.
+ */
+export function isNameVariant(a: string, b: string): boolean {
+  const x = normalizedPersonName(a);
+  const y = normalizedPersonName(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const xs = x.split(" ").filter(Boolean);
+  const ys = y.split(" ").filter(Boolean);
+  if (xs.length === 0 || ys.length === 0) return false;
+  const short = xs.length <= ys.length ? xs : ys;
+  const long = xs.length <= ys.length ? ys : xs;
+  const set = new Set(long);
+  return short.every((token) => set.has(token));
+}
+
+/**
  * İKİNCİ GEÇİŞ — AYNI AD = AYNI KİŞİ.
  * Aynı kişinin iki cihazı farklı imza anahtarı ya da eksik numara özeti
  * yüzünden ayrı kümelere düşebiliyor. Numara özetleri çakışmadığı sürece
- * normalize adı birebir aynı olan kümeler tek kişide birleşir.
+ * adı aynı (ya da kısa/uzun varyantı) olan kümeler tek kişide birleşir.
  */
 export function mergeGroupsByName<T>(
   groups: Map<string, T[]>,
   getName: (bucket: T[]) => string,
   getHash: (bucket: T[]) => string | undefined,
 ): void {
-  const byName = new Map<string, string>();
+  const anchors: Array<{ key: string; name: string }> = [];
   for (const [key, bucket] of Array.from(groups.entries())) {
     const name = normalizedPersonName(getName(bucket));
     if (!name) continue;
-    const target = byName.get(name);
-    if (!target) {
-      byName.set(name, key);
+    const hit = anchors.find((a) => isNameVariant(a.name, name));
+    if (!hit) {
+      anchors.push({ key, name });
       continue;
     }
-    const other = groups.get(target);
+    const other = groups.get(hit.key);
     if (!other) continue;
     const hashA = getHash(bucket);
     const hashB = getHash(other);
@@ -175,7 +194,44 @@ export function mergeGroupsByName<T>(
     if (hashA && hashB && hashA !== hashB) continue;
     other.push(...bucket);
     groups.delete(key);
+    // Birleşen kümenin daha uzun adı çapa adı olur ("mehmet" → "mehmet dinç").
+    if (name.length > hit.name.length) hit.name = name;
   }
+}
+
+const SELF_PHONE_HASH_KEY = "tedbirge.person.phone-hash";
+const SELF_PERSON_ID_KEY = "tedbirge.person.id";
+const SELF_ALIAS_KEY = "tedbirge.chat.alias";
+
+function readLocal(key: string): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return (window.localStorage.getItem(key) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * KENDİ KAYDIM REHBERDE/SOHBET LİSTESİNDE KİŞİ OLARAK GÖRÜNMEZ.
+ * Kendi diğer cihazlarım aynı numara çıpasını (ya da numara yoksa aynı adı)
+ * taşır; bunlar "Kendinize not" dışında ayrı satır açmaz.
+ */
+export function isSelfPerson(p: {
+  id?: string | null;
+  personId?: string | null;
+  phoneHash?: string | null;
+  name?: string | null;
+}): boolean {
+  const myHash = readLocal(SELF_PHONE_HASH_KEY);
+  const myPerson = readLocal(SELF_PERSON_ID_KEY);
+  const myName = readLocal(SELF_ALIAS_KEY);
+  const hash = (p.phoneHash ?? "").trim();
+  if (myHash && hash) return hash === myHash;
+  if (myPerson && (p.personId === myPerson || p.id === myPerson)) return true;
+  // Numara çıpası yoksa ad eşleşmesi kullanılır (yalnız çakışan numara yokken).
+  if (!hash && myName && isNameVariant(myName, p.name ?? "")) return true;
+  return false;
 }
 
 
