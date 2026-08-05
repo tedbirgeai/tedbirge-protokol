@@ -276,6 +276,8 @@ export class BrowserNode {
   private onState: (s: BrowserNodeState) => void;
   private channel: ReturnType<typeof supabase.channel> | null = null;
   private cloudUp = false;
+  private cloudReady: Promise<void> | null = null;
+  private resolveCloudReady: (() => void) | null = null;
   private localBus: BroadcastChannel | null = null;
   private localSeen = new Map<string, number>();
   private localTimer: ReturnType<typeof setInterval> | null = null;
@@ -381,6 +383,9 @@ export class BrowserNode {
     this.startLocalDiscovery();
     this.startLanSignaling();
 
+    this.cloudReady = new Promise<void>((resolve) => {
+      this.resolveCloudReady = resolve;
+    });
     this.channel = supabase.channel(CHANNEL, {
       config: { broadcast: { self: false }, presence: { key: this.nodeId } },
     });
@@ -395,11 +400,15 @@ export class BrowserNode {
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           this.cloudUp = true;
+          this.resolveCloudReady?.();
+          this.resolveCloudReady = null;
           await this.channel?.track({ nodeId: this.nodeId, at: Date.now() });
           void this.dialNewPeers();
           this.emit({});
         } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
           this.cloudUp = false;
+          this.resolveCloudReady?.();
+          this.resolveCloudReady = null;
           this.emit({});
         }
       });
@@ -732,6 +741,9 @@ export class BrowserNode {
     this.localBus = null;
     this.localSeen.clear();
     this.cloudUp = false;
+    this.resolveCloudReady?.();
+    this.resolveCloudReady = null;
+    this.cloudReady = null;
     if (this.channel) void supabase.removeChannel(this.channel);
     this.channel = null;
     this.emit({ running: false, discovery: "none" });
@@ -1044,6 +1056,16 @@ export class BrowserNode {
     // Egress kilidi: hedef yalnızca overlay düğüm kimliği olabilir (5651 kapalı devre).
     assertNoEgress(to);
     if (!this.identity) this.identity = await ensureIdentity(this.nodeId);
+
+    // Soğuk açılıştaki ilk paket, gerçek zamanlı kanalın abone olmasından birkaç
+    // milisaniye önce gelirse kaybolmasın. Yerel/çevrimdışı yolları engellememek
+    // için bekleme kesin olarak kısa ve sınırlıdır.
+    if (this.state.online && this.cloudReady && !this.cloudUp) {
+      await Promise.race([
+        this.cloudReady,
+        new Promise<void>((resolve) => window.setTimeout(resolve, 2_500)),
+      ]);
+    }
 
     const targets = this.openPeers()
       .map(([id]) => id)

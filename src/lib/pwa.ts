@@ -4,7 +4,7 @@
  */
 
 const SW_URL = "/sw.js";
-const UPDATE_INTERVAL_MS = 15 * 60 * 1000;
+const UPDATE_INTERVAL_MS = 5 * 60 * 1000;
 const REFRESH_MARKER = "tedbirge:sw-refreshing";
 
 type PwaUpdateDetail = {
