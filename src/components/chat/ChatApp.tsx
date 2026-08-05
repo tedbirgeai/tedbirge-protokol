@@ -846,8 +846,8 @@ export function ChatApp() {
     return set;
   }, [chat.conversations]);
   const conversations = useMemo(
-    () =>
-      allConversations.filter((c) => {
+    () => {
+      const rows = allConversations.filter((c) => {
         const f = folderOf(c.id);
         if (folder === "" ? f === ARCHIVE : f !== folder) return false;
         if (c.id === SELF_CONV_ID) return true;
@@ -856,10 +856,30 @@ export function ChatApp() {
         if (!hasActivity && !callTouched.has(c.id)) return false;
         // Adı çözülemeyen kayıt hiç oluşturulmaz.
         if (!isNamed(c)) return false;
+        // Son güvenlik ağı: başlık yine de nötr etikete düşüyorsa listelenmez.
+        if (!c.group && safeTitleOf(c) === UNKNOWN_TITLE) return false;
         return true;
-      }),
+      });
+      // TEK KİŞİ = TEK SATIR. Aynı kişinin farklı cihazlarıyla açılmış
+      // sohbetler numara çıpası/kişi kimliği üzerinden tek satırda toplanır;
+      // en son hareket gören sohbet listede kalır.
+      const byPerson = new Map<string, (typeof rows)[number]>();
+      const out: typeof rows = [];
+      for (const c of rows) {
+        const member = c.members?.[0];
+        if (c.group || c.id === SELF_CONV_ID || !member) {
+          out.push(c);
+          continue;
+        }
+        const key = resolvePhoneHash(member) || nameKeyOf(member) || member;
+        const current = byPerson.get(key);
+        if (!current || (c.lastTs ?? 0) > (current.lastTs ?? 0)) byPerson.set(key, c);
+      }
+      return [...out, ...byPerson.values()].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+    },
     [allConversations, folder, folderVersion, callTouched],
   );
+
 
   const archivedCount = useMemo(
     () => allConversations.filter((c) => isArchived(c.id)).length,
