@@ -773,10 +773,79 @@ async function sendForwardedText(conv: Conversation, text: string, author: strin
 async function setStatus(id: string, status: MessageStatus) {
   const msg = await getMessage(id);
   if (!msg) return;
-  const rank: Record<MessageStatus, number> = { pending: 0, sent: 1, delivered: 2, read: 3 };
-  if (rank[status] <= rank[msg.status]) return;
+  const rank: Record<MessageStatus, number> = {
+    pending: 0,
+    failed: 0,
+    sent: 1,
+    delivered: 2,
+    read: 3,
+  };
+  // "İletilemedi" yalnızca hâlâ bekleyen bir mesaja yazılabilir; teslim
+  // edilmiş bir mesaj hatalıya düşmez.
+  if (status === "failed") {
+    if (msg.status !== "pending") return;
+  } else if (rank[status] <= rank[msg.status] && msg.status !== "failed") return;
   await putMessage({ ...msg, status });
   await refreshMessages(msg.convId);
+}
+
+/**
+ * Sakla-ilet kuyruğu penceresi. Bu süre boyunca teslim edilemeyen mesaj
+ * sessizce düşürülmez; kullanıcıya "iletilemedi · yeniden dene" olarak
+ * gösterilir ve tek dokunuşla yeniden gönderilebilir.
+ */
+export const PENDING_TTL_MS = 30 * 60_000;
+
+/** Süresi dolan bekleyen mesajları "iletilemedi" olarak işaretler. */
+export async function sweepStalePending(): Promise<number> {
+  const now = Date.now();
+  const rows = await listAllMessages();
+  let n = 0;
+  for (const m of rows) {
+    if (!m.outgoing || m.status !== "pending") continue;
+    if (now - m.ts < PENDING_TTL_MS) continue;
+    await putMessage({ ...m, status: "failed" });
+    n += 1;
+  }
+  if (n) {
+    await refreshConversations();
+    for (const convId of Object.keys(state.messages)) await refreshMessages(convId);
+  }
+  return n;
+}
+
+/** Tek dokunuşla yeniden gönderme — iletilemeyen mesajı tekrar dener. */
+export async function retryMessage(messageId: string): Promise<boolean> {
+  const msg = await getMessage(messageId);
+  if (!msg || !msg.outgoing) return false;
+  const conv = await getConversation(msg.convId);
+  if (!conv) return false;
+
+  await putMessage({ ...msg, status: "pending", ts: msg.ts });
+  await refreshMessages(msg.convId);
+
+  let delivered = isSelfConversation(conv.id);
+  for (const peer of await targetsOf(conv)) {
+    try {
+      const ok = await sendMesh("chat", peer, {
+        t: msg.kind === "text" ? "text" : "text",
+        id: msg.id,
+        convId: conv.id,
+        group: conv.group,
+        groupTitle: conv.group ? conv.title : undefined,
+        members: conv.group ? conv.members : undefined,
+        text: msg.text ?? "",
+        ts: msg.ts,
+        alias: getAlias(),
+      });
+      delivered = delivered || ok;
+    } catch {
+      /* bağlantı yok */
+    }
+  }
+  await putMessage({ ...msg, status: delivered ? "sent" : "pending" });
+  await refreshMessages(msg.convId);
+  return delivered;
 }
 
 function clearTyping(convId: string) {
@@ -1263,6 +1332,9 @@ export async function bootChat() {
   // Kaybolan mesajlar: açılışta ve her dakika süresi dolanlar silinir.
   void sweepEphemeral();
   setInterval(() => void sweepEphemeral(), 60_000);
+  // Kuyrukta çok bekleyen mesajlar sessizce düşmez; "iletilemedi" olur.
+  void sweepStalePending();
+  setInterval(() => void sweepStalePending(), 60_000);
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();
   await cleanDuplicateConversations();

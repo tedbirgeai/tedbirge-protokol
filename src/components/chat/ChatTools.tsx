@@ -22,8 +22,22 @@ import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { NotificationHealth } from "@/components/chat/NotificationHealth";
+import { getAlias, getEmail, getPhone, setAlias, setEmail } from "@/lib/chat/profile";
+import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory";
+
 
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
+
+/** Ayarlar tek ekranda toplanır: altı sekme, tek pencere. */
+type SettingsTab = "profil" | "bildirim" | "gizlilik" | "depolama" | "rehber" | "hakkinda";
+const SETTINGS_TABS: { id: SettingsTab; label: string }[] = [
+  { id: "profil", label: "Profil" },
+  { id: "bildirim", label: "Bildirim" },
+  { id: "gizlilik", label: "Gizlilik" },
+  { id: "depolama", label: "Depolama" },
+  { id: "rehber", label: "Rehber" },
+  { id: "hakkinda", label: "Hakkında" },
+];
 
 /** Kilit ekranı — PIN doğrulanana kadar sohbet içeriği gösterilmez. */
 export function AppLockScreen({ onUnlocked }: { onUnlocked: () => void }) {
@@ -190,6 +204,11 @@ export function ChatSettingsDialog({
   const [ttl, setTtlValue] = useState(0);
   const [minutes, setMinutes] = useState(5);
   const [notify, setNotify] = useState(false);
+  const [tab, setTab] = useState<SettingsTab>("profil");
+  const [alias, setAliasValue] = useState("");
+  const [email, setEmailValue] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncInfo, setSyncInfo] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
 
@@ -199,6 +218,8 @@ export function ChatSettingsDialog({
     setMinutes(autoLockMinutes());
     setNotify(notificationsAllowed());
     setTtlValue(convId ? ttlOf(convId) : 0);
+    setAliasValue(getAlias());
+    setEmailValue(getEmail());
     setMsg(null);
     setErr(null);
   }, [open, convId]);
@@ -217,7 +238,7 @@ export function ChatSettingsDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Gizlilik ve yedekleme</h2>
+          <h2 className="text-lg font-semibold">Ayarlar</h2>
           <button
             type="button"
             onClick={onClose}
@@ -228,6 +249,126 @@ export function ChatSettingsDialog({
           </button>
         </div>
 
+        {/* Tek ekranda toplanmış ayar sekmeleri */}
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {SETTINGS_TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                setTab(t.id);
+              }}
+              className="wa-press min-h-9 rounded-full px-3 py-1.5 text-[12px] font-semibold"
+              style={{
+                border: "1px solid var(--wa-border)",
+                background: tab === t.id ? "var(--wa-accent)" : "transparent",
+                color: tab === t.id ? "#fff" : "var(--wa-muted)",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "profil" && (
+        <section className="mt-5">
+          <h3 className="text-sm font-semibold">Profil</h3>
+          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+            Adınız ve e-postanız yalnızca bu cihazda saklanır; kimliğiniz numaranıza bağlıdır.
+          </p>
+          <input
+            value={alias}
+            onChange={(e) => setAliasValue(e.target.value)}
+            placeholder="Ad Soyad"
+            className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
+            style={{ borderColor: "var(--wa-border)" }}
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmailValue(e.target.value)}
+            placeholder="E-posta (isteğe bağlı)"
+            inputMode="email"
+            className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
+            style={{ borderColor: "var(--wa-border)" }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setAlias(alias);
+              setEmail(email);
+              setMsg("Profil kaydedildi.");
+            }}
+            className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white"
+            style={{ background: "var(--wa-accent)" }}
+          >
+            Kaydet
+          </button>
+          <dl className="mt-3 space-y-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+            <div className="flex justify-between gap-2">
+              <dt>Telefon</dt>
+              <dd className="font-mono">{getPhone() || "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt>Kimlik</dt>
+              <dd className="font-mono">{getBrowserNodeId()}</dd>
+            </div>
+          </dl>
+        </section>
+        )}
+
+        {tab === "rehber" && (
+        <section className="mt-5">
+          <h3 className="text-sm font-semibold">Rehber</h3>
+          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+            Rehberiniz uygulama ön plana geldiğinde ve altı saatte bir kendiliğinden eşitlenir.
+          </p>
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={() => {
+              pressFeedback();
+              setSyncing(true);
+              void autoSyncContacts()
+                .then((r) => {
+                  if (r.source === "none") {
+                    setSyncInfo(
+                      deviceContactsSupported()
+                        ? "Rehber izni verilmedi. Cihaz ayarlarından Tedbirge rehber iznini açın."
+                        : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
+                    );
+                    return;
+                  }
+                  setSyncInfo(
+                    r.matched > 0
+                      ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
+                      : `${r.checked} kişi denetlendi · rehberinizden henüz katılan yok.`,
+                  );
+                })
+                .catch(() => setSyncInfo("Rehber eşitlenemedi."))
+                .finally(() => setSyncing(false));
+            }}
+            className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+            style={{ background: "var(--wa-accent)" }}
+          >
+            {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
+          </button>
+          {syncInfo && (
+            <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--wa-muted)" }}>
+              {syncInfo}
+            </p>
+          )}
+          <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+            KVKK: numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez
+            özetlerle yapılır.
+          </p>
+        </section>
+        )}
+
+        
+        {tab === "bildirim" && (
+        <>
         {/* Bildirimler */}
         <section className="mt-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -271,7 +412,11 @@ export function ChatSettingsDialog({
           </div>
           <NotificationHealth />
         </section>
+        </>
+        )}
 
+        {tab === "hakkinda" && (
+        <>
         {/* Uygulamayı yükle */}
         <section className="mt-6">
           <h3 className="text-sm font-semibold">Uygulamayı yükle</h3>
@@ -283,9 +428,13 @@ export function ChatSettingsDialog({
             <InstallAppButton />
           </div>
         </section>
+        </>
+        )}
 
 
 
+        {tab === "gizlilik" && (
+        <>
         {/* Kaybolan mesajlar */}
         <section className="mt-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -319,7 +468,11 @@ export function ChatSettingsDialog({
             ))}
           </div>
         </section>
+        </>
+        )}
 
+        {tab === "gizlilik" && (
+        <>
         {/* Ekran kilidi */}
         <section className="mt-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -383,7 +536,11 @@ export function ChatSettingsDialog({
             </label>
           )}
         </section>
+        </>
+        )}
 
+        {tab === "depolama" && (
+        <>
         {/* Yedekleme */}
         <section className="mt-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -445,6 +602,8 @@ export function ChatSettingsDialog({
             }}
           />
         </section>
+        </>
+        )}
 
         {msg && (
           <p className="mt-4 text-xs" style={{ color: "var(--wa-accent)" }}>

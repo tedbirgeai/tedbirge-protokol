@@ -33,6 +33,7 @@ import {
   Trash2,
   Settings,
   Radio,
+  RotateCw,
   Users,
   Video,
   Volume2,
@@ -64,6 +65,7 @@ import {
   useChat,
   useConversationMessages,
   EDIT_WINDOW_MS,
+  retryMessage,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
@@ -101,7 +103,6 @@ import { useNodeRuntime } from "@/lib/node-runtime";
 import { getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
-import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
 import {
   fileToAvatarDataUrl,
@@ -236,6 +237,19 @@ function Avatar({ name, size = 44, src }: { name: string; size?: number; src?: s
 
 function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
+  if (msg.status === "failed")
+    return (
+      <button
+        type="button"
+        className="wa-press inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+        style={{ background: "var(--wa-panel)", color: "var(--destructive)" }}
+        onClick={() => void retryMessage(msg.id)}
+        aria-label="İletilemedi — yeniden dene"
+      >
+        <RotateCw className="h-3.5 w-3.5" />
+        iletilemedi · yeniden dene
+      </button>
+    );
   if (msg.status === "pending")
     return (
       <Clock
@@ -1135,9 +1149,8 @@ export function ChatApp() {
           </div>
         </div>
 
-        <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--wa-border)" }}>
-          <InstallAppButton />
-        </div>
+        {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
+
         <div className="px-3 py-2">
           <div
             className="flex items-center gap-3 rounded-lg px-3 py-2"
@@ -1397,6 +1410,55 @@ export function ChatApp() {
               Bir sohbet seçin. Mesajlarınız internet varken bulut üzerinden, internet yokken
               yakındaki cihazlar üzerinden iletilir — siz hiçbir ayar yapmazsınız.
             </p>
+
+            {/* Son sohbetler ve arşiv kısayolu */}
+            {conversations.length > 0 && (
+              <div className="w-full max-w-md text-left">
+                <p
+                  className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide"
+                  style={{ color: "var(--wa-muted)" }}
+                >
+                  Son sohbetler
+                </p>
+                <ul className="overflow-hidden rounded-xl" style={{ background: "var(--wa-panel)" }}>
+                  {conversations.slice(0, 5).map((c) => (
+                    <li key={`recent_${c.id}`} style={{ borderBottom: "1px solid var(--wa-border)" }}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveId(c.id)}
+                        className="wa-press flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                      >
+                        <Avatar name={titleOf(c)} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14px] font-medium">
+                            {titleOf(c)}
+                          </span>
+                          <span
+                            className="block truncate text-[12px]"
+                            style={{ color: "var(--wa-muted)" }}
+                          >
+                            {c.lastText || "Henüz mesaj yok"}
+                          </span>
+                        </span>
+                        <span className="text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                          {c.lastTs ? timeOf(c.lastTs) : ""}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {archivedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setFolder(ARCHIVE)}
+                className="wa-press min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold"
+                style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
+              >
+                Arşiv · {archivedCount}
+              </button>
+            )}
           </div>
         ) : (
           <>
