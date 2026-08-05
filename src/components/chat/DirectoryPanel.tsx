@@ -81,16 +81,12 @@ function Row({
 
 const SYNC_FLAG = "tedbirge.chat.autoSync";
 
-export function DirectoryPanel({
-  query,
-  peers,
-  labelOf,
-  onOpenPeer,
-  onOpenSelfNote,
-}: Props) {
+export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Props) {
   const book = useContacts();
+  useAvatars();
   const tried = useRef(false);
   const q = query.trim().toLocaleLowerCase("tr");
+
 
   // Girişte rehberi arka planda otomatik eşitle (tek sefer, sessiz).
   useEffect(() => {
