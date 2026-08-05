@@ -1384,7 +1384,8 @@ export class BrowserNode {
 
       // Tek turda sınırlı sayıda kalıcı öğe gönderilir; büyük eski kuyruklar
       // API'yi tekrar 429'a sürüklemeden kontrollü biçimde boşalır.
-      for (const row of durable.slice(0, 100)) {
+      for (const row of durable.slice(0, 25)) {
+        if (relayCooldownRemainingMs() > 0) break;
         const item = row.env as QueuedItem;
         if (item.t === "fwd") {
           if (this.broadcastRaw(encodeEnvelope(item.env))) await deletePacket(row.pktId);
@@ -1398,6 +1399,7 @@ export class BrowserNode {
         }
         const sent = await this.send(item.kind, item.to, item.payload, item.priority, false);
         if (sent) {
+          delivered += 1;
           await deletePacket(row.pktId);
           const messageId = (item.payload as { id?: unknown } | null)?.id;
           if (typeof messageId === "string") {
@@ -1409,9 +1411,12 @@ export class BrowserNode {
       }
     } finally {
       this.flushBusy = false;
+      // İlerleme varsa hızlı tur, yoksa kademeli bekleme.
+      this.queueBackoff = delivered > 0 ? 0 : Math.min(this.queueBackoff + 1, 4);
       await this.refreshQueueCount();
     }
   }
+
 
   private async postTelemetry(body: Record<string, unknown>) {
     if (this.demoMode) return false;
