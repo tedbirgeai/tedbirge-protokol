@@ -136,3 +136,16 @@ Servis çalışanı `tedbirge-outbox` etiketiyle Background Sync dinler:
 ağ geri geldiğinde bekleyen mesajlar kendiliğinden gönderilir.
 iOS Safari bu API'yi desteklemez; orada kuyruk 15 saniyelik
 zamanlayıcı ve üstel geri çekilme ile işlenir.
+
+## Rehber senkronizasyonu (kanal tablosu)
+
+| Ortam | Rehber erişimi | Davranış |
+| --- | --- | --- |
+| Tedbirge mobil uygulaması (iOS/Android) | Sistem rehber izni | Tüm rehber otomatik okunur, yarım saatte bir sessizce tazelenir |
+| Android tarayıcı / PWA | Kişi seçici (Contact Picker) | Seçilen kişiler okunur, sonra otomatik yeniden eşleştirilir |
+| iPhone Safari ve masaüstü | Rehber dosyası (.vcf) | Bir kez yüklenir, sonra otomatik yeniden eşleştirilir |
+
+Her üç kanalda da ham numara ve ad cihazdan çıkmaz; sunucuya yalnızca geri
+döndürülemez SHA-256 özeti gider (KVKK). Tam otomatik rehber yalnızca yerel
+uygulama kabuğuyla mümkündür — `npx cap sync` ile kabuğu derleyip cihaza
+yükledikten sonra ilk açılışta rehber izni istenir.
