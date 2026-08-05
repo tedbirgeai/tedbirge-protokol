@@ -9,11 +9,15 @@
  * Dış SMS/GSM servisi kullanılmaz; internet kesintisinde de çalışır.
  */
 import { useCallback, useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { setAlias, setPhone } from "@/lib/chat/profile";
+import { setAlias, setEmail, setPhone } from "@/lib/chat/profile";
 import { normalizePhone, syncDeviceContacts } from "@/lib/chat/directory";
 import { ensureNotificationPermission } from "@/lib/chat/push";
+import { refreshContacts, shortIdOf } from "@/lib/chat/contacts";
+import { qrPayload } from "@/lib/peer-trust";
+import { restoreContacts } from "@/lib/chat/vault";
 import {
   isOnline,
   localCode,
@@ -22,7 +26,8 @@ import {
   verifyLocalCode,
 } from "@/lib/chat/local-auth";
 
-type Step = "phone" | "code";
+type Step = "phone" | "code" | "done";
+
 
 
 /** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
