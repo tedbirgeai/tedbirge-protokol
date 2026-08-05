@@ -247,6 +247,7 @@ export async function pruneGhostConversations(): Promise<number> {
   let removed = 0;
   for (const conv of convs) {
     if (conv.group) continue;
+    if (conv.id === "self_notes") continue; // "Kendinize not" korunur
     if (withMessages.has(conv.id)) continue;
     const member = conv.members?.[0];
     if (!member) continue;
