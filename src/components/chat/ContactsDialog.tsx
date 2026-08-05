@@ -188,12 +188,14 @@ function ContactRow({
 function SyncContactsRow() {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
+  const [people, setPeople] = useState<{ peerId: string; name: string; shortId: string }[]>([]);
 
   // Açılışta otomatik eşitleme: kullanıcı hiçbir butona basmadan
   // rehberi yeniden eşleştirilir.
   useEffect(() => {
     void autoSyncContacts()
       .then((r) => {
+        setPeople(r.people);
         if (r.checked > 0)
           setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
       })
@@ -212,6 +214,7 @@ function SyncContactsRow() {
           );
           return;
         }
+        setPeople(r.people);
         setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
         toast.success("Rehber eşitlendi");
       })
@@ -232,6 +235,17 @@ function SyncContactsRow() {
       <Button size="sm" disabled={busy} onClick={runAuto}>
         {busy ? "Eşitleniyor…" : "Şimdi eşitle"}
       </Button>
+
+      {people.length > 0 && (
+        <ul className="w-full space-y-1 border-t border-border pt-3">
+          {people.map((p) => (
+            <li key={p.peerId} className="flex items-center justify-between gap-3 text-sm">
+              <span className="truncate font-medium">{p.name}</span>
+              <span className="font-mono text-[11px] text-muted-foreground">{p.shortId}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
