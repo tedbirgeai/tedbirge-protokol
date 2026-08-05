@@ -223,3 +223,45 @@ export async function mergePersonDuplicates(): Promise<number> {
   }
   return merged;
 }
+
+/**
+ * HAYALET SOHBET TEMİZLİĞİ.
+ * Adı çözülemeyen ya da kendi diğer cihazıma ait, hiç mesajı olmayan
+ * birebir sohbet kayıtları listede "Tedbirge kullanıcısı" satırı olarak
+ * kalıyordu. Bu kayıtlar silinir; mesajı olan hiçbir sohbete dokunulmaz.
+ */
+export async function pruneGhostConversations(): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  const { listConversations, deleteConversation, listAllMessages } = await import(
+    "@/lib/store/idb"
+  );
+  const { resolveDisplayName, isSelfPerson, nameKeyOf, resolvePhoneHash } = await import(
+    "@/lib/chat/name-resolver"
+  );
+  const [convs, messages] = await Promise.all([
+    listConversations().catch(() => []),
+    listAllMessages().catch(() => []),
+  ]);
+  const withMessages = new Set(messages.map((m) => m.convId));
+
+  let removed = 0;
+  for (const conv of convs) {
+    if (conv.group) continue;
+    if (withMessages.has(conv.id)) continue;
+    const member = conv.members?.[0];
+    if (!member) continue;
+    const name = resolveDisplayName(member).trim() || (conv.title ?? "").trim();
+    const ghost =
+      !resolveDisplayName(member).trim() ||
+      isSelfPerson({
+        id: member,
+        personId: nameKeyOf(member),
+        phoneHash: resolvePhoneHash(member),
+        name,
+      });
+    if (!ghost) continue;
+    await deleteConversation(conv.id).catch(() => undefined);
+    removed += 1;
+  }
+  return removed;
+}
