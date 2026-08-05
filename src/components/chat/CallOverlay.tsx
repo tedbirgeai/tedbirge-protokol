@@ -148,87 +148,106 @@ export function CallOverlay() {
       : label;
 
   const ctlBase =
-    "wa-press flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-foreground hover:bg-accent";
+    "wa-press flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20";
+
+  const connecting = call.phase !== "active";
 
   return (
-    <div className="wa-call-overlay fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur">
-      <div className="relative flex w-full max-w-3xl flex-1 items-center justify-center p-6">
-        {call.video ? (
-          <>
-            <video
-              ref={remoteRef}
-              autoPlay
-              playsInline
-              className="h-full w-full rounded-sm border border-border bg-card object-cover"
-            />
-            <video
-              ref={localRef}
-              autoPlay
-              playsInline
-              muted
-              className="absolute bottom-8 right-8 h-40 w-28 rounded-sm border border-border object-cover"
-            />
-            <div className="absolute left-8 top-8 rounded-full bg-background/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              {call.peerAlias} · {statusLine}
-            </div>
-          </>
-        ) : (
-          <div className="text-center">
-            {peerAvatar ? (
-              <img
-                src={peerAvatar}
-                alt=""
-                className="mx-auto h-40 w-40 rounded-full border border-border object-cover"
-              />
-            ) : (
-              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border border-primary/40 bg-primary/10 font-mono text-3xl text-primary">
-                {(call.peerAlias || "?").slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <video ref={remoteRef} autoPlay playsInline className="hidden" />
-            <p className="mt-6 text-xl font-semibold text-foreground">{call.peerAlias}</p>
-            <p className="mt-1 flex items-center justify-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              {statusLine}
-              {call.phase === "active" && <QualityBars q={call.quality} />}
-            </p>
+    <div
+      className="wa-call-overlay fixed inset-0 flex flex-col items-center justify-between bg-zinc-900 text-white"
+      style={{ zIndex: 9999 }}
+    >
+      {/* Görüntülü kip: kamera görüntüsü tam ekran arka plan */}
+      {call.video && (
+        <>
+          <video
+            ref={remoteRef}
+            autoPlay
+            playsInline
+            className={`absolute inset-0 h-full w-full object-cover ${connecting ? "opacity-0" : "opacity-100"}`}
+          />
+          <video
+            ref={localRef}
+            autoPlay
+            playsInline
+            muted
+            className={
+              connecting
+                ? "absolute inset-0 h-full w-full object-cover"
+                : "absolute bottom-28 right-4 h-40 w-28 rounded-2xl border border-white/20 object-cover shadow-lg"
+            }
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+        </>
+      )}
+      {!call.video && (
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 20%, #fff 1px, transparent 1px), radial-gradient(circle at 70% 60%, #fff 1px, transparent 1px)",
+            backgroundSize: "48px 48px, 64px 64px",
+          }}
+        />
+      )}
 
-            {call.phase === "active" && (
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Bağlantı: {call.quality.label}
-                {call.quality.rttMs !== null ? ` · ${call.quality.rttMs} ms` : ""}
-                {call.quality.jitterMs !== null ? ` · titreşim ${call.quality.jitterMs} ms` : ""}
-                {call.quality.lossPct !== null ? ` · kayıp %${call.quality.lossPct}` : ""}
-              </p>
-            )}
-            {call.conference && call.participants.length > 0 && (
-              <ul className="mt-4 flex flex-wrap justify-center gap-2">
-                {call.participants.map((p) => (
-                  <li
-                    key={p.peerId}
-                    className="rounded-full border border-border px-3 py-1 text-[11px] text-muted-foreground"
-                  >
-                    {p.alias} · {p.connected ? "bağlı" : "bekliyor"}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+      {/* Üst: kişi adı ve durum */}
+      <div className="relative z-10 w-full pt-12 text-center">
+        <p className="text-2xl font-semibold">{call.peerAlias || "Bilinmeyen"}</p>
+        <p className="mt-1 flex items-center justify-center gap-2 text-sm text-white/70">
+          {statusLine}
+          {call.phase === "active" && <QualityBars q={call.quality} />}
+        </p>
+        {call.phase === "active" && (
+          <p className="mt-1 text-xs text-white/50">
+            Bağlantı: {call.quality.label}
+            {call.quality.rttMs !== null ? ` · ${call.quality.rttMs} ms` : ""}
+          </p>
         )}
       </div>
 
-      {call.error && <p className="pb-4 text-sm text-destructive">{call.error}</p>}
-      {playBlocked && call.phase === "active" && (
-        <button
-          type="button"
-          onClick={() => void enableCallAudio()}
-          className="wa-press mb-4 flex items-center gap-2 rounded-sm border border-primary bg-primary/10 px-4 py-2 text-sm font-semibold text-primary"
-        >
-          <Volume2 className="h-4 w-4" />
-          Görüşme sesini aç
-        </button>
-      )}
+      {/* Orta: avatar (sesli kip) */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-6">
+        {!call.video &&
+          (peerAvatar ? (
+            <img
+              src={peerAvatar}
+              alt=""
+              className="h-44 w-44 rounded-full border border-white/15 object-cover shadow-2xl"
+            />
+          ) : (
+            <div className="flex h-44 w-44 items-center justify-center rounded-full bg-white/10 text-5xl font-semibold text-white/80">
+              {(call.peerAlias || "?").slice(0, 2).toUpperCase()}
+            </div>
+          ))}
+        {!call.video && <video ref={remoteRef} autoPlay playsInline className="hidden" />}
+        {call.conference && call.participants.length > 0 && (
+          <ul className="flex flex-wrap justify-center gap-2 px-6">
+            {call.participants.map((p) => (
+              <li
+                key={p.peerId}
+                className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-white/70"
+              >
+                {p.alias} · {p.connected ? "bağlı" : "bekliyor"}
+              </li>
+            ))}
+          </ul>
+        )}
+        {call.error && <p className="px-8 text-center text-sm text-amber-300">{call.error}</p>}
+        {playBlocked && call.phase === "active" && (
+          <button
+            type="button"
+            onClick={() => void enableCallAudio()}
+            className="wa-press flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white"
+          >
+            <Volume2 className="h-4 w-4" />
+            Görüşme sesini aç
+          </button>
+        )}
+      </div>
 
-      <div className="flex items-center gap-4 pb-12">
+      {/* Alt kontrol barı */}
+      <div className="relative z-10 flex items-center justify-center gap-4 pb-12">
         {call.phase === "ringing" ? (
           <>
             <button
@@ -237,10 +256,10 @@ export function CallOverlay() {
                 pressFeedback();
                 void acceptCall();
               }}
-              className="wa-press wa-ring flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground"
+              className="wa-press wa-ring flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white"
               aria-label="Aramayı kabul et"
             >
-              <PhoneIncoming className="h-6 w-6" />
+              <PhoneIncoming className="h-7 w-7" />
             </button>
             <button
               type="button"
@@ -248,14 +267,50 @@ export function CallOverlay() {
                 pressFeedback();
                 endCall();
               }}
-              className="wa-press flex h-14 w-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              className="wa-press flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white"
               aria-label="Aramayı reddet"
             >
-              <PhoneOff className="h-6 w-6" />
+              <PhoneOff className="h-7 w-7" />
             </button>
           </>
         ) : (
           <>
+            <button
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                setSpeaker((v) => !v);
+              }}
+              className={ctlBase}
+              aria-label={speaker ? "Hoparlörü kapat" : "Hoparlörü aç"}
+            >
+              {speaker ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                toggleCamera();
+              }}
+              className={ctlBase}
+              aria-label={call.cameraOff ? "Kamerayı aç" : "Kamerayı kapat"}
+            >
+              {call.cameraOff || !call.video ? (
+                <VideoOff className="h-5 w-5" />
+              ) : (
+                <Video className="h-5 w-5" />
+              )}
+            </button>
+            {call.video && (
+              <button
+                type="button"
+                onClick={() => void switchCamera()}
+                className={ctlBase}
+                aria-label="Kamerayı değiştir"
+              >
+                <SwitchCamera className="h-5 w-5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -271,50 +326,12 @@ export function CallOverlay() {
               type="button"
               onClick={() => {
                 pressFeedback();
-                setSpeaker((v) => !v);
-              }}
-              className={ctlBase}
-              aria-label={speaker ? "Hoparlörü kapat" : "Hoparlörü aç"}
-            >
-              {speaker ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-            </button>
-            {call.video && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    pressFeedback();
-                    toggleCamera();
-                  }}
-                  className={ctlBase}
-                  aria-label={call.cameraOff ? "Kamerayı aç" : "Kamerayı kapat"}
-                >
-                  {call.cameraOff ? (
-                    <VideoOff className="h-5 w-5" />
-                  ) : (
-                    <Video className="h-5 w-5" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void switchCamera()}
-                  className={ctlBase}
-                  aria-label="Kamerayı değiştir"
-                >
-                  <SwitchCamera className="h-5 w-5" />
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                pressFeedback();
                 endCall();
               }}
-              className="wa-press flex h-14 w-14 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              className="wa-press flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white"
               aria-label="Görüşmeyi bitir"
             >
-              <PhoneOff className="h-6 w-6" />
+              <PhoneOff className="h-7 w-7" />
             </button>
           </>
         )}
@@ -322,3 +339,4 @@ export function CallOverlay() {
     </div>
   );
 }
+

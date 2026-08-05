@@ -186,7 +186,11 @@ export function getPeerStream(peerId: string) {
   return legs.get(peerId)?.stream ?? null;
 }
 
-async function ensureMedia(video: boolean) {
+/**
+ * Mikrofon/kamera açar. İzin verilmezse ya da cihaz yoksa görüşme
+ * DÜŞMEZ: arama ekranı açık kalır, yalnızca dinleme kipinde sürer.
+ */
+async function ensureMedia(video: boolean): Promise<MediaStream | null> {
   if (localStream) return localStream;
   const videoConstraints: MediaTrackConstraints = {
     width: { ideal: 1280, max: 1920 },
@@ -195,21 +199,38 @@ async function ensureMedia(video: boolean) {
     aspectRatio: { ideal: 16 / 9 },
     facingMode: "user",
   };
+  const audio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+  const got = (s: MediaStream) => {
+    localStream = s;
+    // Ekrandaki önizleme yeni akışı hemen bağlasın.
+    publish({ streamVersion: state.streamVersion + 1 });
+    return s;
+  };
 
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: video ? videoConstraints : false,
-    });
+    return got(
+      await navigator.mediaDevices.getUserMedia({ audio, video: video ? videoConstraints : false }),
+    );
   } catch {
-    // Kamera istenen çözünürlüğü desteklemiyorsa varsayılana düş.
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video,
-    });
+    /* istenen çözünürlük desteklenmiyor olabilir */
   }
-  return localStream;
+  try {
+    return got(await navigator.mediaDevices.getUserMedia({ audio, video }));
+  } catch {
+    /* izin yok */
+  }
+  if (video) {
+    try {
+      return got(await navigator.mediaDevices.getUserMedia({ audio, video: false }));
+    } catch {
+      /* mikrofon da yok */
+    }
+  }
+  localStream = null;
+  return null;
 }
+
+
 
 
 function createLeg(peerId: string, alias: string) {
@@ -385,13 +406,26 @@ function stopStats() {
 
 /* ------------------------------ eylemler ------------------------------ */
 
+/** Yerel akışı bağlar; izin yoksa yalnız-dinleme hatları açılır. */
+function attachLocal(pc: RTCPeerConnection, stream: MediaStream | null, video: boolean) {
+  if (stream) {
+    stream.getTracks().forEach((t) => {
+      if (!pc.getSenders().some((s) => s.track === t)) pc.addTrack(t, stream);
+    });
+    return;
+  }
+  if (pc.getTransceivers().length === 0) {
+    pc.addTransceiver("audio", { direction: "recvonly" });
+    if (video) pc.addTransceiver("video", { direction: "recvonly" });
+  }
+}
+
 async function dial(peerId: string, alias: string, video: boolean) {
   const stream = await ensureMedia(video);
   const leg = createLeg(peerId, alias);
-  stream.getTracks().forEach((t) => {
-    if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
-  });
+  attachLocal(leg.pc, stream, video);
   await tuneSenders(leg.pc);
+
 
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
@@ -470,8 +504,14 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
       if (state.phase === "outgoing") endCall("Cevap yok.");
     }, RING_TIMEOUT_MS);
   } catch {
-    endCall("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
+    // Arama ekranı kapanmaz: kullanıcı kırmızı tuşla kendisi sonlandırır.
+    publish({ error: "Mikrofona erişilemedi — yalnız dinleme kipinde deneniyor." });
+    if (outgoingTimer) clearTimeout(outgoingTimer);
+    outgoingTimer = setTimeout(() => {
+      if (state.phase === "outgoing") endCall("Cevap yok.");
+    }, RING_TIMEOUT_MS);
   }
+
 }
 
 
@@ -525,9 +565,8 @@ export async function acceptCall() {
     for (const [peerId, offer] of entries) {
       try {
       const leg = createLeg(peerId, offer.alias || peerId);
-      stream.getTracks().forEach((t) => {
-        if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
-      });
+      attachLocal(leg.pc, stream, state.video);
+
       await tuneSenders(leg.pc);
       await leg.pc.setRemoteDescription(offer.desc);
 
@@ -734,9 +773,8 @@ async function onCallSignal(from: string, raw: unknown) {
         if (leg && leg.pc.signalingState !== "stable") return;
         const stream = await ensureMedia(state.video);
         const fresh = createLeg(from, p.alias ?? from);
-        stream.getTracks().forEach((t) => {
-          if (!fresh.pc.getSenders().some((s) => s.track === t)) fresh.pc.addTrack(t, stream);
-        });
+        attachLocal(fresh.pc, stream, state.video);
+
         await tuneSenders(fresh.pc);
         await fresh.pc.setRemoteDescription(desc);
 
