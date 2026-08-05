@@ -48,7 +48,6 @@ import {
   resolveNickname,
   resolvePhoneHash,
 
-  normalizedPersonName,
   personGroupKey,
   mergeGroupsByName,
   writeNickname,
