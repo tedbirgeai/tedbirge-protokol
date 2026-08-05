@@ -189,10 +189,39 @@ function finalizeCallLog() {
     .catch(() => undefined);
 }
 
+/**
+ * Ekran kilidi: arama sürerken ekran sönmez, arama arka planda düşmez.
+ * Desteklemeyen tarayıcıda sessizce atlanır (iOS Safari eski sürümler).
+ */
+let wakeLock: { release: () => Promise<void> } | null = null;
+
+function syncWakeLock(phase: CallPhase) {
+  const busy = phase === "active" || phase === "reconnecting" || phase === "outgoing";
+  const nav = navigator as Navigator & {
+    wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> };
+  };
+  if (busy && !wakeLock && nav.wakeLock) {
+    void nav.wakeLock
+      .request("screen")
+      .then((lock) => {
+        wakeLock = lock;
+      })
+      .catch(() => {
+        /* izin yok — arama etkilenmez */
+      });
+  } else if (!busy && wakeLock) {
+    const lock = wakeLock;
+    wakeLock = null;
+    void lock.release().catch(() => {});
+  }
+}
+
 function publish(patch: Partial<CallState>) {
   state = { ...state, ...patch };
+  if (patch.phase) syncWakeLock(patch.phase);
   listeners.forEach((l) => l());
 }
+
 
 function syncParticipants() {
   publish({
