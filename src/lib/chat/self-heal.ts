@@ -130,9 +130,10 @@ export async function runSelfHeal(): Promise<HealthReport> {
   last = { at: Date.now(), ok: open.length === 0, issues };
 
   logSync(
-    issues.length ? "uyarı" : "bilgi",
+    open.length ? "uyarı" : "bilgi",
     "Açılış sağlık denetimi",
     issues.length ? issues.map((i) => i.title).join(" · ") : "Her şey yolunda",
   );
+
   return last;
 }
