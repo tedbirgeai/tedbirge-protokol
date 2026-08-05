@@ -30,22 +30,23 @@ export function CallHost() {
         const { supabase } = await import("@/integrations/supabase/client");
         const syncDirectory = async () => {
           if (disposed) return;
+          const [{ syncPersonIdentity, getBrowserNodeId }, profile, queue] = await Promise.all([
+            import("@/lib/browser-node"),
+            import("@/lib/chat/profile"),
+            import("@/lib/chat/enroll-queue"),
+          ]);
+          // Katılım kaydı önce cihazda kuyruğa alınır: çevrimdışı katılan
+          // kullanıcı da ağ gelince kendiliğinden dizine yazılır.
+          const personId = await syncPersonIdentity();
+          queue.queueEnrollment({
+            personId,
+            nodeId: getBrowserNodeId(),
+            ...(profile.getAlias() ? { displayName: profile.getAlias() } : {}),
+          });
+          await queue.flushEnrollment().catch(() => "queued" as const);
+
           const { data } = await supabase.auth.getSession();
           if (!data.session) return;
-          const [{ syncPersonIdentity, getBrowserNodeId }, { syncMyDirectoryEntry }, profile] =
-            await Promise.all([
-              import("@/lib/browser-node"),
-              import("@/lib/directory.functions"),
-              import("@/lib/chat/profile"),
-            ]);
-          const personId = await syncPersonIdentity();
-          await syncMyDirectoryEntry({
-            data: {
-              personId,
-              nodeId: getBrowserNodeId(),
-              displayName: profile.getAlias() || undefined,
-            },
-          });
           // Rehber kalıcılığı: uygulama silinip yeniden kurulsa da şifreli
           // yedekten geri gelir, sonrasında güncel hâli tekrar yedeklenir.
           const phone = profile.getPhone();
@@ -54,19 +55,18 @@ export function CallHost() {
             await vault.restoreContacts(phone).catch(() => 0);
             await vault.backupContacts(phone).catch(() => false);
           }
-          // Otonom eşleştirme: saklı rehber her açılışta yeniden taranır,
-          // yeni katılan tanıdıklar elle iş yapılmadan rehbere düşer.
-          const { autoSyncContacts } = await import("@/lib/chat/directory");
-          await autoSyncContacts().catch(() => null);
-
-
-
         };
         await syncDirectory().catch(() => undefined);
+        // Otonom eşitleme: ön plana gelişte, ağ dönüşünde ve 6 saatte bir.
+        const { startDirectorySync } = await import("@/lib/chat/enroll-queue");
+        const stopSync = startDirectorySync();
         const auth = supabase.auth.onAuthStateChange((_event, session) => {
           if (session) void syncDirectory().catch(() => undefined);
         });
-        unsubscribe = () => auth.data.subscription.unsubscribe();
+        unsubscribe = () => {
+          stopSync();
+          auth.data.subscription.unsubscribe();
+        };
       } catch {
         /* tarayıcı kısıtlaması: sohbet sayfası yine de kendi başlatmasını yapar */
       }

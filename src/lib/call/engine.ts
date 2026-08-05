@@ -515,7 +515,7 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
 }
 
 
-/** Grup / konferans araması — her katılımcıya ayrı bağlantı (2-4 kişi). */
+/** Grup / konferans araması — tam bağlı mesh, SFU yok (3-6 kişi). */
 export async function startConference(
   peers: Array<{ peerId: string; alias?: string }>,
   video: boolean,
@@ -523,7 +523,7 @@ export async function startConference(
 ) {
   bootCalls();
   if (state.phase !== "idle" && state.phase !== "ended") return;
-  const list = peers.filter((p) => p.peerId && p.peerId !== nodeSelf()).slice(0, 4);
+  const list = peers.filter((p) => p.peerId && p.peerId !== nodeSelf()).slice(0, 5); // kendinizle birlikte en fazla 6 kişi
   if (!list.length) return;
   publish({
     phase: "outgoing",

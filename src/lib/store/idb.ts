@@ -477,7 +477,7 @@ export async function migrateLegacyQueue(): Promise<number> {
 
 /* --------------------- sohbet: konuşmalar ve mesajlar --------------------- */
 
-export type MessageStatus = "pending" | "sent" | "delivered" | "read";
+export type MessageStatus = "pending" | "failed" | "sent" | "delivered" | "read";
 export type MessageKind = "text" | "media" | "system" | "call" | "location" | "sos";
 
 /** Konum mesajı gövdesi (çevrimdışı harita karesi ile birlikte taşınır). */

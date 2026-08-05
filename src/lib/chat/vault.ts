@@ -33,14 +33,30 @@ function unb64(text: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-async function keyFor(phone: string): Promise<CryptoKey> {
+/**
+ * Kullanıcıya özel tuz: numaradan türeyen, cihazdan bağımsız ama her
+ * kullanıcıda farklı bir değer. Böylece iki farklı kullanıcının aynı
+ * anahtar malzemesini paylaşması ve toplu sözlük saldırısı imkânsızlaşır.
+ * (v1 sabit tuzlu eski yedekler geriye dönük olarak hâlâ açılır.)
+ */
+async function saltFor(phone: string): Promise<Uint8Array<ArrayBuffer>> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    enc.encode(`tedbirge/vault/salt/v2:${phone}`),
+  );
+  return new Uint8Array(digest);
+}
+
+async function keyFor(phone: string, version: 1 | 2 = 2): Promise<CryptoKey> {
   const base = await crypto.subtle.importKey("raw", enc.encode(phone), "PBKDF2", false, [
     "deriveKey",
   ]);
+  const salt: BufferSource =
+    version === 1 ? enc.encode("tedbirge/vault/v1") : await saltFor(phone);
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: enc.encode("tedbirge/vault/v1"),
+      salt,
       iterations: 210_000,
       hash: "SHA-256",
     },
@@ -100,16 +116,28 @@ export async function restoreContacts(phone: string): Promise<number> {
 
     const [ivPart, dataPart] = ciphertext.split(".");
     if (!ivPart || !dataPart) return 0;
-    const key = await keyFor(phone);
-    const plain = dec.decode(
-      new Uint8Array(
-        await crypto.subtle.decrypt(
-          { name: "AES-GCM", iv: unb64(ivPart) },
-          key,
-          unb64(dataPart),
-        ),
-      ),
-    );
+
+    // Önce kullanıcıya özel tuzlu (v2) anahtar denenir; açılmazsa eski
+    // sabit tuzlu (v1) yedekler için geriye dönük deneme yapılır.
+    let plain = "";
+    for (const version of [2, 1] as const) {
+      try {
+        const key = await keyFor(phone, version);
+        plain = dec.decode(
+          new Uint8Array(
+            await crypto.subtle.decrypt(
+              { name: "AES-GCM", iv: unb64(ivPart) },
+              key,
+              unb64(dataPart),
+            ),
+          ),
+        );
+        break;
+      } catch {
+        plain = "";
+      }
+    }
+    if (!plain) return 0;
     const payload = JSON.parse(plain) as VaultPayload;
     if (payload.format !== "tedbirge.vault.v1") return 0;
 

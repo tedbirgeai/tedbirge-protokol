@@ -32,6 +32,11 @@ type Payload = {
   messages: ChatMessage[];
   aliases: Record<string, string>;
   nicknames: Record<string, string>;
+  /** Medya ekleri mesajların içinde (data URL) taşınır; avatarlar ayrıca. */
+  avatars?: Record<string, string>;
+  myAvatar?: string;
+  /** Yerel rehber defteri (cihazda tutulan kişiler). */
+  localBook?: string;
 };
 
 function b64(bytes: Uint8Array): string {
@@ -69,6 +74,14 @@ function readMap(key: string): Record<string, string> {
   }
 }
 
+function readRaw(key: string): string {
+  try {
+    return window.localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 /** Şifreli yedek üretir ve indirilecek Blob döner. */
 export async function createBackup(passphrase: string): Promise<Blob> {
   if (passphrase.length < 8) throw new Error("Parola en az 8 karakter olmalı.");
@@ -77,6 +90,9 @@ export async function createBackup(passphrase: string): Promise<Blob> {
     messages: await listAllMessages(),
     aliases: readMap("tedbirge.chat.aliases"),
     nicknames: readMap("tedbirge.chat.nicknames"),
+    avatars: readMap("tedbirge.chat.avatars"),
+    myAvatar: readRaw("tedbirge.chat.avatar.me"),
+    localBook: readRaw("tedbirge.chat.localBook"),
   };
   const salt = new Uint8Array(16);
   const iv = new Uint8Array(12);
@@ -146,6 +162,14 @@ export async function restoreBackup(text: string, passphrase: string): Promise<R
       "tedbirge.chat.nicknames",
       JSON.stringify({ ...readMap("tedbirge.chat.nicknames"), ...payload.nicknames }),
     );
+    if (payload.avatars)
+      window.localStorage.setItem(
+        "tedbirge.chat.avatars",
+        JSON.stringify({ ...readMap("tedbirge.chat.avatars"), ...payload.avatars }),
+      );
+    if (payload.myAvatar) window.localStorage.setItem("tedbirge.chat.avatar.me", payload.myAvatar);
+    if (payload.localBook && !window.localStorage.getItem("tedbirge.chat.localBook"))
+      window.localStorage.setItem("tedbirge.chat.localBook", payload.localBook);
   } catch {
     /* gizli mod */
   }

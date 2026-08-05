@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Radio, StickyNote, User } from "lucide-react";
 
 import { useContacts, type Contact } from "@/lib/chat/contacts";
-import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory";
+import { autoSyncContacts } from "@/lib/chat/directory";
 
 import { isTechnicalLabel } from "@/lib/chat/display-name";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
@@ -85,8 +85,6 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   const book = useContacts();
   useAvatars();
   const tried = useRef(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncInfo, setSyncInfo] = useState<string | null>(null);
   const [matchedPeople, setMatchedPeople] = useState<
     { peerId: string; name: string; shortId: string }[]
   >([]);
@@ -101,12 +99,6 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
     void autoSyncContacts()
       .then((r) => {
         if (r.people.length > 0) setMatchedPeople(r.people);
-        if (r.checked > 0)
-          setSyncInfo(
-            r.matched > 0
-              ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
-              : `${r.checked} kişi denetlendi · rehberinizden henüz Tedbirge'ye katılan yok.`,
-          );
       })
       .catch(() => null);
   }, []);
@@ -122,7 +114,17 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   }, [book.contacts, q]);
 
   const onlineIds = useMemo(() => new Set(peers.map((p) => p.nodeId)), [peers]);
-  const empty = contacts.length === 0;
+  // Eşleşen kişi zaten rehberde varsa tek kayıt gösterilir (çift satır yok).
+  const extraMatches = useMemo(() => {
+    const known = new Set(book.contacts.map((c) => c.peerId));
+    return matchedPeople.filter(
+      (p) =>
+        !known.has(p.peerId) &&
+        (!q || p.name.toLocaleLowerCase("tr").includes(q)) &&
+        !isTechnicalLabel(p.name),
+    );
+  }, [book.contacts, matchedPeople, q]);
+  const empty = contacts.length === 0 && extraMatches.length === 0;
 
   return (
     <div style={{ borderTop: "1px solid var(--wa-border)" }}>
@@ -165,68 +167,23 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
         </div>
       )}
 
-      <div className="px-4 py-3">
-        <button
-          type="button"
-          disabled={syncing}
-          onClick={() => {
-            setSyncing(true);
-            void (async () => {
-              const r = await autoSyncContacts();
-              setMatchedPeople(r.people);
-              if (r.source === "none") {
-                setSyncInfo(
-                  deviceContactsSupported()
-                    ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
-                    : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
-                );
-                return;
-              }
-              setSyncInfo(
-                r.matched > 0
-                  ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
-                  : `${r.checked} kişi denetlendi · rehberinizden henüz Tedbirge'ye katılan yok.`,
-              );
-            })()
-              .catch(() => setSyncInfo("Rehber eşitlenemedi."))
-              .finally(() => setSyncing(false));
-          }}
-          className="wa-press min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
-          style={{ background: "var(--wa-accent)" }}
-        >
-          {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
-        </button>
-
-        {syncInfo && (
-          <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
-            {syncInfo}
-          </p>
-        )}
-
-        {matchedPeople.length > 0 && (
-          <ul className="mt-2 space-y-1">
-            {matchedPeople.map((p) => (
-              <li key={p.peerId}>
-                <button
-                  type="button"
-                  onClick={() => onOpenPeer(p.peerId, p.name)}
-                  className="wa-press w-full rounded-lg px-2 py-2 text-left"
-                  style={{ background: "var(--wa-panel, transparent)" }}
-                >
-                  <span className="block text-[13px] font-medium">{p.name}</span>
-                  <span className="block font-mono text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                    {p.shortId} · rehberinizden eşleşti
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <p className="px-4 pb-4 pt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-        Numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle yapılır.
-      </p>
+      {/* Eşitleme butonu, rapor ve KVKK notu Ayarlar > Rehber bölümüne
+          taşındı; sohbet listesi WhatsApp gibi sade kalır. */}
+      {extraMatches.length > 0 && (
+        <ul className="pb-2">
+          {extraMatches.map((p) => (
+            <li key={p.peerId}>
+              <Row
+                title={p.name}
+                subtitle="Rehberinizden eşleşti"
+                icon={<User className="h-4 w-4" />}
+                avatar={getAvatar(p.peerId)}
+                onClick={() => onOpenPeer(p.peerId, p.name)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
