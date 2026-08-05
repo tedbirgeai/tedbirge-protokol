@@ -108,3 +108,32 @@ export function mergeCallRecords(incoming: CallRecord[]): number {
   write(merged);
   return merged.length;
 }
+
+/**
+ * HAYALET ARAMA KAYDI TEMİZLİĞİ.
+ * Adı çözülemeyen ("Tedbirge kullanıcısı") ya da kendi diğer cihazıma ait
+ * arama kayıtları listede hayalet satır üretiyordu. Bu kayıtlar açılışta
+ * budanır; kişi adı sonradan öğrenilirse yeni aramalarla geri gelir.
+ */
+export async function pruneCallLog(): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  const rows = read();
+  if (rows.length === 0) return 0;
+  const { resolveDisplayName, isSelfPerson, nameKeyOf, resolvePhoneHash } = await import(
+    "@/lib/chat/name-resolver"
+  );
+  const kept = rows.filter((rec) => {
+    const peer = rec.peerId ?? "";
+    if (!peer) return false;
+    if (!resolveDisplayName(peer).trim()) return false;
+    return !isSelfPerson({
+      id: peer,
+      personId: nameKeyOf(peer),
+      phoneHash: resolvePhoneHash(peer),
+      name: resolveDisplayName(peer),
+    });
+  });
+  const removed = rows.length - kept.length;
+  if (removed > 0) write(kept);
+  return removed;
+}
