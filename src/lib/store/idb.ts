@@ -133,15 +133,25 @@ export function openDb(): Promise<IDBDatabase> {
       // Başka sekme yeni sürüme geçerse bu bağlantı kibarca kapanır.
       db.onversionchange = () => {
         db.close();
-        dbPromise = null;
+        if (dbPromise === thisPromise) dbPromise = null;
         notifyBlocked();
+      };
+      // Bağlantı beklenmedik şekilde kapanırsa (depo silindi, sekme askıya
+      // alındı) önbellek düşürülür; sonraki işlem yeni bağlantı açar.
+      db.onclose = () => {
+        if (dbPromise === thisPromise) dbPromise = null;
       };
       resolve(db);
     };
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB açılamadı"));
+    req.onerror = () => {
+      if (dbPromise === thisPromise) dbPromise = null;
+      reject(req.error ?? new Error("IndexedDB açılamadı"));
+    };
   });
+  const thisPromise = dbPromise;
   return dbPromise;
 }
+
 
 /** IndexedDB kilit uyarısı — arayüz bu olayı dinleyip kullanıcıyı uyarır. */
 export const IDB_BLOCKED_EVENT = "tedbirge:idb-blocked";
@@ -166,38 +176,61 @@ function runTx<T>(
   run: (s: IDBObjectStore) => IDBRequest<T>,
 ) {
   return new Promise<T>((resolve, reject) => {
-    const t = db.transaction(store, mode);
+    // db.transaction() kapanan bağlantıda SENKRON hata fırlatır; promise
+    // içinde kalması için burada yakalanır.
+    let t: IDBTransaction;
+    try {
+      t = db.transaction(store, mode);
+    } catch (error) {
+      reject(error);
+      return;
+    }
     const req = run(t.objectStore(store));
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error ?? new Error("IndexedDB işlemi başarısız"));
+    t.onabort = () => reject(t.error ?? new Error("IndexedDB işlemi iptal edildi"));
   });
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function tx<T>(
   store: string,
   mode: IDBTransactionMode,
   run: (s: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> {
-  try {
-    return await runTx(await openDb(), store, mode, run);
-  } catch (err) {
-    // Bağlantı kapanıyorsa (başka sekme sürüm yükseltti veya depo silindi)
-    // önbelleği düşür, yeniden bağlan ve işlemi bir kez daha dene.
-    const name = (err as { name?: string } | null)?.name;
-    if (name !== "InvalidStateError" && name !== "TransactionInactiveError") throw err;
-    dbPromise = null;
-    return runTx(await openDb(), store, mode, run);
+  let lastError: unknown;
+  // Kapanan/askıya alınan bağlantı otonom onarılır: önbellek düşürülür,
+  // yeni bağlantı açılır ve işlem üç kez denenir. Sessiz kayıp olmaz.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await runTx(await openDb(), store, mode, run);
+    } catch (err) {
+      lastError = err;
+      dbPromise = null;
+      if (attempt < 2) await sleep(60 * (attempt + 1));
+    }
   }
+  throw lastError instanceof Error ? lastError : new Error("IndexedDB işlemi başarısız");
+
 }
 
 
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try {
     return await p;
-  } catch {
+  } catch (error) {
+    // Sessiz hata yasak: başarısız her yerel yazma/okuma günlüğe düşer.
+    try {
+      const { logSync } = await import("@/lib/chat/sync-log");
+      logSync("hata", "yerel-depo", String((error as { message?: string })?.message ?? error));
+    } catch {
+      /* günlük yazılamadı */
+    }
     return fallback;
   }
 }
+
 
 /* ----------------------------- outbox ----------------------------- */
 
