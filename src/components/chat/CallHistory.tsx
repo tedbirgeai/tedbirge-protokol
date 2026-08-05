@@ -8,7 +8,7 @@ import {
   onCallLogChange,
   type CallRecord,
 } from "@/lib/chat/call-log";
-import { safeNameOf } from "@/lib/chat/safe-title";
+import { safeNameOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
 import { pressFeedback } from "@/lib/chat/sounds";
 
 function icon(rec: CallRecord) {
