@@ -129,6 +129,7 @@ import {
   personGroupKey,
   mergeGroupsByName,
   isSelfPerson,
+  resolveDisplayName,
 } from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
