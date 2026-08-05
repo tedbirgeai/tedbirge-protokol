@@ -39,6 +39,9 @@ import {
   Volume2,
   VolumeX,
   X,
+  Bell,
+  BellOff,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   bootChat,
@@ -1011,6 +1014,12 @@ export function ChatApp() {
         titleOf={titleOf}
         authorName={forwardMsg?.outgoing ? me : nameOf(forwardMsg?.from ?? "")}
         onClose={() => setForwardMsg(null)}
+      />
+      <MediaGallery
+        open={galleryOpen}
+        convId={activeId}
+        title={active ? titleOf(active) : ""}
+        onClose={() => setGalleryOpen(false)}
       />
       <EmergencyDialog
         open={emergencyOpen}
