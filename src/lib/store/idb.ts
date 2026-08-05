@@ -133,15 +133,25 @@ export function openDb(): Promise<IDBDatabase> {
       // Başka sekme yeni sürüme geçerse bu bağlantı kibarca kapanır.
       db.onversionchange = () => {
         db.close();
-        dbPromise = null;
+        if (dbPromise === thisPromise) dbPromise = null;
         notifyBlocked();
+      };
+      // Bağlantı beklenmedik şekilde kapanırsa (depo silindi, sekme askıya
+      // alındı) önbellek düşürülür; sonraki işlem yeni bağlantı açar.
+      db.onclose = () => {
+        if (dbPromise === thisPromise) dbPromise = null;
       };
       resolve(db);
     };
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB açılamadı"));
+    req.onerror = () => {
+      if (dbPromise === thisPromise) dbPromise = null;
+      reject(req.error ?? new Error("IndexedDB açılamadı"));
+    };
   });
+  const thisPromise = dbPromise;
   return dbPromise;
 }
+
 
 /** IndexedDB kilit uyarısı — arayüz bu olayı dinleyip kullanıcıyı uyarır. */
 export const IDB_BLOCKED_EVENT = "tedbirge:idb-blocked";
