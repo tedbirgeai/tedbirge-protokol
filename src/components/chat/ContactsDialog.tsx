@@ -411,6 +411,41 @@ export function ContactsDialog({
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => {
+                  const phone = getPhone();
+                  if (!phone) {
+                    toast("Yedekleme için numaranızla katılmanız gerekir");
+                    return;
+                  }
+                  void backupContacts(phone).then((ok) =>
+                    ok
+                      ? toast.success("Rehber şifreli olarak yedeklendi")
+                      : toast("Yedekleme şu anda yapılamadı"),
+                  );
+                }}
+              >
+                Rehberi yedekle
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const phone = getPhone();
+                  if (!phone) {
+                    toast("Geri yükleme için numaranızla katılmanız gerekir");
+                    return;
+                  }
+                  void restoreContacts(phone).then((n) =>
+                    n > 0 ? toast.success(`${n} kişi geri yüklendi`) : toast("Yedek bulunamadı"),
+                  );
+                }}
+              >
+                Yedeği geri yükle
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
                 className="text-destructive"
                 onClick={() => {
                   if (!window.confirm("Tüm rehber bu cihazdan silinsin mi? Mesajlarınız korunur."))
