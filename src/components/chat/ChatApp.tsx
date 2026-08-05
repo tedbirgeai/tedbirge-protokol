@@ -1405,6 +1405,7 @@ export function ChatApp() {
               style={{
                 background: "var(--wa-panel-soft)",
                 borderBottom: "1px solid var(--wa-border)",
+                paddingTop: "calc(0.5rem + env(safe-area-inset-top))",
               }}
             >
               <button
