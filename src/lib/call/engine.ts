@@ -501,8 +501,14 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
       if (state.phase === "outgoing") endCall("Cevap yok.");
     }, RING_TIMEOUT_MS);
   } catch {
-    endCall("Mikrofona erişilemedi. Tarayıcı izinlerini kontrol edin.");
+    // Arama ekranı kapanmaz: kullanıcı kırmızı tuşla kendisi sonlandırır.
+    publish({ error: "Mikrofona erişilemedi — yalnız dinleme kipinde deneniyor." });
+    if (outgoingTimer) clearTimeout(outgoingTimer);
+    outgoingTimer = setTimeout(() => {
+      if (state.phase === "outgoing") endCall("Cevap yok.");
+    }, RING_TIMEOUT_MS);
   }
+
 }
 
 
