@@ -45,6 +45,16 @@ function ParticipantVideo({ peerId, version }: { peerId: string; version: number
   return <video ref={ref} autoPlay playsInline className="h-full w-full object-cover" />;
 }
 
+function ParticipantAudio({ peerId, version }: { peerId: string; version: number }) {
+  const ref = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.srcObject = getPeerStream(peerId);
+    void ref.current.play().catch(() => undefined);
+  }, [peerId, version]);
+  return <audio ref={ref} autoPlay />;
+}
+
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -225,6 +235,14 @@ export function CallOverlay() {
           }}
         />
       )}
+      {!call.video && call.conference &&
+        call.participants.map((participant) => (
+          <ParticipantAudio
+            key={`audio_${participant.peerId}`}
+            peerId={participant.peerId}
+            version={call.streamVersion}
+          />
+        ))}
 
       {/* Üst: kişi adı ve durum */}
       <div className="relative z-10 w-full pt-12 text-center">
@@ -258,7 +276,9 @@ export function CallOverlay() {
               {(call.peerAlias || "?").slice(0, 2).toUpperCase()}
             </div>
           ))}
-        {!call.video && <video ref={remoteRef} autoPlay playsInline className="hidden" />}
+        {!call.video && !call.conference && (
+          <video ref={remoteRef} autoPlay playsInline className="hidden" />
+        )}
         {call.conference && !call.video && call.participants.length > 0 && (
           <ul className="flex flex-wrap justify-center gap-2 px-6">
             {call.participants.map((p) => (

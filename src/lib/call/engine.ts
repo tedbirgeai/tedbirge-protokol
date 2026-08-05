@@ -1024,6 +1024,7 @@ async function onCallSignal(from: string, raw: unknown) {
 
 
   if (p.t === "offer" && p.sdp) {
+    if (!currentCallId && p.callId) currentCallId = p.callId;
     const desc: RTCSessionDescriptionInit = { type: "offer", sdp: p.sdp };
     const leg = legs.get(from);
     if (p.restart && leg) {
