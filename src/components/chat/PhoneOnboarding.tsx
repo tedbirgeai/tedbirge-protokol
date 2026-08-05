@@ -185,6 +185,15 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       } catch {
         /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
       }
+      try {
+        // Bu cihazdaki rehber hemen şifreli olarak hesaba yedeklenir; aynı
+        // numarayla açılan diğer ortamlar (bilgisayar/PWA) anında görür.
+        const { backupContacts } = await import("@/lib/chat/vault");
+        await backupContacts(verifiedPhone);
+      } catch {
+        /* çevrimdışı: bir sonraki eşitlemede yedeklenir */
+      }
+
       // Kalıcı kimlik kartı (TBG kodu + karekod) gösterilir.
       try {
         const state = await refreshContacts().then(() => undefined);

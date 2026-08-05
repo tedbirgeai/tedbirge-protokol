@@ -49,12 +49,16 @@ export function CallHost() {
           if (!data.session) return;
           // Rehber kalıcılığı: uygulama silinip yeniden kurulsa da şifreli
           // yedekten geri gelir, sonrasında güncel hâli tekrar yedeklenir.
-          const phone = profile.getPhone();
+          // Çıpa numarası yerel oturumdan da okunur; böylece bulut oturumu
+          // olmayan cihazlar da aynı hesapta birleşir.
+          const { getAnchorPhone } = await import("@/lib/chat/anchor");
+          const phone = (await getAnchorPhone()) || profile.getPhone();
           if (phone) {
             const vault = await import("@/lib/chat/vault");
             await vault.restoreContacts(phone).catch(() => 0);
             await vault.backupContacts(phone).catch(() => false);
           }
+
         };
         await syncDirectory().catch(() => undefined);
         // Otonom eşitleme: ön plana gelişte, ağ dönüşünde ve 6 saatte bir.

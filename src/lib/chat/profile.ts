@@ -62,10 +62,21 @@ export function setAlias(alias: string) {
   }
 }
 
+/**
+ * Kurulum tamamlandı sayılması için AD ve NUMARA gerekir. Numara,
+ * kimliğin çıpasıdır: aynı numarayla açılan her ortam (Chrome, Edge,
+ * PWA, iOS, Android) aynı kişi kimliğine bağlanır ve rehber kasası
+ * kendiliğinden birleşir. Numarası olmayan eski cihazlar bir kez
+ * numara ekranına düşer; hiçbir veri kaybolmaz, kayıtlar yeni kişi
+ * kimliğine taşınır.
+ */
 export function isOnboarded(): boolean {
   try {
-    return window.localStorage.getItem(ONBOARD_KEY) === "1" && getAlias().length > 0;
+    if (window.localStorage.getItem(ONBOARD_KEY) !== "1") return false;
+    if (getAlias().length === 0) return false;
+    return getPhone().length > 0;
   } catch {
     return false;
   }
 }
+
