@@ -336,6 +336,22 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
               </p>
             )}
 
+            <label className="mt-4 block text-xs font-medium" style={{ color: "var(--wa-muted)" }}>
+              E-posta (isteğe bağlı)
+            </label>
+            <input
+              value={email}
+              inputMode="email"
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="ornek@eposta.com"
+              className="mt-1 w-full rounded-lg border px-4 py-3 text-sm outline-none"
+              style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+            />
+            <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              E-posta yalnızca bu cihazda saklanır; katılım için zorunlu değildir.
+            </p>
+
+
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
             <button
