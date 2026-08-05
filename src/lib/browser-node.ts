@@ -127,6 +127,16 @@ function lanSignalUrls(): string[] {
 }
 
 
+/** Teslim hattındaki her sessiz hata Türkçe tek cümleyle günlüğe düşer. */
+async function logRelayIssue(message: string) {
+  try {
+    const { logSync } = await import("@/lib/chat/sync-log");
+    logSync("hata", "teslim", message);
+  } catch {
+    /* günlük yazılamadıysa akışı durdurmayız */
+  }
+}
+
 /** Uygulama katmanı (sohbet, arama, eşitleme) paket dinleyicisi. */
 export type MeshAppHandler = (kind: EnvelopeKind, from: string, body: unknown) => void;
 
@@ -184,7 +194,7 @@ export type MeshEnvelope = {
   at: number;
 };
 
-type Hello = { t: "hello"; nodeId: string; spk: string; bpk: string };
+type Hello = { t: "hello"; nodeId: string; spk: string; bpk: string; pid?: string };
 type QueuedIntent = {
   t: "intent";
   kind: EnvelopeKind;
@@ -423,7 +433,11 @@ export class BrowserNode {
           this.cloudUp = true;
           this.resolveCloudReady?.();
           this.resolveCloudReady = null;
-          await this.channel?.track({ nodeId: this.nodeId, at: Date.now() });
+          await this.channel?.track({
+            nodeId: this.nodeId,
+            personId: getPersonId() || this.nodeId,
+            at: Date.now(),
+          });
           void this.dialNewPeers();
           this.emit({});
         } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
@@ -450,30 +464,39 @@ export class BrowserNode {
 
   /** Kendi genel anahtarlarımızı rehbere yazar (ilk temas için gerekir). */
   private async publishDirectory() {
-    if (!this.identity || !this.state.online) return;
+    if (!this.identity) return;
     const { publishRelayKeys } = await import("@/lib/relay-cloud");
-    await publishRelayKeys({
+    // navigator.onLine yanılabilir (captive portal, arka plandaki PWA, WebView).
+    // Denemeyi bayrağa bağlamayız: istek başarılıysa çevrimiçi olduğumuzu
+    // gerçek sonuçtan öğreniriz.
+    const ok = await publishRelayKeys({
       nodeId: this.nodeId,
+      personId: getPersonId() || this.nodeId,
       signPublic: this.identity.signPublic,
       boxPublic: this.identity.boxPublic,
     });
+    if (ok && !this.state.online) this.emit({ online: true });
   }
 
   /** Bulutta bekleyen zarfları indirir ve normal mesh işleme hattına verir. */
   private async pollRelay() {
-    if (this.relayBusy || !this.state.online) return;
+    if (this.relayBusy) return;
     this.relayBusy = true;
     try {
       const { pullRelayEnvelopes } = await import("@/lib/relay-cloud");
       // Önceki başarılı turun onayları yeni çekme isteğine eklenir. Böylece
       // teslim + onay için iki ayrı HTTP isteği yerine tur başına tek istek olur.
       const ack = this.relayAck;
-      const items = await pullRelayEnvelopes(this.nodeId, ack);
+      const items = await pullRelayEnvelopes(this.nodeId, ack, getPersonId() || undefined);
       if (items === null) {
         this.relayFailures = Math.min(this.relayFailures + 1, 5);
+        void logRelayIssue("Bulut posta kutusu okunamadı; birazdan yeniden denenecek.");
         return;
       }
       this.relayFailures = 0;
+      // Gerçek kanıt: istek döndüyse ağ vardır. navigator.onLine yanılsa bile
+      // teslim hattı kilitlenmez.
+      if (!this.state.online) this.emit({ online: true });
       this.relayAck = [];
       if (!items.length) return;
       for (const item of items) {
@@ -481,8 +504,11 @@ export class BrowserNode {
       }
       this.relayAck = items.map((i) => i.pktId);
       this.emit({ lastRelayAt: new Date().toISOString() });
-    } catch {
-      /* ağ hatası: bir sonraki turda tekrar denenir */
+    } catch (error) {
+      this.relayFailures = Math.min(this.relayFailures + 1, 5);
+      void logRelayIssue(
+        `Bekleyen mesajlar alınamadı: ${error instanceof Error ? error.message : "bilinmeyen hata"}`,
+      );
     } finally {
       this.relayBusy = false;
     }
@@ -516,44 +542,78 @@ export class BrowserNode {
     payload: unknown,
     priority: Priority,
   ): Promise<boolean> {
-    if (!this.state.online || to === "*" || TRANSIENT_KINDS.has(kind)) return false;
+    if (to === "*" || TRANSIENT_KINDS.has(kind)) return false;
     if (!this.identity) return false;
 
-    let boxPublic = this.peerKeys.get(to)?.bpk;
-    if (!boxPublic) {
-      const rec = await getPeer(to);
-      boxPublic = rec?.publicKey;
+    const devices = await this.resolveDevices(to);
+    if (!devices.length) {
+      void logRelayIssue(
+        "Karşı tarafın cihazı ağda hiç görünmedi; mesaj kuyrukta bekletiliyor.",
+      );
+      return false;
     }
-    if (!boxPublic) {
-      const { lookupRelayKeys } = await import("@/lib/relay-cloud");
-      boxPublic = (await lookupRelayKeys(to))?.boxPublic;
-    }
-    if (!boxPublic) return false;
 
     try {
-      const env = await createEnvelope({
-        from: this.nodeId,
-        to,
-        kind,
-        payload,
-        peerBoxPublic: boxPublic,
-        senderSignPublic: this.identity.signPublic,
-        priority,
-        ttl: MAX_TTL,
-      });
-      const { pushRelayEnvelopes } = await import("@/lib/relay-cloud");
-      return await pushRelayEnvelopes([
-        {
+      const items: {
+        pktId: string;
+        to: string;
+        from: string;
+        envelope: string;
+        priority: number;
+      }[] = [];
+      for (const device of devices) {
+        const env = await createEnvelope({
+          from: this.nodeId,
+          to: device.nodeId,
+          kind,
+          payload,
+          peerBoxPublic: device.boxPublic,
+          senderSignPublic: this.identity.signPublic,
+          priority,
+          ttl: MAX_TTL,
+        });
+        items.push({
           pktId: env.h.pktId,
-          to,
+          to: device.nodeId,
           from: this.nodeId,
           envelope: encodeEnvelope(env),
           priority,
-        },
-      ]);
-    } catch {
+        });
+      }
+      const { pushRelayEnvelopes } = await import("@/lib/relay-cloud");
+      const ok = await pushRelayEnvelopes(items);
+      if (!ok) void logRelayIssue("Bulut rölesi mesajı kabul etmedi; yeniden denenecek.");
+      else if (!this.state.online) this.emit({ online: true });
+      return ok;
+    } catch (error) {
+      void logRelayIssue(
+        `Şifreli zarf hazırlanamadı: ${error instanceof Error ? error.message : "bilinmeyen hata"}`,
+      );
       return false;
     }
+  }
+
+  /**
+   * Hedefin ulaşılabilir cihazlarını çözer. Hedef ister cihaz düğümü
+   * (mob-…) ister kişi kimliği (TBG-…) olsun aynı yanıt döner; kişinin
+   * TÜM bağlı cihazlarına ayrı ayrı şifreli zarf gider (çoklu cihaz).
+   */
+  private async resolveDevices(
+    to: string,
+  ): Promise<{ nodeId: string; boxPublic: string }[]> {
+    const out = new Map<string, { nodeId: string; boxPublic: string }>();
+    const local = this.peerKeys.get(to)?.bpk ?? (await getPeer(to))?.publicKey;
+    if (local) out.set(to, { nodeId: to, boxPublic: local });
+    try {
+      const { lookupRelayDevices } = await import("@/lib/relay-cloud");
+      for (const d of await lookupRelayDevices(to)) {
+        if (d.nodeId === this.nodeId) continue;
+        out.set(d.nodeId, { nodeId: d.nodeId, boxPublic: d.boxPublic });
+      }
+    } catch {
+      /* dizin okunamadı: yerel anahtarla devam */
+    }
+    return Array.from(out.values());
   }
 
   /**
@@ -568,38 +628,38 @@ export class BrowserNode {
     payload: unknown,
     priority: Priority,
   ): Promise<boolean> {
-    if (!this.channel || !this.cloudUp || !this.state.online || to === "*" || !this.identity) {
+    if (!this.channel || !this.cloudUp || to === "*" || !this.identity) {
       return false;
     }
-    const present = Object.keys(this.channel.presenceState()).includes(to);
-    if (!present) return false;
-
-    let boxPublic = this.peerKeys.get(to)?.bpk;
-    if (!boxPublic) boxPublic = (await getPeer(to))?.publicKey;
-    if (!boxPublic) {
-      const { lookupRelayKeys } = await import("@/lib/relay-cloud");
-      boxPublic = (await lookupRelayKeys(to))?.boxPublic;
-    }
-    if (!boxPublic) return false;
+    const online = new Set(Object.keys(this.channel.presenceState()));
+    const devices = (await this.resolveDevices(to)).filter((d) => online.has(d.nodeId));
+    if (!devices.length) return false;
 
     try {
-      const env = await createEnvelope({
-        from: this.nodeId,
-        to,
-        kind,
-        payload,
-        peerBoxPublic: boxPublic,
-        senderSignPublic: this.identity.signPublic,
-        priority,
-        ttl: MAX_TTL,
-      });
-      const result = await this.channel.send({
-        type: "broadcast",
-        event: "mesh",
-        payload: { envelope: encodeEnvelope(env) },
-      });
-      return result === "ok";
-    } catch {
+      let sent = false;
+      for (const device of devices) {
+        const env = await createEnvelope({
+          from: this.nodeId,
+          to: device.nodeId,
+          kind,
+          payload,
+          peerBoxPublic: device.boxPublic,
+          senderSignPublic: this.identity.signPublic,
+          priority,
+          ttl: MAX_TTL,
+        });
+        const result = await this.channel.send({
+          type: "broadcast",
+          event: "mesh",
+          payload: { envelope: encodeEnvelope(env) },
+        });
+        if (result === "ok") sent = true;
+      }
+      return sent;
+    } catch (error) {
+      void logRelayIssue(
+        `Gerçek zamanlı kanal gönderemedi: ${error instanceof Error ? error.message : "bilinmeyen hata"}`,
+      );
       return false;
     }
   }
@@ -834,6 +894,7 @@ export class BrowserNode {
       nodeId: this.nodeId,
       spk: this.identity.signPublic,
       bpk: this.identity.boxPublic,
+      pid: getPersonId() || this.nodeId,
     };
     try {
       dc.send(JSON.stringify(hello));
@@ -940,6 +1001,15 @@ export class BrowserNode {
       if (maybe?.t === "hello" && maybe.nodeId && maybe.spk && maybe.bpk) {
         const { fingerprintOfKey } = await import("@/lib/crypto/identity");
         const fingerprint = fingerprintOfKey(maybe.spk);
+        // Cihaz → kişi bağı: aynı kişinin farklı cihazları rehberde tek kart olur.
+        if (maybe.pid && maybe.pid !== maybe.nodeId) {
+          try {
+            const { linkNodeToPerson } = await import("@/lib/chat/name-resolver");
+            linkNodeToPerson(maybe.nodeId, maybe.pid);
+          } catch {
+            /* eşleme yazılamadı: teslim etkilenmez */
+          }
+        }
         // TOFU: anahtar sabitlenir; değiştiyse "changed" uyarısı üretilir.
         const trust = await observePeerKey({
           peerId: maybe.nodeId,
