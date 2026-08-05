@@ -208,14 +208,15 @@ function SyncContactsRow() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium">Rehberimdeki kişiler</p>
+        <p className="text-sm font-medium">Telefon rehberimi yükle</p>
         <p className="text-xs text-muted-foreground">
           {info ??
             (native
               ? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."
-              : "Bu tarayıcı rehbere doğrudan erişemiyor. Telefonunuzdan dışa aktardığınız rehber dosyasını (.vcf) seçin; dosya cihazınızda okunur.")}
+              : "iPhone ve masaüstü tarayıcıları rehbere doğrudan erişemez. iPhone’da: Kişiler → kişileri seçin → Paylaş → “Kartı Paylaş” ile .vcf dosyasını kaydedin, sonra aşağıdan seçin. Dosya yalnızca bu cihazda okunur.")}
         </p>
       </div>
+
       <div className="flex flex-wrap gap-2">
         {native && (
           <Button size="sm" disabled={busy} onClick={() => run(syncDeviceContacts())}>
@@ -288,16 +289,27 @@ export function ContactsDialog({
     };
   }, [open, me?.peerId, me?.signPublic]);
 
+  // Adı bilinmeyen (yalnızca teknik kimlikten ibaret) kayıtlar listelenmez.
+  const named = useMemo(
+    () => contacts.filter((c) => c.displayName !== c.shortId),
+    [contacts],
+  );
+  const unnamed = useMemo(
+    () => contacts.filter((c) => c.displayName === c.shortId),
+    [contacts],
+  );
+
   const rows = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
-    if (!needle) return contacts;
-    return contacts.filter((c) =>
-      [c.displayName, c.claimedName ?? "", c.shortId, c.peerId]
+    if (!needle) return named;
+    return named.filter((c) =>
+      [c.displayName, c.claimedName ?? "", c.shortId]
         .join(" ")
         .toLocaleLowerCase("tr")
         .includes(needle),
     );
-  }, [contacts, q]);
+  }, [named, q]);
+
 
   const myShort = me?.shortId ?? shortIdOf("local");
 
@@ -384,10 +396,32 @@ export function ContactsDialog({
             ))}
             {rows.length === 0 && (
               <li className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Rehber boş. Kimliğinizi paylaşın; karşı taraf size yazdığında kişi otomatik eklenir.
+                Rehberinizde adıyla eşleşen kişi yok. Telefon rehberinizi yükleyin ya da kimliğinizi
+                paylaşın.
               </li>
             )}
           </ul>
+
+          {unnamed.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+              <span>
+                {unnamed.length} adsız kayıt gizlendi (adı bilinmeyen cihazlar listelenmez).
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] text-destructive"
+                onClick={() => {
+                  void Promise.all(unnamed.map((c) => eraseContact(c.peerId))).then(() =>
+                    toast(`${unnamed.length} adsız kayıt silindi`),
+                  );
+                }}
+              >
+                <Trash2 className="mr-1 h-3 w-3" /> Temizle
+              </Button>
+            </div>
+          )}
+
 
           {/* KVKK / GDPR */}
           <div className="rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
