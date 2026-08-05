@@ -47,6 +47,15 @@ import { bootBackupTransfer } from "@/lib/chat/transfer";
 import { isMuted } from "@/lib/chat/mute";
 import { safeTitleOf } from "@/lib/chat/safe-title";
 import { markSeen } from "@/lib/chat/last-seen";
+import {
+  announceName,
+  answerNameTo,
+  applyRemoteName,
+  isNameExchange,
+  requestNameFrom,
+} from "@/lib/chat/name-exchange";
+import { resolveDisplayName } from "@/lib/chat/name-resolver";
+
 
 export type ChatState = {
   conversations: Conversation[];
