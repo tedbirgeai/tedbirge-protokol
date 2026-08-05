@@ -7,16 +7,11 @@
  *  - Kullanıcı hiçbir butona basmaz; rehber izni girişte otomatik istenir.
  *  - Eşleşme yoksa sahte kişi üretilmez; temiz bir boş durum gösterilir.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Radio, StickyNote, User } from "lucide-react";
 
 import { useContacts, type Contact } from "@/lib/chat/contacts";
-import {
-  autoSyncContacts,
-  importContacts,
-  parseVcards,
-  saveLocalBook,
-} from "@/lib/chat/directory";
+import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory";
 
 import { isTechnicalLabel } from "@/lib/chat/display-name";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
@@ -90,7 +85,8 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   const book = useContacts();
   useAvatars();
   const tried = useRef(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncInfo, setSyncInfo] = useState<string | null>(null);
 
   const q = query.trim().toLocaleLowerCase("tr");
 
@@ -155,34 +151,32 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
           </p>
           <button
             type="button"
+            disabled={syncing}
             onClick={() => {
+              setSyncing(true);
               void (async () => {
                 const r = await autoSyncContacts();
-                if (r.source === "none") fileRef.current?.click();
-              })();
+                if (r.source === "none") {
+                  setSyncInfo(
+                    deviceContactsSupported()
+                      ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
+                      : "Bu cihazın tarayıcısı otomatik rehber erişimini desteklemiyor. Dosya penceresi açılmadı.",
+                  );
+                  return;
+                }
+                setSyncInfo(`${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`);
+              })().catch(() => setSyncInfo("Rehber eşitlenemedi.")).finally(() => setSyncing(false));
             }}
-            className="wa-press mt-2 rounded-full px-3 py-2 text-[13px] font-semibold text-white"
+            className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
             style={{ background: "var(--wa-accent)" }}
           >
-            Rehberimi şimdi eşitle
+            {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".vcf,text/vcard,text/x-vcard"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (!file) return;
-              void file.text().then(async (text) => {
-                const list = parseVcards(text);
-                if (list.length === 0) return;
-                saveLocalBook(list);
-                await importContacts(list);
-              });
-            }}
-          />
+          {syncInfo && (
+            <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
+              {syncInfo}
+            </p>
+          )}
         </div>
       )}
 
