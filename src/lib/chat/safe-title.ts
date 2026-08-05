@@ -18,7 +18,7 @@ export type TitleLike = {
   members?: string[];
 };
 
-export const UNKNOWN_TITLE = "Kayıtsız kişi";
+export const UNKNOWN_TITLE = "Tedbirge kullanıcısı";
 
 /** Tek bir eş kimliği için görünür ad. */
 export function safeNameOf(peerId: string | undefined | null, hint?: string): string {

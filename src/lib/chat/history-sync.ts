@@ -1,16 +1,17 @@
 /**
- * CİHAZLAR ARASI SOHBET SENKRONU (uçtan uca şifreli, artımlı)
+ * CİHAZLAR ARASI SOHBET SENKRONU (uçtan uca şifreli, artımlı + tam yedek)
  * ------------------------------------------------------------------
- * Sohbet oturumları, mesaj geçmişi, okundu bilgisi, sohbet başlıkları
- * ve arama geçmişi cihazda AES-GCM ile şifrelenir ve yalnızca şifreli
- * hâliyle hesaba yazılır. Anahtar telefon numarasından türetilir; sunucu
- * içeriği çözemez.
+ * Sohbet oturumları, mesaj geçmişi, okundu bilgisi, rehber kayıtları,
+ * verdiğiniz adlar ve arama geçmişi cihazda AES-GCM ile şifrelenir ve
+ * yalnızca şifreli hâliyle hesaba yazılır. Anahtar telefon numarasından
+ * türetilir; sunucu içeriği çözemez.
  *
- * ARTIMLI: her turda yalnızca son damgadan sonra değişenler gönderilir.
- * BİRLEŞTİRME: çakışmada "son yazan kazanır" değil, mesaj kimliği +
- * zaman damgası ile birleştirme yapılır; aynı mesaj iki kez görünmez.
+ * İLK GİRİŞ: yeni bir cihaz numarayla girdiğinde TAM PAKET (snapshot)
+ * hem yazılır hem de karşı taraftan baştan itibaren okunur — imleç
+ * kullanılmaz, hiçbir geçmiş atlanmaz.
+ * SONRAKİ TURLAR: yalnızca değişenler (delta) taşınır.
  * ÇEVRİMDIŞI: ağ yokken her şey yerelde çalışır, ağ gelince kuyruk
- * kendiliğinden boşalır.
+ * kendiliğinden boşalır; hiçbir ekran bloke olmaz.
  */
 
 import {
@@ -20,19 +21,29 @@ import {
   getConversation,
   putConversation,
   putMessage,
+  listTrustedNodes,
+  putTrustedNode,
   type ChatMessage,
   type Conversation,
   type MessageStatus,
+  type TrustedNode,
 } from "@/lib/store/idb";
 import { keyFor, b64, unb64 } from "@/lib/chat/vault";
 import { getAnchorPhone } from "@/lib/chat/anchor";
 import { mergeCallRecords, listCalls, type CallRecord } from "@/lib/chat/call-log";
 import { getBrowserNodeId } from "@/lib/browser-node";
+import { logSync } from "@/lib/chat/sync-log";
 
 const CURSOR_PUSH = "tedbirge.sync.pushCursor";
 const CURSOR_PULL = "tedbirge.sync.pullCursor";
 const LAST_OK = "tedbirge.sync.lastOk";
 const LAST_ERROR = "tedbirge.sync.lastError";
+/** Bu cihaz ilk tam eşitlemesini tamamladı mı? */
+const BOOTSTRAPPED = "tedbirge.sync.bootstrapped";
+/** Uygulanmış paket kimlikleri (yeniden işlememek için). */
+const SEEN_CHUNKS = "tedbirge.sync.seenChunks";
+
+const NICK_KEY = "tedbirge.chat.nicknames";
 
 /** Tek pakette taşınan en fazla mesaj sayısı (kota koruması). */
 const CHUNK_MESSAGES = 250;
@@ -44,17 +55,23 @@ const MAX_BATCH_CHARS = 450_000;
 const MAX_ITEM_CHARS = 400_000;
 /** Periyodik eşitleme aralığı. */
 const INTERVAL_MS = 5 * 60_000;
-
+/** Hatırlanan paket kimliği sayısı. */
+const MAX_SEEN = 600;
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
 type Delta = {
-  format: "tedbirge.history.v1";
+  format: "tedbirge.history.v1" | "tedbirge.history.v2";
   savedAt: number;
+  /** Tam yedek mi (ilk giriş) yoksa artımlı mı? */
+  snapshot?: boolean;
   conversations: Conversation[];
   messages: ChatMessage[];
   calls: CallRecord[];
+  /** v2: rehber kayıtları ve verdiğiniz adlar da taşınır. */
+  contacts?: TrustedNode[];
+  nicknames?: Record<string, string>;
 };
 
 export type SyncState = {
@@ -103,6 +120,26 @@ function writeStr(key: string, value: string) {
   }
 }
 
+function readSeen(): Set<string> {
+  try {
+    return new Set(JSON.parse(readStr(SEEN_CHUNKS) || "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeSeen(set: Set<string>) {
+  writeStr(SEEN_CHUNKS, JSON.stringify(Array.from(set).slice(-MAX_SEEN)));
+}
+
+function readNicknames(): Record<string, string> {
+  try {
+    return JSON.parse(readStr(NICK_KEY) || "{}") as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
 /**
  * Teknik hata metnini (ör. doğrulama JSON'u) kullanıcıya okunur hâle
  * getirir; ham JSON hiçbir zaman arayüzde gösterilmez.
@@ -117,7 +154,6 @@ function friendlyError(raw: string): string {
   if (/fetch|network|failed to fetch/i.test(text)) return "Bağlantı kurulamadı";
   return text.length > 120 ? `${text.slice(0, 117)}…` : text;
 }
-
 
 function publish(patch: Partial<SyncState>) {
   state = { ...state, ...patch };
@@ -151,13 +187,19 @@ export function syncStatusLabel(s: SyncState = state): string {
 export async function ensureCloudSession(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   const phone = await getAnchorPhone();
-  if (!phone) return false;
+  if (!phone) {
+    logSync("uyarı", "Bulut oturumu", "Numara doğrulanmamış — yalnızca bu cihazda saklanıyor");
+    return false;
+  }
   const { supabase } = await import("@/integrations/supabase/client");
   const { data } = await supabase.auth.getSession();
   const expected = `${phone.replace(/\D/g, "")}@phone.tedbirge.app`;
   const current = data.session?.user?.email ?? "";
   if (current === expected) return true;
-  if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    logSync("bilgi", "Bulut oturumu", "Ağ yok — çevrimdışı çalışılıyor");
+    return false;
+  }
 
   const { linkPhoneAccount } = await import("@/lib/local-auth.functions");
   const res = await linkPhoneAccount({ data: { phone } });
@@ -169,6 +211,7 @@ export async function ensureCloudSession(): Promise<boolean> {
     password: res.password,
   });
   if (error) throw new Error(`Bulut oturumu açılamadı: ${error.message}`);
+  logSync("bilgi", "Bulut oturumu", "Numaraya bağlı hesapla açıldı");
   return true;
 }
 
@@ -186,6 +229,8 @@ async function sealDelta(phone: string, delta: Delta): Promise<string> {
 async function openDelta(phone: string, blob: string): Promise<Delta | null> {
   const [ivPart, dataPart] = blob.split(".");
   if (!ivPart || !dataPart) return null;
+  // Anahtar sürümü uyuşmazlığı sessizce yutulmaz: v2 ve v1 sırayla denenir,
+  // ikisi de açılmazsa çağıran tarafa görünür uyarı üretir.
   for (const version of [2, 1] as const) {
     try {
       const key = await keyFor(phone, version);
@@ -195,7 +240,9 @@ async function openDelta(phone: string, blob: string): Promise<Delta | null> {
         ),
       );
       const parsed = JSON.parse(plain) as Delta;
-      if (parsed.format !== "tedbirge.history.v1") return null;
+      if (parsed.format !== "tedbirge.history.v1" && parsed.format !== "tedbirge.history.v2") {
+        return null;
+      }
       return parsed;
     } catch {
       /* diğer sürümle dene */
@@ -219,8 +266,7 @@ function newer(a: ChatMessage, b: ChatMessage): ChatMessage {
   const bStamp = b.editedAt ?? b.ts;
   const base = bStamp > aStamp ? { ...a, ...b } : { ...b, ...a };
   // Durum geriye gitmez: okundu bilgisi her cihazda korunur.
-  const status =
-    STATUS_RANK[a.status] >= STATUS_RANK[b.status] ? a.status : b.status;
+  const status = STATUS_RANK[a.status] >= STATUS_RANK[b.status] ? a.status : b.status;
   return {
     ...base,
     status,
@@ -269,38 +315,93 @@ async function applyDelta(delta: Delta): Promise<number> {
     }
   }
 
+  // Rehber kayıtları ve verdiğiniz adlar: karşı cihazdaki isimler bu
+  // cihaza da iner, böylece sohbetler "adsız" kalıp gizlenmez.
+  let contactsTouched = false;
+  for (const node of delta.contacts ?? []) {
+    if (!node?.nodeId) continue;
+    await putTrustedNode(node);
+    contactsTouched = true;
+    applied += 1;
+  }
+  const incomingNicks = delta.nicknames ?? {};
+  if (Object.keys(incomingNicks).length > 0) {
+    const current = readNicknames();
+    let changed = false;
+    for (const [id, name] of Object.entries(incomingNicks)) {
+      if (!current[id] && name) {
+        current[id] = name;
+        changed = true;
+      }
+    }
+    if (changed) {
+      writeStr(NICK_KEY, JSON.stringify(current));
+      contactsTouched = true;
+      applied += 1;
+    }
+  }
+  if (contactsTouched) {
+    const { refreshContacts } = await import("@/lib/chat/contacts");
+    await refreshContacts();
+  }
+
   if (delta.calls?.length) mergeCallRecords(delta.calls);
   return applied;
 }
 
 /* --------------------------- tur --------------------------- */
 
-async function pull(phone: string): Promise<number> {
+async function pull(phone: string, full: boolean): Promise<number> {
   const { pullHistoryChunks } = await import("@/lib/history.functions");
-  const since = readStr(CURSOR_PULL);
-  const res = await pullHistoryChunks({ data: since ? { since, limit: 60 } : { limit: 60 } });
+  // İlk kurulumda imleç kullanılmaz: geçmişin tamamı baştan okunur.
+  const since = full ? "" : readStr(CURSOR_PULL);
+  const res = await pullHistoryChunks({ data: since ? { since, limit: 120 } : { limit: 120 } });
   if (res.error) throw new Error(res.error);
+  logSync("bilgi", "Paket okuma", `${res.chunks.length} paket bulundu${full ? " (tam geçmiş)" : ""}`);
 
   const self = getBrowserNodeId();
+  const seen = readSeen();
   let applied = 0;
+  let failed = 0;
   let cursor = since;
   for (const chunk of res.chunks) {
     cursor = chunk.createdAt;
-    if (chunk.deviceId === self) continue;
+    if (seen.has(chunk.id)) continue;
+    // Kendi paketlerimiz normalde atlanır; ancak aynı cihaz kimliği iki
+    // ortamda çakışabileceği için ilk (tam) turda bunlar da uygulanır.
+    if (!full && chunk.deviceId === self) {
+      seen.add(chunk.id);
+      continue;
+    }
     const delta = await openDelta(phone, chunk.ciphertext);
-    if (!delta) continue;
+    if (!delta) {
+      failed += 1;
+      continue;
+    }
     applied += await applyDelta(delta);
+    seen.add(chunk.id);
   }
+  writeSeen(seen);
   if (cursor) writeStr(CURSOR_PULL, cursor);
+  if (failed > 0) {
+    logSync("uyarı", "Paket çözme", `${failed} paket açılamadı`);
+    throw new Error(
+      `${failed} yedek paketi bu cihazda açılamadı — numaranızı doğrulayıp yeniden deneyin`,
+    );
+  }
+  logSync("bilgi", "Yerele yazma", `${applied} kayıt uygulandı`);
   if (applied > 0) {
     const { refreshAll } = await import("@/lib/chat/engine");
     await refreshAll();
+    logSync("bilgi", "Arayüz", "Sohbet listesi yenilendi");
   }
   return applied;
 }
 
-async function push(phone: string): Promise<number> {
-  const cursor = readNum(CURSOR_PUSH);
+async function push(phone: string, full: boolean): Promise<number> {
+  // Tam yedekte imleç yok sayılır: sohbet + mesaj + rehber + arama kaydı
+  // eksiksiz olarak kasaya yazılır.
+  const cursor = full ? 0 : readNum(CURSOR_PUSH);
   const now = Date.now();
 
   const conversations = (await listConversations()).filter((c) => c.lastTs >= cursor);
@@ -308,19 +409,32 @@ async function push(phone: string): Promise<number> {
     .filter((m) => (m.editedAt ?? m.ts) >= cursor)
     .sort((a, b) => a.ts - b.ts);
   const calls = listCalls().filter((c) => c.ts >= cursor);
+  const contacts = full ? await listTrustedNodes().catch(() => []) : [];
+  const nicknames = full ? readNicknames() : {};
 
   // Tek pakete sığmayan (büyük medya taşıyan) mesajlar atlanır; bunlar
   // eşleşen cihazlar arasında doğrudan aktarılır, kasaya yazılmaz.
   const messages: ChatMessage[] = [];
+  let skipped = 0;
   for (const m of allMessages) {
     if (JSON.stringify(m).length > MAX_ITEM_CHARS) {
-      console.warn("[sync] büyük mesaj kasaya yazılmadı", m.id);
+      skipped += 1;
       continue;
     }
     messages.push(m);
   }
-  if (conversations.length === 0 && messages.length === 0 && calls.length === 0) {
+  if (skipped > 0) {
+    logSync("uyarı", "Paket yazma", `${skipped} büyük medya mesajı yedeğe alınamadı`);
+  }
+  const nothingToSend =
+    conversations.length === 0 &&
+    messages.length === 0 &&
+    calls.length === 0 &&
+    contacts.length === 0 &&
+    Object.keys(nicknames).length === 0;
+  if (nothingToSend) {
     writeStr(CURSOR_PUSH, String(now));
+    logSync("bilgi", "Paket yazma", "Gönderilecek yeni kayıt yok");
     return 0;
   }
 
@@ -333,7 +447,10 @@ async function push(phone: string): Promise<number> {
   let currentChars = 0;
   for (const m of messages) {
     const size = JSON.stringify(m).length;
-    if (current.length >= CHUNK_MESSAGES || (current.length > 0 && currentChars + size > MAX_BATCH_CHARS)) {
+    if (
+      current.length >= CHUNK_MESSAGES ||
+      (current.length > 0 && currentChars + size > MAX_BATCH_CHARS)
+    ) {
       batches.push(current);
       current = [];
       currentChars = 0;
@@ -345,27 +462,36 @@ async function push(phone: string): Promise<number> {
   if (batches.length === 0) batches.push([]);
 
   let sent = 0;
+  let written = 0;
   for (let i = 0; i < batches.length; i += 1) {
     const delta: Delta = {
-      format: "tedbirge.history.v1",
+      format: "tedbirge.history.v2",
       savedAt: now,
+      snapshot: full && i === 0,
       conversations: i === 0 ? conversations : [],
       messages: batches[i] ?? [],
       calls: i === 0 ? calls : [],
+      contacts: i === 0 ? contacts : [],
+      nicknames: i === 0 ? nicknames : {},
     };
     const ciphertext = await sealDelta(phone, delta);
     if (ciphertext.length > MAX_CIPHERTEXT) {
-      console.warn("[sync] paket sınırı aşıldı, atlandı", ciphertext.length);
+      logSync("uyarı", "Paket yazma", "Bir paket boyut sınırını aştı, bölünerek yeniden denenecek");
       continue;
     }
     const res = await pushHistoryChunk({ data: { deviceId, ciphertext } });
     if (!res.ok) throw new Error(res.error ?? "Paket yazılamadı");
+    written += 1;
     sent += delta.messages.length;
   }
   writeStr(CURSOR_PUSH, String(now));
+  logSync(
+    "bilgi",
+    "Paket yazma",
+    `${written} paket yazıldı · ${sent} mesaj${full ? " (tam yedek)" : ""}`,
+  );
   return sent;
 }
-
 
 let inFlight: Promise<boolean> | null = null;
 
@@ -383,14 +509,25 @@ export async function syncNow(): Promise<boolean> {
       }
       if (typeof navigator !== "undefined" && navigator.onLine === false) {
         publish({ lastError: "" });
+        logSync("bilgi", "Eşitleme", "Ağ yok — kuyruk bekletiliyor");
         return false;
       }
       const linked = await ensureCloudSession();
       publish({ cloudSession: linked });
       if (!linked) return false;
 
-      await pull(phone);
-      await push(phone);
+      // İlk tur: hem tam geçmiş indirilir hem de tam yedek yazılır.
+      const full = readStr(BOOTSTRAPPED) !== "1";
+      if (full) logSync("bilgi", "Eşitleme", "İlk giriş — tam geçmiş isteniyor");
+
+      await pull(phone, full);
+      await push(phone, full);
+      if (full) {
+        // Tam yedek yazıldıktan sonra diğer cihazların paketleri de
+        // ikinci bir turda uygulanır (yarış durumu koruması).
+        await pull(phone, true);
+        writeStr(BOOTSTRAPPED, "1");
+      }
 
       const { historyStats } = await import("@/lib/history.functions");
       const stats = await historyStats();
@@ -404,21 +541,35 @@ export async function syncNow(): Promise<boolean> {
         chunks: stats.chunks,
         bytes: stats.bytes,
       });
+      logSync("bilgi", "Eşitleme", "Tur başarıyla tamamlandı");
       return true;
     } catch (error) {
       const raw = error instanceof Error ? error.message : String(error);
       const message = friendlyError(raw);
       console.error("[sync] tur başarısız", raw);
       writeStr(LAST_ERROR, message);
+      logSync("hata", "Eşitleme", message);
       publish({ lastError: message });
       return false;
-
     } finally {
       publish({ running: false });
       inFlight = null;
     }
   })();
   return inFlight;
+}
+
+/**
+ * TAM YENİDEN EŞİTLE — imleçleri ve paket geçmişini sıfırlar, tüm
+ * geçmişi baştan indirir ve bu cihazın tamamını yeniden yedekler.
+ */
+export async function fullResync(): Promise<boolean> {
+  writeStr(CURSOR_PULL, "");
+  writeStr(CURSOR_PUSH, "");
+  writeStr(SEEN_CHUNKS, "");
+  writeStr(BOOTSTRAPPED, "");
+  logSync("bilgi", "Tam yeniden eşitleme", "İmleçler sıfırlandı");
+  return syncNow();
 }
 
 /* --------------------------- otomatik tetikleyiciler --------------------------- */
@@ -441,7 +592,10 @@ export function startHistorySync(): () => void {
   publish({ lastOkAt: readNum(LAST_OK), lastError: readStr(LAST_ERROR) });
 
   const onChanged = () => scheduleHistorySync();
-  const onOnline = () => void syncNow();
+  const onOnline = () => {
+    logSync("bilgi", "Ağ", "Bağlantı geri geldi — kuyruk boşaltılıyor");
+    void syncNow();
+  };
   const onVisible = () => {
     if (document.visibilityState === "visible") void syncNow();
   };

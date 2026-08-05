@@ -226,21 +226,24 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
     const target = m.nodeId || m.personId;
     // Kendi numaranız eşleşse bile rehberde kişi olarak gösterilmez.
     if (!target || target === self || (myHash && m.hash === myHash)) continue;
+    // Eşleşen her kayıt mutlaka bir adla listelenir: rehberdeki ad yoksa
+    // kişinin beyan ettiği ad, o da yoksa rehberdeki numara kullanılır.
+    const label = local?.name?.trim() || m.displayName?.trim() || local?.phone || "";
     await putTrustedNode({
       nodeId: target,
-      alias: m.displayName ?? local?.name ?? undefined,
+      alias: label || undefined,
       personId: m.personId || undefined,
       method: "auto",
       pairedAt: Date.now(),
     });
-    if (local?.name) setNickname(target, local.name);
+    if (label) setNickname(target, label);
     const personKey = m.personId || target;
     if (seenPersons.has(personKey)) continue;
     seenPersons.add(personKey);
     matched += 1;
     people.push({
       peerId: target,
-      name: local?.name || m.displayName || shortIdOf(target),
+      name: label || shortIdOf(target),
       shortId: shortIdOf(target),
     });
   }

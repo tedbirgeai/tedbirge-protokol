@@ -839,8 +839,9 @@ export function ChatApp() {
       allConversations.filter((c) => {
         const f = folderOf(c.id);
         if (folder === "" ? f === ARCHIVE : f !== folder) return false;
-        // KVKK: adı bilinmeyen (anonim) kayıtlar sohbet listesinde gösterilmez.
-        if (!isNamed(c) && c.id !== SELF_CONV_ID) return false;
+        // Adı bilinmeyen kayıtlar yalnızca hiç mesajı yoksa gizlenir;
+        // başka cihazdan gelen gerçek sohbetler her zaman listelenir.
+        if (!isNamed(c) && c.id !== SELF_CONV_ID && !c.lastTs && !c.lastText) return false;
         return true;
       }),
     [allConversations, folder, folderVersion],

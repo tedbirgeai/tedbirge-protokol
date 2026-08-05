@@ -7,15 +7,17 @@
  * şeridi gösterilir.
  */
 import { useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw, CloudOff, Cloud } from "lucide-react";
+import { AlertTriangle, RefreshCw, CloudOff, Cloud, RotateCcw } from "lucide-react";
 import {
   formatBytes,
+  fullResync,
   getSyncState,
   onSyncStateChange,
   syncNow,
   syncStatusLabel,
   type SyncState,
 } from "@/lib/chat/history-sync";
+import { getSyncLog, onSyncLogChange, type SyncLogEntry } from "@/lib/chat/sync-log";
 import { pressFeedback } from "@/lib/chat/sounds";
 
 function useSyncState(): SyncState {
@@ -28,9 +30,26 @@ function useSyncState(): SyncState {
   return snap;
 }
 
+function useSyncLog(): SyncLogEntry[] {
+  const [rows, setRows] = useState<SyncLogEntry[]>([]);
+  useEffect(() => {
+    const update = () => setRows([...getSyncLog()]);
+    update();
+    return onSyncLogChange(update);
+  }, []);
+  return rows;
+}
+
+const LEVEL_COLOR: Record<SyncLogEntry["level"], string> = {
+  bilgi: "var(--wa-muted)",
+  uyarı: "#b45309",
+  hata: "#b91c1c",
+};
+
 /** Ayarlar > Eşitleme sekmesi içeriği. */
 export function SyncStatusSection() {
   const s = useSyncState();
+  const log = useSyncLog();
   return (
     <section className="mt-5">
       <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -72,23 +91,56 @@ export function SyncStatusSection() {
         </div>
       </dl>
 
-      <button
-        type="button"
-        onClick={() => {
-          pressFeedback();
-          void syncNow();
-        }}
-        disabled={s.running}
-        className="wa-press mt-4 inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-[14px] font-semibold text-white disabled:opacity-60"
-        style={{ background: "var(--wa-accent)" }}
-      >
-        <RefreshCw className={`h-4 w-4 ${s.running ? "animate-spin" : ""}`} aria-hidden />
-        {s.running ? "Eşitleniyor…" : "Şimdi eşitle"}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            void syncNow();
+          }}
+          disabled={s.running}
+          className="wa-press inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-[14px] font-semibold text-white disabled:opacity-60"
+          style={{ background: "var(--wa-accent)" }}
+        >
+          <RefreshCw className={`h-4 w-4 ${s.running ? "animate-spin" : ""}`} aria-hidden />
+          {s.running ? "Eşitleniyor…" : "Şimdi eşitle"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            void fullResync();
+          }}
+          disabled={s.running}
+          className="wa-press inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-[14px] font-semibold disabled:opacity-60"
+          style={{ border: "1px solid var(--wa-line, currentColor)" }}
+        >
+          <RotateCcw className="h-4 w-4" aria-hidden />
+          Tam yeniden eşitle
+        </button>
+      </div>
 
       <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
         {syncStatusLabel(s)}
       </p>
+
+      <h4 className="mt-5 text-[13px] font-semibold">Eşitleme günlüğü (son 20 olay)</h4>
+      <ul className="mt-2 space-y-1 text-[12px]">
+        {log.length === 0 && (
+          <li style={{ color: "var(--wa-muted)" }}>Henüz kayıt yok.</li>
+        )}
+        {log.map((e) => (
+          <li key={`${e.at}-${e.step}-${e.detail}`} className="flex gap-2">
+            <span className="shrink-0 tabular-nums" style={{ color: "var(--wa-muted)" }}>
+              {new Date(e.at).toLocaleTimeString("tr-TR")}
+            </span>
+            <span className="min-w-0 flex-1" style={{ color: LEVEL_COLOR[e.level] }}>
+              <strong className="font-medium">{e.step}</strong>
+              {e.detail ? ` — ${e.detail}` : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
