@@ -250,13 +250,20 @@ function SyncContactsRow() {
         <p className="text-sm font-medium">Rehberim otomatik eşitlenir</p>
         <p className="text-xs text-muted-foreground">
           {info ??
-            "Her açılışta arka planda çalışır; tanıdıklarınız katıldıkça kendiliğinden eklenir. Numaralar cihazdan çıkmaz."}
+            "Her açılışta ve yarım saatte bir arka planda çalışır; tanıdıklarınız katıldıkça kendiliğinden eklenir. Numaralar cihazdan çıkmaz."}
         </p>
       </div>
 
       <Button size="sm" disabled={busy} onClick={runAuto}>
         {busy ? "Eşitleniyor…" : "Şimdi eşitle"}
       </Button>
+
+      <p className="w-full text-[11px] leading-relaxed text-muted-foreground">
+        Tüm rehberin otomatik gelmesi yalnızca Tedbirge mobil uygulamasında mümkündür (sistem
+        rehber izni). Android tarayıcıda seçtiğiniz kişiler, iPhone Safari ve masaüstünde ise bir
+        kez yüklediğiniz rehber dosyası (.vcf) kullanılır; sonrasında eşleştirme kendiliğinden
+        tazelenir.
+      </p>
 
       {people.length > 0 && (
         <ul className="w-full space-y-1 border-t border-border pt-3">

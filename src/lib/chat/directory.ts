@@ -291,3 +291,70 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   return { checked: rows.length, matched, people };
 }
 
+
+/**
+ * SESSİZ YENİDEN EŞLEŞTİRME.
+ * Cihazda saklanan rehber (ham numara cihazdan çıkmaz) yeniden
+ * eşleştirilir; sonradan Tedbirge'ye katılan tanıdıklar kendiliğinden
+ * belirir. Kullanıcıya hiçbir pencere açılmaz.
+ */
+export async function rematchSavedBook(): Promise<ImportResult> {
+  const saved = loadLocalBook();
+  if (saved.length === 0) return { checked: 0, matched: 0, people: [] };
+  return importContacts(saved);
+}
+
+const AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000;
+const LAST_SYNC_KEY = "tedbirge.chat.lastContactSync";
+
+function lastSyncAt(): number {
+  try {
+    return Number(window.localStorage.getItem(LAST_SYNC_KEY) ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Periyodik rehber tazeleme: açılışta, ağ geri geldiğinde ve uygulama
+ * öne alındığında (en fazla yarım saatte bir) sessizce çalışır.
+ */
+export function startContactAutoSync(): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  let running = false;
+
+  const tick = async () => {
+    if (running) return;
+    if (Date.now() - lastSyncAt() < AUTO_SYNC_INTERVAL_MS) return;
+    running = true;
+    try {
+      const r = await rematchSavedBook();
+      try {
+        window.localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
+      } catch {
+        /* gizli mod */
+      }
+      if (r.matched > 0) {
+        await refreshContacts();
+        logSync("bilgi", "rehber-tazeleme", `${r.matched} kişi güncellendi.`);
+      }
+    } catch (error) {
+      logSync("uyarı", "rehber-tazeleme", friendlyError(error, "Rehber tazelenemedi."));
+    } finally {
+      running = false;
+    }
+  };
+
+  const onVisible = () => {
+    if (document.visibilityState === "visible") void tick();
+  };
+  const timer = window.setInterval(() => void tick(), AUTO_SYNC_INTERVAL_MS);
+  window.addEventListener("online", () => void tick());
+  document.addEventListener("visibilitychange", onVisible);
+  void tick();
+
+  return () => {
+    window.clearInterval(timer);
+    document.removeEventListener("visibilitychange", onVisible);
+  };
+}

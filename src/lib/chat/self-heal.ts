@@ -94,15 +94,22 @@ export async function runSelfHeal(): Promise<HealthReport> {
   // 4) Rehber otonom onarımı — mükerrer kişi kartları ve adsız hayalet
   // kayıtlar kullanıcı hiçbir şey yapmadan sessizce birleştirilir/temizlenir.
   try {
-    const { mergePersonDuplicates, pruneGhostContacts } = await import("@/lib/chat/merge");
+    const { mergePersonDuplicates, pruneGhostContacts, pruneGhostConversations } = await import(
+      "@/lib/chat/merge"
+    );
+    const { pruneCallLog } = await import("@/lib/chat/call-log");
     const merged = await mergePersonDuplicates();
     const pruned = await pruneGhostContacts();
-    if (merged || pruned) {
+    // Adsız/kendi cihazıma ait hayalet sohbet ve arama kayıtları budanır:
+    // "Tedbirge kullanıcısı" satırı listede hiç oluşmaz.
+    const ghostConvs = await pruneGhostConversations().catch(() => 0);
+    const ghostCalls = await pruneCallLog().catch(() => 0);
+    if (merged || pruned || ghostConvs || ghostCalls) {
       const { refreshContacts } = await import("@/lib/chat/contacts");
       await refreshContacts();
       issues.push({
         title: "Rehber kendiliğinden düzeltildi",
-        advice: `${merged} mükerrer kişi birleştirildi, ${pruned} boş kayıt kaldırıldı — yapmanız gereken bir şey yok.`,
+        advice: `${merged} mükerrer kişi birleştirildi, ${pruned + ghostConvs + ghostCalls} boş kayıt kaldırıldı — yapmanız gereken bir şey yok.`,
         repaired: true,
       });
     }
