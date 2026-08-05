@@ -999,7 +999,30 @@ export function ChatApp() {
           className="flex items-center gap-3 px-4 py-2.5"
           style={{ background: "var(--wa-panel-soft)", borderBottom: "1px solid var(--wa-border)" }}
         >
-          <Avatar name={me} size={40} />
+          <button
+            type="button"
+            onClick={() => myAvatarInput.current?.click()}
+            className="wa-press rounded-full"
+            aria-label="Profil fotoğrafını değiştir"
+            title="Profil fotoğrafını değiştir"
+          >
+            <Avatar name={me} size={40} src={getMyAvatar()} />
+          </button>
+          <input
+            ref={myAvatarInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              void fileToAvatarDataUrl(file)
+                .then((url) => setMyAvatar(url))
+                .catch(() => undefined);
+            }}
+          />
+
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold" style={{ color: "var(--wa-text)" }}>
               {me}
