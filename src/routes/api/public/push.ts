@@ -115,7 +115,7 @@ export const Route = createFileRoute("/api/public/push")({
               ? "Tedbirge üzerinden sizi arıyor."
               : "Şifreli yeni mesajınız var.",
           tag: parsed.kind === "call" ? "tedbirge-call" : "tedbirge-chat",
-          url: "/chat",
+          url: parsed.kind === "call" ? "/chat?call=1" : "/chat",
           peer: parsed.peer,
         });
         return json({ ok: true, sent });

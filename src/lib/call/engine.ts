@@ -162,6 +162,14 @@ const reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const restarting = new Set<string>();
 const MAX_RECONNECTS = 3;
 const RING_TIMEOUT_MS = 45_000;
+/** Hiçbir kanaldan "çalıyor" onayı gelmezse aramayı temiz kapatma süresi. */
+const UNREACHABLE_MS = 30_000;
+/** Röleden geç gelen davet bu süreden eskiyse çaldırılmaz, cevapsız yazılır. */
+const MISSED_AFTER_MS = 10_000;
+/** Bu turdaki giden aramanın tekil kimliği (tekrar davetleri tekilleştirir). */
+let currentCallId: string | null = null;
+/** Karşılanan davet kimlikleri — aynı çağrı iki kanaldan gelirse bir kez çalar. */
+const handledCallIds = new Set<string>();
 
 /* --------------------------- arama geçmişi kaydı --------------------------- */
 
@@ -482,6 +490,42 @@ function attachLocal(pc: RTCPeerConnection, stream: MediaStream | null, video: b
   }
 }
 
+/**
+ * Çağrı daveti üç kanaldan aynı anda gider:
+ *  (a) mesh/doğrudan eş — sendMesh; bağlı eş yoksa aynı çağrı içinde
+ *      gerçek zamanlı şifreli kanal ve bulut rölesi (store-and-forward)
+ *      denenir, yani davet kalıcı zarf olarak buluta yazılır.
+ *  (b) uyandırma bildirimi — Web Push / native push.
+ * Başarısız her kanal eşitleme günlüğüne Türkçe olarak yazılır.
+ */
+async function sendInvite(
+  peerId: string,
+  sdp: string,
+  video: boolean,
+  callId: string,
+): Promise<boolean> {
+  const payload = {
+    t: "offer",
+    sdp,
+    video,
+    alias: getAlias(),
+    callId,
+    at: Date.now(),
+  };
+  const [meshOk, wakeOk] = await Promise.all([
+    sendMesh("call", peerId, payload).catch(() => false),
+    import("@/lib/chat/webpush")
+      .then((m) => m.wakePeer(peerId, "call").then(() => true))
+      .catch(() => false),
+  ]);
+  if (!meshOk || !wakeOk) {
+    const { logSync } = await import("@/lib/chat/sync-log");
+    if (!meshOk) logSync("uyarı", "çağrı-daveti", "Ağ ve bulut yolu şu an davet taşıyamadı.");
+    if (!wakeOk) logSync("uyarı", "çağrı-bildirimi", "Karşı cihaza uyandırma bildirimi gitmedi.");
+  }
+  return meshOk || wakeOk;
+}
+
 async function dial(peerId: string, alias: string, video: boolean) {
   const stream = await ensureMedia(video);
   const leg = createLeg(peerId, alias);
@@ -491,17 +535,7 @@ async function dial(peerId: string, alias: string, video: boolean) {
 
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
-  const sent = await sendMesh("call", peerId, {
-    t: "offer",
-    sdp: offer.sdp,
-    video,
-    alias: getAlias(),
-    at: Date.now(),
-  });
-  // Karşı cihaz kapalı/arka planda olabilir: telefonu çaldırmak için
-  // uyandırma bildirimi yollanır (içerik gönderilmez).
-  void import("@/lib/chat/webpush").then((m) => m.wakePeer(peerId, "call")).catch(() => {});
-  return sent;
+  return sendInvite(peerId, offer.sdp ?? "", video, currentCallId ?? peerId);
 }
 
 /**
@@ -518,15 +552,7 @@ function startDialRetry(peerId: string, video: boolean) {
     const leg = legs.get(peerId);
     const sdp = leg?.pc.localDescription?.sdp;
     if (!sdp) return;
-    void sendMesh("call", peerId, {
-      t: "offer",
-      sdp,
-      video,
-      alias: getAlias(),
-      at: Date.now(),
-    });
-    if (!state.remoteRinging)
-      void import("@/lib/chat/webpush").then((m) => m.wakePeer(peerId, "call")).catch(() => {});
+    void sendInvite(peerId, sdp, video, currentCallId ?? peerId);
   }, DIAL_RETRY_MS);
 }
 
@@ -559,22 +585,34 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     speakingPeerId: null,
   });
   callMeta = { peerId, video, direction: "outgoing" };
+  currentCallId = `${nodeSelf()}-${Date.now().toString(36)}`;
+  // Dürüst durum: 30 saniye içinde hiçbir kanaldan "çalıyor" onayı gelmezse
+  // arama sonsuza dek "Aranıyor" kalmaz, temiz biter ve cevapsız yazılır.
+  const armTimers = () => {
+    if (outgoingTimer) clearTimeout(outgoingTimer);
+    outgoingTimer = setTimeout(() => {
+      if (state.phase !== "outgoing") return;
+      if (!state.remoteRinging) {
+        endCall("Ulaşılamadı — karşı cihaz şu anda erişilebilir değil.");
+        return;
+      }
+      // Telefon çaldı ama açılmadı: klasik "cevap yok".
+      if (outgoingTimer) clearTimeout(outgoingTimer);
+      outgoingTimer = setTimeout(() => {
+        if (state.phase === "outgoing") endCall("Cevap yok.");
+      }, RING_TIMEOUT_MS - UNREACHABLE_MS);
+    }, UNREACHABLE_MS);
+  };
   try {
     await dial(peerId, alias ?? peerId, video);
     // Teklif ilk turda ulaşmasa bile arama düşürülmez: karşı cihaz açıldığı
-    // anda yakalansın diye teklif tekrarlanır, süre dolunca "Cevap yok".
+    // anda yakalansın diye teklif tekrarlanır, süre dolunca kapanır.
     startDialRetry(peerId, video);
-    if (outgoingTimer) clearTimeout(outgoingTimer);
-    outgoingTimer = setTimeout(() => {
-      if (state.phase === "outgoing") endCall("Cevap yok.");
-    }, RING_TIMEOUT_MS);
+    armTimers();
   } catch {
     // Arama ekranı kapanmaz: kullanıcı kırmızı tuşla kendisi sonlandırır.
     publish({ error: "Mikrofona erişilemedi — yalnız dinleme kipinde deneniyor." });
-    if (outgoingTimer) clearTimeout(outgoingTimer);
-    outgoingTimer = setTimeout(() => {
-      if (state.phase === "outgoing") endCall("Cevap yok.");
-    }, RING_TIMEOUT_MS);
+    armTimers();
   }
 
 }
@@ -663,7 +701,8 @@ export async function acceptCall() {
 
 export function endCall(reason?: string) {
   const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
-  for (const peerId of peers) void sendMesh("call", peerId, { t: "bye", at: Date.now() });
+  for (const peerId of peers) void sendMesh("call", peerId, { t: "bye", callId: currentCallId ?? undefined, at: Date.now() });
+  currentCallId = null;
   cleanup();
   publish({ phase: reason ? "ended" : "idle", error: reason ?? null, remoteRinging: false });
   setTimeout(() => {
@@ -883,6 +922,7 @@ type CallSignal = {
   video?: boolean;
   alias?: string;
   restart?: boolean;
+  callId?: string;
   at?: number;
 };
 
@@ -899,6 +939,34 @@ async function onCallSignal(from: string, raw: unknown) {
   // Eski sürümün tarihsiz çağrı paketleri bulut röleden gelirse çalıştırılmaz;
   // böylece uygulama açılışında eski arama/ICE/bitirme sinyali canlanamaz.
   if (p.t === "offer" ? age > OFFER_FRESH_MS : age > CONTROL_FRESH_MS) return;
+
+  // Uygulama kapalıyken röleye düşen davet: 10 saniyeden eskiyse telefon
+  // çalmaz, doğrudan "cevapsız arama" olarak geçmişe yazılır.
+  if (p.t === "offer" && age > MISSED_AFTER_MS) {
+    const key = p.callId ?? `${from}-${p.at ?? 0}`;
+    if (!handledCallIds.has(key)) {
+      handledCallIds.add(key);
+      void import("@/lib/chat/call-log")
+        .then((m) =>
+          m.logCall({ peerId: from, direction: "missed", video: Boolean(p.video), seconds: 0 }),
+        )
+        .catch(async () => {
+          const { logSync } = await import("@/lib/chat/sync-log");
+          logSync("uyarı", "cevapsız-arama", "Geçmiş kaydı yazılamadı.");
+        });
+    }
+    void sendMesh("call", from, { t: "bye", at: Date.now() });
+    return;
+  }
+
+  // Aynı davet üç kanaldan da gelebilir: telefon yalnızca bir kez çalar.
+  if (p.t === "offer" && p.callId && !p.restart) {
+    if (handledCallIds.has(p.callId) && !pendingOffers.has(from) && state.peerId !== from) return;
+    handledCallIds.add(p.callId);
+    if (handledCallIds.size > 200) handledCallIds.clear();
+  }
+
+
 
 
   if (p.t === "offer" && p.sdp) {
