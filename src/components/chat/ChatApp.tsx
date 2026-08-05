@@ -54,6 +54,7 @@ import {
   createGroup,
   ensureDirectConversation,
   ensureSelfConversation,
+  SELF_CONV_ID,
   markRead,
   removeConversation,
   conversationTargets,
