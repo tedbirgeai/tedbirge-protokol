@@ -254,7 +254,17 @@ function collapsePersons(rows: Contact[]): Contact[] {
     out.push(primary);
   }
   // Adı gerçekten bilinmeyen kayıt listeye HİÇ yazılmaz (gizlenmez — oluşturulmaz).
-  return out.filter((c) => c.displayName.trim().length > 0);
+  // Kendi diğer cihazlarım da rehberde ayrı kişi olarak görünmez.
+  return out.filter(
+    (c) =>
+      c.displayName.trim().length > 0 &&
+      !isSelfPerson({
+        id: c.peerId,
+        personId: c.personId,
+        phoneHash: c.phoneHash,
+        name: c.displayName,
+      }),
+  );
 }
 
 
