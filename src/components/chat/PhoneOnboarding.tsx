@@ -177,7 +177,11 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
         /* yedek yok veya çevrimdışı */
       }
       try {
-        await syncDeviceContacts();
+        // Tek adımda: cihaz rehberi + yerel defter + bulut yedeği taranır,
+        // eşleşen kişiler otomatik eklenir. Kullanıcı düğmeye basmaz.
+        const { autoSyncContacts } = await import("@/lib/chat/directory");
+        const auto = await autoSyncContacts();
+        if (auto.matched > 0) setRestored((prev) => Math.max(prev, auto.matched));
       } catch {
         /* rehber izni yoksa/çevrimdışıysa sonra eşitlenir */
       }
