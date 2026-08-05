@@ -1334,7 +1334,21 @@ export function ChatApp() {
           </div>
         )}
 
-        <ul className="flex-1 overflow-y-auto">
+        {folder === CALLS_TAB && (
+          <div className="flex-1 overflow-y-auto">
+            <CallHistory
+              onCall={(peer, video) => {
+                void ensureDirectConversation(peer).then((c) => {
+                  setActiveId(c.id);
+                  void startCall(peer, video, nameOf(peer));
+                });
+              }}
+            />
+          </div>
+        )}
+
+        <ul className={`flex-1 overflow-y-auto ${folder === CALLS_TAB ? "hidden" : ""}`}>
+
           {pairing.incoming.map((req) => (
             <li
               key={`req_${req.nodeId}`}
