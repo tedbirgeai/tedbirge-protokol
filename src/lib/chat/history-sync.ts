@@ -139,8 +139,11 @@ export async function ensureCloudSession(): Promise<boolean> {
   const { linkPhoneAccount } = await import("@/lib/local-auth.functions");
   const res = await linkPhoneAccount({ data: { phone } });
   if (!res.ok) {
-    // Hız sınırı geçici bir durumdur; bir sonraki turda tekrar denenir.
-    if (res.reason === "rate-limited") return Boolean(data.session);
+    // Hız sınırı geçici bir durumdur; kısa süre sonra kendiliğinden tekrarlanır.
+    if (res.reason === "rate-limited") {
+      scheduleHistorySync(65_000);
+      return Boolean(data.session);
+    }
     throw new Error("Bulut hesabı bağlanamadı");
   }
   const { error } = await supabase.auth.signInWithPassword({
