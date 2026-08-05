@@ -90,6 +90,8 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   const book = useContacts();
   useAvatars();
   const tried = useRef(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const q = query.trim().toLocaleLowerCase("tr");
 
   // Girişte rehberi arka planda otomatik eşitle (tek sefer, sessiz).
