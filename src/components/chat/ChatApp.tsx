@@ -128,6 +128,7 @@ import {
   resolvePhoneHash,
   personGroupKey,
   mergeGroupsByName,
+  isSelfPerson,
 } from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
