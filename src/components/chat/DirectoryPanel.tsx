@@ -87,6 +87,9 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   const tried = useRef(false);
   const [syncing, setSyncing] = useState(false);
   const [syncInfo, setSyncInfo] = useState<string | null>(null);
+  const [matchedPeople, setMatchedPeople] = useState<
+    { peerId: string; name: string; shortId: string }[]
+  >([]);
 
   const q = query.trim().toLocaleLowerCase("tr");
 
@@ -95,7 +98,17 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
   useEffect(() => {
     if (tried.current) return;
     tried.current = true;
-    void autoSyncContacts().catch(() => null);
+    void autoSyncContacts()
+      .then((r) => {
+        if (r.people.length > 0) setMatchedPeople(r.people);
+        if (r.checked > 0)
+          setSyncInfo(
+            r.matched > 0
+              ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
+              : `${r.checked} kişi denetlendi · rehberinizden henüz Tedbirge'ye katılan yok.`,
+          );
+      })
+      .catch(() => null);
   }, []);
 
   // KVKK: yalnızca gerçek adı bilinen (rehberde eşleşmiş) kişiler listelenir.
@@ -149,38 +162,67 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
           <p className="text-[13px]" style={{ color: "var(--wa-muted)" }}>
             Rehberiniz eşitleniyor. Tanıdıklarınız Tedbirge'ye katıldıkça kendiliğinden görünür.
           </p>
-          <button
-            type="button"
-            disabled={syncing}
-            onClick={() => {
-              setSyncing(true);
-              void (async () => {
-                const r = await autoSyncContacts();
-                if (r.source === "none") {
-                  setSyncInfo(
-                    deviceContactsSupported()
-                      ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
-                      : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
-                  );
-                  return;
-
-                }
-                setSyncInfo(`${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`);
-              })().catch(() => setSyncInfo("Rehber eşitlenemedi.")).finally(() => setSyncing(false));
-            }}
-            className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
-            style={{ background: "var(--wa-accent)" }}
-          >
-            {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
-          </button>
-          {syncInfo && (
-            <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
-              {syncInfo}
-            </p>
-          )}
         </div>
       )}
 
+      <div className="px-4 py-3">
+        <button
+          type="button"
+          disabled={syncing}
+          onClick={() => {
+            setSyncing(true);
+            void (async () => {
+              const r = await autoSyncContacts();
+              setMatchedPeople(r.people);
+              if (r.source === "none") {
+                setSyncInfo(
+                  deviceContactsSupported()
+                    ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
+                    : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
+                );
+                return;
+              }
+              setSyncInfo(
+                r.matched > 0
+                  ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
+                  : `${r.checked} kişi denetlendi · rehberinizden henüz Tedbirge'ye katılan yok.`,
+              );
+            })()
+              .catch(() => setSyncInfo("Rehber eşitlenemedi."))
+              .finally(() => setSyncing(false));
+          }}
+          className="wa-press min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+          style={{ background: "var(--wa-accent)" }}
+        >
+          {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
+        </button>
+
+        {syncInfo && (
+          <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
+            {syncInfo}
+          </p>
+        )}
+
+        {matchedPeople.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {matchedPeople.map((p) => (
+              <li key={p.peerId}>
+                <button
+                  type="button"
+                  onClick={() => onOpenPeer(p.peerId, p.name)}
+                  className="wa-press w-full rounded-lg px-2 py-2 text-left"
+                  style={{ background: "var(--wa-panel, transparent)" }}
+                >
+                  <span className="block text-[13px] font-medium">{p.name}</span>
+                  <span className="block font-mono text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                    {p.shortId} · rehberinizden eşleşti
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <p className="px-4 pb-4 pt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
         Numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle yapılır.
