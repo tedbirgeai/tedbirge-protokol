@@ -7,6 +7,10 @@
  */
 import { putTrustedNode } from "@/lib/store/idb";
 import { refreshContacts, setNickname } from "@/lib/chat/contacts";
+import { logSync } from "@/lib/chat/sync-log";
+import { logError } from "@/lib/chat/errors";
+import { friendlyError } from "@/lib/friendly-error";
+
 
 export type DeviceContact = { name: string; phone: string };
 
@@ -94,7 +98,9 @@ export async function syncDeviceContacts(): Promise<ImportResult | null> {
     if (picked.length === 0) return { checked: 0, matched: 0, people: [] };
     saveLocalBook(picked);
     return await importContacts(picked);
-  } catch {
+  } catch (error) {
+    logError("rehber", error, "Cihaz rehberi okunamadı. İzin verip tekrar deneyin.");
+    logSync("hata", "cihaz-rehberi", friendlyError(error, "Cihaz rehberi okunamadı."));
     return null;
   }
 }
@@ -120,8 +126,8 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
       const r = await importContacts(native);
       return { ...r, source: "device" };
     }
-  } catch {
-    /* yerel kabuk yok */
+  } catch (error) {
+    logSync("bilgi", "yerel-rehber", friendlyError(error, "Yerel rehber köprüsü yok."));
   }
 
   if (deviceContactsSupported()) {
@@ -144,7 +150,8 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
     if (phone) {
       const vault = await import("@/lib/chat/vault");
       const restored = await vault.restoreContacts(phone).catch((error: unknown) => {
-        console.error("[sync] kasa geri yüklenemedi", error);
+        logError("rehber", error, "Rehber yedeği geri yüklenemedi. Bağlantı gelince yeniden denenecek.");
+        logSync("hata", "kasa-geri-yükleme", friendlyError(error, "Rehber yedeği geri yüklenemedi."));
         return 0;
       });
       if (restored > 0) {
@@ -157,8 +164,8 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
         return { checked: restored, matched: restored, people: [], source: "vault" };
       }
     }
-  } catch {
-    /* yedek yok */
+  } catch (error) {
+    logSync("uyarı", "rehber-yedek", friendlyError(error, "Rehber yedeği bulunamadı."));
   }
 
   return { checked: 0, matched: 0, people: [], source: "none" };
@@ -218,42 +225,57 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
 
   const people: MatchedContact[] = [];
   let matched = 0;
+  let skippedUnnamed = 0;
   // Aynı kişinin birden çok cihazı varsa tek kişi olarak sayılır; en son
   // görülen cihaz birincil kabul edilir (WhatsApp bağlı-cihaz modeli).
   const seenPersons = new Set<string>();
+  const { linkNodeToPerson, writeClaimedName } = await import("@/lib/chat/name-resolver");
   for (const m of matches) {
     const local = byHash.get(m.hash);
     const target = m.nodeId || m.personId;
     // Kendi numaranız eşleşse bile rehberde kişi olarak gösterilmez.
     if (!target || target === self || (myHash && m.hash === myHash)) continue;
-    // Eşleşen her kayıt mutlaka bir adla listelenir: rehberdeki ad yoksa
-    // kişinin beyan ettiği ad, o da yoksa rehberdeki numara kullanılır.
-    const label = local?.name?.trim() || m.displayName?.trim() || local?.phone || "";
+    // Rehberdeki ad → kişinin beyan ettiği ad. İkisi de yoksa KAYIT AÇILMAZ:
+    // adsız satır arayüzde hiç oluşmasın (gizlenmesin).
+    const label = local?.name?.trim() || m.displayName?.trim() || "";
+    if (!label) {
+      skippedUnnamed += 1;
+      continue;
+    }
+    linkNodeToPerson(target, m.personId);
     await putTrustedNode({
       nodeId: target,
-      alias: label || undefined,
+      alias: label,
       personId: m.personId || undefined,
       method: "auto",
       pairedAt: Date.now(),
     });
-    if (label) setNickname(target, label);
+    // Ad tek kanaldan yazılır: kişi kimliği + tüm bağlı düğümler.
+    setNickname(target, label);
+    if (m.displayName?.trim()) writeClaimedName(target, m.displayName.trim());
     const personKey = m.personId || target;
     if (seenPersons.has(personKey)) continue;
     seenPersons.add(personKey);
     matched += 1;
-    people.push({
-      peerId: target,
-      name: label || shortIdOf(target),
-      shortId: shortIdOf(target),
-    });
+    people.push({ peerId: target, name: label, shortId: shortIdOf(target) });
   }
-  // Eski ortamlardan kalan, adı çözülemeyen hayalet kayıtlar budanır.
+  // Eski ortamlardan kalan kopya ve hayalet kayıtlar tek kişide birleşir.
   try {
-    const { pruneGhostContacts } = await import("@/lib/chat/merge");
+    const { mergePersonDuplicates, pruneGhostContacts } = await import("@/lib/chat/merge");
+    await mergePersonDuplicates();
     await pruneGhostContacts();
-  } catch {
-    /* temizlik zorunlu değil */
+  } catch (error) {
+    logSync("uyarı", "rehber-temizlik", friendlyError(error, "Kişi temizliği tamamlanamadı."));
   }
+  if (skippedUnnamed > 0) {
+    logSync(
+      "bilgi",
+      "rehber-eşleşme",
+      `${skippedUnnamed} eşleşme adsız olduğu için listeye eklenmedi`,
+    );
+  }
+  logSync("bilgi", "rehber-eşleşme", `${rows.length} numara tarandı, ${matched} kişi eşleşti`);
   await refreshContacts();
   return { checked: rows.length, matched, people };
 }
+

@@ -38,8 +38,16 @@ import {
 import { trustStatusOf, type TrustStatus } from "@/lib/peer-trust";
 import { getBrowserNodeId } from "@/lib/browser-node";
 
-const NICK_KEY = "tedbirge.chat.nicknames";
-const ALIAS_KEY = "tedbirge.chat.aliases";
+import {
+  ALIAS_KEY,
+  NICK_KEY,
+  linkNodeToPerson,
+  readMap,
+  resolveClaimedName,
+  resolveNickname,
+  writeNickname,
+} from "@/lib/chat/name-resolver";
+
 
 /** Karıştırılabilir harf/rakam (I, L, O, U) çıkarılmış Crockford Base32. */
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -66,16 +74,7 @@ export function shortIdOf(material: string): string {
 }
 
 /* --------------------------- kendi takma adlar --------------------------- */
-
-function readMap(key: string): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
-  } catch {
-    return {};
-  }
-}
+/* Tüm okuma/yazma tek kanaldan: @/lib/chat/name-resolver */
 
 function writeMap(key: string, map: Record<string, string>) {
   try {
@@ -86,18 +85,15 @@ function writeMap(key: string, map: Record<string, string>) {
 }
 
 export function getNickname(peerId: string): string {
-  return readMap(NICK_KEY)[peerId] ?? "";
+  return resolveNickname(peerId);
 }
 
 /** Kişiye kendi verdiğiniz ad — cihazdan çıkmaz. */
 export function setNickname(peerId: string, name: string) {
-  const map = readMap(NICK_KEY);
-  const clean = name.trim().slice(0, 40);
-  if (clean) map[peerId] = clean;
-  else delete map[peerId];
-  writeMap(NICK_KEY, map);
+  writeNickname(peerId, name);
   void refreshContacts();
 }
+
 
 /* ------------------------------- model ------------------------------- */
 
@@ -145,12 +141,14 @@ function buildContact(
   peer: PeerRecord | undefined,
   trusted: TrustedNode | undefined,
   peerId: string,
-  nicknames: Record<string, string>,
-  aliases: Record<string, string>,
+  _nicknames: Record<string, string>,
+  _aliases: Record<string, string>,
 ): Contact {
   const signPublic = peer?.knownSignPublic ?? peer?.verifyKey;
-  const nickname = nicknames[peerId] || undefined;
-  const claimedName = (aliases[peerId] || trusted?.alias || "").trim() || undefined;
+  // Ad tek kanaldan okunur: kişi kimliği varsa onun üzerinden.
+  linkNodeToPerson(peerId, trusted?.personId);
+  const nickname = resolveNickname(peerId) || undefined;
+  const claimedName = (resolveClaimedName(peerId) || trusted?.alias || "").trim() || undefined;
   const shortId = shortIdOf(signPublic ?? peerId);
   return {
     peerId,
@@ -160,7 +158,7 @@ function buildContact(
     trust: trustStatusOf(peer ?? null),
     nickname,
     claimedName,
-    displayName: nickname || claimedName || shortId,
+    displayName: nickname || claimedName || "",
     ambiguous: false,
     method: trusted?.method,
     personId: trusted?.personId,
@@ -168,6 +166,7 @@ function buildContact(
     lastSeen: Math.max(peer?.lastSeen ?? 0, trusted?.pairedAt ?? 0),
   };
 }
+
 
 /**
  * Aynı kişiye ait cihazları tek karta indirir: en son görülen cihaz
@@ -191,12 +190,14 @@ function collapsePersons(rows: Contact[]): Contact[] {
       // Ad yalnızca bir cihazda kayıtlıysa tüm karta yansısın.
       if (!primary.nickname) primary.nickname = linked.find((c) => c.nickname)?.nickname;
       if (!primary.claimedName) primary.claimedName = linked.find((c) => c.claimedName)?.claimedName;
-      primary.displayName = primary.nickname || primary.claimedName || primary.shortId;
+      primary.displayName = primary.nickname || primary.claimedName || "";
     }
     out.push(primary);
   }
-  return out;
+  // Adı gerçekten bilinmeyen kayıt listeye HİÇ yazılmaz (gizlenmez — oluşturulmaz).
+  return out.filter((c) => c.displayName.trim().length > 0);
 }
+
 
 /** Rehberi IndexedDB + yerel adlardan yeniden kurar. */
 export async function refreshContacts(): Promise<Contact[]> {
@@ -269,13 +270,22 @@ export function contactFor(peerId: string): Contact | undefined {
 
 /** Bir düğüm kimliği için gösterilecek ad — üç katmanın özeti. */
 export function contactLabel(peerId: string, fallbackAlias?: string): string {
+  // Tek kanal: kişi kimliği üzerinden takma ad → beyan adı → çağıranın ipucu.
+  const resolved = resolveNickname(peerId) || resolveClaimedName(peerId);
+  if (resolved) return resolved;
   const c = contactFor(peerId);
-  if (c) return c.displayName;
-  const nick = getNickname(peerId);
-  if (nick) return nick;
+  if (c?.displayName) return c.displayName;
   if (fallbackAlias?.trim()) return fallbackAlias.trim();
   return shortIdOf(peerId);
 }
+
+/** Kişi kimliğiyle (personId) de kart bulunabilsin. */
+export function contactForPerson(id: string): Contact | undefined {
+  return state.contacts.find(
+    (c) => c.peerId === id || c.personId === id || c.linkedNodes?.includes(id),
+  );
+}
+
 
 export function useContacts(): ContactsState {
   return useSyncExternalStore(

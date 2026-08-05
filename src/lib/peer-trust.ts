@@ -22,10 +22,15 @@ import { getPeer, putPeer, listPeers, type PeerRecord } from "@/lib/store/idb";
 
 export type TrustStatus = "unknown" | "auto" | "manual" | "changed";
 
+/**
+ * ROZET METİNLERİ — yalnızca üç durum gösterilir.
+ * "Bilinmiyor" rozeti kaldırıldı: rehberden gelen her kayıt zaten
+ * eşleşmiştir, çelişkili ikili etiket kalmaz.
+ */
 export const TRUST_LABEL: Record<TrustStatus, string> = {
-  unknown: "Bilinmiyor",
-  auto: "Otomatik",
-  manual: "Manuel onaylı",
+  unknown: "Rehberden eşleşti",
+  auto: "Rehberden eşleşti",
+  manual: "Elle doğrulandı",
   changed: "Parmak izi değişti",
 };
 

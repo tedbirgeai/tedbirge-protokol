@@ -25,6 +25,18 @@ export function CallHost() {
         bootCalls();
         await startNode();
         await chat.bootChat();
+        // Tek seferlik ama idempotent göç: kopya/hayalet kişi kayıtları
+        // tek kişide birleşir, adsız artıklar temizlenir.
+        try {
+          const merge = await import("@/lib/chat/merge");
+          await merge.mergePersonDuplicates();
+          await merge.pruneGhostContacts();
+          const { refreshContacts } = await import("@/lib/chat/contacts");
+          await refreshContacts();
+        } catch (error) {
+          const { logSync } = await import("@/lib/chat/sync-log");
+          logSync("uyarı", "kişi-birleştirme", String(error));
+        }
         // Cihaz değişse de numaradan bulunabilirlik korunur. Oturum soğuk
         // açılışta henüz yüklenmemişse auth olayı geldiğinde tekrar kaydedilir.
         const { supabase } = await import("@/integrations/supabase/client");
@@ -63,23 +75,30 @@ export function CallHost() {
           }
 
         };
-        await syncDirectory().catch((error) => console.error("[sync] açılış eşitlemesi başarısız", error));
+        await syncDirectory().catch(async (error) => {
+          const { logSync } = await import("@/lib/chat/sync-log");
+          const { friendlyError } = await import("@/lib/friendly-error");
+          logSync("hata", "açılış-eşitleme", friendlyError(error));
+        });
         // Otonom eşitleme: ön plana gelişte, ağ dönüşünde ve 6 saatte bir.
         const { startDirectorySync } = await import("@/lib/chat/enroll-queue");
         const stopSync = startDirectorySync();
         const auth = supabase.auth.onAuthStateChange((_event, session) => {
           if (session) {
-            void syncDirectory().catch((error) =>
-              console.error("[sync] oturum eşitlemesi başarısız", error),
-            );
+            void syncDirectory().catch(async (error) => {
+              const { logSync } = await import("@/lib/chat/sync-log");
+              const { friendlyError } = await import("@/lib/friendly-error");
+              logSync("hata", "oturum-eşitleme", friendlyError(error));
+            });
           }
         });
         unsubscribe = () => {
           stopSync();
           auth.data.subscription.unsubscribe();
         };
-      } catch {
-        /* tarayıcı kısıtlaması: sohbet sayfası yine de kendi başlatmasını yapar */
+      } catch (error) {
+        const { logSync } = await import("@/lib/chat/sync-log");
+        logSync("hata", "açılış", String(error));
       }
     })();
     return () => {
