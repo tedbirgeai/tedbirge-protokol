@@ -48,29 +48,43 @@ async function bump(clientHash: string, windowStart: Date, limit: number) {
   return true;
 }
 
-export async function checkApiRateLimit(scope: string, key: string): Promise<ApiRateLimitResult> {
+export type ApiRateLimitOptions = {
+  /** Dakikalık tavan (varsayılan 60). */
+  perMinute?: number;
+  /** Günlük tavan (varsayılan 20.000). */
+  perDay?: number;
+};
+
+export async function checkApiRateLimit(
+  scope: string,
+  key: string,
+  options: ApiRateLimitOptions = {},
+): Promise<ApiRateLimitResult> {
+  const perMinute = options.perMinute ?? WINDOW_LIMIT;
+  const perDay = options.perDay ?? DAILY_LIMIT;
   try {
     const hash = await sha256Hex(`${scope}:${key}`);
     const now = new Date();
 
-    if (!(await bump(`api:${hash}`, floorTo(now, WINDOW_MINUTES), WINDOW_LIMIT))) {
+    if (!(await bump(`api:${hash}`, floorTo(now, WINDOW_MINUTES), perMinute))) {
       return {
         ok: false,
         retryAfterSeconds: WINDOW_MINUTES * 60,
-        message: `rate_limited: dakikada en fazla ${WINDOW_LIMIT} istek gönderebilirsiniz.`,
+        message: `rate_limited: dakikada en fazla ${perMinute} istek gönderebilirsiniz.`,
       };
     }
 
     const dayStart = new Date(
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
     );
-    if (!(await bump(`api:${hash}:day`, dayStart, DAILY_LIMIT))) {
+    if (!(await bump(`api:${hash}:day`, dayStart, perDay))) {
       return {
         ok: false,
         retryAfterSeconds: 3600,
         message: "rate_limited: günlük istek kotası doldu.",
       };
     }
+
 
     return { ok: true };
   } catch (error) {
