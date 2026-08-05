@@ -137,13 +137,22 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
   }
 
   try {
-    const { getPhone } = await import("@/lib/chat/profile");
-    const phone = getPhone();
+    // Çıpa numarası: yerel oturum → profil → hesap. Yeni bir ortamda
+    // rehber yedeği bu numarayla otomatik geri yüklenir.
+    const { getAnchorPhone } = await import("@/lib/chat/anchor");
+    const phone = await getAnchorPhone();
     if (phone) {
       const vault = await import("@/lib/chat/vault");
       const restored = await vault.restoreContacts(phone).catch(() => 0);
-      if (restored > 0)
+      if (restored > 0) {
+        // Yedekten gelen cihaz rehberi varsa hemen eşleştirilir.
+        const book = loadLocalBook();
+        if (book.length > 0) {
+          const r = await importContacts(book);
+          return { ...r, source: "vault" };
+        }
         return { checked: restored, matched: restored, people: [], source: "vault" };
+      }
     }
   } catch {
     /* yedek yok */
