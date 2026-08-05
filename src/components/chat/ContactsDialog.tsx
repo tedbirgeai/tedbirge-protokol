@@ -247,6 +247,31 @@ function SyncContactsRow() {
       .finally(() => setBusy(false));
   };
 
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const onFile = (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    void importContactsFile(file)
+      .then((r) => {
+        if (r.checked === 0) {
+          setInfo(
+            "Dosya okunamadı. iPhone'da Kişiler > Tümünü paylaş > .vcf, Google'da contacts.google.com > Dışa aktar > CSV seçin.",
+          );
+          toast.error("Rehber dosyası tanınmadı");
+          return;
+        }
+        setPeople(r.people);
+        setInfo(`${r.checked} kişi okundu · ${r.matched} kişi Tedbirge'de bulundu.`);
+        toast.success("Rehber yüklendi");
+      })
+      .catch(() => setInfo("Rehber dosyası okunamadı, tekrar deneyin."))
+      .finally(() => {
+        setBusy(false);
+        if (fileRef.current) fileRef.current.value = "";
+      });
+  };
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
       <div className="min-w-0">
@@ -257,16 +282,36 @@ function SyncContactsRow() {
         </p>
       </div>
 
-      <Button size="sm" disabled={busy} onClick={runAuto}>
-        {busy ? "Eşitleniyor…" : "Şimdi eşitle"}
-      </Button>
+      <div className="flex shrink-0 gap-2">
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => fileRef.current?.click()}>
+          <Upload className="mr-1 h-4 w-4" /> Rehber dosyası yükle
+        </Button>
+        <Button size="sm" disabled={busy} onClick={runAuto}>
+          {busy ? "Eşitleniyor…" : "Şimdi eşitle"}
+        </Button>
+      </div>
 
-      <p className="w-full text-[11px] leading-relaxed text-muted-foreground">
-        Tüm rehberin otomatik gelmesi yalnızca Tedbirge mobil uygulamasında mümkündür (sistem
-        rehber izni). Android tarayıcıda seçtiğiniz kişiler, iPhone Safari ve masaüstünde ise bir
-        kez yüklediğiniz rehber dosyası (.vcf) kullanılır; sonrasında eşleştirme kendiliğinden
-        tazelenir.
-      </p>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".vcf,.csv,text/vcard,text/x-vcard,text/csv"
+        className="hidden"
+        onChange={(e) => onFile(e.target.files?.[0])}
+      />
+
+      <div className="w-full space-y-1 text-[11px] leading-relaxed text-muted-foreground">
+        <p>
+          Tüm rehberin kendiliğinden gelmesi yalnızca Tedbirge mobil uygulamasında mümkündür
+          (sistem rehber izni). Android tarayıcıda seçtiğiniz kişiler; iPhone ve masaüstünde bir kez
+          yüklediğiniz rehber dosyası kullanılır — sonrası otomatik tazelenir.
+        </p>
+        <p>
+          <strong>iPhone:</strong> Kişiler &gt; Listeler &gt; Tümünü seç &gt; Paylaş &gt; dosyayı
+          kaydet (.vcf). <strong>Google:</strong> contacts.google.com &gt; Dışa aktar &gt; CSV.
+          <strong> Outlook:</strong> Kişiler &gt; Yönet &gt; Kişileri dışa aktar (CSV).
+        </p>
+      </div>
+
 
       {people.length > 0 && (
         <ul className="w-full space-y-1 border-t border-border pt-3">
