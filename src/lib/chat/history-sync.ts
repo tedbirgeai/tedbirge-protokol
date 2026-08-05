@@ -36,8 +36,15 @@ const LAST_ERROR = "tedbirge.sync.lastError";
 
 /** Tek pakette taşınan en fazla mesaj sayısı (kota koruması). */
 const CHUNK_MESSAGES = 250;
+/** Sunucunun kabul ettiği en büyük şifreli paket (güvenlik payı ile). */
+const MAX_CIPHERTEXT = 850_000;
+/** Bir pakete konulacak en fazla düz metin karakteri. */
+const MAX_BATCH_CHARS = 450_000;
+/** Tek başına kasaya sığmayan mesaj eşiği (büyük medya). */
+const MAX_ITEM_CHARS = 400_000;
 /** Periyodik eşitleme aralığı. */
 const INTERVAL_MS = 5 * 60_000;
+
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
