@@ -647,10 +647,12 @@ export async function startConference(
     ).values(),
   ).slice(0, 5); // kendinizle birlikte en fazla 6 kişi
   if (!list.length) return;
+  const firstPeer = list[0];
+  if (!firstPeer) return;
   currentCallId = `${nodeSelf()}-${Date.now().toString(36)}`;
   publish({
     phase: "outgoing",
-    peerId: list[0]!.peerId,
+    peerId: firstPeer.peerId,
     peerAlias: title,
     video,
     error: null,

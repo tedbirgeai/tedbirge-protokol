@@ -23,7 +23,7 @@ export const PERSON_MAP_KEY = "tedbirge.chat.personMap";
  * noktalama ve gereksiz boşluk farkları aynı kişiyi ayrı satıra bölmez.
  */
 export function normalizedPersonName(value: string | undefined | null): string {
-  return (value ?? "")
+  const normalized = (value ?? "")
     .trim()
     .toLocaleLowerCase("tr")
     .normalize("NFD")
@@ -32,6 +32,12 @@ export function normalizedPersonName(value: string | undefined | null): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+  // Eski sürümler cihaz türünü kişi adının önüne ekliyordu. Bu etiketler
+  // kimliğin parçası değildir; "Bilgisayar Mehmet Dinç" ile "Mehmet Dinç"
+  // aynı rehber kişisidir.
+  return normalized
+    .replace(/^(bilgisayar|masaustu|desktop|telefon|cep telefonu|iphone|ipad|tablet|mobil)\s+/, "")
+    .trim();
 }
 
 export function readMap(key: string): Record<string, string> {

@@ -154,7 +154,12 @@ async function mergeDuplicates(rows: Conversation[]): Promise<Conversation[]> {
       survivors.push(c);
       continue;
     }
-    survivors[idx] = fold(survivors[idx]!, c);
+    const survivor = survivors[idx];
+    if (!survivor) {
+      survivors.push(c);
+      continue;
+    }
+    survivors[idx] = fold(survivor, c);
     dropped.push({ survivorIndex: idx, drop: c });
   }
   if (!dropped.length) return rows;
@@ -164,7 +169,10 @@ async function mergeDuplicates(rows: Conversation[]): Promise<Conversation[]> {
     for (const m of await listMessages(drop.id)) await putMessage({ ...m, convId: survivor.id });
     await idbDeleteConversation(drop.id);
   }
-  for (const { survivorIndex } of dropped) await putConversation(survivors[survivorIndex]!);
+  for (const { survivorIndex } of dropped) {
+    const survivor = survivors[survivorIndex];
+    if (survivor) await putConversation(survivor);
+  }
   return await listConversations();
 }
 
