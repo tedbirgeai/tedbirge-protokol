@@ -27,10 +27,12 @@ export function CallHistory({ onCall }: { onCall: (peerId: string, video: boolea
   const [rows, setRows] = useState<CallRecord[]>([]);
 
   useEffect(() => {
-    const sync = () => setRows(listCalls());
+    // Adı çözülemeyen kayıt listede hiç görünmez (hayalet satır yasağı).
+    const sync = () => setRows(listCalls().filter((r) => isNamedPeer(r.peerId)));
     sync();
     return onCallLogChange(sync);
   }, []);
+
 
   if (rows.length === 0) {
     return (
