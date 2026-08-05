@@ -110,10 +110,25 @@ export type AutoSyncResult = ImportResult & { source: "device" | "saved" | "vaul
  * Yalnızca üçü de boşsa arayüz dosya seçimine düşer.
  */
 export async function autoSyncContacts(): Promise<AutoSyncResult> {
+  // (0) Yerel iOS/Android uygulaması: sistem rehber izniyle tüm kişiler
+  // arka planda okunur — kullanıcı hiçbir seçim yapmaz (WhatsApp modeli).
+  try {
+    const { readNativeContacts } = await import("@/lib/chat/native-contacts");
+    const native = await readNativeContacts();
+    if (native && native.length > 0) {
+      saveLocalBook(native);
+      const r = await importContacts(native);
+      return { ...r, source: "device" };
+    }
+  } catch {
+    /* yerel kabuk yok */
+  }
+
   if (deviceContactsSupported()) {
     const r = await syncDeviceContacts();
     if (r && r.checked > 0) return { ...r, source: "device" };
   }
+
 
   const saved = loadLocalBook();
   if (saved.length > 0) {

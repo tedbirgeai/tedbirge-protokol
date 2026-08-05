@@ -160,9 +160,10 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
                   setSyncInfo(
                     deviceContactsSupported()
                       ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
-                      : "Bu cihazın tarayıcısı otomatik rehber erişimini desteklemiyor. Dosya penceresi açılmadı.",
+                      : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
                   );
                   return;
+
                 }
                 setSyncInfo(`${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`);
               })().catch(() => setSyncInfo("Rehber eşitlenemedi.")).finally(() => setSyncing(false));
