@@ -40,6 +40,22 @@ export function normalizedPersonName(value: string | undefined | null): string {
     .trim();
 }
 
+/**
+ * Görünür ad temizliği: cihaz etiketleri ("Bilgisayar Mehmet Dinç",
+ * "Telefon Türkan Dinç") kişinin adı değildir; kart adı tek biçim olur.
+ * Büyük/küçük harf ve Türkçe karakterler korunur.
+ */
+export function cleanPersonLabel(value: string | undefined | null): string {
+  const raw = (value ?? "").trim().replace(/\s+/g, " ");
+  if (!raw) return "";
+  const stripped = raw.replace(
+    /^(bilgisayar|masaüstü|masaustu|desktop|telefon|cep telefonu|iphone|ipad|tablet|mobil)\s+/i,
+    "",
+  );
+  return stripped.trim() || raw;
+}
+
+
 export function readMap(key: string): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
