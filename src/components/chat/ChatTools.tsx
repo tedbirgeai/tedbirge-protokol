@@ -1,5 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { Lock, Search, ShieldCheck, Timer, X, Download, Upload, Bell } from "lucide-react";
+import {
+  Lock,
+  Search,
+  ShieldCheck,
+  Timer,
+  X,
+  Download,
+  Upload,
+  Bell,
+  Smartphone,
+} from "lucide-react";
+import { getPrivacy, setPrivacy } from "@/lib/chat/privacy";
+import {
+  listSessions,
+  onSessionsChange,
+  revokeSession,
+  type DeviceSession,
+} from "@/lib/chat/sessions";
 import { createBackup, downloadBackup, restoreBackup } from "@/lib/chat/backup";
 import {
   autoLockMinutes,
@@ -680,10 +697,10 @@ function DeviceSessionsSection() {
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-medium">{sx.label}</span>
               <span className="block text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                {sx.current ? "Bu cihaz" : `Son etkin: ${new Date(sx.lastSeen).toLocaleString("tr-TR")}`}
+                {sx.self ? "Bu cihaz" : `Son etkin: ${new Date(sx.lastSeen).toLocaleString("tr-TR")}`}
               </span>
             </span>
-            {!sx.current && (
+            {!sx.self && (
               <button
                 type="button"
                 onClick={() => {
