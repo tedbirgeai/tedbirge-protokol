@@ -78,6 +78,7 @@ const TRANSIENT_KINDS = new Set<EnvelopeKind>([
   "pong",
   "signal",
   "presence",
+  "session",
 ]);
 
 /**
@@ -137,7 +138,7 @@ export function setMeshAppHandler(fn: MeshAppHandler | null) {
 }
 
 /** Uygulama katmanına iletilecek paket türleri. */
-const APP_KINDS: EnvelopeKind[] = ["chat", "receipt", "call", "media", "sync", "presence", "text", "alert"];
+const APP_KINDS: EnvelopeKind[] = ["chat", "receipt", "call", "media", "sync", "presence", "session", "text", "alert"];
 
 export type PeerInfo = {
   nodeId: string;
