@@ -1268,7 +1268,11 @@ export function ChatApp() {
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
-                  <Avatar name={name} />
+                  <Avatar
+                    name={name}
+                    src={c.group ? undefined : getAvatar(c.members[0])}
+                  />
+
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <p
