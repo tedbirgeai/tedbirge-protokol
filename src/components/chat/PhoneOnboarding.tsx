@@ -255,6 +255,7 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   async function finish(verifiedPhone: string | null) {
     setAlias(name.trim() || verifiedPhone || "Ben");
     if (verifiedPhone) setPhone(verifiedPhone);
+    setEmail(email);
     void ensureNotificationPermission();
     if (!verifiedPhone) return;
     try {
