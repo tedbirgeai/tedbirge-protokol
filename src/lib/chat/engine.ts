@@ -55,7 +55,7 @@ import {
   isNameExchange,
   requestNameFrom,
 } from "@/lib/chat/name-exchange";
-import { resolveDisplayName } from "@/lib/chat/name-resolver";
+import { nameKeyOf, normalizedPersonName, resolveDisplayName } from "@/lib/chat/name-resolver";
 
 
 export type ChatState = {
@@ -111,8 +111,8 @@ function saveAliases(map: Record<string, string>) {
  */
 function identityKey(c: Conversation): string {
   const peer = c.members[0] ?? "";
-  const name = (state.aliases[peer] || c.title || peer).trim().toLocaleLowerCase("tr");
-  return name || peer;
+  const name = normalizedPersonName(resolveDisplayName(peer) || state.aliases[peer] || c.title);
+  return name ? `name:${name}` : `person:${nameKeyOf(peer) || peer}`;
 }
 
 /** İki konuşma aynı kişiye mi ait? (ortak cihaz kimliği ya da aynı ad) */
@@ -154,16 +154,25 @@ async function mergeDuplicates(rows: Conversation[]): Promise<Conversation[]> {
       survivors.push(c);
       continue;
     }
-    survivors[idx] = fold(survivors[idx]!, c);
+    const survivor = survivors[idx];
+    if (!survivor) {
+      survivors.push(c);
+      continue;
+    }
+    survivors[idx] = fold(survivor, c);
     dropped.push({ survivorIndex: idx, drop: c });
   }
   if (!dropped.length) return rows;
   for (const { survivorIndex, drop } of dropped) {
-    const survivor = survivors[survivorIndex]!;
+    const survivor = survivors[survivorIndex];
+    if (!survivor) continue;
     for (const m of await listMessages(drop.id)) await putMessage({ ...m, convId: survivor.id });
     await idbDeleteConversation(drop.id);
   }
-  for (const { survivorIndex } of dropped) await putConversation(survivors[survivorIndex]!);
+  for (const { survivorIndex } of dropped) {
+    const survivor = survivors[survivorIndex];
+    if (survivor) await putConversation(survivor);
+  }
   return await listConversations();
 }
 
@@ -253,9 +262,9 @@ async function resolveDirectConversation(from: string, alias?: string): Promise<
   const rows = await listConversations();
   const byMember = rows.find((c) => !c.group && c.members.includes(from));
   if (byMember) return byMember;
-  const name = (alias ?? state.aliases[from] ?? "").trim().toLocaleLowerCase("tr");
+  const name = normalizedPersonName(alias ?? resolveDisplayName(from) ?? state.aliases[from]);
   if (name) {
-    const match = rows.find((c) => !c.group && identityKey(c) === name);
+    const match = rows.find((c) => !c.group && identityKey(c) === `name:${name}`);
     if (match) {
       const merged = { ...match, members: Array.from(new Set([...match.members, from])) };
       await putConversation(merged);

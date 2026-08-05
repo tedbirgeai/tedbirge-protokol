@@ -136,7 +136,7 @@ export function groupByPerson<T extends { peerId: string; personId?: string; las
  */
 export async function mergePersonDuplicates(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  const { linkNodeToPerson, resolveDisplayName, writeNickname } = await import(
+  const { linkNodeToPerson, normalizedPersonName, resolveDisplayName, writeNickname } = await import(
     "@/lib/chat/name-resolver"
   );
   const [trusted, peers] = await Promise.all([
@@ -150,8 +150,10 @@ export async function mergePersonDuplicates(): Promise<number> {
   const buckets = new Map<string, TrustedRow[]>();
   for (const node of trusted) {
     const signKey = keyOf.get(node.nodeId);
-    const name = (resolveDisplayName(node.nodeId) || node.alias || "").trim().toLocaleLowerCase("tr");
-    const key = node.personId || (signKey ? `k:${signKey}` : name ? `n:${name}` : `s:${node.nodeId}`);
+    const name = normalizedPersonName(resolveDisplayName(node.nodeId) || node.alias || "");
+    // Görünür adı bulunan eski kayıtlar önce ad üzerinden birleşir. Böylece
+    // geçmişte hatalı üretilmiş farklı personId değerleri aynı kişiyi çoğaltmaz.
+    const key = name ? `n:${name}` : node.personId || (signKey ? `k:${signKey}` : `s:${node.nodeId}`);
     const bucket = buckets.get(key);
     if (bucket) bucket.push(node);
     else buckets.set(key, [node]);
@@ -164,7 +166,8 @@ export async function mergePersonDuplicates(): Promise<number> {
       bucket.find((n) => n.personId)?.personId ??
       (key.startsWith("k:") || key.startsWith("n:") || key.startsWith("s:") ? "" : key);
     const sorted = [...bucket].sort((a, b) => (b.pairedAt ?? 0) - (a.pairedAt ?? 0));
-    const primary = sorted[0]!;
+    const primary = sorted[0];
+    if (!primary) continue;
     const anchor = personId || primary.nodeId;
     const name =
       bucket.map((n) => resolveDisplayName(n.nodeId) || n.alias || "").find((v) => v.trim()) ?? "";
