@@ -194,6 +194,90 @@ export function parseVcards(text: string): DeviceContact[] {
   return out;
 }
 
+/** Basit CSV satır çözümleyici (tırnak içindeki virgülleri korur). */
+function csvRow(line: string, sep: string): string[] {
+  const cells: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i]!;
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') {
+        cur += '"';
+        i += 1;
+      } else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === sep) {
+      cells.push(cur);
+      cur = "";
+    } else cur += ch;
+  }
+  cells.push(cur);
+  return cells.map((c) => c.trim());
+}
+
+/**
+ * Google Kişiler / Outlook CSV dışa aktarımı çözümleyici.
+ * Ad sütunu "name" içeren ilk sütun, numara sütunu "phone"/"tel"
+ * içeren tüm sütunlardır. Dosya cihazda okunur, ağa gönderilmez.
+ */
+export function parseContactsCsv(text: string): DeviceContact[] {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const sep = (lines[0]!.match(/;/g)?.length ?? 0) > (lines[0]!.match(/,/g)?.length ?? 0) ? ";" : ",";
+  const head = csvRow(lines[0]!, sep).map((h) => h.toLowerCase());
+  const nameCols = head
+    .map((h, i) => (/name|ad|isim/.test(h) && !/file|nick|user/.test(h) ? i : -1))
+    .filter((i) => i >= 0);
+  const phoneCols = head
+    .map((h, i) => (/phone|tel|mobil|numara|gsm/.test(h) && !/type|label/.test(h) ? i : -1))
+    .filter((i) => i >= 0);
+  if (phoneCols.length === 0) return [];
+
+  const out: DeviceContact[] = [];
+  for (const line of lines.slice(1)) {
+    const cells = csvRow(line, sep);
+    const name = nameCols
+      .map((i) => cells[i] ?? "")
+      .find((v) => v.trim())
+      ?.trim();
+    for (const i of phoneCols) {
+      for (const raw of (cells[i] ?? "").split(/[:;/]| ::: /)) {
+        const phone = normalizePhone(raw.trim());
+        if (phone) out.push({ name: name || phone, phone });
+      }
+    }
+  }
+  return out;
+}
+
+/** Dosya adına/içeriğine göre doğru çözümleyiciyi seçer. */
+export function parseContactsFile(fileName: string, text: string): DeviceContact[] {
+  if (/BEGIN:VCARD/i.test(text)) return parseVcards(text);
+  if (/\.csv$/i.test(fileName) || /[,;]/.test(text.split(/\r?\n/)[0] ?? "")) {
+    return parseContactsCsv(text);
+  }
+  return [];
+}
+
+/**
+ * Rehber dosyasını okur, cihazda saklar ve eşleştirir.
+ * Ham numara/ad hiçbir zaman ağa çıkmaz.
+ */
+export async function importContactsFile(file: File): Promise<ImportResult> {
+  const text = await file.text();
+  const parsed = parseContactsFile(file.name, text);
+  if (parsed.length === 0) return { checked: 0, matched: 0, people: [] };
+  const merged = new Map<string, DeviceContact>();
+  for (const c of [...loadLocalBook(), ...parsed]) merged.set(c.phone, c);
+  const all = Array.from(merged.values());
+  saveLocalBook(all);
+  const result = await importContacts(all);
+  return { ...result, checked: parsed.length };
+}
+
+
 /**
  * Kişileri eşleştirir ve bulunanları yerel rehbere ekler.
  * Rehberdeki ad yerel kalır; ağa gönderilmez.

@@ -143,9 +143,20 @@ zamanlayıcı ve üstel geri çekilme ile işlenir.
 | --- | --- | --- |
 | Tedbirge mobil uygulaması (iOS/Android) | Sistem rehber izni | Tüm rehber otomatik okunur, yarım saatte bir sessizce tazelenir |
 | Android tarayıcı / PWA | Kişi seçici (Contact Picker) | Seçilen kişiler okunur, sonra otomatik yeniden eşleştirilir |
-| iPhone Safari ve masaüstü | Rehber dosyası (.vcf) | Bir kez yüklenir, sonra otomatik yeniden eşleştirilir |
+| iPhone Safari ve masaüstü | Rehber dosyası (.vcf veya CSV) | Bir kez yüklenir, sonra otomatik yeniden eşleştirilir |
+
+Rehber dosyası nasıl dışa aktarılır:
+
+- **iPhone:** Kişiler > Listeler > Tümünü seç > Paylaş > dosyayı kaydet (`.vcf`).
+- **Google Kişiler:** contacts.google.com > Dışa aktar > **CSV**.
+- **Outlook:** Kişiler > Yönet > Kişileri dışa aktar (`CSV`).
+
+Dosya uygulamada **Rehber > Rehber dosyası yükle** ile seçilir; hem vCard hem
+CSV okunur, kişiler cihazda saklanır ve aynı dosya iki kez yüklense bile kopya
+kişi oluşmaz.
 
 Her üç kanalda da ham numara ve ad cihazdan çıkmaz; sunucuya yalnızca geri
 döndürülemez SHA-256 özeti gider (KVKK). Tam otomatik rehber yalnızca yerel
 uygulama kabuğuyla mümkündür — `npx cap sync` ile kabuğu derleyip cihaza
 yükledikten sonra ilk açılışta rehber izni istenir.
+
