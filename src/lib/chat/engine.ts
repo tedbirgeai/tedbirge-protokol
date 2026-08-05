@@ -204,10 +204,32 @@ export async function purgeStaleConversations(force = false): Promise<number> {
   return removed;
 }
 
+/** Veri değişti: cihazlar arası eşitleme kısa gecikmeyle tetiklenir. */
+let syncEcho = 0;
+function touchSync() {
+  if (typeof window === "undefined") return;
+  const now = Date.now();
+  if (now - syncEcho < 1_000) return;
+  syncEcho = now;
+  window.dispatchEvent(new CustomEvent("tedbirge:chat-changed"));
+}
+
 async function refreshConversations() {
   const rows = await mergeDuplicates(await listConversations());
   publish({ conversations: rows });
+  touchSync();
 }
+
+/** Tüm listeleri ve açık sohbetleri yeniden yükler (eşitleme sonrası). */
+export async function refreshAll(): Promise<void> {
+  const rows = await mergeDuplicates(await listConversations());
+  publish({ conversations: rows });
+  for (const convId of Object.keys(state.messages)) {
+    const msgs = await listMessages(convId);
+    publish({ messages: { ...state.messages, [convId]: msgs } });
+  }
+}
+
 
 /**
  * Gelen bir eş için doğru konuşmayı bulur: kimlik yeni olsa bile aynı takma
