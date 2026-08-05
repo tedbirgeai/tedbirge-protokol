@@ -269,6 +269,7 @@ async function resolveDirectConversation(from: string, alias?: string): Promise<
 async function refreshMessages(convId: string) {
   const rows = await listMessages(convId);
   publish({ messages: { ...state.messages, [convId]: rows } });
+  touchSync();
 }
 
 /* --------------------------- konuşma yönetimi --------------------------- */
@@ -1454,6 +1455,8 @@ export async function bootChat() {
     });
   });
   bootBackupTransfer();
+  // Cihazlar arası şifreli sohbet eşitlemesi (otomatik, kullanıcı müdahalesiz).
+  void import("@/lib/chat/history-sync").then((m) => m.startHistorySync());
   // Kaybolan mesajlar: açılışta ve her dakika süresi dolanlar silinir.
   void sweepEphemeral();
   setInterval(() => void sweepEphemeral(), 60_000);
