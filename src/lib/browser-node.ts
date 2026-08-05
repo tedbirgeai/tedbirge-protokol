@@ -1001,6 +1001,15 @@ export class BrowserNode {
       if (maybe?.t === "hello" && maybe.nodeId && maybe.spk && maybe.bpk) {
         const { fingerprintOfKey } = await import("@/lib/crypto/identity");
         const fingerprint = fingerprintOfKey(maybe.spk);
+        // Cihaz → kişi bağı: aynı kişinin farklı cihazları rehberde tek kart olur.
+        if (maybe.pid && maybe.pid !== maybe.nodeId) {
+          try {
+            const { linkNodeToPerson } = await import("@/lib/chat/name-resolver");
+            linkNodeToPerson(maybe.nodeId, maybe.pid);
+          } catch {
+            /* eşleme yazılamadı: teslim etkilenmez */
+          }
+        }
         // TOFU: anahtar sabitlenir; değiştiyse "changed" uyarısı üretilir.
         const trust = await observePeerKey({
           peerId: maybe.nodeId,
