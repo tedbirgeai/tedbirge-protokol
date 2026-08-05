@@ -83,12 +83,18 @@ export async function logCall(input: Omit<CallRecord, "id" | "ts">): Promise<Cal
   };
   write([rec, ...read()]);
   try {
+    // HAYALET SATIR ÖNLEME: adı çözülemeyen eş için sohbet AÇILMAZ.
+    // Kayıt yalnızca arama geçmişinde durur; ad sonradan öğrenilirse
+    // bir sonraki aramada sohbet gerçek adıyla oluşur.
+    const { resolveDisplayName } = await import("@/lib/chat/name-resolver");
+    if (!rec.convId && !resolveDisplayName(rec.peerId).trim()) return rec;
     const { addSystemMessage, ensureDirectConversation } = await import("@/lib/chat/engine");
     const convId = rec.convId ?? (await ensureDirectConversation(rec.peerId)).id;
     await addSystemMessage(convId, callSummary(rec));
   } catch {
     /* sohbet henüz yoksa yalnızca geçmişte durur */
   }
+
   return rec;
 }
 
