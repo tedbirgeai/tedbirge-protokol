@@ -78,6 +78,7 @@ const COUNTRIES: { code: string; flag: string; name: string }[] = [
 export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<Step>("phone");
   const [name, setName] = useState("");
+  const [email, setEmailInput] = useState("");
   const [dial, setDial] = useState("90");
   const [phone, setPhoneInput] = useState("");
   const [code, setCode] = useState("");
@@ -87,6 +88,11 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [shownCode, setShownCode] = useState("");
   const [ttl, setTtl] = useState(30);
   const [online, setOnline] = useState(true);
+  // Katılım sonrası gösterilen kalıcı kimlik kartı.
+  const [myShortId, setMyShortId] = useState("");
+  const [myQr, setMyQr] = useState<string | null>(null);
+  const [restored, setRestored] = useState(0);
+
 
   const e164 = normalizePhone(phone, dial);
 
