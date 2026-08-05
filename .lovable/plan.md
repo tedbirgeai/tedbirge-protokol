@@ -1,69 +1,52 @@
-## TEDBİRGE GATEWAY — NİHAİ UYGULAMA VE MİMARİ PLANI
+# Tedbirge — Teslimat Hattının Kalıcı Onarımı
 
-Hiçbir dosya değiştirilmedi. Aşağıdaki plan, onayınız sonrası uygulanacak sıralamadır.
+Uygulamanın "hiçbir şey gitmiyor" hâlinin kanıtlanmış tek bir ana nedeni var; onu kapatmadan diğer şikâyetleri (mükerrer kişi, konferans) doğru değerlendirmek mümkün değil. Bu plan önce kök nedeni kapatır, sonra görünür kusurları sırayla temizler.
 
-### Faz 0 — Temel: Kalıcı depolama katmanı
-Yeni `src/lib/store/idb.ts`: IndexedDB sarmalayıcı (harici bağımlılık yok, `indexedDB` API doğrudan).
-Nesne depoları:
-```text
-outbox   (key: pktId)  — gönderilmeyi bekleyen zarflar, index: priority, ts
-inbox    (key: pktId)  — görülen paket kimlikleri (mükerrer engelleme), TTL 30 gün
-keys     (key: nodeId) — non-extractable CryptoKey nesneleri
-peers    (key: peerId) — genel anahtar, parmak izi, son görülme
-events   (key: autoinc)— kesinti/olay günlüğü, saha ölçümleri
-```
-`localStorage` kuyruğu tek seferlik göç ile taşınır (`browser-node.ts` içindeki 200 paketlik dizi okunur, IndexedDB'ye yazılır, anahtar silinir). Hedef: 30 gün off-grid, ~50k paket.
+## Doğrulanan kök neden
 
-**Öncelik tabanlı budama** (`src/lib/store/pruning.ts`): her paket `priority: 0=acil/güvenlik, 1=kontrol, 2=mesaj, 3=telemetri`. Kota %85'i aşınca sondan (3 → 2) ve en eskiden başlayarak budanır; 0 ve 1 asla silinmez. Kota `navigator.storage.estimate()` ile ölçülür, `navigator.storage.persist()` istenir.
+Canlı ağ kayıtlarında `/api/public/relay` isteklerinin tamamı **429 (rate_limited)** dönüyor. Nedeni:
 
-### Faz 1 — Kriptografi çekirdeği
-`src/lib/e2ee.ts` genişletilir (mevcut ECDH+AES-GCM korunur, kırılma yok):
-- **Kimlik anahtarı**: Ed25519 (`crypto.subtle` destekliyorsa; yoksa ECDSA P-256'ya düşer) — imzalama.
-- **Şifreleme anahtarı**: ECDH P-256 → AES-256-GCM (mevcut). ChaCha20 tarayıcıda yok; AES-GCM donanım hızlandırmalı olduğu için standart bu kalır, ajan tarafında ChaCha20-Poly1305 kabul edilir (alg alanı ile müzakere).
-- `extractable: false` üretim; anahtarlar IndexedDB `keys` deposunda CryptoKey olarak saklanır. `localStorage` anahtar saklama kaldırılır (göç: mevcut anahtar bir kez içe aktarılıp non-extractable kopyaya çevrilir).
-- **Seed phrase**: yeni `src/lib/recovery.ts` — 128-bit entropi → BIP-39 kelime listesi (yerel liste, offline), HKDF ile deterministik anahtar türetimi. Kurtarma ekranında 12 kelime bir kez gösterilir, doğrulama adımı ile onaylanır.
-- **Parmak izi**: mevcut `fingerprintOf` kullanılır; UI'da opsiyonel manuel eşleştirme.
+- Sunucu tarafı sınır **IP başına dakikada 60 istek** (`src/lib/api-rate-limit.server.ts`). Aynı ev/ofis ağındaki tüm cihazlar, hatta aynı cihazın sekmeleri, tek kotayı paylaşıyor.
+- İstemci bu kotayı saniyeler içinde tüketiyor: `browser-node.ts` içinde kuyruk 12 saniyede bir tamamen yeniden deneniyor ve **her paket için** `resolveDevices()` çağrılıyor. Her gönderim denemesi 2 ayrı yol (gerçek zamanlı + röle) üzerinden ayrı `lookup` isteği üretiyor, önbellek yok.
+- 429 yanıtı istemcide "başarısız" sayılıp geri çekilme (backoff) uygulanmadan tekrar deneniyor — kendi kendini besleyen bir döngü.
 
-### Faz 2 — MeshEnvelope v2 (E2EE zarf)
-`src/lib/mesh-envelope.ts` (yeni), tüm taşıyıcılar için ortak biçim:
-```text
-header (açık): v, pktId, from, to, kind, ttl, hops, lamport, ts, sig
-body   (kapalı): { alg, epk, iv, ct }   ← yalnız hedef açar
-```
-- `pktId = SHA-256(from ‖ lamport ‖ body.ct)` → idempotency anahtarı; `inbox`'ta varsa paket düşürülür.
-- `lamport`: yerel mantıksal saat, her gönderim/alımda `max(local, gelen)+1`; duvar saati yalnız gösterim amaçlı.
-- `sig`: header + body hash'inin Ed25519 imzası. İmza doğrulanmayan paket röle EDİLMEZ.
-- Röle davranışı: header okunur, `ttl--`, yeniden imzalanmaz (orijinal imza taşınır), body'e dokunulmaz.
-`browser-node.ts` ve `install.sh` ajan protokolü bu biçime geçirilir; sunucu (`api/public/queue.ts`, `telemetry.ts`) yalnız opak `body` taşır, doğrulama header üzerinden yapılır.
+Sonuç: mesaj, arama daveti, rehber eşitlemesi hiçbiri karşıya ulaşmıyor. Bu düzeltilmeden yapılan her test yanıltıcı.
 
-### Faz 3 — PHY veri düzlemi (LoRa/HaLow taşıma)
-`src/lib/carrier-bridge.ts` içine **paket zamanlayıcı** eklenir (`src/lib/carrier-scheduler.ts`):
-- Fiziksel çerçeve limiti: LoRa yükü ≤ 200 bayt → zarflar parçalanır (`frag: i/n`, hedefte yeniden birleştirme, eksik parça 30 dk sonra düşer).
-- **Duty-cycle kilidi**: kayan 60 dk penceresinde toplam yayın süresi ≥ 36 s ise (%1) kuyruk bekletilir; süre, spreading factor + bant genişliği + bayt sayısından hesaplanan Time-on-Air ile ölçülür. Güç tavanı 25 mW (14 dBm) — modem yapılandırma komutu bu değerin üstünü reddeder. Sınırlar `regulation.ts` içinden okunur, sabit yazılmaz; bölge değişirse tek kaynaktan değişir.
-- Bütçe dolduğunda yalnız priority 0/1 paketleri geçer, telemetri beklemeye alınır. UI'da "duty-cycle bütçesi: %x, sonraki pencere: hh:mm" göstergesi.
-- Taşıyıcı seçimi: IP varsa WebSocket/WebRTC; koptuğunda sırayla HaLow → Wi-Fi yönlü → LoRa. Geri dönüşte kuyruk otomatik boşalır.
+## Yapılacak işler
 
-### Faz 4 — Keşif ve NAT
-- Tarayıcı: `/katil` captive portal + yerel röle köprüsü (aynı LAN'daki düğüm, sunucusuz WebRTC el sıkışması için QR/kısa kod takası).
-- Ajan (`install.sh`): mDNS/DNS-SD ile gerçek yerel keşif; tarayıcı ajana ws://localhost üzerinden bağlanır.
-- TURN yok. Simetrik NAT'ta, kamuya açık IP'li Tedbirge düğümleri `egress` bayrağıyla ilan edilir ve dağıtık röle olur; egress düğüm de body'i okuyamaz (Faz 2 garantisi).
+### 1. Röle trafiğini kotanın altına indir (öncelik)
+- `resolveDevices` sonuçları için cihaz-içi önbellek (TTL ~5 dk, başarısızlıkta kısa TTL); aynı hedef için saniyede tekrar tekrar `lookup` atılmaz.
+- Kuyruk boşaltmada hedef başına tek çözümleme, paketler tek `push` isteğinde toplu gönderilir.
+- 429 yanıtında istemci genelinde geri çekilme: `Retry-After` süresince tüm röle çağrıları duraklar, üstel artışla tekrar denenir; kullanıcıya "Bağlantı yoğun, birazdan yeniden denenecek" tek cümlelik Türkçe uyarı ve eşitleme günlüğü kaydı.
+- Kuyruk yeniden deneme aralığı sabit 12 sn yerine üstel (12 sn → 2 dk) ve yalnız gerçekten bekleyen paket varsa çalışır.
 
-### Faz 5 — Arayüz (mevcut tasarım ve palet korunur)
-- `BrowserNodeCard`: "Kurtarma anahtarı" adımı (12 kelime), duty-cycle göstergesi, kuyruk doluluk çubuğu.
-- `CarrierBridgeCard`: taşıyıcı başına "veri düzlemi aktif / yalnız telemetri" rozeti ve yayın bütçesi.
-- Panel > Güvenlik: eş parmak izi listesi, manuel doğrulama, imzasız paket sayacı.
-- `/guvenlik` ve `/gizlilik`: "röleler içeriği göremez" beyanı artık teknik gerçeği yansıttığı için doğrulanabilir ifadeyle güncellenir (KVKK: röle düğümde kişisel veri işlenmez).
+### 2. Sunucu sınırını doğru ölçeğe taşı
+- `relay` kapsamı için sınır IP yerine **düğüm kimliği** başına uygulanır; IP başına yalnız kötüye kullanımı durduracak yüksek bir tavan kalır.
+- `lookup` gibi salt-okunur eylemler için ayrı ve daha geniş kota; `push`/`pull` için ayrı kota.
+- 429 yanıtına `Retry-After` başlığı eklenir (istemcinin geri çekilmesi buna dayanır).
 
-### Teknik notlar / riskler
-- Ed25519 WebCrypto desteği tarayıcıya göre değişir; ECDSA P-256 yedeği zorunlu, alg alanı zarfta taşınır.
-- IndexedDB kotası tarayıcı/cihaza bağlıdır; 30 gün hedefi budama politikası ile garanti edilir, ham kapasite ile değil.
-- Web Serial yalnız masaüstü Chromium'da; mobilde LoRa veri düzlemi BLE köprüsü veya ajan üzerinden çalışır, iOS'ta çalışmaz — UI bunu açıkça yazar.
-- Duty-cycle hesabı gerçek modem geri bildirimiyle (TX süre raporu) çapraz kontrol edilir; sapma varsa yazılım tavanı daha muhafazakâr kalır.
+### 3. İki yönlü teslimin kanıtlanması
+- Playwright ile iki ayrı profil: A→B ve B→A metin mesajı, fotoğraf, sesli ve görüntülü arama daveti.
+- Her senaryoda hangi kanaldan (mesh / gerçek zamanlı / röle) teslim edildiği eşitleme günlüğünden okunur ve rapora yazılır.
+- 429 sayısının sıfır olduğu ağ kaydıyla doğrulanır.
 
-### Uygulama sırası ve doğrulama
-1. Faz 0 → 1 → 2 (çekirdek, geriye dönük uyumlu; eski zarf 30 gün kabul edilir)
-2. Faz 3 → 4 (taşıma)
-3. Faz 5 (arayüz)
-Her fazda: birim testleri (zarf imza/açma, budama, duty-cycle bütçesi), tarayıcı üzerinden uçtan uca senaryo (çevrimdışı → kuyruk → geri dönüş), tip kontrolü.
+### 4. Mükerrer kişi kaydının kalıcı çözümü
+- Rehber birleştirmesi şu an ada göre çalışıyor; aynı kişinin farklı cihazları farklı `personId` ile kaldığında ayrı kart oluşuyor.
+- Birleştirme anahtarı numara-çıpalı `personId` önceliğine alınır; ad yalnız ikincil ipucu olur.
+- Açılışta tek seferlik göç: mevcut mükerrer kayıtlar tek karta indirilir, eski kayıtlar silinmez, bağlı cihaz olarak eklenir.
+- Testte 5 kişi / 3 cihaz senaryosu ile tek kart doğrulanır.
 
-Onayınız sonrası Faz 0'dan başlayarak uygulamaya geçilecektir.
+### 5. Konferans (sesli/görüntülü) tamamlanması
+- Çekirdek `startConference` var; eksik olan arayüz ve oda yönetimi: ortak oda kimliği, davetle geç katılım, katılımcı ızgarası, mikrofon/kamera durumu, katılımcı çıkarma, düşen katılımcının otomatik yeniden bağlanması.
+- Üç profil ile senaryo: üç kişilik konferans, biri geç katılıyor, biri düşüp geri dönüyor.
+
+### 6. Teslim ölçütü
+`tsgo --noEmit` 0 hata, tüm testler yeşil, her madde için ekran görüntülü veya günlük çıktılı kanıt. Kanıtsız madde teslim sayılmaz.
+
+## Teknik notlar
+
+Dokunulacak dosyalar: `src/lib/browser-node.ts`, `src/lib/relay-cloud.ts`, `src/routes/api/public/relay.ts`, `src/lib/api-rate-limit.server.ts`, `src/lib/chat/contacts.ts`, `src/lib/chat/merge.ts`, `src/lib/call/engine.ts` ve konferans arayüz bileşeni. Şifreleme katmanına dokunulmaz; röle yalnız opak zarf taşımaya devam eder.
+
+## Sıra önerisi
+
+1 ve 2 birlikte tek turda (teslimat hattı), ardından 3 ile kanıt. 4 ve 5 ikinci turda — çünkü 1-2 düzelmeden bunların testi anlamsız.
