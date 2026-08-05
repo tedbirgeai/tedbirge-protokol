@@ -231,7 +231,15 @@ function collapsePersons(rows: Contact[]): Contact[] {
       if (!primary.method) primary.method = bucket.find((c) => c.method)?.method;
       const anchor = bucket.find((c) => c.personId)?.personId ?? primary.personId ?? primary.peerId;
       primary.personId = anchor;
-      for (const contact of bucket) linkNodeToPerson(contact.peerId, anchor);
+      const hash = bucket.find((c) => c.phoneHash)?.phoneHash;
+      if (hash) primary.phoneHash = hash;
+      for (const contact of bucket) {
+        linkNodeToPerson(contact.peerId, anchor);
+        // Numara özeti kişinin tüm cihazlarına yayılır: bir sonraki açılışta
+        // aynı kişi hiçbir koşulda iki karta bölünmez.
+        if (hash) writePhoneHash(contact.peerId, hash);
+      }
+
     }
 
     out.push(primary);
