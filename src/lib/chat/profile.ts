@@ -7,6 +7,26 @@
 const ALIAS_KEY = "tedbirge.chat.alias";
 const ONBOARD_KEY = "tedbirge.chat.onboarded";
 const PHONE_KEY = "tedbirge.chat.phone";
+const EMAIL_KEY = "tedbirge.chat.email";
+
+/** İsteğe bağlı e-posta — yalnızca bu cihazda saklanır. */
+export function getEmail(): string {
+  try {
+    return window.localStorage.getItem(EMAIL_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setEmail(email: string) {
+  try {
+    const clean = email.trim().slice(0, 120);
+    if (clean) window.localStorage.setItem(EMAIL_KEY, clean);
+    else window.localStorage.removeItem(EMAIL_KEY);
+  } catch {
+    /* gizli mod */
+  }
+}
 
 /** Doğrulanmış telefon numarası (E.164) — yalnızca bu cihazda saklanır. */
 export function getPhone(): string {
