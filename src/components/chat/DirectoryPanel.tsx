@@ -29,12 +29,14 @@ function Row({
   subtitle,
   tone,
   icon,
+  avatar,
   onClick,
 }: {
   title: string;
   subtitle: string;
   tone?: string;
   icon: React.ReactNode;
+  avatar?: string;
   onClick: () => void;
 }) {
   return (
@@ -43,13 +45,22 @@ function Row({
       onClick={onClick}
       className="wa-press wa-row flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-black/[0.03]"
     >
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        style={{ background: "var(--wa-panel-soft)", color: "var(--wa-accent)" }}
-        aria-hidden
-      >
-        {icon}
-      </span>
+      {avatar ? (
+        <img
+          src={avatar}
+          alt=""
+          className="h-9 w-9 shrink-0 rounded-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+          style={{ background: "var(--wa-panel-soft)", color: "var(--wa-accent)" }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+      )}
       <span className="min-w-0 flex-1">
         <span
           className="block truncate text-[15px] font-medium"
@@ -64,6 +75,7 @@ function Row({
     </button>
   );
 }
+
 
 const SYNC_FLAG = "tedbirge.chat.autoSync";
 
