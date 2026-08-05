@@ -7,7 +7,18 @@
  * şeridi gösterilir.
  */
 import { useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw, CloudOff, Cloud, RotateCcw } from "lucide-react";
+import {
+  AlertTriangle,
+  RefreshCw,
+  CloudOff,
+  Cloud,
+  RotateCcw,
+  ShieldCheck,
+  UserSearch,
+} from "lucide-react";
+import { getHealthReport, runSelfHeal, type HealthReport } from "@/lib/chat/self-heal";
+import { requestMissingNames } from "@/lib/chat/engine";
+
 import {
   formatBytes,
   fullResync,
