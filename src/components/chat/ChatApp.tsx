@@ -658,6 +658,8 @@ function MenuItem({
   );
 }
 
+const CALLS_TAB = "__calls";
+
 export function ChatApp() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -1227,6 +1229,20 @@ export function ChatApp() {
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setFolder(CALLS_TAB);
+            }}
+            className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+            style={{
+              background: folder === CALLS_TAB ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+              color: folder === CALLS_TAB ? "#fff" : "var(--wa-muted)",
+            }}
+          >
+            Aramalar
+          </button>
         </div>
 
         {groupMode && (
