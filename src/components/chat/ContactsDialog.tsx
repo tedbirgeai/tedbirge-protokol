@@ -4,7 +4,7 @@
  * okunmaz; tüm veri yalnızca bu cihazda kalır (KVKK / GDPR uyumlu).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
@@ -31,7 +31,13 @@ import {
   TrustBadge,
   type PeerVerifyTarget,
 } from "@/components/site/PeerVerifyDialog";
-import { deviceContactsSupported, syncDeviceContacts } from "@/lib/chat/directory";
+import {
+  deviceContactsSupported,
+  importContacts,
+  parseVcards,
+  saveLocalBook,
+  syncDeviceContacts,
+} from "@/lib/chat/directory";
 import {
   eraseAllContacts,
   eraseContact,
