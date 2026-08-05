@@ -180,7 +180,8 @@ export async function mergePersonDuplicates(): Promise<number> {
   for (const [key, bucket] of buckets) {
     // Kişi kimliği: kayıtlardan biri taşıyorsa o, yoksa en eski düğüm.
     const personId = bucket.find((n) => n.personId)?.personId ?? (key.startsWith("p:") ? key.slice(2) : "");
-    const phoneHash = bucket.find((n) => n.phoneHash)?.phoneHash;
+    const phoneHash =
+      bucket.find((n) => n.phoneHash)?.phoneHash ?? (key.startsWith("h:") ? key.slice(2) : undefined);
 
     const sorted = [...bucket].sort((a, b) => (b.pairedAt ?? 0) - (a.pairedAt ?? 0));
     const primary = sorted[0];
@@ -190,8 +191,12 @@ export async function mergePersonDuplicates(): Promise<number> {
       bucket.map((n) => resolveDisplayName(n.nodeId) || n.alias || "").find((v) => v.trim()) ?? "",
     );
 
-    for (const node of bucket) linkNodeToPerson(node.nodeId, anchor);
+    for (const node of bucket) {
+      linkNodeToPerson(node.nodeId, anchor);
+      if (phoneHash) writePhoneHash(node.nodeId, phoneHash);
+    }
     if (name) writeNickname(anchor, name);
+
 
     if (bucket.length > 1) {
       for (const node of sorted.slice(1)) {
