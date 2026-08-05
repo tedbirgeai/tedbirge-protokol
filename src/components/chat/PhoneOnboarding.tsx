@@ -444,6 +444,93 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
           </>
         )}
 
+        {step === "done" && (
+          <>
+            <h2 className="text-xl font-semibold" style={{ color: "var(--wa-text)" }}>
+              Kimliğiniz hazır
+            </h2>
+            <p className="mt-2 text-sm" style={{ color: "var(--wa-muted)" }}>
+              {name.trim() || "Ben"} · {e164}
+              {email.trim() ? ` · ${email.trim()}` : ""}
+            </p>
+
+            <div
+              className="mt-4 flex flex-col items-center gap-3 rounded-xl border p-4"
+              style={{ borderColor: "var(--wa-border)" }}
+            >
+              {myQr ? (
+                <img
+                  src={myQr}
+                  alt="Kimlik karekodunuz"
+                  width={180}
+                  height={180}
+                  className="rounded border"
+                />
+              ) : (
+                <div
+                  className="flex h-[180px] w-[180px] items-center justify-center rounded border text-xs"
+                  style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+                >
+                  Karekod hazırlanıyor…
+                </div>
+              )}
+              <p
+                className="font-mono text-lg tracking-[0.18em]"
+                style={{ color: "var(--wa-text)" }}
+              >
+                {myShortId || "TBG-••••-••••"}
+              </p>
+              <p className="text-center text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                Bu kod cihaz değiştirseniz de aynı kalır. Karşı taraf karekodu okutarak sizi
+                doğrulayabilir.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(myShortId);
+                    toast("Kimliğiniz kopyalandı");
+                  }}
+                  className="wa-press rounded-full border px-4 py-2 text-xs font-medium"
+                  style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+                >
+                  Kimliği kopyala
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${window.location.origin}/chat`;
+                    const text = `Tedbirge kimliğim: ${myShortId} — ${url}`;
+                    if (navigator.share) void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
+                    else void navigator.clipboard?.writeText(text).then(() => toast("Davet kopyalandı"));
+                  }}
+                  className="wa-press rounded-full border px-4 py-2 text-xs font-medium"
+                  style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+                >
+                  Paylaş
+                </button>
+              </div>
+            </div>
+
+            {restored > 0 && (
+              <p className="mt-3 text-center text-xs" style={{ color: "var(--wa-accent)" }}>
+                Önceki yedeğinizden {restored} kişi geri yüklendi.
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => onDone()}
+              className="wa-press mt-5 w-full rounded-full px-4 py-3 text-sm font-semibold text-white"
+              style={{ background: "var(--wa-accent)" }}
+            >
+              Sohbete başla
+            </button>
+          </>
+        )}
+
+
+
 
         <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
           Numaranız yalnızca uçtan uca şifreli ağ kimliğinizi doğrulamak için kullanılır. 6698
