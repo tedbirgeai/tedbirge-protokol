@@ -55,3 +55,49 @@ kaldırın — uygulama `dist/client` içindeki dosyalarla tamamen
 
 Rehber verisi cihazdan çıkmaz. Eşleştirme yalnızca geri döndürülemez
 SHA-256 özetleriyle yapılır; eşleşmeyen numaralar sunucuda iz bırakmaz.
+
+## İkon, açılış ekranı ve sürüm numarası
+
+Kaynak görseller depoda hazırdır:
+
+- İkon: `public/icon-512.png` (1024×1024 sürümünü `resources/icon.png` olarak kopyalayın)
+- Açılış ekranı: `resources/splash.png` (2732×2732, arka plan `#0b141a`)
+
+```bash
+npm i -D @capacitor/assets
+npx capacitor-assets generate --iconBackgroundColor "#0b141a" --splashBackgroundColor "#0b141a"
+```
+
+Sürüm numarası tek kaynaktan yönetilir: `package.json` içindeki `version`
+(şu an `1.0.0`).
+
+- iOS: Xcode > App > General > Version = `1.0.0`, Build = artan tamsayı.
+- Android: `android/app/build.gradle` içinde `versionName "1.0.0"`,
+  `versionCode` artan tamsayı.
+
+## Push bildirimi (APNs / FCM)
+
+Kod tarafı hazırdır: `src/lib/chat/native-push.ts` izni ister, cihaz
+jetonunu alır ve saklar. Yalnızca sertifika adımları sizde:
+
+1. **iOS** — Apple Developer > Keys > yeni **APNs Auth Key (.p8)** üretin.
+   Xcode'da `Signing & Capabilities` altına **Push Notifications** ve
+   **Background Modes > Remote notifications** ekleyin.
+2. **Android** — Firebase konsolunda proje açıp `google-services.json`
+   dosyasını `android/app/` altına koyun.
+3. `npx cap sync` çalıştırın.
+
+Sunucu tarafı yalnızca "uyandırma" sinyali gönderir; mesaj içeriği ve
+rehber cihazdan çıkmaz.
+
+## Derleme kontrol listesi
+
+```bash
+npm run build
+npx cap sync
+npx cap open ios      # Archive > App Store Connect
+npx cap open android  # Build > Generate Signed Bundle (.aab)
+```
+
+Mağaza sürümünde `capacitor.config.ts` içindeki `server.url` bloğunu
+kaldırmayı unutmayın.
