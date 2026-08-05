@@ -138,12 +138,13 @@ export async function mergePersonDuplicates(): Promise<number> {
   if (typeof window === "undefined") return 0;
   const {
     linkNodeToPerson,
-    normalizedPersonName,
     resolveDisplayName,
     writeNickname,
     cleanPersonLabel,
     resolvePhoneHash,
     writePhoneHash,
+    personGroupKey,
+    mergeGroupsByName,
   } = await import("@/lib/chat/name-resolver");
 
   const [trusted, peers] = await Promise.all([
@@ -152,51 +153,32 @@ export async function mergePersonDuplicates(): Promise<number> {
   ]);
   const keyOf = new Map(peers.map((p) => [p.peerId, p.knownSignPublic ?? p.verifyKey] as const));
 
-  // Küme anahtarı sırası: NUMARA ÖZETİ → kişi kimliği → imza anahtarı → ad.
-  // Aynı numaraya bağlı tüm cihazlar tek kişide toplanır; numarası bilinen
-  // iki farklı kişi aynı adı taşısa bile birleşmez.
+  // Kanonik anahtar (name-resolver): numara özeti → kişi kimliği →
+  // imza anahtarı → normalize ad → düğüm kimliği.
   type TrustedRow = (typeof trusted)[number];
   const buckets = new Map<string, TrustedRow[]>();
   for (const node of trusted) {
-    const signKey = keyOf.get(node.nodeId);
-    const name = normalizedPersonName(resolveDisplayName(node.nodeId) || node.alias || "");
-    const hash = node.phoneHash || resolvePhoneHash(node.nodeId);
-    const key = hash
-      ? `h:${hash}`
-      : node.personId
-        ? `p:${node.personId}`
-        : signKey
-          ? `k:${signKey}`
-          : name
-            ? `n:${name}`
-            : `s:${node.nodeId}`;
+    const key = personGroupKey({
+      phoneHash: node.phoneHash || resolvePhoneHash(node.nodeId),
+      personId: node.personId,
+      signPublic: keyOf.get(node.nodeId),
+      name: resolveDisplayName(node.nodeId) || node.alias || "",
+      fallback: node.nodeId,
+    });
 
     const bucket = buckets.get(key);
     if (bucket) bucket.push(node);
     else buckets.set(key, [node]);
   }
 
-  // İkinci geçiş: farklı imza anahtarı yüzünden ayrı düşen ama aynı adı
-  // taşıyan kümeler birleşir. Numara özetleri çakışıyorsa birleşme olmaz.
-  const byName = new Map<string, string>();
-  for (const [key, bucket] of Array.from(buckets.entries())) {
-    const name = normalizedPersonName(
+  // İkinci geçiş: aynı ad = aynı kişi (numara özeti çakışmıyorsa).
+  mergeGroupsByName(
+    buckets,
+    (bucket) =>
       bucket.map((n) => resolveDisplayName(n.nodeId) || n.alias || "").find((v) => v.trim()) ?? "",
-    );
-    if (!name) continue;
-    const target = byName.get(name);
-    if (!target) {
-      byName.set(name, key);
-      continue;
-    }
-    const other = buckets.get(target);
-    if (!other) continue;
-    const hashA = bucket.find((n) => n.phoneHash)?.phoneHash;
-    const hashB = other.find((n) => n.phoneHash)?.phoneHash;
-    if (hashA && hashB && hashA !== hashB) continue;
-    other.push(...bucket);
-    buckets.delete(key);
-  }
+    (bucket) => bucket.find((n) => n.phoneHash)?.phoneHash,
+  );
+
 
 
   let merged = 0;
