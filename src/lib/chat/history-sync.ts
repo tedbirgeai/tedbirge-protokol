@@ -103,6 +103,22 @@ function writeStr(key: string, value: string) {
   }
 }
 
+/**
+ * Teknik hata metnini (ör. doğrulama JSON'u) kullanıcıya okunur hâle
+ * getirir; ham JSON hiçbir zaman arayüzde gösterilmez.
+ */
+function friendlyError(raw: string): string {
+  const text = (raw || "").trim();
+  if (!text) return "Bilinmeyen bir sorun oluştu";
+  if (text.startsWith("[") || text.startsWith("{")) {
+    return "Eşitleme paketi kabul edilmedi — yeniden denenecek";
+  }
+  if (/rate|429|too many/i.test(text)) return "Çok sık denendi, birazdan tekrar denenecek";
+  if (/fetch|network|failed to fetch/i.test(text)) return "Bağlantı kurulamadı";
+  return text.length > 120 ? `${text.slice(0, 117)}…` : text;
+}
+
+
 function publish(patch: Partial<SyncState>) {
   state = { ...state, ...patch };
   listeners.forEach((l) => l());
