@@ -235,10 +235,11 @@ function SyncContactsRow() {
           setInfo(
             deviceContactsSupported()
               ? "Rehber izni verilmedi. Telefon ayarlarından Tedbirge rehber iznini açın."
-              : "Bu cihazın tarayıcısı otomatik rehber erişimini desteklemiyor; dosya penceresi açılmadı.",
+              : "Bu tarayıcı rehbere doğrudan erişemiyor — “Rehber dosyası yükle” ile .vcf veya CSV dosyanızı seçin, sonrası otomatik.",
           );
           return;
         }
+
         setPeople(r.people);
         setInfo(`${r.checked} kişi denetlendi · ${r.matched} Tedbirge kullanıcısı eşleşti.`);
         toast.success("Rehber eşitlendi");
