@@ -200,26 +200,28 @@ async function ensureMedia(video: boolean): Promise<MediaStream | null> {
     facingMode: "user",
   };
   const audio = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+  const got = (s: MediaStream) => {
+    localStream = s;
+    // Ekrandaki önizleme yeni akışı hemen bağlasın.
+    publish({ streamVersion: state.streamVersion + 1 });
+    return s;
+  };
 
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio,
-      video: video ? videoConstraints : false,
-    });
-    return localStream;
+    return got(
+      await navigator.mediaDevices.getUserMedia({ audio, video: video ? videoConstraints : false }),
+    );
   } catch {
     /* istenen çözünürlük desteklenmiyor olabilir */
   }
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio, video });
-    return localStream;
+    return got(await navigator.mediaDevices.getUserMedia({ audio, video }));
   } catch {
     /* izin yok */
   }
   if (video) {
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio, video: false });
-      return localStream;
+      return got(await navigator.mediaDevices.getUserMedia({ audio, video: false }));
     } catch {
       /* mikrofon da yok */
     }
@@ -227,6 +229,7 @@ async function ensureMedia(video: boolean): Promise<MediaStream | null> {
   localStream = null;
   return null;
 }
+
 
 
 
