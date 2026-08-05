@@ -188,50 +188,28 @@ function buildContact(
 function collapsePersons(rows: Contact[]): Contact[] {
   const groups = new Map<string, Contact[]>();
   for (const row of rows) {
-    // Sıra: NUMARA ÖZETİ → kişi kimliği → imza anahtarı → ad → cihaz kimliği.
-    // Aynı numaraya bağlı cihazlar adları farklı olsa da tek kartta toplanır;
-    // kimliği bilinen iki ayrı kişi aynı adı taşısa bile ayrı kalır.
-    const nameKey = normalizedPersonName(row.displayName);
-    const key = row.phoneHash
-      ? `h:${row.phoneHash}`
-      : row.personId
-        ? `p:${row.personId}`
-        : row.signPublic
-          ? `k:${row.signPublic}`
-          : nameKey
-            ? `n:${nameKey}`
-            : row.peerId;
+    // Kanonik anahtar (name-resolver): numara özeti → kişi kimliği →
+    // imza anahtarı → normalize ad → cihaz kimliği.
+    const key = personGroupKey({
+      phoneHash: row.phoneHash,
+      personId: row.personId,
+      signPublic: row.signPublic,
+      name: row.displayName,
+      fallback: row.peerId,
+    });
 
     const bucket = groups.get(key);
     if (bucket) bucket.push(row);
     else groups.set(key, [row]);
   }
 
-  // İKİNCİ GEÇİŞ — AYNI AD = AYNI KİŞİ.
-  // Aynı kişinin iki cihazı farklı imza anahtarı taşıdığı için ilk geçişte
-  // ayrı kümelere düşebiliyordu. Numara özeti çakışmadığı sürece aynı ada
-  // sahip kümeler tek kişide birleşir ("MEHMET" = "mehmet dinç" değil;
-  // yalnızca normalize edilmiş ad birebir aynıysa birleşir).
-  const byName = new Map<string, string>();
-  for (const [key, bucket] of Array.from(groups.entries())) {
-    const name = normalizedPersonName(
-      bucket.map((c) => c.displayName).find((v) => v.trim()) ?? "",
-    );
-    if (!name) continue;
-    const target = byName.get(name);
-    if (!target) {
-      byName.set(name, key);
-      continue;
-    }
-    const other = groups.get(target);
-    if (!other) continue;
-    const hashA = bucket.find((c) => c.phoneHash)?.phoneHash;
-    const hashB = other.find((c) => c.phoneHash)?.phoneHash;
-    // İki farklı numaraya çıpalı kişi aynı adı taşıyorsa ASLA birleşmez.
-    if (hashA && hashB && hashA !== hashB) continue;
-    other.push(...bucket);
-    groups.delete(key);
-  }
+  // İkinci geçiş: aynı ad = aynı kişi (numara özeti çakışmıyorsa).
+  mergeGroupsByName(
+    groups,
+    (bucket) => bucket.map((c) => c.displayName).find((v) => v.trim()) ?? "",
+    (bucket) => bucket.find((c) => c.phoneHash)?.phoneHash,
+  );
+
 
 
   const out: Contact[] = [];
