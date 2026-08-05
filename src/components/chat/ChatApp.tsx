@@ -123,7 +123,7 @@ import {
 
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
 import { isNamed, safeTitleOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
-import { nameKeyOf, resolvePhoneHash } from "@/lib/chat/name-resolver";
+import { nameKeyOf, normalizedPersonName, resolvePhoneHash } from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
 import { bootLeader } from "@/lib/chat/leader";
