@@ -229,9 +229,10 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   // Aynı kişinin birden çok cihazı varsa tek kişi olarak sayılır; en son
   // görülen cihaz birincil kabul edilir (WhatsApp bağlı-cihaz modeli).
   const seenPersons = new Set<string>();
-  const { linkNodeToPerson, writeClaimedName, cleanPersonLabel } = await import(
+  const { linkNodeToPerson, writeClaimedName, cleanPersonLabel, writePhoneHash } = await import(
     "@/lib/chat/name-resolver"
   );
+
   for (const m of matches) {
     const local = byHash.get(m.hash);
     const target = m.nodeId || m.personId;
