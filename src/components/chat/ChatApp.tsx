@@ -123,7 +123,12 @@ import {
 
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
 import { isNamed, safeTitleOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
-import { nameKeyOf, normalizedPersonName, resolvePhoneHash } from "@/lib/chat/name-resolver";
+import {
+  nameKeyOf,
+  resolvePhoneHash,
+  personGroupKey,
+  mergeGroupsByName,
+} from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
 import { bootLeader } from "@/lib/chat/leader";
@@ -865,7 +870,7 @@ export function ChatApp() {
       // TEK KİŞİ = TEK SATIR. Aynı kişinin farklı cihazlarıyla açılmış
       // sohbetler numara çıpası/kişi kimliği üzerinden tek satırda toplanır;
       // en son hareket gören sohbet listede kalır.
-      const byPerson = new Map<string, (typeof rows)[number]>();
+      const byPerson = new Map<string, (typeof rows)[number][]>();
       const out: typeof rows = [];
       for (const c of rows) {
         const member = c.members?.[0];
@@ -873,17 +878,36 @@ export function ChatApp() {
           out.push(c);
           continue;
         }
-        // Anahtar sırası: numara özeti → kişi kimliği → normalize edilmiş ad.
-        // Aynı kişinin iki cihazıyla açılmış sohbet tek satırda toplanır.
+        // Kanonik anahtar: numara özeti → kişi kimliği → normalize ad.
         const linked = nameKeyOf(member);
-        const nameKey = normalizedPersonName(safeTitleOf(c));
-        const key =
-          resolvePhoneHash(member) || (linked !== member ? linked : "") || nameKey || member;
+        const key = personGroupKey({
+          phoneHash: resolvePhoneHash(member),
+          personId: linked !== member ? linked : "",
+          name: safeTitleOf(c),
+          fallback: member,
+        });
 
-        const current = byPerson.get(key);
-        if (!current || (c.lastTs ?? 0) > (current.lastTs ?? 0)) byPerson.set(key, c);
+        const bucket = byPerson.get(key);
+        if (bucket) bucket.push(c);
+        else byPerson.set(key, [c]);
       }
-      return [...out, ...byPerson.values()].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+      // İkinci geçiş: aynı ad = aynı kişi (numara özeti çakışmıyorsa).
+      mergeGroupsByName(
+        byPerson,
+        (bucket) => bucket.map((c) => safeTitleOf(c)).find((v) => v.trim()) ?? "",
+        (bucket) => bucket.map((c) => resolvePhoneHash(c.members?.[0] ?? "")).find(Boolean),
+      );
+      // Her kişiden en son hareket gören sohbet listede kalır; diğer
+      // cihazların kimlikleri üyelerde korunur (arama doğru cihaza gitsin).
+      const collapsed = Array.from(byPerson.values()).map((bucket) => {
+        const sorted = [...bucket].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+        const primary = sorted[0]!;
+        if (sorted.length === 1) return primary;
+        const members = Array.from(new Set(sorted.flatMap((c) => c.members ?? [])));
+        return { ...primary, members };
+      });
+      return [...out, ...collapsed].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+
     },
     [allConversations, folder, folderVersion, callTouched],
   );

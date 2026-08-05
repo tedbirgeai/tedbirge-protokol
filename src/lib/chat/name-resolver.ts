@@ -126,6 +126,60 @@ export function resolvePhoneHash(id: string): string {
   return "";
 }
 
+/**
+ * KANONİK KİŞİ ANAHTARI — tek kaynak.
+ * Rehber (contacts), otonom onarım (merge) ve sohbet listesi (ChatApp)
+ * aynı sırayı kullanır: numara özeti → kişi kimliği → imza anahtarı →
+ * normalize ad → cihaz kimliği.
+ */
+export function personGroupKey(p: {
+  phoneHash?: string | null;
+  personId?: string | null;
+  signPublic?: string | null;
+  name?: string | null;
+  fallback: string;
+}): string {
+  const name = normalizedPersonName(p.name);
+  if (p.phoneHash) return `h:${p.phoneHash}`;
+  if (p.personId) return `p:${p.personId}`;
+  if (p.signPublic) return `k:${p.signPublic}`;
+  if (name) return `n:${name}`;
+  return `s:${p.fallback}`;
+}
+
+/**
+ * İKİNCİ GEÇİŞ — AYNI AD = AYNI KİŞİ.
+ * Aynı kişinin iki cihazı farklı imza anahtarı ya da eksik numara özeti
+ * yüzünden ayrı kümelere düşebiliyor. Numara özetleri çakışmadığı sürece
+ * normalize adı birebir aynı olan kümeler tek kişide birleşir.
+ */
+export function mergeGroupsByName<T>(
+  groups: Map<string, T[]>,
+  getName: (bucket: T[]) => string,
+  getHash: (bucket: T[]) => string | undefined,
+): void {
+  const byName = new Map<string, string>();
+  for (const [key, bucket] of Array.from(groups.entries())) {
+    const name = normalizedPersonName(getName(bucket));
+    if (!name) continue;
+    const target = byName.get(name);
+    if (!target) {
+      byName.set(name, key);
+      continue;
+    }
+    const other = groups.get(target);
+    if (!other) continue;
+    const hashA = getHash(bucket);
+    const hashB = getHash(other);
+    // İki farklı numaraya çıpalı kişi aynı adı taşıyorsa ASLA birleşmez.
+    if (hashA && hashB && hashA !== hashB) continue;
+    other.push(...bucket);
+    groups.delete(key);
+  }
+}
+
+
+
 
 function firstOf(mapKey: string, ids: string[]): string {
   const map = readMap(mapKey);
