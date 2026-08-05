@@ -169,7 +169,7 @@ function buildContact(
     ambiguous: false,
     method: trusted?.method,
     personId: trusted?.personId,
-    phoneHash: trusted?.phoneHash,
+    phoneHash: trusted?.phoneHash || resolvePhoneHash(peerId) || undefined,
     pairedAt: trusted?.pairedAt,
     lastSeen: Math.max(peer?.lastSeen ?? 0, trusted?.pairedAt ?? 0),
   };
