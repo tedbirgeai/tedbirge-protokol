@@ -124,7 +124,11 @@ export async function runSelfHeal(): Promise<HealthReport> {
   }
 
 
-  last = { at: Date.now(), ok: issues.length === 0, issues };
+  // Kendiliğinden onarılan maddeler "sorun" sayılmaz; kullanıcıya yalnızca
+  // bilgi olarak görünür.
+  const open = issues.filter((i) => !i.repaired);
+  last = { at: Date.now(), ok: open.length === 0, issues };
+
   logSync(
     issues.length ? "uyarı" : "bilgi",
     "Açılış sağlık denetimi",
