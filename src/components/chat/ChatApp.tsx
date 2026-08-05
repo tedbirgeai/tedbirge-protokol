@@ -71,7 +71,6 @@ import { bootCalls, startCall, startConference } from "@/lib/call/engine";
 import { CallHistory } from "@/components/chat/CallHistory";
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { lastSeenLabel } from "@/lib/chat/last-seen";
-import { MUTE_OPTIONS, isMuted, muteConversation, muteUntilLabel, unmuteConversation } from "@/lib/chat/mute";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
 import { ForwardDialog } from "@/components/chat/ForwardDialog";
 import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
@@ -121,7 +120,14 @@ import { isNamed, safeTitleOf } from "@/lib/chat/safe-title";
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
 import { bootLeader } from "@/lib/chat/leader";
 import { bootSessions } from "@/lib/chat/sessions";
-import { isMuted, onMuteChange } from "@/lib/chat/mute";
+import {
+  MUTE_OPTIONS,
+  isMuted,
+  muteConversation,
+  muteUntilLabel,
+  onMuteChange,
+  unmuteConversation,
+} from "@/lib/chat/mute";
 import { IDB_BLOCKED_EVENT } from "@/lib/store/idb";
 
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
