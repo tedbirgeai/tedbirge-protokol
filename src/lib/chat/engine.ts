@@ -1514,6 +1514,20 @@ export async function bootChat() {
       .then((m) => (m.isLeaderTab() ? pumpRetryQueue() : 0))
       .catch((error: unknown) => console.error("[chat] yeniden gönderim turu başarısız", error));
   }, 15_000);
+  // Ağ geri geldiğinde ya da uygulamaya dönüldüğünde kuyruk hemen boşalır:
+  // "çevrimdışı — n mesaj bekliyor" durumu sonsuza kadar takılı kalmaz.
+  const flushNow = () => {
+    void pumpRetryQueue().catch((error: unknown) =>
+      console.error("[chat] kuyruk boşaltılamadı", error),
+    );
+    void requestMissingNames();
+  };
+  window.addEventListener("online", flushNow);
+  window.addEventListener("focus", flushNow);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") flushNow();
+  });
+
   // Açılışta tek seferlik temizlik: eski mükerrer kişiler tek satıra iner.
   await purgeStaleConversations();
   await cleanDuplicateConversations();
