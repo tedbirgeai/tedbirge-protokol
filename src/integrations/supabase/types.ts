@@ -1181,18 +1181,21 @@ export type Database = {
         Row: {
           box_public: string
           node_id: string
+          person_id: string | null
           sign_public: string
           updated_at: string
         }
         Insert: {
           box_public: string
           node_id: string
+          person_id?: string | null
           sign_public: string
           updated_at?: string
         }
         Update: {
           box_public?: string
           node_id?: string
+          person_id?: string | null
           sign_public?: string
           updated_at?: string
         }

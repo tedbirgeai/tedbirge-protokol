@@ -7,6 +7,8 @@
  */
 
 export type RelayKeys = { nodeId: string; signPublic: string; boxPublic: string };
+/** Kişinin bağlı cihazları — her cihaz için ayrı şifreli zarf üretilir. */
+export type RelayDevice = RelayKeys;
 
 const ENDPOINT = "/api/public/relay";
 
@@ -24,9 +26,25 @@ async function call<T>(body: unknown): Promise<T | null> {
   }
 }
 
-export async function publishRelayKeys(keys: RelayKeys): Promise<boolean> {
+export async function publishRelayKeys(
+  keys: RelayKeys & { personId?: string },
+): Promise<boolean> {
   const res = await call<{ ok: boolean }>({ action: "publish", ...keys });
   return Boolean(res?.ok);
+}
+
+/**
+ * Hedefin (cihaz düğümü ya da kişi kimliği) ulaşılabilir tüm cihazlarını
+ * döndürür. Boş dizi: kişi henüz ağa hiç bağlanmamış.
+ */
+export async function lookupRelayDevices(target: string): Promise<RelayDevice[]> {
+  const res = await call<{ ok: boolean; found: boolean; devices?: RelayDevice[] } & RelayKeys>({
+    action: "lookup",
+    nodeId: target,
+  });
+  if (!res?.ok || !res.found) return [];
+  if (res.devices?.length) return res.devices;
+  return [{ nodeId: res.nodeId, signPublic: res.signPublic, boxPublic: res.boxPublic }];
 }
 
 export async function lookupRelayKeys(nodeId: string): Promise<RelayKeys | null> {
@@ -46,10 +64,12 @@ export async function pushRelayEnvelopes(
 export async function pullRelayEnvelopes(
   nodeId: string,
   ack: string[] = [],
+  personId?: string,
 ): Promise<{ pktId: string; envelope: string }[] | null> {
   const res = await call<{ ok: boolean; items: { pktId: string; envelope: string }[] }>({
     action: "pull",
     nodeId,
+    personId,
     ack,
   });
   return res?.ok ? (res.items ?? []) : null;

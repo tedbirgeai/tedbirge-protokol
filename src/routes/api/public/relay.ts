@@ -21,6 +21,7 @@ const Body = z.union([
   z.object({
     action: z.literal("publish"),
     nodeId: NodeId,
+    personId: z.string().trim().min(3).max(120).optional(),
     signPublic: z.string().min(10).max(500),
     boxPublic: z.string().min(10).max(500),
   }),
@@ -43,6 +44,7 @@ const Body = z.union([
   z.object({
     action: z.literal("pull"),
     nodeId: NodeId,
+    personId: z.string().trim().min(3).max(120).optional(),
     ack: z.array(z.string().max(200)).max(MAX_PULL).default([]),
   }),
 ]);
@@ -92,6 +94,7 @@ export const Route = createFileRoute("/api/public/relay")({
           const { error } = await supabaseAdmin.from("relay_directory").upsert(
             {
               node_id: parsed.nodeId,
+              person_id: parsed.personId ?? null,
               sign_public: parsed.signPublic,
               box_public: parsed.boxPublic,
               updated_at: new Date().toISOString(),
@@ -103,18 +106,44 @@ export const Route = createFileRoute("/api/public/relay")({
         }
 
         if (parsed.action === "lookup") {
-          const { data } = await supabaseAdmin
+          // Kimlik hem cihaz düğümü (mob-…) hem kişi kimliği (TBG-…) olabilir.
+          // Kişinin TÜM bağlı cihazları döndürülür; gönderen her cihaz için
+          // ayrı şifreli zarf üretir (WhatsApp çoklu cihaz modeli).
+          const { data: self } = await supabaseAdmin
             .from("relay_directory")
-            .select("node_id, sign_public, box_public")
+            .select("node_id, person_id, sign_public, box_public")
             .eq("node_id", parsed.nodeId)
             .maybeSingle();
-          if (!data) return json({ ok: true, found: false });
+
+          const person = self?.person_id ?? parsed.nodeId;
+          const { data: fanout } = await supabaseAdmin
+            .from("relay_directory")
+            .select("node_id, person_id, sign_public, box_public")
+            .eq("person_id", person)
+            .limit(20);
+
+          const map = new Map<string, { node_id: string; sign_public: string; box_public: string }>();
+          for (const row of [...(fanout ?? []), ...(self ? [self] : [])]) {
+            map.set(row.node_id, {
+              node_id: row.node_id,
+              sign_public: row.sign_public,
+              box_public: row.box_public,
+            });
+          }
+          const devices = Array.from(map.values());
+          if (devices.length === 0) return json({ ok: true, found: false, devices: [] });
+          const primary = self ?? devices[0]!;
           return json({
             ok: true,
             found: true,
-            nodeId: data.node_id,
-            signPublic: data.sign_public,
-            boxPublic: data.box_public,
+            nodeId: primary.node_id,
+            signPublic: primary.sign_public,
+            boxPublic: primary.box_public,
+            devices: devices.map((d) => ({
+              nodeId: d.node_id,
+              signPublic: d.sign_public,
+              boxPublic: d.box_public,
+            })),
           });
         }
 
@@ -153,11 +182,14 @@ export const Route = createFileRoute("/api/public/relay")({
         }
 
         // pull
+        const mailboxes = Array.from(
+          new Set([parsed.nodeId, ...(parsed.personId ? [parsed.personId] : [])]),
+        );
         if (parsed.ack.length) {
           await supabaseAdmin
             .from("relay_envelopes")
             .delete()
-            .eq("target_node", parsed.nodeId)
+            .in("target_node", mailboxes)
             .in("pkt_id", parsed.ack);
         }
         // Süresi dolmuş zarfları temizle (ucuz, indeksli).
@@ -169,7 +201,7 @@ export const Route = createFileRoute("/api/public/relay")({
         const { data } = await supabaseAdmin
           .from("relay_envelopes")
           .select("pkt_id, envelope")
-          .eq("target_node", parsed.nodeId)
+          .in("target_node", mailboxes)
           .order("priority", { ascending: true })
           .order("created_at", { ascending: true })
           .limit(MAX_PULL);
