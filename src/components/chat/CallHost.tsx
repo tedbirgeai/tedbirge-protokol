@@ -54,6 +54,12 @@ export function CallHost() {
             await vault.restoreContacts(phone).catch(() => 0);
             await vault.backupContacts(phone).catch(() => false);
           }
+          // Otonom eşleştirme: saklı rehber her açılışta yeniden taranır,
+          // yeni katılan tanıdıklar elle iş yapılmadan rehbere düşer.
+          const { autoSyncContacts } = await import("@/lib/chat/directory");
+          await autoSyncContacts().catch(() => null);
+
+
 
         };
         await syncDirectory().catch(() => undefined);
