@@ -259,6 +259,11 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
     // Ad tek kanaldan yazılır: kişi kimliği + tüm bağlı düğümler.
     setNickname(target, label);
     if (m.displayName?.trim()) writeClaimedName(target, cleanPersonLabel(m.displayName.trim()));
+    // Numara özeti kişinin bilinen tüm cihazlarına yazılır: farklı tarayıcı,
+    // PWA ve mobil kayıtları tek kişi kartında birleşir.
+    writePhoneHash(target, m.hash);
+    if (m.personId) writePhoneHash(m.personId, m.hash);
+
 
     const personKey = m.personId || target;
     if (seenPersons.has(personKey)) continue;
