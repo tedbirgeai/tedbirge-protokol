@@ -119,6 +119,9 @@ export type Contact = {
   method?: TrustedNode["method"];
   /** Numaraya çıpalanmış kişi kimliği (aynı kişinin tüm cihazları). */
   personId?: string;
+  /** Rehberden gelen numara özeti — kart birleştirmenin birincil çıpası. */
+  phoneHash?: string;
+
   /** Bu kişinin diğer bağlı cihazları — arayüzde tek kart gösterilir. */
   linkedNodes?: string[];
   pairedAt?: number;
