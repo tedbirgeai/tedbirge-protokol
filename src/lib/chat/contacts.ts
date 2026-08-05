@@ -46,6 +46,8 @@ import {
   readMap,
   resolveClaimedName,
   resolveNickname,
+  resolvePhoneHash,
+
   normalizedPersonName,
   writeNickname,
 } from "@/lib/chat/name-resolver";
