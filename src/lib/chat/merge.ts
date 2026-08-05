@@ -136,30 +136,41 @@ export function groupByPerson<T extends { peerId: string; personId?: string; las
  */
 export async function mergePersonDuplicates(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  const { linkNodeToPerson, normalizedPersonName, resolveDisplayName, writeNickname } = await import(
-    "@/lib/chat/name-resolver"
-  );
+  const {
+    linkNodeToPerson,
+    normalizedPersonName,
+    resolveDisplayName,
+    writeNickname,
+    cleanPersonLabel,
+    resolvePhoneHash,
+    writePhoneHash,
+  } = await import("@/lib/chat/name-resolver");
+
   const [trusted, peers] = await Promise.all([
     listTrustedNodes().catch(() => []),
     listPeers().catch(() => []),
   ]);
   const keyOf = new Map(peers.map((p) => [p.peerId, p.knownSignPublic ?? p.verifyKey] as const));
 
-  // Küme anahtarı sırası: numara çıpası (personId) → imza anahtarı → ad.
-  // Numarası bilinen iki kişi aynı adı taşısa bile birleşmez; ad yalnızca
-  // her iki tarafta da kimlik bilinmiyorken birleştirme sebebidir.
+  // Küme anahtarı sırası: NUMARA ÖZETİ → kişi kimliği → imza anahtarı → ad.
+  // Aynı numaraya bağlı tüm cihazlar tek kişide toplanır; numarası bilinen
+  // iki farklı kişi aynı adı taşısa bile birleşmez.
   type TrustedRow = (typeof trusted)[number];
   const buckets = new Map<string, TrustedRow[]>();
   for (const node of trusted) {
     const signKey = keyOf.get(node.nodeId);
     const name = normalizedPersonName(resolveDisplayName(node.nodeId) || node.alias || "");
-    const key = node.personId
-      ? `p:${node.personId}`
-      : signKey
-        ? `k:${signKey}`
-        : name
-          ? `n:${name}`
-          : `s:${node.nodeId}`;
+    const hash = node.phoneHash || resolvePhoneHash(node.nodeId);
+    const key = hash
+      ? `h:${hash}`
+      : node.personId
+        ? `p:${node.personId}`
+        : signKey
+          ? `k:${signKey}`
+          : name
+            ? `n:${name}`
+            : `s:${node.nodeId}`;
+
     const bucket = buckets.get(key);
     if (bucket) bucket.push(node);
     else buckets.set(key, [node]);
@@ -169,16 +180,23 @@ export async function mergePersonDuplicates(): Promise<number> {
   for (const [key, bucket] of buckets) {
     // Kişi kimliği: kayıtlardan biri taşıyorsa o, yoksa en eski düğüm.
     const personId = bucket.find((n) => n.personId)?.personId ?? (key.startsWith("p:") ? key.slice(2) : "");
+    const phoneHash =
+      bucket.find((n) => n.phoneHash)?.phoneHash ?? (key.startsWith("h:") ? key.slice(2) : undefined);
 
     const sorted = [...bucket].sort((a, b) => (b.pairedAt ?? 0) - (a.pairedAt ?? 0));
     const primary = sorted[0];
     if (!primary) continue;
     const anchor = personId || primary.nodeId;
-    const name =
-      bucket.map((n) => resolveDisplayName(n.nodeId) || n.alias || "").find((v) => v.trim()) ?? "";
+    const name = cleanPersonLabel(
+      bucket.map((n) => resolveDisplayName(n.nodeId) || n.alias || "").find((v) => v.trim()) ?? "",
+    );
 
-    for (const node of bucket) linkNodeToPerson(node.nodeId, anchor);
+    for (const node of bucket) {
+      linkNodeToPerson(node.nodeId, anchor);
+      if (phoneHash) writePhoneHash(node.nodeId, phoneHash);
+    }
     if (name) writeNickname(anchor, name);
+
 
     if (bucket.length > 1) {
       for (const node of sorted.slice(1)) {
@@ -188,10 +206,14 @@ export async function mergePersonDuplicates(): Promise<number> {
       await putTrustedNode({
         ...primary,
         personId: anchor,
+        phoneHash: phoneHash ?? primary.phoneHash,
         alias: name || primary.alias,
       });
-    } else if (personId && primary.personId !== personId) {
-      await putTrustedNode({ ...primary, personId });
+    } else if (
+      (personId && primary.personId !== personId) ||
+      (phoneHash && primary.phoneHash !== phoneHash)
+    ) {
+      await putTrustedNode({ ...primary, personId: personId || primary.personId, phoneHash });
     }
   }
   return merged;

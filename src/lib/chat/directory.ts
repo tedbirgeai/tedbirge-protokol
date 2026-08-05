@@ -229,7 +229,10 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   // Aynı kişinin birden çok cihazı varsa tek kişi olarak sayılır; en son
   // görülen cihaz birincil kabul edilir (WhatsApp bağlı-cihaz modeli).
   const seenPersons = new Set<string>();
-  const { linkNodeToPerson, writeClaimedName } = await import("@/lib/chat/name-resolver");
+  const { linkNodeToPerson, writeClaimedName, cleanPersonLabel, writePhoneHash } = await import(
+    "@/lib/chat/name-resolver"
+  );
+
   for (const m of matches) {
     const local = byHash.get(m.hash);
     const target = m.nodeId || m.personId;
@@ -237,7 +240,8 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
     if (!target || target === self || (myHash && m.hash === myHash)) continue;
     // Rehberdeki ad → kişinin beyan ettiği ad. İkisi de yoksa KAYIT AÇILMAZ:
     // adsız satır arayüzde hiç oluşmasın (gizlenmesin).
-    const label = local?.name?.trim() || m.displayName?.trim() || "";
+    // Cihaz etiketi ("BİLGİSAYAR …", "TELEFON …") adın parçası değildir.
+    const label = cleanPersonLabel(local?.name?.trim() || m.displayName?.trim() || "");
     if (!label) {
       skippedUnnamed += 1;
       continue;
@@ -247,12 +251,20 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
       nodeId: target,
       alias: label,
       personId: m.personId || undefined,
+      // Numara özeti kişi kartlarının birincil birleştirme çıpasıdır.
+      phoneHash: m.hash,
       method: "auto",
       pairedAt: Date.now(),
     });
     // Ad tek kanaldan yazılır: kişi kimliği + tüm bağlı düğümler.
     setNickname(target, label);
-    if (m.displayName?.trim()) writeClaimedName(target, m.displayName.trim());
+    if (m.displayName?.trim()) writeClaimedName(target, cleanPersonLabel(m.displayName.trim()));
+    // Numara özeti kişinin bilinen tüm cihazlarına yazılır: farklı tarayıcı,
+    // PWA ve mobil kayıtları tek kişi kartında birleşir.
+    writePhoneHash(target, m.hash);
+    if (m.personId) writePhoneHash(m.personId, m.hash);
+
+
     const personKey = m.personId || target;
     if (seenPersons.has(personKey)) continue;
     seenPersons.add(personKey);

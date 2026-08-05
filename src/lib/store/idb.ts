@@ -416,6 +416,13 @@ export type TrustedNode = {
   publicKey?: string;
   /** Numaraya çıpalanmış kişi kimliği: aynı kişinin tüm cihazları eşit. */
   personId?: string;
+  /**
+   * Rehber eşleşmesinden gelen numara özeti (SHA-256). Ham numara ASLA
+   * saklanmaz/ağa çıkmaz. Kişi kartlarını birleştirmenin birincil çıpasıdır:
+   * aynı numaraya ait tüm cihazlar tek kişide toplanır.
+   */
+  phoneHash?: string;
+
   method: "pin" | "qr" | "auto";
   pairedAt: number;
 };

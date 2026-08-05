@@ -40,6 +40,22 @@ export function normalizedPersonName(value: string | undefined | null): string {
     .trim();
 }
 
+/**
+ * Görünür ad temizliği: cihaz etiketleri ("Bilgisayar Mehmet Dinç",
+ * "Telefon Türkan Dinç") kişinin adı değildir; kart adı tek biçim olur.
+ * Büyük/küçük harf ve Türkçe karakterler korunur.
+ */
+export function cleanPersonLabel(value: string | undefined | null): string {
+  const raw = (value ?? "").trim().replace(/\s+/g, " ");
+  if (!raw) return "";
+  const stripped = raw.replace(
+    /^(bilgisayar|masaüstü|masaustu|desktop|telefon|cep telefonu|iphone|ipad|tablet|mobil)\s+/i,
+    "",
+  );
+  return stripped.trim() || raw;
+}
+
+
 export function readMap(key: string): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
@@ -82,6 +98,34 @@ export function idsOfPerson(id: string): string[] {
   for (const [node, person] of Object.entries(map)) if (person === key) out.add(node);
   return Array.from(out);
 }
+
+/** düğüm/kişi kimliği → rehber numara özeti (yalnızca bu cihazda). */
+export const PHONE_HASH_KEY = "tedbirge.chat.phoneHash";
+
+/** Numara özetini kişinin bilinen tüm kimliklerine yazar. */
+export function writePhoneHash(id: string, hash: string): void {
+  if (!id || !hash) return;
+  const map = readMap(PHONE_HASH_KEY);
+  let changed = false;
+  for (const key of idsOfPerson(id)) {
+    if (map[key] !== hash) {
+      map[key] = hash;
+      changed = true;
+    }
+  }
+  if (changed) writeMap(PHONE_HASH_KEY, map);
+}
+
+/** Kişinin numara özeti — bağlı cihazlardan herhangi biri biliyorsa döner. */
+export function resolvePhoneHash(id: string): string {
+  const map = readMap(PHONE_HASH_KEY);
+  for (const key of idsOfPerson(id)) {
+    const v = (map[key] ?? "").trim();
+    if (v) return v;
+  }
+  return "";
+}
+
 
 function firstOf(mapKey: string, ids: string[]): string {
   const map = readMap(mapKey);

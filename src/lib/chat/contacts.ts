@@ -41,13 +41,19 @@ import { getBrowserNodeId } from "@/lib/browser-node";
 import {
   ALIAS_KEY,
   NICK_KEY,
+  cleanPersonLabel,
   linkNodeToPerson,
   readMap,
   resolveClaimedName,
   resolveNickname,
+  resolvePhoneHash,
+
   normalizedPersonName,
   writeNickname,
+  writePhoneHash,
+
 } from "@/lib/chat/name-resolver";
+
 
 
 /** Karıştırılabilir harf/rakam (I, L, O, U) çıkarılmış Crockford Base32. */
@@ -117,6 +123,9 @@ export type Contact = {
   method?: TrustedNode["method"];
   /** Numaraya çıpalanmış kişi kimliği (aynı kişinin tüm cihazları). */
   personId?: string;
+  /** Rehberden gelen numara özeti — kart birleştirmenin birincil çıpası. */
+  phoneHash?: string;
+
   /** Bu kişinin diğer bağlı cihazları — arayüzde tek kart gösterilir. */
   linkedNodes?: string[];
   pairedAt?: number;
@@ -148,8 +157,9 @@ function buildContact(
   const signPublic = peer?.knownSignPublic ?? peer?.verifyKey;
   // Ad tek kanaldan okunur: kişi kimliği varsa onun üzerinden.
   linkNodeToPerson(peerId, trusted?.personId);
-  const nickname = resolveNickname(peerId) || undefined;
-  const claimedName = (resolveClaimedName(peerId) || trusted?.alias || "").trim() || undefined;
+  const nickname = cleanPersonLabel(resolveNickname(peerId)) || undefined;
+  const claimedName =
+    cleanPersonLabel(resolveClaimedName(peerId) || trusted?.alias || "") || undefined;
   const shortId = shortIdOf(signPublic ?? peerId);
   return {
     peerId,
@@ -163,10 +173,12 @@ function buildContact(
     ambiguous: false,
     method: trusted?.method,
     personId: trusted?.personId,
+    phoneHash: trusted?.phoneHash || resolvePhoneHash(peerId) || undefined,
     pairedAt: trusted?.pairedAt,
     lastSeen: Math.max(peer?.lastSeen ?? 0, trusted?.pairedAt ?? 0),
   };
 }
+
 
 
 /**
@@ -176,17 +188,20 @@ function buildContact(
 function collapsePersons(rows: Contact[]): Contact[] {
   const groups = new Map<string, Contact[]>();
   for (const row of rows) {
-    // Sıra: numara çıpası (personId) → imza anahtarı → ad → cihaz kimliği.
+    // Sıra: NUMARA ÖZETİ → kişi kimliği → imza anahtarı → ad → cihaz kimliği.
     // Aynı numaraya bağlı cihazlar adları farklı olsa da tek kartta toplanır;
     // kimliği bilinen iki ayrı kişi aynı adı taşısa bile ayrı kalır.
     const nameKey = normalizedPersonName(row.displayName);
-    const key = row.personId
-      ? `p:${row.personId}`
-      : row.signPublic
-        ? `k:${row.signPublic}`
-        : nameKey
-          ? `n:${nameKey}`
-          : row.peerId;
+    const key = row.phoneHash
+      ? `h:${row.phoneHash}`
+      : row.personId
+        ? `p:${row.personId}`
+        : row.signPublic
+          ? `k:${row.signPublic}`
+          : nameKey
+            ? `n:${nameKey}`
+            : row.peerId;
+
     const bucket = groups.get(key);
     if (bucket) bucket.push(row);
     else groups.set(key, [row]);
@@ -218,7 +233,15 @@ function collapsePersons(rows: Contact[]): Contact[] {
       if (!primary.method) primary.method = bucket.find((c) => c.method)?.method;
       const anchor = bucket.find((c) => c.personId)?.personId ?? primary.personId ?? primary.peerId;
       primary.personId = anchor;
-      for (const contact of bucket) linkNodeToPerson(contact.peerId, anchor);
+      const hash = bucket.find((c) => c.phoneHash)?.phoneHash;
+      if (hash) primary.phoneHash = hash;
+      for (const contact of bucket) {
+        linkNodeToPerson(contact.peerId, anchor);
+        // Numara özeti kişinin tüm cihazlarına yayılır: bir sonraki açılışta
+        // aynı kişi hiçbir koşulda iki karta bölünmez.
+        if (hash) writePhoneHash(contact.peerId, hash);
+      }
+
     }
 
     out.push(primary);
