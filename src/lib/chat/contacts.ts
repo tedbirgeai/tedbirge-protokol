@@ -41,6 +41,7 @@ import { getBrowserNodeId } from "@/lib/browser-node";
 import {
   ALIAS_KEY,
   NICK_KEY,
+  cleanPersonLabel,
   linkNodeToPerson,
   readMap,
   resolveClaimedName,
@@ -48,6 +49,7 @@ import {
   normalizedPersonName,
   writeNickname,
 } from "@/lib/chat/name-resolver";
+
 
 
 /** Karıştırılabilir harf/rakam (I, L, O, U) çıkarılmış Crockford Base32. */
