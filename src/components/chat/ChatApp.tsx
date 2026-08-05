@@ -753,6 +753,9 @@ export function ChatApp() {
 
   const pairing = usePairing();
   const contactBook = useContacts();
+  useAvatars();
+  const myAvatarInput = useRef<HTMLInputElement>(null);
+
 
   // Rehber, yeni eş ya da yeni sohbet göründüğünde kendini tazeler.
   useEffect(() => {
