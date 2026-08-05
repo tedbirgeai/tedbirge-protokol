@@ -1150,9 +1150,8 @@ export function ChatApp() {
           </div>
         </div>
 
-        <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--wa-border)" }}>
-          <InstallAppButton />
-        </div>
+        {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
+
         <div className="px-3 py-2">
           <div
             className="flex items-center gap-3 rounded-lg px-3 py-2"
