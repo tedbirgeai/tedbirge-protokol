@@ -281,18 +281,44 @@ async function push(phone: string): Promise<number> {
   const now = Date.now();
 
   const conversations = (await listConversations()).filter((c) => c.lastTs >= cursor);
-  const messages = (await listAllMessages())
+  const allMessages = (await listAllMessages())
     .filter((m) => (m.editedAt ?? m.ts) >= cursor)
     .sort((a, b) => a.ts - b.ts);
   const calls = listCalls().filter((c) => c.ts >= cursor);
-  if (conversations.length === 0 && messages.length === 0 && calls.length === 0) return 0;
+
+  // Tek pakete sığmayan (büyük medya taşıyan) mesajlar atlanır; bunlar
+  // eşleşen cihazlar arasında doğrudan aktarılır, kasaya yazılmaz.
+  const messages: ChatMessage[] = [];
+  for (const m of allMessages) {
+    if (JSON.stringify(m).length > MAX_ITEM_CHARS) {
+      console.warn("[sync] büyük mesaj kasaya yazılmadı", m.id);
+      continue;
+    }
+    messages.push(m);
+  }
+  if (conversations.length === 0 && messages.length === 0 && calls.length === 0) {
+    writeStr(CURSOR_PUSH, String(now));
+    return 0;
+  }
 
   const { pushHistoryChunk } = await import("@/lib/history.functions");
   const deviceId = getBrowserNodeId();
+
+  // Paketler hem adet hem de bayt sınırına göre bölünür.
   const batches: ChatMessage[][] = [];
-  for (let i = 0; i < messages.length; i += CHUNK_MESSAGES) {
-    batches.push(messages.slice(i, i + CHUNK_MESSAGES));
+  let current: ChatMessage[] = [];
+  let currentChars = 0;
+  for (const m of messages) {
+    const size = JSON.stringify(m).length;
+    if (current.length >= CHUNK_MESSAGES || (current.length > 0 && currentChars + size > MAX_BATCH_CHARS)) {
+      batches.push(current);
+      current = [];
+      currentChars = 0;
+    }
+    current.push(m);
+    currentChars += size;
   }
+  if (current.length > 0) batches.push(current);
   if (batches.length === 0) batches.push([]);
 
   let sent = 0;
@@ -305,6 +331,10 @@ async function push(phone: string): Promise<number> {
       calls: i === 0 ? calls : [],
     };
     const ciphertext = await sealDelta(phone, delta);
+    if (ciphertext.length > MAX_CIPHERTEXT) {
+      console.warn("[sync] paket sınırı aşıldı, atlandı", ciphertext.length);
+      continue;
+    }
     const res = await pushHistoryChunk({ data: { deviceId, ciphertext } });
     if (!res.ok) throw new Error(res.error ?? "Paket yazılamadı");
     sent += delta.messages.length;
@@ -312,6 +342,7 @@ async function push(phone: string): Promise<number> {
   writeStr(CURSOR_PUSH, String(now));
   return sent;
 }
+
 
 let inFlight: Promise<boolean> | null = null;
 
