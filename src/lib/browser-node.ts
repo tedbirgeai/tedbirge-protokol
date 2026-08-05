@@ -62,6 +62,10 @@ const CHANNEL = "tedbirge-mesh-v1";
 /** Yerel keşif kanalı: aynı cihaz/aynı origin üzerindeki sekme ve PWA örnekleri. */
 const LOCAL_CHANNEL = "tedbirge-local-mesh-v1";
 const LOCAL_ANNOUNCE_MS = 4_000;
+/** Dizin sorgusu önbelleği: başarılı sonuç 5 dk, boş sonuç 20 sn saklanır. */
+const DEVICE_CACHE_MS = 300_000;
+const DEVICE_CACHE_MISS_MS = 20_000;
+
 const MAX_TTL = 4;
 /** Bulutsuz (Katman B) el sıkışma için yerel ajan WebSocket sinyalleşme adresleri. */
 const LAN_SIGNAL_PORT = 8787;
