@@ -1322,12 +1322,37 @@ export class BrowserNode {
     return this.send("alert", "*", { text, at: Date.now() }, 0);
   }
 
+  /**
+   * Kuyruk yeniden denemesi sabit aralıklı değildir: teslim edilecek paket
+   * yoksa ya da bulut kotası soğuma penceresindeyse tur atlanır ve bekleme
+   * üstel olarak büyür (12 sn → 2 dk). Böylece boşa istek üretilmez.
+   */
+  private scheduleQueueFlush() {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    const delay = Math.min(12_000 * 2 ** this.queueBackoff, 120_000);
+    this.retryTimer = setTimeout(async () => {
+      this.retryTimer = null;
+      await this.flushQueue();
+      if (this.state.running) this.scheduleQueueFlush();
+    }, delay);
+  }
+
   private async flushQueue() {
     if (this.flushBusy) return;
+    const { relayCooldownRemainingMs } = await import("@/lib/relay-cloud");
+    if (relayCooldownRemainingMs() > 0) {
+      this.queueBackoff = Math.min(this.queueBackoff + 1, 4);
+      return;
+    }
     this.flushBusy = true;
+    let delivered = 0;
     try {
       const rows = await getPackets();
-      if (!rows.length) return;
+      if (!rows.length) {
+        this.queueBackoff = Math.min(this.queueBackoff + 1, 4);
+        return;
+      }
+
       const durable: typeof rows = [];
       const uniqueIntents = new Set<string>();
       for (const row of rows) {
