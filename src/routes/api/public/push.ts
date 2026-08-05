@@ -24,6 +24,16 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("unsubscribe"), endpoint: z.string().url().max(2000) }),
   z.object({
+    action: z.literal("native-subscribe"),
+    nodeId: NodeId,
+    token: z.string().trim().min(10).max(500),
+    platform: z.enum(["ios", "android", "unknown"]).default("unknown"),
+  }),
+  z.object({
+    action: z.literal("native-unsubscribe"),
+    token: z.string().trim().min(10).max(500),
+  }),
+  z.object({
     action: z.literal("notify"),
     to: NodeId,
     kind: z.enum(["message", "call"]),
@@ -79,6 +89,16 @@ export const Route = createFileRoute("/api/public/push")({
 
         if (parsed.action === "subscribe") {
           const ok = await dispatch.registerPushSubscription(parsed);
+          return json({ ok });
+        }
+
+        if (parsed.action === "native-subscribe") {
+          const ok = await dispatch.registerNativeToken(parsed);
+          return json({ ok });
+        }
+
+        if (parsed.action === "native-unsubscribe") {
+          const ok = await dispatch.removeNativeToken(parsed.token);
           return json({ ok });
         }
 
