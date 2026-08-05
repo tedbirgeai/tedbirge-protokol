@@ -1,3 +1,4 @@
+import { SyncWarningBar } from "@/components/chat/SyncStatusPanel";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -1355,6 +1356,8 @@ export function ChatApp() {
             />
           </div>
         )}
+
+        <SyncWarningBar />
 
         <ul className={`flex-1 overflow-y-auto ${folder === CALLS_TAB ? "hidden" : ""}`}>
 

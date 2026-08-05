@@ -91,3 +91,20 @@ export async function logCall(input: Omit<CallRecord, "id" | "ts">): Promise<Cal
   }
   return rec;
 }
+
+/**
+ * Başka bir cihazdan gelen arama kayıtlarını birleştirir (kimliğe göre
+ * tekilleştirir, aynı kayıt iki kez görünmez).
+ */
+export function mergeCallRecords(incoming: CallRecord[]): number {
+  if (!incoming?.length) return 0;
+  const byId = new Map<string, CallRecord>();
+  for (const rec of [...read(), ...incoming]) {
+    if (!rec?.id) continue;
+    const existing = byId.get(rec.id);
+    if (!existing || rec.seconds > existing.seconds) byId.set(rec.id, rec);
+  }
+  const merged = Array.from(byId.values()).sort((a, b) => b.ts - a.ts);
+  write(merged);
+  return merged.length;
+}

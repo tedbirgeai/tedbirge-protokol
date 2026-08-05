@@ -73,7 +73,8 @@ export async function flushEnrollment(): Promise<"sent" | "queued" | "empty"> {
     if (!res.ok) return "queued";
     writeQueue(null);
     return "sent";
-  } catch {
+  } catch (error) {
+    console.error("[sync] katılım kuyruğu gönderilemedi", error);
     return "queued";
   }
 }
@@ -117,16 +118,17 @@ export async function runDirectorySync(force = false): Promise<boolean> {
       const phone = await getAnchorPhone();
       if (phone) {
         const vault = await import("@/lib/chat/vault");
-        await vault.restoreContacts(phone).catch(() => 0);
-        await vault.backupContacts(phone).catch(() => false);
+        await vault.restoreContacts(phone);
+        await vault.backupContacts(phone);
       }
-    } catch {
-      /* çevrimdışı: bir sonraki turda denenir */
+    } catch (error) {
+      console.error("[sync] rehber kasası eşitlenemedi", error);
     }
     const ok = flushed !== "queued" && result.source !== "none";
     if (ok) markSynced();
     return ok;
-  } catch {
+  } catch (error) {
+    console.error("[sync] dizin turu başarısız", error);
     return false;
   }
 }

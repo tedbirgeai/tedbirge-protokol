@@ -455,6 +455,33 @@ export type Database = {
           },
         ]
       }
+      history_chunks: {
+        Row: {
+          byte_size: number
+          ciphertext: string
+          created_at: string
+          device_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          byte_size?: number
+          ciphertext: string
+          created_at?: string
+          device_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          byte_size?: number
+          ciphertext?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ir_frames: {
         Row: {
           alarm: boolean

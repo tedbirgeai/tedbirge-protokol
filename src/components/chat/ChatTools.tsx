@@ -39,6 +39,7 @@ import { searchMessages, type SearchHit } from "@/lib/chat/search";
 import { pressFeedback } from "@/lib/chat/sounds";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { NotificationHealth } from "@/components/chat/NotificationHealth";
+import { SyncStatusSection } from "@/components/chat/SyncStatusPanel";
 import { getAlias, getEmail, getPhone, setAlias, setEmail } from "@/lib/chat/profile";
 import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory";
 
@@ -46,11 +47,19 @@ import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory"
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
 
 /** Ayarlar tek ekranda toplanır: altı sekme, tek pencere. */
-type SettingsTab = "profil" | "bildirim" | "gizlilik" | "depolama" | "rehber" | "hakkinda";
+type SettingsTab =
+  | "profil"
+  | "bildirim"
+  | "gizlilik"
+  | "esitleme"
+  | "depolama"
+  | "rehber"
+  | "hakkinda";
 const SETTINGS_TABS: { id: SettingsTab; label: string }[] = [
   { id: "profil", label: "Profil" },
   { id: "bildirim", label: "Bildirim" },
   { id: "gizlilik", label: "Gizlilik" },
+  { id: "esitleme", label: "Eşitleme" },
   { id: "depolama", label: "Depolama" },
   { id: "rehber", label: "Rehber" },
   { id: "hakkinda", label: "Hakkında" },
@@ -557,6 +566,8 @@ export function ChatSettingsDialog({
         </section>
         </>
         )}
+
+        {tab === "esitleme" && <SyncStatusSection />}
 
         {tab === "depolama" && (
         <>
