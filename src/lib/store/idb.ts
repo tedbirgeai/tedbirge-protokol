@@ -219,10 +219,18 @@ async function tx<T>(
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try {
     return await p;
-  } catch {
+  } catch (error) {
+    // Sessiz hata yasak: başarısız her yerel yazma/okuma günlüğe düşer.
+    try {
+      const { logSync } = await import("@/lib/chat/sync-log");
+      logSync("hata", "yerel-depo", String((error as { message?: string })?.message ?? error));
+    } catch {
+      /* günlük yazılamadı */
+    }
     return fallback;
   }
 }
+
 
 /* ----------------------------- outbox ----------------------------- */
 
