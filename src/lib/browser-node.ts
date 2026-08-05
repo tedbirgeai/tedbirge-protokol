@@ -478,7 +478,7 @@ export class BrowserNode {
       // Bekleyen mesajlar yalnız olay anında değil, düzenli olarak da denenir.
       void this.flushQueue();
     }, 60_000);
-    this.retryTimer = setInterval(() => void this.flushQueue(), 12_000);
+    this.scheduleQueueFlush();
 
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
     void this.publishDirectory();
