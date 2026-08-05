@@ -726,9 +726,15 @@ export function ChatApp() {
   useEffect(() => {
     const offFolders = onFoldersChange(() => setFolderVersion((v) => v + 1));
     const offPrivacy = onPrivacyChange(() => setPrivacyState({ ...getPrivacy() }));
+    // Rehber sessizce tazelenir: sonradan katılan tanıdıklar kendiliğinden gelir.
+    let stopSync: (() => void) | undefined;
+    void import("@/lib/chat/directory").then((m) => {
+      stopSync = m.startContactAutoSync();
+    });
     return () => {
       offFolders();
       offPrivacy();
+      stopSync?.();
     };
   }, []);
 
