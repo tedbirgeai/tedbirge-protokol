@@ -94,16 +94,11 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
 
   const q = query.trim().toLocaleLowerCase("tr");
 
-  // Girişte rehberi arka planda otomatik eşitle (tek sefer, sessiz).
+  // Her açılışta rehber sessizce yeniden eşleştirilir: yeni katılan
+  // tanıdıklar kullanıcı hiçbir şey yapmadan listede belirir.
   useEffect(() => {
     if (tried.current) return;
     tried.current = true;
-    try {
-      if (window.localStorage.getItem(SYNC_FLAG) === "1") return;
-      window.localStorage.setItem(SYNC_FLAG, "1");
-    } catch {
-      /* gizli mod */
-    }
     void autoSyncContacts().catch(() => null);
   }, []);
 
