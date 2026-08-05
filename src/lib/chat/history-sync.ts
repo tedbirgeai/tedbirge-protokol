@@ -36,8 +36,15 @@ const LAST_ERROR = "tedbirge.sync.lastError";
 
 /** Tek pakette taşınan en fazla mesaj sayısı (kota koruması). */
 const CHUNK_MESSAGES = 250;
+/** Sunucunun kabul ettiği en büyük şifreli paket (güvenlik payı ile). */
+const MAX_CIPHERTEXT = 850_000;
+/** Bir pakete konulacak en fazla düz metin karakteri. */
+const MAX_BATCH_CHARS = 450_000;
+/** Tek başına kasaya sığmayan mesaj eşiği (büyük medya). */
+const MAX_ITEM_CHARS = 400_000;
 /** Periyodik eşitleme aralığı. */
 const INTERVAL_MS = 5 * 60_000;
+
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -95,6 +102,22 @@ function writeStr(key: string, value: string) {
     console.warn("[sync] yerel depolama yazılamadı", error);
   }
 }
+
+/**
+ * Teknik hata metnini (ör. doğrulama JSON'u) kullanıcıya okunur hâle
+ * getirir; ham JSON hiçbir zaman arayüzde gösterilmez.
+ */
+function friendlyError(raw: string): string {
+  const text = (raw || "").trim();
+  if (!text) return "Bilinmeyen bir sorun oluştu";
+  if (text.startsWith("[") || text.startsWith("{")) {
+    return "Eşitleme paketi kabul edilmedi — yeniden denenecek";
+  }
+  if (/rate|429|too many/i.test(text)) return "Çok sık denendi, birazdan tekrar denenecek";
+  if (/fetch|network|failed to fetch/i.test(text)) return "Bağlantı kurulamadı";
+  return text.length > 120 ? `${text.slice(0, 117)}…` : text;
+}
+
 
 function publish(patch: Partial<SyncState>) {
   state = { ...state, ...patch };
@@ -281,18 +304,44 @@ async function push(phone: string): Promise<number> {
   const now = Date.now();
 
   const conversations = (await listConversations()).filter((c) => c.lastTs >= cursor);
-  const messages = (await listAllMessages())
+  const allMessages = (await listAllMessages())
     .filter((m) => (m.editedAt ?? m.ts) >= cursor)
     .sort((a, b) => a.ts - b.ts);
   const calls = listCalls().filter((c) => c.ts >= cursor);
-  if (conversations.length === 0 && messages.length === 0 && calls.length === 0) return 0;
+
+  // Tek pakete sığmayan (büyük medya taşıyan) mesajlar atlanır; bunlar
+  // eşleşen cihazlar arasında doğrudan aktarılır, kasaya yazılmaz.
+  const messages: ChatMessage[] = [];
+  for (const m of allMessages) {
+    if (JSON.stringify(m).length > MAX_ITEM_CHARS) {
+      console.warn("[sync] büyük mesaj kasaya yazılmadı", m.id);
+      continue;
+    }
+    messages.push(m);
+  }
+  if (conversations.length === 0 && messages.length === 0 && calls.length === 0) {
+    writeStr(CURSOR_PUSH, String(now));
+    return 0;
+  }
 
   const { pushHistoryChunk } = await import("@/lib/history.functions");
   const deviceId = getBrowserNodeId();
+
+  // Paketler hem adet hem de bayt sınırına göre bölünür.
   const batches: ChatMessage[][] = [];
-  for (let i = 0; i < messages.length; i += CHUNK_MESSAGES) {
-    batches.push(messages.slice(i, i + CHUNK_MESSAGES));
+  let current: ChatMessage[] = [];
+  let currentChars = 0;
+  for (const m of messages) {
+    const size = JSON.stringify(m).length;
+    if (current.length >= CHUNK_MESSAGES || (current.length > 0 && currentChars + size > MAX_BATCH_CHARS)) {
+      batches.push(current);
+      current = [];
+      currentChars = 0;
+    }
+    current.push(m);
+    currentChars += size;
   }
+  if (current.length > 0) batches.push(current);
   if (batches.length === 0) batches.push([]);
 
   let sent = 0;
@@ -305,6 +354,10 @@ async function push(phone: string): Promise<number> {
       calls: i === 0 ? calls : [],
     };
     const ciphertext = await sealDelta(phone, delta);
+    if (ciphertext.length > MAX_CIPHERTEXT) {
+      console.warn("[sync] paket sınırı aşıldı, atlandı", ciphertext.length);
+      continue;
+    }
     const res = await pushHistoryChunk({ data: { deviceId, ciphertext } });
     if (!res.ok) throw new Error(res.error ?? "Paket yazılamadı");
     sent += delta.messages.length;
@@ -312,6 +365,7 @@ async function push(phone: string): Promise<number> {
   writeStr(CURSOR_PUSH, String(now));
   return sent;
 }
+
 
 let inFlight: Promise<boolean> | null = null;
 
@@ -352,11 +406,13 @@ export async function syncNow(): Promise<boolean> {
       });
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("[sync] tur başarısız", message);
+      const raw = error instanceof Error ? error.message : String(error);
+      const message = friendlyError(raw);
+      console.error("[sync] tur başarısız", raw);
       writeStr(LAST_ERROR, message);
       publish({ lastError: message });
       return false;
+
     } finally {
       publish({ running: false });
       inFlight = null;
