@@ -118,6 +118,10 @@ export type Contact = {
   /** Aynı beyan adını taşıyan başka kişi var mı? (isim çakışması uyarısı) */
   ambiguous: boolean;
   method?: TrustedNode["method"];
+  /** Numaraya çıpalanmış kişi kimliği (aynı kişinin tüm cihazları). */
+  personId?: string;
+  /** Bu kişinin diğer bağlı cihazları — arayüzde tek kart gösterilir. */
+  linkedNodes?: string[];
   pairedAt?: number;
   lastSeen: number;
 };
