@@ -879,7 +879,10 @@ export class BrowserNode {
   private handleOnline = () => {
     this.emit({ online: true });
     void appendEvent("uplink", "İnternet geri geldi — kuyruk boşaltılıyor.");
+    this.queueBackoff = 0;
+    this.deviceCache.clear();
     void this.flushQueue();
+
     void this.heartbeat();
     void this.publishDirectory();
     void this.pollRelay();
