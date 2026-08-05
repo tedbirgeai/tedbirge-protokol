@@ -848,8 +848,22 @@ export function ChatApp() {
   const callTouched = useMemo(() => {
     const set = new Set<string>();
     for (const rec of listCalls()) {
+      const peer = rec.peerId ?? "";
+      // Adı çözülemeyen ya da kendi cihazıma ait arama kaydı sohbet satırı açmaz.
+      if (!peer) continue;
+      const name = resolveDisplayName(peer).trim();
+      if (!name) continue;
+      if (
+        isSelfPerson({
+          id: peer,
+          personId: nameKeyOf(peer),
+          phoneHash: resolvePhoneHash(peer),
+          name,
+        })
+      )
+        continue;
       if (rec.convId) set.add(rec.convId);
-      if (rec.peerId) set.add(directConvId(getBrowserNodeId(), rec.peerId));
+      set.add(directConvId(getBrowserNodeId(), peer));
     }
     return set;
   }, [chat.conversations]);
