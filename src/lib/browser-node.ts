@@ -628,7 +628,7 @@ export class BrowserNode {
     payload: unknown,
     priority: Priority,
   ): Promise<boolean> {
-    if (!this.channel || !this.cloudUp || !this.state.online || to === "*" || !this.identity) {
+    if (!this.channel || !this.cloudUp || to === "*" || !this.identity) {
       return false;
     }
     const online = new Set(Object.keys(this.channel.presenceState()));
