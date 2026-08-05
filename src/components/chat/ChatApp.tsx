@@ -1570,7 +1570,9 @@ export function ChatApp() {
                         ? "uçtan uca şifreli"
                         : peerOnline
                           ? "çevrimiçi"
-                          : "son görülme bilinmiyor"}
+                          : privacy.hideLastSeen
+                            ? "uçtan uca şifreli"
+                            : lastSeenLabel(peerId ?? "")}
                 </p>
               </div>
               <button
@@ -1611,6 +1613,73 @@ export function ChatApp() {
               >
                 <Video className="h-6 w-6" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setGalleryOpen(true);
+                }}
+                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Medya ve belgeler"
+                title="Medya ve belgeler"
+              >
+                <ImageIcon className="h-5 w-5" />
+              </button>
+              <div className="relative hidden lg:block">
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setMuteMenu((v) => !v);
+                  }}
+                  className="wa-press flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"
+                  style={{ color: isMuted(active.id) ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                  aria-label={isMuted(active.id) ? "Sesi aç" : "Sessize al"}
+                  title={isMuted(active.id) ? muteUntilLabel(active.id) : "Sessize al"}
+                >
+                  {isMuted(active.id) ? (
+                    <BellOff className="h-5 w-5" />
+                  ) : (
+                    <Bell className="h-5 w-5" />
+                  )}
+                </button>
+                {muteMenu && (
+                  <div
+                    className="absolute right-0 top-12 z-30 w-44 overflow-hidden rounded-lg shadow-lg"
+                    style={{ background: "var(--wa-panel)", border: "1px solid var(--wa-border)" }}
+                  >
+                    {isMuted(active.id) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          unmuteConversation(active.id);
+                          setMuteMenu(false);
+                        }}
+                        className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
+                        style={{ color: "var(--wa-text)" }}
+                      >
+                        Bildirimleri aç
+                      </button>
+                    ) : (
+                      MUTE_OPTIONS.map((o) => (
+                        <button
+                          key={o.id}
+                          type="button"
+                          onClick={() => {
+                            muteConversation(active.id, o.id);
+                            setMuteMenu(false);
+                          }}
+                          className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
+                          style={{ color: "var(--wa-text)" }}
+                        >
+                          {o.label}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => void togglePin(active.id)}
