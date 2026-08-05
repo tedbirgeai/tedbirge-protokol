@@ -13,6 +13,8 @@ import { Radio, StickyNote, User } from "lucide-react";
 import { useContacts, type Contact } from "@/lib/chat/contacts";
 import { syncDeviceContacts } from "@/lib/chat/directory";
 import { isTechnicalLabel } from "@/lib/chat/display-name";
+import { getAvatar, useAvatars } from "@/lib/chat/avatars";
+
 import type { PeerInfo } from "@/lib/browser-node";
 
 type Props = {
@@ -29,12 +31,14 @@ function Row({
   subtitle,
   tone,
   icon,
+  avatar,
   onClick,
 }: {
   title: string;
   subtitle: string;
   tone?: string;
   icon: React.ReactNode;
+  avatar?: string;
   onClick: () => void;
 }) {
   return (
@@ -43,13 +47,22 @@ function Row({
       onClick={onClick}
       className="wa-press wa-row flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-black/[0.03]"
     >
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        style={{ background: "var(--wa-panel-soft)", color: "var(--wa-accent)" }}
-        aria-hidden
-      >
-        {icon}
-      </span>
+      {avatar ? (
+        <img
+          src={avatar}
+          alt=""
+          className="h-9 w-9 shrink-0 rounded-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+          style={{ background: "var(--wa-panel-soft)", color: "var(--wa-accent)" }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+      )}
       <span className="min-w-0 flex-1">
         <span
           className="block truncate text-[15px] font-medium"
@@ -67,14 +80,9 @@ function Row({
 
 const SYNC_FLAG = "tedbirge.chat.autoSync";
 
-export function DirectoryPanel({
-  query,
-  peers,
-  labelOf,
-  onOpenPeer,
-  onOpenSelfNote,
-}: Props) {
+export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Props) {
   const book = useContacts();
+  useAvatars();
   const tried = useRef(false);
   const q = query.trim().toLocaleLowerCase("tr");
 
@@ -91,7 +99,8 @@ export function DirectoryPanel({
     void syncDeviceContacts().catch(() => null);
   }, []);
 
-  // Yalnızca gerçek adı olan kişiler listelenir.
+  // KVKK: yalnızca gerçek adı bilinen (rehberde eşleşmiş) kişiler listelenir.
+  // Anonim / kayıtsız düğümler arayüzde hiçbir şekilde gösterilmez.
   const contacts = useMemo(() => {
     const rows: Contact[] = book.contacts.filter(
       (c) => !isTechnicalLabel(c.nickname || c.claimedName || ""),
@@ -100,16 +109,8 @@ export function DirectoryPanel({
     return rows.filter((c) => c.displayName.toLocaleLowerCase("tr").includes(q));
   }, [book.contacts, q]);
 
-  const nodes = useMemo(
-    () =>
-      peers
-        .map((p) => ({ p, name: labelOf(p.nodeId) }))
-        .filter((r) => !isTechnicalLabel(r.name))
-        .filter((r) => !q || r.name.toLocaleLowerCase("tr").includes(q)),
-    [peers, q, labelOf],
-  );
-
-  const empty = contacts.length === 0 && nodes.length === 0;
+  const onlineIds = useMemo(() => new Set(peers.map((p) => p.nodeId)), [peers]);
+  const empty = contacts.length === 0;
 
   return (
     <div style={{ borderTop: "1px solid var(--wa-border)" }}>
@@ -129,26 +130,20 @@ export function DirectoryPanel({
         />
       )}
 
-      {nodes.map((r) => (
-        <Row
-          key={`node_${r.p.nodeId}`}
-          title={r.name}
-          subtitle="Çevrimiçi"
-          tone="var(--wa-accent)"
-          icon={<Radio className="h-4 w-4" />}
-          onClick={() => onOpenPeer(r.p.nodeId)}
-        />
-      ))}
-
-      {contacts.map((c) => (
-        <Row
-          key={`c_${c.peerId}`}
-          title={c.displayName}
-          subtitle="Rehberinizden eşleşti"
-          icon={<User className="h-4 w-4" />}
-          onClick={() => onOpenPeer(c.peerId, c.nickname ?? c.claimedName)}
-        />
-      ))}
+      {contacts.map((c) => {
+        const online = onlineIds.has(c.peerId);
+        return (
+          <Row
+            key={`c_${c.peerId}`}
+            title={c.displayName}
+            subtitle={online ? "Çevrimiçi" : "Rehberinizden eşleşti"}
+            tone={online ? "var(--wa-accent)" : undefined}
+            avatar={getAvatar(c.peerId)}
+            icon={online ? <Radio className="h-4 w-4" /> : <User className="h-4 w-4" />}
+            onClick={() => onOpenPeer(c.peerId, c.nickname ?? c.claimedName)}
+          />
+        );
+      })}
 
       {empty && (
         <p className="px-4 py-3 text-[13px]" style={{ color: "var(--wa-muted)" }}>

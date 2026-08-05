@@ -54,6 +54,7 @@ import {
   createGroup,
   ensureDirectConversation,
   ensureSelfConversation,
+  SELF_CONV_ID,
   markRead,
   removeConversation,
   conversationTargets,
@@ -102,6 +103,14 @@ import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
 import { InstallAppButton } from "@/components/chat/InstallAppButton";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
+import {
+  fileToAvatarDataUrl,
+  getAvatar,
+  getMyAvatar,
+  setMyAvatar,
+  useAvatars,
+} from "@/lib/chat/avatars";
+
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
 
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
@@ -203,7 +212,17 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]!;
 }
 
-function Avatar({ name, size = 44 }: { name: string; size?: number }) {
+function Avatar({ name, size = 44, src }: { name: string; size?: number; src?: string }) {
+  if (src)
+    return (
+      <img
+        src={src}
+        alt=""
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
@@ -733,6 +752,8 @@ export function ChatApp() {
 
   const pairing = usePairing();
   const contactBook = useContacts();
+  useAvatars();
+  const myAvatarInput = useRef<HTMLInputElement>(null);
 
   // Rehber, yeni eş ya da yeni sohbet göründüğünde kendini tazeler.
   useEffect(() => {
@@ -762,9 +783,8 @@ export function ChatApp() {
       allConversations.filter((c) => {
         const f = folderOf(c.id);
         if (folder === "" ? f === ARCHIVE : f !== folder) return false;
-        // Arayüzde teknik kimlik başlığı gösterilmez: adı olmayan ve hiç
-        // mesajı bulunmayan kayıtlar listede yer almaz.
-        if (isTechnicalLabel(titleOf(c)) && !c.lastText) return false;
+        // KVKK: adı bilinmeyen (anonim) kayıtlar sohbet listesinde gösterilmez.
+        if (isTechnicalLabel(titleOf(c)) && c.id !== SELF_CONV_ID) return false;
         return true;
       }),
     [allConversations, folder, folderVersion],
@@ -791,7 +811,12 @@ export function ChatApp() {
       active.members.at(-1))
     : undefined;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
+  /** Çevrim içi / son görülme yalnızca rehberde eşleşmiş kişilerde gösterilir. */
+  const peerKnown = Boolean(
+    active && !active.group && !isTechnicalLabel(contactLabel(active.members[0] ?? "", "")),
+  );
   const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "Kayıtsız kişi");
+
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
   /** Kayan pencere: çok uzun sohbetlerde yalnızca son N mesaj DOM'a basılır. */
   const shownMessages = useMemo(
@@ -975,7 +1000,30 @@ export function ChatApp() {
           className="flex items-center gap-3 px-4 py-2.5"
           style={{ background: "var(--wa-panel-soft)", borderBottom: "1px solid var(--wa-border)" }}
         >
-          <Avatar name={me} size={40} />
+          <button
+            type="button"
+            onClick={() => myAvatarInput.current?.click()}
+            className="wa-press rounded-full"
+            aria-label="Profil fotoğrafını değiştir"
+            title="Profil fotoğrafını değiştir"
+          >
+            <Avatar name={me} size={40} src={getMyAvatar()} />
+          </button>
+          <input
+            ref={myAvatarInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              void fileToAvatarDataUrl(file)
+                .then((url) => setMyAvatar(url))
+                .catch(() => undefined);
+            }}
+          />
+
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold" style={{ color: "var(--wa-text)" }}>
               {me}
@@ -1138,33 +1186,41 @@ export function ChatApp() {
                   Henüz yakında cihaz yok — karekod ile davet edin.
                 </p>
               )}
-              {peers.map((p) => {
-                const paired = Boolean(pairing.trusted[p.nodeId]);
-                return (
-                  <button
-                    key={p.nodeId}
-                    type="button"
-                    onClick={() => {
-                      void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then((c) => {
-                        setActiveId(c.id);
-                        setGroupMode(false);
-                      });
-                    }}
-                    className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
-                    style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-                  >
-                    <span className="truncate">
-                      {humanName(contactLabel(p.nodeId, chat.aliases[p.nodeId]), "Kayıtsız cihaz")}
-                    </span>
-                    <span
-                      className="text-[11px]"
-                      style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
+              {peers
+                .filter((p) => !isTechnicalLabel(contactLabel(p.nodeId, chat.aliases[p.nodeId])))
+                .map((p) => {
+                  const paired = Boolean(pairing.trusted[p.nodeId]);
+
+                  return (
+                    <button
+                      key={p.nodeId}
+                      type="button"
+                      onClick={() => {
+                        void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then(
+                          (c) => {
+                            setActiveId(c.id);
+                            setGroupMode(false);
+                          },
+                        );
+                      }}
+                      className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                      style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
                     >
-                      {paired ? "çevrimiçi" : "yakında"}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span className="truncate">
+                        {humanName(
+                          contactLabel(p.nodeId, chat.aliases[p.nodeId]),
+                          "Kayıtsız cihaz",
+                        )}
+                      </span>
+                      <span
+                        className="text-[11px]"
+                        style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                      >
+                        {paired ? "çevrimiçi" : "yakında"}
+                      </span>
+                    </button>
+                  );
+                })}
             </div>
             <div className="mt-3 flex gap-2">
               <input
@@ -1244,7 +1300,8 @@ export function ChatApp() {
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
-                  <Avatar name={name} />
+                  <Avatar name={name} src={c.group ? undefined : getAvatar(c.members[0])} />
+
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <p
@@ -1348,7 +1405,7 @@ export function ChatApp() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <Avatar name={activeName} size={40} />
+              <Avatar name={activeName} size={40} src={getAvatar(peerId)} />
               <div className="min-w-0 flex-1">
                 <p
                   className="truncate text-[15px] font-semibold"
@@ -1362,9 +1419,11 @@ export function ChatApp() {
                     ? "yazıyor…"
                     : active.group
                       ? "Grup"
-                      : peerOnline
-                        ? "çevrimiçi"
-                        : "son görülme bilinmiyor"}
+                      : !peerKnown
+                        ? "uçtan uca şifreli"
+                        : peerOnline
+                          ? "çevrimiçi"
+                          : "son görülme bilinmiyor"}
                 </p>
               </div>
               <button
