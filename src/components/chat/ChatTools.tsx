@@ -468,6 +468,8 @@ export function ChatSettingsDialog({
             ))}
           </div>
         </section>
+        <PrivacyPresenceSection />
+        <DeviceSessionsSection />
         </>
         )}
 
@@ -617,5 +619,86 @@ export function ChatSettingsDialog({
         )}
       </div>
     </div>
+  );
+}
+
+/** Son görülme paylaşımı anahtarı. */
+function PrivacyPresenceSection() {
+  const [hidden, setHidden] = useState(() => getPrivacy().hideLastSeen);
+  return (
+    <section className="mt-6">
+      <h3 className="text-sm font-semibold">Son görülme</h3>
+      <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+        Kapatırsanız kendi son görülme bilginiz paylaşılmaz; karşı tarafınki de size gösterilmez.
+      </p>
+      <label className="mt-2 flex items-center gap-2 text-[13px]">
+        <input
+          type="checkbox"
+          checked={!hidden}
+          onChange={(e) => {
+            const show = e.target.checked;
+            setHidden(!show);
+            setPrivacy({ hideLastSeen: !show });
+          }}
+        />
+        Son görülme bilgimi paylaş
+      </label>
+    </section>
+  );
+}
+
+/** Aynı kimliğe bağlı cihazlar ve uzaktan çıkış. */
+function DeviceSessionsSection() {
+  const [rows, setRows] = useState<DeviceSession[]>([]);
+  useEffect(() => {
+    const sync = () => setRows(listSessions());
+    sync();
+    return onSessionsChange(sync);
+  }, []);
+
+  return (
+    <section className="mt-6">
+      <h3 className="flex items-center gap-2 text-sm font-semibold">
+        <Smartphone className="h-4 w-4" aria-hidden /> Bağlı cihazlar
+      </h3>
+      <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+        Aynı kimlikle açtığınız telefon ve bilgisayar oturumları. Mesajlar cihazlar arasında uçtan
+        uca şifreli eşitlenir.
+      </p>
+      {rows.length === 0 && (
+        <p className="mt-2 text-xs" style={{ color: "var(--wa-muted)" }}>
+          Şu anda yalnızca bu cihaz bağlı.
+        </p>
+      )}
+      <ul className="mt-2 space-y-2">
+        {rows.map((sx) => (
+          <li
+            key={sx.nodeId}
+            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+            style={{ border: "1px solid var(--wa-border)" }}
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-[13px] font-medium">{sx.label}</span>
+              <span className="block text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                {sx.current ? "Bu cihaz" : `Son etkin: ${new Date(sx.lastSeen).toLocaleString("tr-TR")}`}
+              </span>
+            </span>
+            {!sx.current && (
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  void revokeSession(sx.nodeId);
+                }}
+                className="wa-press shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white"
+                style={{ background: "#e03131" }}
+              >
+                Çıkış yaptır
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
