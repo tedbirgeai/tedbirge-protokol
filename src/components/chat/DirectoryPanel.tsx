@@ -11,7 +11,13 @@ import { useEffect, useMemo, useRef } from "react";
 import { Radio, StickyNote, User } from "lucide-react";
 
 import { useContacts, type Contact } from "@/lib/chat/contacts";
-import { syncDeviceContacts } from "@/lib/chat/directory";
+import {
+  importContacts,
+  parseVcards,
+  saveLocalBook,
+  syncDeviceContacts,
+} from "@/lib/chat/directory";
+
 import { isTechnicalLabel } from "@/lib/chat/display-name";
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
 
