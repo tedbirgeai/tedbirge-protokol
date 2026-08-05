@@ -208,14 +208,15 @@ function SyncContactsRow() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card/50 p-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium">Rehberimdeki kişiler</p>
+        <p className="text-sm font-medium">Telefon rehberimi yükle</p>
         <p className="text-xs text-muted-foreground">
           {info ??
             (native
               ? "Numaralar cihazınızdan çıkmaz; yalnızca geri döndürülemez özetleri eşleştirilir."
-              : "Bu tarayıcı rehbere doğrudan erişemiyor. Telefonunuzdan dışa aktardığınız rehber dosyasını (.vcf) seçin; dosya cihazınızda okunur.")}
+              : "iPhone ve masaüstü tarayıcıları rehbere doğrudan erişemez. iPhone’da: Kişiler → kişileri seçin → Paylaş → “Kartı Paylaş” ile .vcf dosyasını kaydedin, sonra aşağıdan seçin. Dosya yalnızca bu cihazda okunur.")}
         </p>
       </div>
+
       <div className="flex flex-wrap gap-2">
         {native && (
           <Button size="sm" disabled={busy} onClick={() => run(syncDeviceContacts())}>
