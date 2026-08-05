@@ -91,7 +91,8 @@ export function DirectoryPanel({
     void syncDeviceContacts().catch(() => null);
   }, []);
 
-  // Yalnızca gerçek adı olan kişiler listelenir.
+  // KVKK: yalnızca gerçek adı bilinen (rehberde eşleşmiş) kişiler listelenir.
+  // Anonim / kayıtsız düğümler arayüzde hiçbir şekilde gösterilmez.
   const contacts = useMemo(() => {
     const rows: Contact[] = book.contacts.filter(
       (c) => !isTechnicalLabel(c.nickname || c.claimedName || ""),
@@ -100,16 +101,8 @@ export function DirectoryPanel({
     return rows.filter((c) => c.displayName.toLocaleLowerCase("tr").includes(q));
   }, [book.contacts, q]);
 
-  const nodes = useMemo(
-    () =>
-      peers
-        .map((p) => ({ p, name: labelOf(p.nodeId) }))
-        .filter((r) => !isTechnicalLabel(r.name))
-        .filter((r) => !q || r.name.toLocaleLowerCase("tr").includes(q)),
-    [peers, q, labelOf],
-  );
-
-  const empty = contacts.length === 0 && nodes.length === 0;
+  const onlineIds = useMemo(() => new Set(peers.map((p) => p.nodeId)), [peers]);
+  const empty = contacts.length === 0;
 
   return (
     <div style={{ borderTop: "1px solid var(--wa-border)" }}>
@@ -129,32 +122,27 @@ export function DirectoryPanel({
         />
       )}
 
-      {nodes.map((r) => (
-        <Row
-          key={`node_${r.p.nodeId}`}
-          title={r.name}
-          subtitle="Çevrimiçi"
-          tone="var(--wa-accent)"
-          icon={<Radio className="h-4 w-4" />}
-          onClick={() => onOpenPeer(r.p.nodeId)}
-        />
-      ))}
-
-      {contacts.map((c) => (
-        <Row
-          key={`c_${c.peerId}`}
-          title={c.displayName}
-          subtitle="Rehberinizden eşleşti"
-          icon={<User className="h-4 w-4" />}
-          onClick={() => onOpenPeer(c.peerId, c.nickname ?? c.claimedName)}
-        />
-      ))}
+      {contacts.map((c) => {
+        const online = onlineIds.has(c.peerId);
+        return (
+          <Row
+            key={`c_${c.peerId}`}
+            title={c.displayName}
+            subtitle={online ? "Çevrimiçi" : "Rehberinizden eşleşti"}
+            tone={online ? "var(--wa-accent)" : undefined}
+            avatar={getAvatar(c.peerId)}
+            icon={online ? <Radio className="h-4 w-4" /> : <User className="h-4 w-4" />}
+            onClick={() => onOpenPeer(c.peerId, c.nickname ?? c.claimedName)}
+          />
+        );
+      })}
 
       {empty && (
         <p className="px-4 py-3 text-[13px]" style={{ color: "var(--wa-muted)" }}>
           Ağda eşleşen kayıtlı kişi bulunamadı.
         </p>
       )}
+
 
       <p className="px-4 pb-4 pt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
         Numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle yapılır.
