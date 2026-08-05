@@ -556,9 +556,8 @@ export async function acceptCall() {
     for (const [peerId, offer] of entries) {
       try {
       const leg = createLeg(peerId, offer.alias || peerId);
-      stream.getTracks().forEach((t) => {
-        if (!leg.pc.getSenders().some((s) => s.track === t)) leg.pc.addTrack(t, stream);
-      });
+      attachLocal(leg.pc, stream, state.video);
+
       await tuneSenders(leg.pc);
       await leg.pc.setRemoteDescription(offer.desc);
 
