@@ -106,9 +106,21 @@ export function CallOverlay() {
   const remoteRef = useRef<HTMLVideoElement>(null);
   const [speaker, setSpeaker] = useState(true);
   const [playBlocked, setPlayBlocked] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const elapsed = useElapsed(call.phase === "active" ? call.startedAt : null);
   useAvatars();
   const peerAvatar = getAvatar(call.peerId);
+  const { contacts } = useContacts();
+  const inCall = useMemo(
+    () => new Set([call.peerId, ...call.participants.map((p) => p.peerId)].filter(Boolean)),
+    [call.peerId, call.participants],
+  );
+  const addable = useMemo(
+    () => contacts.filter((c) => c.displayName && !inCall.has(c.peerId)).slice(0, 40),
+    [contacts, inCall],
+  );
+  const roomFull = call.participants.length + 1 >= CONFERENCE_LIMIT;
+
 
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
