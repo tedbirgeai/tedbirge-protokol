@@ -70,6 +70,7 @@ import {
   useConversationMessages,
   EDIT_WINDOW_MS,
   retryMessage,
+  directConvId,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
 import { CallHistory } from "@/components/chat/CallHistory";
@@ -107,7 +108,8 @@ import {
   vibrate,
 } from "@/lib/chat/sounds";
 import { useNodeRuntime } from "@/lib/node-runtime";
-import { getPersonId, type PeerInfo } from "@/lib/browser-node";
+import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node";
+import { listCalls } from "@/lib/chat/call-log";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
 import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
@@ -120,7 +122,7 @@ import {
 } from "@/lib/chat/avatars";
 
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
-import { isNamed, safeTitleOf } from "@/lib/chat/safe-title";
+import { isNamed, safeTitleOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
 import { bootLeader } from "@/lib/chat/leader";
 import { bootSessions } from "@/lib/chat/sessions";
@@ -834,17 +836,29 @@ export function ChatApp() {
 
   // Klasör görünümü: "" → arşivlenmemiş tümü, ARCHIVE → arşiv, diğer → klasör.
   const tabs = useMemo(() => folderTabs(), [folderVersion]);
+  // Arama kaydı olan sohbetler mesajsız olsa da listede kalır.
+  const callTouched = useMemo(() => {
+    const set = new Set<string>();
+    for (const rec of listCalls()) {
+      if (rec.convId) set.add(rec.convId);
+      if (rec.peerId) set.add(directConvId(getBrowserNodeId(), rec.peerId));
+    }
+    return set;
+  }, [chat.conversations]);
   const conversations = useMemo(
     () =>
       allConversations.filter((c) => {
         const f = folderOf(c.id);
         if (folder === "" ? f === ARCHIVE : f !== folder) return false;
-        // Adı bilinmeyen kayıtlar yalnızca hiç mesajı yoksa gizlenir;
-        // başka cihazdan gelen gerçek sohbetler her zaman listelenir.
-        if (!isNamed(c) && c.id !== SELF_CONV_ID && !c.lastTs && !c.lastText) return false;
+        if (c.id === SELF_CONV_ID) return true;
+        // Boş sohbet listeye girmez: en az bir mesaj ya da arama kaydı şart.
+        const hasActivity = Boolean(c.lastText) || c.unread > 0;
+        if (!hasActivity && !callTouched.has(c.id)) return false;
+        // Adı çözülemeyen kayıt hiç oluşturulmaz.
+        if (!isNamed(c)) return false;
         return true;
       }),
-    [allConversations, folder, folderVersion],
+    [allConversations, folder, folderVersion, callTouched],
   );
 
   const archivedCount = useMemo(
@@ -858,7 +872,7 @@ export function ChatApp() {
   const activeName = active
     ? active.group
       ? active.title
-      : humanName(contactLabel(active.members[0] ?? active.title, active.title), "Kayıtsız kişi")
+      : humanName(contactLabel(active.members[0] ?? active.title, active.title), UNKNOWN_TITLE)
     : "";
   // Mükerrer sohbetler birleştirildiğinde üyelerde eski cihaz kimlikleri de
   // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
@@ -872,7 +886,7 @@ export function ChatApp() {
   const peerKnown = Boolean(
     active && !active.group && !isTechnicalLabel(contactLabel(active.members[0] ?? "", "")),
   );
-  const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "Kayıtsız kişi");
+  const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), UNKNOWN_TITLE);
 
   const peerTyping = Boolean(activeId && Date.now() - (chat.typing[activeId] ?? 0) < 5000);
   /** Kayan pencere: çok uzun sohbetlerde yalnızca son N mesaj DOM'a basılır. */
@@ -1432,7 +1446,7 @@ export function ChatApp() {
                       </span>
                     </div>
                     <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                      {c.lastText || "Henüz mesaj yok"}
+                      {c.lastText}
                     </p>
                   </div>
                   {c.unread > 0 && (
@@ -1523,7 +1537,7 @@ export function ChatApp() {
                             className="block truncate text-[12px]"
                             style={{ color: "var(--wa-muted)" }}
                           >
-                            {c.lastText || "Henüz mesaj yok"}
+                            {c.lastText}
                           </span>
                         </span>
                         <span className="text-[11px]" style={{ color: "var(--wa-muted)" }}>

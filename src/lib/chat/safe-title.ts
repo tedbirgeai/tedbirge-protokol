@@ -9,6 +9,7 @@
  */
 
 import { contactLabel } from "@/lib/chat/contacts";
+import { resolveDisplayName } from "@/lib/chat/name-resolver";
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
 
 export type TitleLike = {
@@ -23,6 +24,9 @@ export const UNKNOWN_TITLE = "Tedbirge kullanıcısı";
 /** Tek bir eş kimliği için görünür ad. */
 export function safeNameOf(peerId: string | undefined | null, hint?: string): string {
   if (!peerId) return humanName(hint, UNKNOWN_TITLE);
+  // TEK KANAL: kişi kimliği üzerinden çözülen ad her zaman önceliklidir.
+  const resolved = resolveDisplayName(peerId);
+  if (resolved) return resolved;
   return humanName(contactLabel(peerId, hint ?? ""), UNKNOWN_TITLE);
 }
 
@@ -39,6 +43,7 @@ export function isNamed(conv: TitleLike | null | undefined): boolean {
   if (!conv) return false;
   if (conv.group) return !isTechnicalLabel(conv.title);
   const first = conv.members?.[0];
+  if (first && resolveDisplayName(first)) return true;
   const label = first ? contactLabel(first, conv.title ?? "") : (conv.title ?? "");
   return !isTechnicalLabel(label);
 }

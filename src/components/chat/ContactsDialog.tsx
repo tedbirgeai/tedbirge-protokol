@@ -79,7 +79,7 @@ function ContactRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-medium">
-              {c.displayName === c.shortId ? "Adsız kişi" : c.displayName}
+              {c.displayName}
             </p>
             <TrustBadge trust={c.trust} />
             {c.ambiguous && (
@@ -88,9 +88,31 @@ function ContactRow({
               </span>
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {c.claimedName && !c.nickname ? `Beyan edilen ad: ${c.claimedName}` : "Doğrulanmış kişi"}
-          </p>
+          {c.claimedName && !c.nickname && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Beyan edilen ad: {c.claimedName}
+            </p>
+          )}
+          {c.trust === "changed" && (
+            <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[11px] text-destructive">
+              Bu kişinin güvenlik parmak izi değişti. Görüşmeden önce yeniden doğrulayın.
+              <Button
+                size="sm"
+                variant="destructive"
+                className="ml-2 h-6 px-2 text-[11px]"
+                onClick={() =>
+                  onVerify({
+                    peerId: c.peerId,
+                    signPublic: c.signPublic,
+                    fingerprint: c.fingerprint,
+                    trust: c.trust,
+                  })
+                }
+              >
+                Yeniden doğrula
+              </Button>
+            </div>
+          )}
           {c.nickname && c.claimedName && c.nickname !== c.claimedName && (
             <p className="text-[11px] text-muted-foreground">Kendi beyanı: {c.claimedName}</p>
           )}
