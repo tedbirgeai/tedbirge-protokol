@@ -91,7 +91,26 @@ export async function runSelfHeal(): Promise<HealthReport> {
     logSync("uyarı", "Eşitleme denetimi başarısız", String(error));
   }
 
-  // 4) Bildirim katmanı
+  // 4) Rehber otonom onarımı — mükerrer kişi kartları ve adsız hayalet
+  // kayıtlar kullanıcı hiçbir şey yapmadan sessizce birleştirilir/temizlenir.
+  try {
+    const { mergePersonDuplicates, pruneGhostContacts } = await import("@/lib/chat/merge");
+    const merged = await mergePersonDuplicates();
+    const pruned = await pruneGhostContacts();
+    if (merged || pruned) {
+      const { refreshContacts } = await import("@/lib/chat/contacts");
+      await refreshContacts();
+      issues.push({
+        title: "Rehber kendiliğinden düzeltildi",
+        advice: `${merged} mükerrer kişi birleştirildi, ${pruned} boş kayıt kaldırıldı — yapmanız gereken bir şey yok.`,
+        repaired: true,
+      });
+    }
+  } catch (error) {
+    logSync("uyarı", "Rehber onarımı yapılamadı", String(error));
+  }
+
+  // 5) Bildirim katmanı
   try {
     if (typeof Notification !== "undefined" && Notification.permission === "denied") {
       issues.push({
@@ -104,11 +123,17 @@ export async function runSelfHeal(): Promise<HealthReport> {
     /* bildirim API'si yok — sorun değil */
   }
 
-  last = { at: Date.now(), ok: issues.length === 0, issues };
+
+  // Kendiliğinden onarılan maddeler "sorun" sayılmaz; kullanıcıya yalnızca
+  // bilgi olarak görünür.
+  const open = issues.filter((i) => !i.repaired);
+  last = { at: Date.now(), ok: open.length === 0, issues };
+
   logSync(
-    issues.length ? "uyarı" : "bilgi",
+    open.length ? "uyarı" : "bilgi",
     "Açılış sağlık denetimi",
     issues.length ? issues.map((i) => i.title).join(" · ") : "Her şey yolunda",
   );
+
   return last;
 }

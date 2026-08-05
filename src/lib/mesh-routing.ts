@@ -123,6 +123,30 @@ export function shortestPath(graph: Graph, from: string, to: string): RouteResul
   return { path: [from, ...hops.map((h) => h.to)], hops, cost, reachable: true };
 }
 
+/**
+ * YEDEK ROTA (failover): en iyi yolun ilk atlaması düşerse kullanılacak
+ * ikinci en ucuz yol. Aynı kenar grafikten çıkarılıp Dijkstra yeniden
+ * çalıştırılır; döngü koruması Dijkstra'nın ziyaret kümesiyle sağlanır.
+ */
+export function failoverPath(graph: Graph, from: string, to: string): RouteResult | null {
+  const best = shortestPath(graph, from, to);
+  const firstHop = best.hops[0];
+  if (!best.reachable || !firstHop) return null;
+  const pruned: Graph = {
+    nodes: graph.nodes,
+    edges: graph.edges.filter(
+      (e) =>
+        !(
+          e.transport === firstHop.transport &&
+          ((e.from === firstHop.from && e.to === firstHop.to) ||
+            (e.from === firstHop.to && e.to === firstHop.from))
+        ),
+    ),
+  };
+  const alt = shortestPath(pruned, from, to);
+  return alt.reachable ? alt : null;
+}
+
 /** Sade Türkçe rota özeti (arayüzde gösterilir). */
 export function describeRoute(route: RouteResult): string {
   if (!route.reachable) return "Bu cihaza şu an ulaşılabilir bir yol yok — mesaj cihazda bekletilecek.";
@@ -130,3 +154,4 @@ export function describeRoute(route: RouteResult): string {
   const labels = route.hops.map((h) => transportById(h.transport).label);
   return `${route.hops.length} atlama · ${labels.join(" → ")}`;
 }
+
