@@ -8,7 +8,7 @@ import {
   onCallLogChange,
   type CallRecord,
 } from "@/lib/chat/call-log";
-import { safeNameOf } from "@/lib/chat/safe-title";
+import { safeNameOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
 import { pressFeedback } from "@/lib/chat/sounds";
 
 function icon(rec: CallRecord) {
@@ -27,10 +27,16 @@ export function CallHistory({ onCall }: { onCall: (peerId: string, video: boolea
   const [rows, setRows] = useState<CallRecord[]>([]);
 
   useEffect(() => {
-    const sync = () => setRows(listCalls());
+    // Adı çözülemeyen kayıt listede hiç görünmez (hayalet satır yasağı).
+    const sync = () =>
+      setRows(
+        listCalls().filter((r) => Boolean(r.peerId) && safeNameOf(r.peerId) !== UNKNOWN_TITLE),
+      );
+
     sync();
     return onCallLogChange(sync);
   }, []);
+
 
   if (rows.length === 0) {
     return (
