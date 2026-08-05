@@ -11,6 +11,8 @@ import { CallOverlay } from "@/components/chat/CallOverlay";
  */
 export function CallHost() {
   useEffect(() => {
+    let disposed = false;
+    let unsubscribe: (() => void) | undefined;
     void (async () => {
       try {
         const [{ bootCalls }, { startNode }, chat] = await Promise.all([
@@ -23,9 +25,11 @@ export function CallHost() {
         bootCalls();
         await startNode();
         await chat.bootChat();
-        // Cihaz değişse de numaradan bulunabilirlik korunur: dizin kaydı tazelenir.
-        try {
-          const { supabase } = await import("@/integrations/supabase/client");
+        // Cihaz değişse de numaradan bulunabilirlik korunur. Oturum soğuk
+        // açılışta henüz yüklenmemişse auth olayı geldiğinde tekrar kaydedilir.
+        const { supabase } = await import("@/integrations/supabase/client");
+        const syncDirectory = async () => {
+          if (disposed) return;
           const { data } = await supabase.auth.getSession();
           if (!data.session) return;
           const [{ syncPersonIdentity, getBrowserNodeId }, { syncMyDirectoryEntry }, profile] =
@@ -42,13 +46,20 @@ export function CallHost() {
               displayName: profile.getAlias() || undefined,
             },
           });
-        } catch {
-          /* çevrimdışı ya da oturum yok */
-        }
+        };
+        await syncDirectory().catch(() => undefined);
+        const auth = supabase.auth.onAuthStateChange((_event, session) => {
+          if (session) void syncDirectory().catch(() => undefined);
+        });
+        unsubscribe = () => auth.data.subscription.unsubscribe();
       } catch {
         /* tarayıcı kısıtlaması: sohbet sayfası yine de kendi başlatmasını yapar */
       }
     })();
+    return () => {
+      disposed = true;
+      unsubscribe?.();
+    };
   }, []);
 
   return <CallOverlay />;

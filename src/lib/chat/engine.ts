@@ -396,19 +396,24 @@ export async function sendText(
 
   let delivered = isSelfConversation(convId);
   for (const peer of await targetsOf(conv)) {
-    const ok = await sendMesh("chat", peer, {
-      t: "text",
-      id: msg.id,
-      convId,
-      group: conv.group,
-      groupTitle: conv.group ? conv.title : undefined,
-      members: conv.group ? conv.members : undefined,
-      text: msg.text,
-      ts: msg.ts,
-      alias: getAlias(),
-      replyTo,
-      ttlMs: ttlOf(convId) || undefined,
-    });
+    let ok = false;
+    try {
+      ok = await sendMesh("chat", peer, {
+        t: "text",
+        id: msg.id,
+        convId,
+        group: conv.group,
+        groupTitle: conv.group ? conv.title : undefined,
+        members: conv.group ? conv.members : undefined,
+        text: msg.text,
+        ts: msg.ts,
+        alias: getAlias(),
+        replyTo,
+        ttlMs: ttlOf(convId) || undefined,
+      });
+    } catch {
+      ok = false;
+    }
     // Uyandırma paketi: karşı cihaz arka plandayken de bildirim üretilir.
     void sendMesh("presence", peer, {
       t: "wake",
@@ -419,6 +424,9 @@ export async function sendText(
     delivered = delivered || ok;
   }
   await setStatus(msg.id, delivered ? "sent" : "pending");
+  if (!delivered && !isSelfConversation(convId)) {
+    throw new Error("Mesaj sıraya alındı; alıcının bağlantısı kurulunca otomatik gönderilecek.");
+  }
 }
 
 /** Bir sohbetin hedef düğümleri (bas-konuş ve konferans için). */
