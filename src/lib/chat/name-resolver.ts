@@ -99,6 +99,34 @@ export function idsOfPerson(id: string): string[] {
   return Array.from(out);
 }
 
+/** düğüm/kişi kimliği → rehber numara özeti (yalnızca bu cihazda). */
+export const PHONE_HASH_KEY = "tedbirge.chat.phoneHash";
+
+/** Numara özetini kişinin bilinen tüm kimliklerine yazar. */
+export function writePhoneHash(id: string, hash: string): void {
+  if (!id || !hash) return;
+  const map = readMap(PHONE_HASH_KEY);
+  let changed = false;
+  for (const key of idsOfPerson(id)) {
+    if (map[key] !== hash) {
+      map[key] = hash;
+      changed = true;
+    }
+  }
+  if (changed) writeMap(PHONE_HASH_KEY, map);
+}
+
+/** Kişinin numara özeti — bağlı cihazlardan herhangi biri biliyorsa döner. */
+export function resolvePhoneHash(id: string): string {
+  const map = readMap(PHONE_HASH_KEY);
+  for (const key of idsOfPerson(id)) {
+    const v = (map[key] ?? "").trim();
+    if (v) return v;
+  }
+  return "";
+}
+
+
 function firstOf(mapKey: string, ids: string[]): string {
   const map = readMap(mapKey);
   for (const id of ids) {
