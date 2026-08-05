@@ -26,7 +26,12 @@ function hashPhone(e164: string): string {
   return createHash("sha256").update(`tedbirge/phone/v1:${e164}`).digest("hex");
 }
 
-/** Kendi kaydını dizine yazar/günceller. Numara oturumdan alınır. */
+/**
+ * Kendi kaydını dizine yazar/günceller. Numara oturumdan alınır.
+ * ÇOK CİHAZ: her cihaz (node_id) ayrı satırdır; telefon, masaüstü ve
+ * tablet aynı numara altında birlikte durur — arama hangisi açıksa
+ * oraya düşer.
+ */
 export const syncMyDirectoryEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SyncInput.parse(input))
@@ -36,6 +41,7 @@ export const syncMyDirectoryEntry = createServerFn({ method: "POST" })
     if (!phone) return { ok: false as const, reason: "no-phone" as const };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const now = new Date().toISOString();
     const { error } = await supabaseAdmin.from("phone_accounts").upsert(
       {
         user_id: context.userId,
@@ -43,9 +49,10 @@ export const syncMyDirectoryEntry = createServerFn({ method: "POST" })
         person_id: data.personId,
         node_id: data.nodeId,
         display_name: data.displayName?.slice(0, 60) ?? null,
-        updated_at: new Date().toISOString(),
+        last_seen_at: now,
+        updated_at: now,
       },
-      { onConflict: "user_id" },
+      { onConflict: "user_id,node_id" },
     );
     if (error) {
       console.error("[directory] upsert failed", error.message);
