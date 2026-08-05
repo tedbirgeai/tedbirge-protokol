@@ -9,6 +9,8 @@ import {
   Volume2,
   VolumeX,
   SwitchCamera,
+  MonitorUp,
+  MonitorX,
 } from "lucide-react";
 import {
   acceptCall,
@@ -18,6 +20,7 @@ import {
   switchCamera,
   toggleCamera,
   toggleMute,
+  toggleScreenShare,
   useCall,
 } from "@/lib/call/engine";
 import type { CallQuality } from "@/lib/call/engine";
@@ -193,7 +196,10 @@ export function CallOverlay() {
 
       {/* Üst: kişi adı ve durum */}
       <div className="relative z-10 w-full pt-12 text-center">
-        <p className="text-2xl font-semibold">{call.peerAlias || "Bilinmeyen"}</p>
+        <p className="text-2xl font-semibold">
+          {call.speakingPeerId ? "🔊 " : ""}
+          {call.peerAlias || "Bilinmeyen"}
+        </p>
         <p className="mt-1 flex items-center justify-center gap-2 text-sm text-white/70">
           {statusLine}
           {call.phase === "active" && <QualityBars q={call.quality} />}
@@ -226,8 +232,13 @@ export function CallOverlay() {
             {call.participants.map((p) => (
               <li
                 key={p.peerId}
-                className="rounded-full bg-white/10 px-3 py-1 text-[11px] text-white/70"
+                className={`rounded-full px-3 py-1 text-[11px] transition ${
+                  call.speakingPeerId === p.peerId
+                    ? "bg-emerald-400/25 text-white ring-2 ring-emerald-300"
+                    : "bg-white/10 text-white/70"
+                }`}
               >
+                {call.speakingPeerId === p.peerId ? "🔊 " : ""}
                 {p.alias} · {p.connected ? "bağlı" : "bekliyor"}
               </li>
             ))}
@@ -309,6 +320,24 @@ export function CallOverlay() {
                 aria-label="Kamerayı değiştir"
               >
                 <SwitchCamera className="h-5 w-5" />
+              </button>
+            )}
+            {call.video && (
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  void toggleScreenShare();
+                }}
+                className={ctlBase}
+                aria-label={call.screenSharing ? "Ekran paylaşımını durdur" : "Ekranı paylaş"}
+                title={call.screenSharing ? "Ekran paylaşımını durdur" : "Ekranı paylaş"}
+              >
+                {call.screenSharing ? (
+                  <MonitorX className="h-5 w-5" />
+                ) : (
+                  <MonitorUp className="h-5 w-5" />
+                )}
               </button>
             )}
             <button

@@ -18,12 +18,15 @@ export type ChatPrivacy = {
   hideTyping: boolean;
   /** Boş ise çeviri kapalı; "tr", "en", "ar" gibi. */
   autoTranslateTo: string;
+  /** true → son görülme paylaşılmaz ve karşı tarafınki gizlenir. */
+  hideLastSeen: boolean;
 };
 
 const DEFAULTS: ChatPrivacy = {
   hideReadReceipts: false,
   hideTyping: false,
   autoTranslateTo: "",
+  hideLastSeen: false,
 };
 
 let cache: ChatPrivacy | null = null;

@@ -53,6 +53,10 @@ export type CallState = {
   streamVersion: number;
   /** Karşı cihaz teklifi aldı ve telefonu çalıyor (ağ ulaştı). */
   remoteRinging: boolean;
+  /** Ekran paylaşımı açık mı? */
+  screenSharing: boolean;
+  /** O an konuşan katılımcının kimliği (konuşan kişi vurgusu). */
+  speakingPeerId: string | null;
 };
 
 const ICE: RTCConfiguration = {
@@ -134,6 +138,8 @@ let state: CallState = {
   reconnects: 0,
   streamVersion: 0,
   remoteRinging: false,
+  screenSharing: false,
+  speakingPeerId: null,
 };
 
 const listeners = new Set<() => void>();
@@ -156,6 +162,32 @@ const reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const restarting = new Set<string>();
 const MAX_RECONNECTS = 3;
 const RING_TIMEOUT_MS = 45_000;
+
+/* --------------------------- arama geçmişi kaydı --------------------------- */
+
+type CallMeta = {
+  peerId: string;
+  video: boolean;
+  direction: "incoming" | "outgoing";
+};
+let callMeta: CallMeta | null = null;
+
+/** Görüşme biterken gelen/giden/cevapsız kaydını sohbete ve geçmişe yazar. */
+function finalizeCallLog() {
+  const meta = callMeta;
+  callMeta = null;
+  if (!meta) return;
+  const answered = Boolean(state.startedAt);
+  const seconds = answered ? Math.max(0, Math.round((Date.now() - (state.startedAt ?? 0)) / 1000)) : 0;
+  const direction: "incoming" | "outgoing" | "missed" = answered
+    ? meta.direction
+    : meta.direction === "incoming"
+      ? "missed"
+      : "outgoing";
+  void import("@/lib/chat/call-log")
+    .then((m) => m.logCall({ peerId: meta.peerId, direction, video: meta.video, seconds }))
+    .catch(() => undefined);
+}
 
 function publish(patch: Partial<CallState>) {
   state = { ...state, ...patch };
@@ -395,6 +427,7 @@ async function readStats() {
 }
 
 function startStats() {
+  startSpeakerDetection();
   if (statsTimer) return;
   statsTimer = setInterval(() => void readStats(), 2000);
 }
@@ -493,7 +526,10 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     reconnects: 0,
     quality: IDLE_QUALITY,
     remoteRinging: false,
+    screenSharing: false,
+    speakingPeerId: null,
   });
+  callMeta = { peerId, video, direction: "outgoing" };
   try {
     await dial(peerId, alias ?? peerId, video);
     // Teklif ilk turda ulaşmasa bile arama düşürülmez: karşı cihaz açıldığı
@@ -629,6 +665,9 @@ export function dropParticipant(peerId: string) {
 }
 
 function cleanup() {
+  finalizeCallLog();
+  stopSpeakerDetection();
+  stopScreenShare();
   if (outgoingTimer) clearTimeout(outgoingTimer);
   stopDialRetry();
   outgoingTimer = null;
@@ -697,6 +736,113 @@ export async function switchCamera() {
   } finally {
     switchingCamera = false;
   }
+}
+
+/* --------------------- ekran paylaşımı ve konuşan kişi --------------------- */
+
+let screenStream: MediaStream | null = null;
+
+/**
+ * Ekran paylaşımı — görüntülü görüşmede kamera izi ekran iziyle
+ * değiştirilir (yeniden anlaşma gerekmez). Paylaşım bittiğinde kamera
+ * kendiliğinden geri gelir.
+ */
+export async function toggleScreenShare(): Promise<void> {
+  if (state.screenSharing) {
+    stopScreenShare();
+    return;
+  }
+  if (!state.video || !legs.size) {
+    publish({ error: "Ekran paylaşımı yalnızca görüntülü görüşmede kullanılabilir." });
+    return;
+  }
+  try {
+    const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    const track = display.getVideoTracks()[0];
+    if (!track) return;
+    screenStream = display;
+    for (const leg of legs.values()) {
+      const sender = leg.pc.getSenders().find((x) => x.track?.kind === "video");
+      await sender?.replaceTrack(track);
+    }
+    track.addEventListener("ended", () => stopScreenShare());
+    publish({ screenSharing: true, error: null });
+  } catch {
+    publish({ error: "Ekran paylaşımı başlatılamadı." });
+  }
+}
+
+/** Paylaşımı durdurur ve kamera iznini geri bağlar. */
+export function stopScreenShare(): void {
+  if (!screenStream) {
+    if (state.screenSharing) publish({ screenSharing: false });
+    return;
+  }
+  screenStream.getTracks().forEach((t) => t.stop());
+  screenStream = null;
+  const camera = localStream?.getVideoTracks()[0] ?? null;
+  for (const leg of legs.values()) {
+    const sender = leg.pc.getSenders().find((x) => x.track?.kind === "video");
+    void sender?.replaceTrack(camera).catch(() => undefined);
+  }
+  publish({ screenSharing: false });
+}
+
+/** Konuşan kişi vurgusu — her akışın ses seviyesi cihazda ölçülür. */
+let audioCtx: AudioContext | null = null;
+let speakerTimer: ReturnType<typeof setInterval> | null = null;
+const analysers = new Map<string, AnalyserNode>();
+
+function startSpeakerDetection(): void {
+  if (speakerTimer || typeof window === "undefined") return;
+  try {
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return;
+    audioCtx = new Ctor();
+  } catch {
+    return;
+  }
+  speakerTimer = setInterval(() => {
+    if (!audioCtx) return;
+    let best: { peerId: string; level: number } | null = null;
+    for (const [peerId, leg] of legs) {
+      let analyser = analysers.get(peerId);
+      if (!analyser) {
+        if (!leg.stream.getAudioTracks().length) continue;
+        try {
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 512;
+          audioCtx.createMediaStreamSource(leg.stream).connect(analyser);
+          analysers.set(peerId, analyser);
+        } catch {
+          continue;
+        }
+      }
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (const v of data) sum += (v - 128) ** 2;
+      const level = Math.sqrt(sum / data.length);
+      if (!best || level > best.level) best = { peerId, level };
+    }
+    const next = best && best.level > 4 ? best.peerId : null;
+    if (next !== state.speakingPeerId) publish({ speakingPeerId: next });
+  }, 400);
+}
+
+function stopSpeakerDetection(): void {
+  if (speakerTimer) clearInterval(speakerTimer);
+  speakerTimer = null;
+  analysers.clear();
+  try {
+    void audioCtx?.close();
+  } catch {
+    /* zaten kapalı */
+  }
+  audioCtx = null;
+  if (state.speakingPeerId) publish({ speakingPeerId: null });
 }
 
 /* ------------------------------ sinyalleşme ------------------------------ */
@@ -798,6 +944,7 @@ async function onCallSignal(from: string, raw: unknown) {
       return;
     }
     pendingOffers.set(from, { desc, alias: p.alias ?? from, video: Boolean(p.video) });
+    if (!callMeta) callMeta = { peerId: from, video: Boolean(p.video), direction: "incoming" };
     publish({
       phase: "ringing",
       peerId: from,
