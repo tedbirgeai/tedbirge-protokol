@@ -1,0 +1,121 @@
+/**
+ * EŞİTLEME DURUMU
+ * ------------------------------------------------------------------
+ * Cihazlar arası şifreli sohbet eşitlemesinin sağlık ekranı: son
+ * eşitleme zamanı, bulut oturumu, kasa boyutu, son hata ve elle
+ * "Şimdi eşitle" düğmesi. Hata varsa sohbet listesinin üstünde uyarı
+ * şeridi gösterilir.
+ */
+import { useEffect, useState } from "react";
+import { AlertTriangle, RefreshCw, CloudOff, Cloud } from "lucide-react";
+import {
+  formatBytes,
+  getSyncState,
+  onSyncStateChange,
+  syncNow,
+  syncStatusLabel,
+  type SyncState,
+} from "@/lib/chat/history-sync";
+import { pressFeedback } from "@/lib/chat/sounds";
+
+function useSyncState(): SyncState {
+  const [snap, setSnap] = useState<SyncState>(() => getSyncState());
+  useEffect(() => {
+    const update = () => setSnap({ ...getSyncState() });
+    update();
+    return onSyncStateChange(update);
+  }, []);
+  return snap;
+}
+
+/** Ayarlar > Eşitleme sekmesi içeriği. */
+export function SyncStatusSection() {
+  const s = useSyncState();
+  return (
+    <section className="mt-5">
+      <h3 className="flex items-center gap-2 text-sm font-semibold">
+        {s.cloudSession ? (
+          <Cloud className="h-4 w-4" aria-hidden />
+        ) : (
+          <CloudOff className="h-4 w-4" aria-hidden />
+        )}
+        Eşitleme durumu
+      </h3>
+      <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+        Sohbetleriniz, mesajlarınız, okundu bilgisi ve arama geçmişiniz cihazınızda şifrelenir ve
+        yalnızca şifreli hâliyle hesabınıza yedeklenir. Aynı numarayla girdiğiniz her cihazda
+        kendiliğinden görünür.
+      </p>
+
+      <dl className="mt-3 space-y-2 text-[13px]">
+        <div className="flex items-center justify-between gap-3">
+          <dt style={{ color: "var(--wa-muted)" }}>Son eşitleme</dt>
+          <dd className="font-medium">
+            {s.lastOkAt ? new Date(s.lastOkAt).toLocaleString("tr-TR") : "Henüz yok"}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt style={{ color: "var(--wa-muted)" }}>Bulut oturumu</dt>
+          <dd className="font-medium">{s.cloudSession ? "Bağlı" : "Yok"}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt style={{ color: "var(--wa-muted)" }}>Kasa boyutu</dt>
+          <dd className="font-medium">
+            {formatBytes(s.bytes)} · {s.chunks} paket
+          </dd>
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <dt style={{ color: "var(--wa-muted)" }}>Son hata</dt>
+          <dd className="max-w-[60%] text-right font-medium" style={{ color: s.lastError ? "#e03131" : undefined }}>
+            {s.lastError || "Yok"}
+          </dd>
+        </div>
+      </dl>
+
+      <button
+        type="button"
+        onClick={() => {
+          pressFeedback();
+          void syncNow();
+        }}
+        disabled={s.running}
+        className="wa-press mt-4 inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-[14px] font-semibold text-white disabled:opacity-60"
+        style={{ background: "var(--wa-accent)" }}
+      >
+        <RefreshCw className={`h-4 w-4 ${s.running ? "animate-spin" : ""}`} aria-hidden />
+        {s.running ? "Eşitleniyor…" : "Şimdi eşitle"}
+      </button>
+
+      <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+        {syncStatusLabel(s)}
+      </p>
+    </section>
+  );
+}
+
+/** Sohbet listesinin üstünde görünen hata şeridi. */
+export function SyncWarningBar() {
+  const s = useSyncState();
+  if (!s.lastError) return null;
+  return (
+    <div
+      role="status"
+      className="flex items-center gap-2 px-3 py-2 text-[12px]"
+      style={{ background: "rgba(224,49,49,0.12)", color: "#e03131" }}
+    >
+      <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">Eşitleme hatası: {s.lastError}</span>
+      <button
+        type="button"
+        onClick={() => {
+          pressFeedback();
+          void syncNow();
+        }}
+        className="wa-press shrink-0 rounded-lg px-2 py-1 font-semibold"
+        style={{ border: "1px solid currentColor" }}
+      >
+        Yeniden dene
+      </button>
+    </div>
+  );
+}
