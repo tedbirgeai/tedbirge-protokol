@@ -370,7 +370,36 @@ async function appendLocal(conv: Conversation, msg: ChatMessage) {
   await refreshMessages(conv.id);
 }
 
+/**
+ * Yerel sistem mesajı ekler (arama kaydı, bilgi satırı).
+ * Ağa gönderilmez; yalnızca bu cihazın sohbet akışında görünür.
+ */
+export async function addSystemMessage(
+  convId: string,
+  text: string,
+  kind: "system" | "call" = "call",
+): Promise<void> {
+  const conv = await getConversation(convId);
+  if (!conv) return;
+  const msg: ChatMessage = {
+    id: newId("sys"),
+    convId,
+    from: getBrowserNodeId(),
+    to: convId,
+    kind,
+    text,
+    ts: Date.now(),
+    outgoing: true,
+    status: "read",
+  };
+  await putMessage(msg);
+  await putConversation({ ...conv, lastTs: msg.ts, lastText: text });
+  await refreshConversations();
+  await refreshMessages(convId);
+}
+
 export async function sendText(
+
   convId: string,
   text: string,
   replyTo?: { id: string; text: string; author: string },
