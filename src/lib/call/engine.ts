@@ -764,9 +764,8 @@ async function onCallSignal(from: string, raw: unknown) {
         if (leg && leg.pc.signalingState !== "stable") return;
         const stream = await ensureMedia(state.video);
         const fresh = createLeg(from, p.alias ?? from);
-        stream.getTracks().forEach((t) => {
-          if (!fresh.pc.getSenders().some((s) => s.track === t)) fresh.pc.addTrack(t, stream);
-        });
+        attachLocal(fresh.pc, stream, state.video);
+
         await tuneSenders(fresh.pc);
         await fresh.pc.setRemoteDescription(desc);
 
