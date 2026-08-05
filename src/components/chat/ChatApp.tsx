@@ -1359,7 +1359,7 @@ export function ChatApp() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <Avatar name={activeName} size={40} />
+              <Avatar name={activeName} size={40} src={getAvatar(peerId)} />
               <div className="min-w-0 flex-1">
                 <p
                   className="truncate text-[15px] font-semibold"
@@ -1373,7 +1373,10 @@ export function ChatApp() {
                     ? "yazıyor…"
                     : active.group
                       ? "Grup"
-                      : peerOnline
+                      : !peerKnown
+                        ? "uçtan uca şifreli"
+                        : peerOnline
+
                         ? "çevrimiçi"
                         : "son görülme bilinmiyor"}
                 </p>
