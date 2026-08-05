@@ -14,6 +14,10 @@ const TECHNICAL = [
   /^peer[-_]/i,
   /^[0-9a-f]{12,}$/i,
   /^[A-Za-z0-9+/=]{24,}$/,
+  // Nötr yer tutucular kişi adı değildir; kayıt olarak listelenmez.
+  /^tedbirge kullan[ıi]c[ıi]s[ıi]$/i,
+  /^bilinmeyen( ki[şs]i)?$/i,
+  /^anonim$/i,
 ];
 
 /** Verilen etiket teknik bir kimlik mi? */
