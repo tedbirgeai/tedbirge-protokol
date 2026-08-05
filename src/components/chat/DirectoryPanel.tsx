@@ -156,19 +156,21 @@ export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Pro
       {empty && (
         <div className="px-4 py-3">
           <p className="text-[13px]" style={{ color: "var(--wa-muted)" }}>
-            Rehberinizdeki kişiler henüz yüklenmedi.
+            Rehberiniz eşitleniyor. Tanıdıklarınız Tedbirge'ye katıldıkça kendiliğinden görünür.
           </p>
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => {
+              void (async () => {
+                const r = await autoSyncContacts();
+                if (r.source === "none") fileRef.current?.click();
+              })();
+            }}
             className="wa-press mt-2 rounded-full px-3 py-2 text-[13px] font-semibold text-white"
             style={{ background: "var(--wa-accent)" }}
           >
-            Telefon rehberimi yükle
+            Rehberimi şimdi eşitle
           </button>
-          <p className="mt-2 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-            iPhone: Kişiler → seç → Paylaş → kartı .vcf olarak kaydedin, sonra burada seçin.
-          </p>
           <input
             ref={fileRef}
             type="file"
