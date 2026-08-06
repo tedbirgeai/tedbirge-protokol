@@ -296,6 +296,7 @@ export function ChatSettingsDialog({
 
   useEffect(() => {
     if (!open) return;
+    if (initialTab) setTab(initialTab);
     setLocked(lockEnabled());
     setMinutes(autoLockMinutes());
     setNotify(notificationsAllowed());
@@ -304,7 +305,7 @@ export function ChatSettingsDialog({
     setEmailValue(getEmail());
     setMsg(null);
     setErr(null);
-  }, [open, convId]);
+  }, [open, convId, initialTab]);
 
   if (!open) return null;
 
