@@ -122,6 +122,7 @@ import {
 } from "@/lib/chat/avatars";
 
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
+import { BUILD_LABEL } from "@/lib/build-id";
 import { isNamed, safeTitleOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
 import {
   nameKeyOf,
