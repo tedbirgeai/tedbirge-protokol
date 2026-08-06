@@ -242,24 +242,40 @@ export async function pruneGhostConversations(): Promise<number> {
     listConversations().catch(() => []),
     listAllMessages().catch(() => []),
   ]);
-  const withMessages = new Set(messages.map((m) => m.convId));
+  // Yalnızca arama/sistem kaydı içeren sohbetler "gerçek yazışma" sayılmaz;
+  // adı çözülemeyen eşlerde bunlar hayalet satır üretiyordu.
+  const withRealMessages = new Set(
+    messages.filter((m) => m.kind !== "system" && m.kind !== "call").map((m) => m.convId),
+  );
 
   let removed = 0;
   for (const conv of convs) {
     if (conv.group) continue;
     if (conv.id === "self_notes") continue; // "Kendinize not" korunur
-    if (withMessages.has(conv.id)) continue;
+    if (withRealMessages.has(conv.id)) continue;
     const member = conv.members?.[0];
-    if (!member) continue;
-    const name = resolveDisplayName(member).trim() || (conv.title ?? "").trim();
+    if (!member) {
+      // Üyesi olmayan, nötr başlıklı hayalet kayıt.
+      const title = (conv.title ?? "").trim();
+      if (title && !/^tedbirge kullan[ıi]c[ıi]s[ıi]$/i.test(title)) continue;
+      await deleteConversation(conv.id).catch(() => undefined);
+      removed += 1;
+      continue;
+    }
+
+    const resolved = resolveDisplayName(member).trim();
+    const name = resolved || (conv.title ?? "").trim();
+    const { isTechnicalLabel } = await import("@/lib/chat/display-name");
     const ghost =
-      !resolveDisplayName(member).trim() ||
+      !resolved ||
+      isTechnicalLabel(resolved) ||
       isSelfPerson({
         id: member,
         personId: nameKeyOf(member),
         phoneHash: resolvePhoneHash(member),
         name,
       });
+
     if (!ghost) continue;
     await deleteConversation(conv.id).catch(() => undefined);
     removed += 1;
