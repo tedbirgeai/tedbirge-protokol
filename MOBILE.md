@@ -5,44 +5,51 @@ Yerel uygulama kabuğu kurulduğunda rehber senkronizasyonu WhatsApp ile
 birebir aynı çalışır: sistem izni bir kez verilir, sonrasında tüm kişiler
 arka planda kendiliğinden eşleşir.
 
-## Kurulum (bir kez, kendi bilgisayarınızda)
+## Tek komutla kurulum (anahtar teslim)
 
 ```bash
 git clone <repo> && cd <repo>
 npm install
-npm run build
-
-npx cap add ios       # macOS + Xcode gerekir
-npx cap add android   # Android Studio gerekir
-npx cap sync
+npm run mobile:setup
 ```
 
-## İzin metinleri
+`mobile:setup` sırasıyla şunları kendiliğinden yapar:
 
-### iOS — `ios/App/App/Info.plist`
-```xml
-<key>NSContactsUsageDescription</key>
-<string>Tanıdıklarınızı Tedbirge ağında bulmak için rehberiniz yalnızca bu cihazda okunur. Numaralarınız cihazdan çıkmaz.</string>
-<key>NSCameraUsageDescription</key>
-<string>Görüntülü görüşme için kamera erişimi gerekir.</string>
-<key>NSMicrophoneUsageDescription</key>
-<string>Sesli görüşme için mikrofon erişimi gerekir.</string>
-```
+1. Web sürümünü derler (`dist/client`)
+2. `ios/` ve `android/` platform klasörlerini ekler (yoksa)
+3. Rehber, kamera, mikrofon, bildirim ve konum izin metinlerini
+   `Info.plist` ve `AndroidManifest.xml` içine yazar (elle düzenleme yok)
+4. İkon ve açılış ekranını üretir
+5. `npx cap sync` ile web katmanını cihaz projesine kopyalar
 
-### Android — `android/app/src/main/AndroidManifest.xml`
-```xml
-<uses-permission android:name="android.permission.READ_CONTACTS" />
-<uses-permission android:name="android.permission.CAMERA" />
-<uses-permission android:name="android.permission.RECORD_AUDIO" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-```
+Komut tekrar tekrar çalıştırılabilir; var olan ayarları bozmaz.
+macOS/Xcode yoksa iOS adımı atlanır, Android kurulmaya devam eder.
 
-## Çalıştırma
+## Derleme ve mağazaya gönderme
 
 ```bash
-npx cap open ios       # Xcode'da çalıştır / App Store'a gönder
-npx cap open android   # Android Studio'da çalıştır / Play'e gönder
+npm run mobile:android   # Android Studio > Build > Generate Signed Bundle (.aab)
+npm run mobile:ios       # Xcode > Archive > App Store Connect
 ```
+
+Web tarafında bir değişiklik yaptığınızda: `npm run mobile:sync`.
+
+## Geliştirme modu (canlı siteye bağlanmak)
+
+```bash
+CAP_LIVE_URL=https://tedbirge-gateway.lovable.app npx cap sync
+```
+
+Bu değişken tanımlı değilse uygulama mağaza modundadır: tüm dosyalar
+cihazın içindedir, internet olmadan da açılır.
+
+## Rehber otomatiği
+
+Yerel uygulamada ilk açılışta sistem rehber izni istenir. İzin
+verildikten sonra tüm kişiler arka planda okunur, yarım saatte bir
+sessizce tazelenir ve telefona sonradan eklenen kişiler kullanıcı
+hiçbir şey yapmadan listeye düşer — WhatsApp ile birebir aynı davranış.
+
 
 ## Mağaza sürümü notu
 
