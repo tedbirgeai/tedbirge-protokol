@@ -327,6 +327,26 @@ export async function ensureDirectConversation(
   peerId: string,
   title?: string,
 ): Promise<Conversation> {
+  // HAYALET KAYIT YASAĞI: adı çözülemeyen eş için kalıcı sohbet AÇILMAZ.
+  // Var olan sohbet varsa döner; yoksa geçici (diske yazılmayan) kayıt
+  // döner ve ad öğrenildiğinde gerçek adıyla kalıcı hale gelir.
+  const { isTechnicalLabel } = await import("@/lib/chat/display-name");
+  const known = (title ?? resolveDisplayName(peerId) ?? state.aliases[peerId] ?? "").trim();
+  if (isTechnicalLabel(known)) {
+    const existingId = directConvId(getBrowserNodeId(), peerId);
+    const existing = await getConversation(existingId);
+    if (existing) return existing;
+    return {
+      id: existingId,
+      title: known || peerId,
+      members: [peerId],
+      group: false,
+      lastTs: Date.now(),
+      lastText: "",
+      unread: 0,
+      pinned: false,
+    };
+  }
   const conv = await resolveDirectConversation(peerId, title);
   if (title && conv.title !== title) {
     const updated = { ...conv, title };
