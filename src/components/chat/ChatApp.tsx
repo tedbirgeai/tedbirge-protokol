@@ -1237,11 +1237,11 @@ export function ChatApp() {
               type="button"
               onClick={() => {
                 pressFeedback();
-                setGroupMode((v) => !v);
+                setPlusOpen(true);
               }}
               className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
               style={{ background: "var(--wa-accent)" }}
-              aria-label="Yeni sohbet veya grup"
+              aria-label="Yeni sohbet, grup veya kimlik paylaş"
             >
               <Plus className="h-6 w-6" />
             </button>
