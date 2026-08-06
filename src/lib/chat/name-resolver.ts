@@ -77,19 +77,53 @@ export function writeMap(key: string, map: Record<string, string>) {
   }
 }
 
+/** düğüm/kişi kimliği → rehber numara özeti (yalnızca bu cihazda). */
+export const PHONE_HASH_KEY = "tedbirge.chat.phoneHash";
+
+/** Bir kimliğe DOĞRUDAN yazılmış numara özeti (bağlantı takip edilmez). */
+function directHash(id: string): string {
+  if (!id) return "";
+  return (readMap(PHONE_HASH_KEY)[id] ?? "").trim();
+}
+
+/**
+ * ÇAPRAZ BAĞLANTI KORUMASI.
+ * İki kimlik farklı numaralara çıpalıysa aynı kişi olamaz. Bu kural
+ * olmadan bir kişinin adı başka bir kişinin cihazına sızıyordu
+ * (rehberde "Türkan" seçilip "Hasan" sohbetinin açılması).
+ */
+function hashConflict(a: string, b: string): boolean {
+  const x = directHash(a);
+  const y = directHash(b);
+  return Boolean(x && y && x !== y);
+}
+
 /** Bir düğümün hangi kişiye ait olduğunu kalıcı olarak kaydeder. */
 export function linkNodeToPerson(nodeId: string, personId?: string | null): void {
   if (!nodeId || !personId || nodeId === personId) return;
+  // Farklı numaraya çıpalı iki kimlik asla tek kişiye bağlanmaz.
+  if (hashConflict(nodeId, personId)) return;
   const map = readMap(PERSON_MAP_KEY);
   if (map[nodeId] === personId) return;
   map[nodeId] = personId;
   writeMap(PERSON_MAP_KEY, map);
 }
 
+/** Yanlış kurulmuş kişi bağlantısını kaldırır. */
+export function unlinkNode(nodeId: string): void {
+  const map = readMap(PERSON_MAP_KEY);
+  if (!(nodeId in map)) return;
+  delete map[nodeId];
+  writeMap(PERSON_MAP_KEY, map);
+}
+
 /** Ad okuma/yazma anahtarı: kişi kimliği varsa o, yoksa düğüm kimliği. */
 export function nameKeyOf(id: string): string {
   if (!id) return id;
-  return readMap(PERSON_MAP_KEY)[id] ?? id;
+  const person = readMap(PERSON_MAP_KEY)[id];
+  if (!person) return id;
+  // Numarası çakışan bağlantı geçersizdir: kimlik kendi başına kalır.
+  return hashConflict(id, person) ? id : person;
 }
 
 /** Aynı kişiye ait bilinen tüm kimlikler (kişi kimliği + düğümleri). */
@@ -97,29 +131,37 @@ export function idsOfPerson(id: string): string[] {
   const key = nameKeyOf(id);
   const map = readMap(PERSON_MAP_KEY);
   const out = new Set<string>([id, key]);
-  for (const [node, person] of Object.entries(map)) if (person === key) out.add(node);
-  return Array.from(out);
+  for (const [node, person] of Object.entries(map)) {
+    if (person !== key) continue;
+    if (hashConflict(node, id)) continue;
+    out.add(node);
+  }
+  return Array.from(out).filter((other) => other === id || !hashConflict(other, id));
 }
 
-/** düğüm/kişi kimliği → rehber numara özeti (yalnızca bu cihazda). */
-export const PHONE_HASH_KEY = "tedbirge.chat.phoneHash";
-
-/** Numara özetini kişinin bilinen tüm kimliklerine yazar. */
+/**
+ * Numara özetini kişinin bilinen kimliklerine yazar.
+ * Başka bir numaraya çıpalı kimliğin özeti ASLA ezilmez.
+ */
 export function writePhoneHash(id: string, hash: string): void {
   if (!id || !hash) return;
   const map = readMap(PHONE_HASH_KEY);
   let changed = false;
   for (const key of idsOfPerson(id)) {
-    if (map[key] !== hash) {
-      map[key] = hash;
-      changed = true;
-    }
+    const current = (map[key] ?? "").trim();
+    if (current === hash) continue;
+    // Zaten farklı bir numaraya çıpalı kimlik korunur.
+    if (current && key !== id) continue;
+    map[key] = hash;
+    changed = true;
   }
   if (changed) writeMap(PHONE_HASH_KEY, map);
 }
 
 /** Kişinin numara özeti — bağlı cihazlardan herhangi biri biliyorsa döner. */
 export function resolvePhoneHash(id: string): string {
+  const own = directHash(id);
+  if (own) return own;
   const map = readMap(PHONE_HASH_KEY);
   for (const key of idsOfPerson(id)) {
     const v = (map[key] ?? "").trim();
@@ -127,6 +169,24 @@ export function resolvePhoneHash(id: string): string {
   }
   return "";
 }
+
+/**
+ * ONARIM — geçmişte kurulmuş çapraz bağlantıları temizler.
+ * Farklı numaralara çıpalı düğümler arasındaki kişi bağlantısı ve
+ * bu bağlantıdan ödünç alınmış adlar silinir. Kaç kayıt onarıldığını döner.
+ */
+export function repairCrossLinks(): number {
+  const links = readMap(PERSON_MAP_KEY);
+  let fixed = 0;
+  for (const [node, person] of Object.entries(links)) {
+    if (!hashConflict(node, person)) continue;
+    delete links[node];
+    fixed += 1;
+  }
+  if (fixed > 0) writeMap(PERSON_MAP_KEY, links);
+  return fixed;
+}
+
 
 /**
  * KANONİK KİŞİ ANAHTARI — tek kaynak.
