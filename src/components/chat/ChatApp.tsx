@@ -943,8 +943,10 @@ export function ChatApp() {
     [allConversations, folderVersion],
   );
 
-  // Mobil alt sekme durumu ve türetilmiş veriler.
+  // Sekme durumu: mobil alt çubuk ve masaüstü sol ray aynı değeri kullanır.
   const [mobileTab, setMobileTab] = useState<MobileTab>("chats");
+  // "+" eylem sayfası (yeni sohbet / grup / not / kimlik paylaş).
+  const [plusOpen, setPlusOpen] = useState(false);
   const totalUnread = useMemo(
     () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
     [allConversations],
