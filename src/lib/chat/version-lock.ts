@@ -7,7 +7,7 @@
  * ASLA silinmez — yalnızca önbellek ve hayalet kayıtlar temizlenir.
  */
 
-export const APP_DATA_VERSION = "2026.08.06-ghost-sweep-2";
+export const APP_DATA_VERSION = "2026.08.06-merge-title-fix";
 
 const KEY = "tedbirge.app.dataVersion";
 
