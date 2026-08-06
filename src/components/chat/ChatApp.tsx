@@ -722,6 +722,7 @@ export function ChatApp() {
   // Klasör ve gizlilik tercihleri değişince liste ve çeviri anında yenilenir.
   useEffect(() => {
     const offFolders = onFoldersChange(() => setFolderVersion((v) => v + 1));
+    const offFlags = onFlagsChange(() => setFolderVersion((v) => v + 1));
     const offPrivacy = onPrivacyChange(() => setPrivacyState({ ...getPrivacy() }));
     // Rehber sessizce tazelenir: sonradan katılan tanıdıklar kendiliğinden gelir.
     let stopSync: (() => void) | undefined;
