@@ -53,10 +53,10 @@ hiçbir şey yapmadan listeye düşer — WhatsApp ile birebir aynı davranış.
 
 ## Mağaza sürümü notu
 
-`capacitor.config.ts` içindeki `server.url` alanı geliştirme kolaylığı
-içindir; uygulama canlı siteyi yükler. Mağaza sürümünde bu bloğu
-kaldırın — uygulama `dist/client` içindeki dosyalarla tamamen
-çevrimdışı açılır.
+Varsayılan yapılandırma zaten mağaza sürümüdür: `CAP_LIVE_URL` tanımlı
+değilse uygulama canlı siteye bağlanmaz, `dist/client` içindeki
+dosyalarla tamamen çevrimdışı açılır. Elle silinecek bir blok yoktur.
+
 
 ## KVKK
 
