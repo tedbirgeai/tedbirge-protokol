@@ -13,6 +13,8 @@
  * Tüm veriler yalnızca bu cihazda tutulur (KVKK: ağa çıkmaz).
  */
 
+import { isTechnicalLabel } from "@/lib/chat/display-name";
+
 export const NICK_KEY = "tedbirge.chat.nicknames";
 export const ALIAS_KEY = "tedbirge.chat.aliases";
 /** düğüm kimliği → kişi kimliği eşlemesi (yerel). */
@@ -241,7 +243,8 @@ function firstOf(mapKey: string, ids: string[]): string {
   const map = readMap(mapKey);
   for (const id of ids) {
     const v = (map[id] ?? "").trim();
-    if (v) return v;
+    // Nötr yer tutucu ("Tedbirge kullanıcısı" vb.) ad sayılmaz.
+    if (v && !isTechnicalLabel(v)) return v;
   }
   return "";
 }
@@ -258,7 +261,9 @@ export function resolveClaimedName(id: string): string {
 
 /** Adı tek kanaldan yazar: kişi anahtarına ve bilinen tüm düğümlerine. */
 export function writeNickname(id: string, name: string): void {
-  const clean = name.trim().slice(0, 40);
+  const raw = name.trim().slice(0, 40);
+  // Teknik kimlik / nötr etiket ASLA ad olarak saklanmaz.
+  const clean = isTechnicalLabel(raw) ? "" : raw;
   const map = readMap(NICK_KEY);
   for (const key of idsOfPerson(id)) {
     if (clean) map[key] = clean;
@@ -270,7 +275,7 @@ export function writeNickname(id: string, name: string): void {
 /** Beyan adını aynı kanala yazar. */
 export function writeClaimedName(id: string, name: string): void {
   const clean = name.trim().slice(0, 40);
-  if (!clean) return;
+  if (!clean || isTechnicalLabel(clean)) return;
   const map = readMap(ALIAS_KEY);
   for (const key of idsOfPerson(id)) map[key] = clean;
   writeMap(ALIAS_KEY, map);
@@ -282,4 +287,27 @@ export function writeClaimedName(id: string, name: string): void {
  */
 export function resolveDisplayName(id: string): string {
   return resolveNickname(id) || resolveClaimedName(id);
+}
+
+/**
+ * Eski sürümlerden kalan nötr/teknik ad kayıtlarını yerel haritalardan siler.
+ * Gerçek adlara dokunmaz; yalnızca "Tedbirge kullanıcısı" gibi yer tutucular
+ * ve ham teknik kimlikler temizlenir.
+ */
+export function purgePlaceholderNames(): number {
+  if (typeof window === "undefined") return 0;
+  let removed = 0;
+  for (const key of [NICK_KEY, ALIAS_KEY]) {
+    const map = readMap(key);
+    let changed = false;
+    for (const [id, value] of Object.entries(map)) {
+      if (isTechnicalLabel(value)) {
+        delete map[id];
+        changed = true;
+        removed += 1;
+      }
+    }
+    if (changed) writeMap(key, map);
+  }
+  return removed;
 }

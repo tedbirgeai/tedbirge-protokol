@@ -886,7 +886,7 @@ export function ChatApp() {
         // Adı çözülemeyen kayıt hiç oluşturulmaz.
         if (!isNamed(c)) return false;
         // Son güvenlik ağı: başlık yine de nötr etikete düşüyorsa listelenmez.
-        if (!c.group && safeTitleOf(c) === UNKNOWN_TITLE) return false;
+        if (!c.group && isTechnicalLabel(safeTitleOf(c))) return false;
         // Kendi diğer cihazlarım ayrı sohbet satırı açmaz ("Kendinize not" hariç).
         if (
           !c.group &&
