@@ -10,6 +10,7 @@ import {
   Bell,
   Smartphone,
 } from "lucide-react";
+import { BUILD_LABEL } from "@/lib/build-id";
 import { getPrivacy, setPrivacy } from "@/lib/chat/privacy";
 import {
   listSessions,
