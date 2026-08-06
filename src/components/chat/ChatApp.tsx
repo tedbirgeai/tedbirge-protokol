@@ -112,7 +112,7 @@ import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node
 import { listCalls } from "@/lib/chat/call-log";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
-import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
+import { contactLabel, refreshContacts, setNickname, useContacts } from "@/lib/chat/contacts";
 import {
   fileToAvatarDataUrl,
   getAvatar,
@@ -130,6 +130,7 @@ import {
   mergeGroupsByName,
   isSelfPerson,
   resolveDisplayName,
+  repairCrossLinks,
 } from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
