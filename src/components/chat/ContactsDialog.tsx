@@ -389,7 +389,7 @@ export function ContactsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:w-full">
+        <DialogContent className="wa wa-scope flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:w-full">
           <DialogHeader className="shrink-0 border-b border-border p-6 pb-4">
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
