@@ -65,7 +65,9 @@ export function setupOfflineSupport() {
     }
     window.sessionStorage.setItem(REFRESH_MARKER, "1");
     notify({ state: "reloading", message: "Yeni sürüm yüklendi — uygulama yenileniyor." });
-    window.setTimeout(() => window.location.reload(), 350);
+    // Kullanıcı bir forma yazıyorsa yenileme ertelenir (katılım ekranında
+    // yazarken sayfa tazelenip girilen bilgi kayboluyordu).
+    void import("@/lib/ui/defer-reload").then((m) => m.safeReload(350));
   };
 
   const armUpdateSignals = (registration: ServiceWorkerRegistration) => {

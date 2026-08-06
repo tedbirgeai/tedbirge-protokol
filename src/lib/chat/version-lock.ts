@@ -97,7 +97,7 @@ export async function applyVersionLock(): Promise<boolean> {
   try {
     if (window.sessionStorage.getItem(RELOAD_MARKER) === APP_DATA_VERSION) return true;
     window.sessionStorage.setItem(RELOAD_MARKER, APP_DATA_VERSION);
-    window.setTimeout(() => window.location.reload(), 400);
+    void import("@/lib/ui/defer-reload").then((m) => m.safeReload(400));
   } catch {
     /* gizli mod: yenileme atlanır */
   }
