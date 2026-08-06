@@ -48,7 +48,7 @@ import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory"
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
 
 /** Ayarlar tek ekranda toplanır: altı sekme, tek pencere. */
-type SettingsTab =
+export type SettingsTab =
   | "profil"
   | "bildirim"
   | "gizlilik"
