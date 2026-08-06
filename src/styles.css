@@ -246,8 +246,47 @@
   --wa-chat-bg: #f5f8f9;
   --wa-tick: #7a8b94;
   --wa-tick-read: #0b7d6c;
+  /* WhatsApp ölçü tokenları — satır, avatar ve alt sekme yüksekliği */
+  --wa-row-h: 72px;
+  --wa-avatar: 52px;
+  --wa-tabbar-h: 56px;
+  --wa-search-h: 44px;
   color: var(--wa-text);
 }
+
+/* Tam ekran kilidi: telefonda kabuk viewport'a sabitlenir, yatay kayma yok. */
+.wa-shell {
+  height: var(--wa-vh, 100dvh);
+  max-height: var(--wa-vh, 100dvh);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.wa-shell * {
+  min-width: 0;
+}
+
+/* Sabit alt sekme çubuğu (yalnızca mobil). */
+.wa-tabbar {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  flex-shrink: 0;
+  height: calc(var(--wa-tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Masaüstünde alt sekme çubuğu görünmez (md ve üzeri). */
+@media (min-width: 768px) {
+  .wa-tabbar {
+    display: none;
+  }
+}
+
+/* WhatsApp ölçülerinde liste satırı. */
+.wa-list-row {
+  min-height: var(--wa-row-h);
+}
+
 
 .wa .wa-chat-bg {
   background-color: var(--wa-chat-bg);

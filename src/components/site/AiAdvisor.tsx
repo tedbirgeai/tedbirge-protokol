@@ -10,7 +10,7 @@ const SUGGESTIONS = [
   "Pilot süreci nasıl başlar?",
 ];
 
-export function AiAdvisor() {
+export function AiAdvisor({ hideLauncher = false }: { hideLauncher?: boolean }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -53,6 +53,8 @@ export function AiAdvisor() {
   }
 
   if (!open) {
+    // Sohbet ekranında yüzen düğme gizlenir; panel yalnızca olayla açılır.
+    if (hideLauncher) return null;
     return (
       <button
         onClick={() => setOpen(true)}
