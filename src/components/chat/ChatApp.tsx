@@ -94,6 +94,8 @@ import { startPtt, stopPtt } from "@/lib/chat/ptt";
 import { ttlOf, ttlLabel } from "@/lib/chat/ephemeral";
 import {
   ARCHIVE,
+  assignFolder,
+  createFolder,
   folderOf,
   folderTabs,
   getFolders,
@@ -101,6 +103,18 @@ import {
   onFoldersChange,
   toggleArchive,
 } from "@/lib/chat/folders";
+import {
+  clearUnreadFlag,
+  forgetFlags,
+  isFavorite,
+  isMarkedUnread,
+  markUnreadFlag,
+  onFlagsChange,
+  toggleFavorite,
+} from "@/lib/chat/chat-flags";
+import { ChatRowMenu, type RowMenuState } from "@/components/chat/ChatRowMenu";
+import { NewContactForm } from "@/components/chat/NewContactForm";
+
 import { getPrivacy, onPrivacyChange } from "@/lib/chat/privacy";
 import { cachedTranslation, translateText } from "@/lib/chat/translate";
 import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
