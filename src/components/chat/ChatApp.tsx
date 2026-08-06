@@ -87,7 +87,11 @@ import {
   directConvId,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
-import { CallHistory } from "@/components/chat/CallHistory";
+import { NewCallSheet } from "@/components/chat/NewCallSheet";
+import { Dialpad } from "@/components/chat/Dialpad";
+import { CallLinkSheet } from "@/components/chat/CallLinkSheet";
+import { ScheduleCallSheet } from "@/components/chat/ScheduleCallSheet";
+
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { lastSeenLabel } from "@/lib/chat/last-seen";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
@@ -711,6 +715,12 @@ export function ChatApp() {
   const [folderVersion, setFolderVersion] = useState(0);
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
   const [newContactOpen, setNewContactOpen] = useState(false);
+  // Arama ekranları: yeni arama, tuş takımı, planlama ve arama bağlantısı.
+  const [newCallOpen, setNewCallOpen] = useState(false);
+  const [dialpadOpen, setDialpadOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [callLinkOpen, setCallLinkOpen] = useState(false);
+
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -1648,17 +1658,23 @@ export function ChatApp() {
         )}
 
         {folder === CALLS_TAB && (
-          <div className="flex-1 overflow-y-auto">
-            <CallHistory
+          <div className="flex min-h-0 flex-1 flex-col">
+            <CallsPanel
+              showHeader={false}
               onCall={(peer, video) => {
                 void ensureDirectConversation(peer).then((c) => {
                   setActiveId(c.id);
                   void startCall(peer, video, nameOf(peer));
                 });
               }}
+              onNewCall={() => setNewCallOpen(true)}
+              onSchedule={() => setScheduleOpen(true)}
+              onDialpad={() => setDialpadOpen(true)}
+              onFavorites={() => setContactsOpen(true)}
             />
           </div>
         )}
+
 
         <SyncWarningBar />
 
@@ -1827,11 +1843,15 @@ export function ChatApp() {
         {mobileTab === "calls" && (
           <div className="flex min-h-0 flex-1 flex-col">
             <CallsPanel
-              onCall={(peerId, video) => void startCall(peerId, video)}
-              onNewCall={() => setContactsOpen(true)}
+              onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+              onNewCall={() => setNewCallOpen(true)}
+              onSchedule={() => setScheduleOpen(true)}
+              onDialpad={() => setDialpadOpen(true)}
+              onFavorites={() => setContactsOpen(true)}
             />
           </div>
         )}
+
 
         {/* Topluluklar sekmesi */}
         {mobileTab === "communities" && (
@@ -2554,6 +2574,30 @@ export function ChatApp() {
         }}
         onShare={() => void shareInvite()}
       />
+
+      {/* Arama ekranları: yeni arama, tuş takımı, bağlantı, planlama */}
+      <NewCallSheet
+        open={newCallOpen}
+        onClose={() => setNewCallOpen(false)}
+        onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+        onConference={(peerIds, video) =>
+          void startConference(
+            peerIds.map((peerId) => ({ peerId, alias: nameOf(peerId) })),
+            video,
+          )
+        }
+        onNewLink={() => setCallLinkOpen(true)}
+        onNewContact={() => setNewContactOpen(true)}
+      />
+      <Dialpad
+        open={dialpadOpen}
+        onClose={() => setDialpadOpen(false)}
+        onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+      />
+      <CallLinkSheet open={callLinkOpen} onClose={() => setCallLinkOpen(false)} />
+      <ScheduleCallSheet open={scheduleOpen} onClose={() => setScheduleOpen(false)} />
+
+
 
       {/* Elle kişi ekleme (Ad · Soyadı · Ülke · Telefon) */}
       <NewContactForm
