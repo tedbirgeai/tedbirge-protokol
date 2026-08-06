@@ -1,4 +1,4 @@
-import { BookUser, QrCode, Star, Users, X } from "lucide-react";
+import { BookUser, QrCode, Star, UserPlus, Users, X } from "lucide-react";
 
 import { pressFeedback } from "@/lib/chat/sounds";
 
@@ -13,6 +13,7 @@ export function NewChatSheet({
   onClose,
   onNewChat,
   onNewGroup,
+  onNewContact,
   onSelfNote,
   onShare,
 }: {
@@ -20,6 +21,7 @@ export function NewChatSheet({
   onClose: () => void;
   onNewChat: () => void;
   onNewGroup: () => void;
+  onNewContact: () => void;
   onSelfNote: () => void;
   onShare: () => void;
 }) {
@@ -28,9 +30,11 @@ export function NewChatSheet({
   const items = [
     { id: "chat", label: "Yeni sohbet", icon: BookUser, run: onNewChat },
     { id: "group", label: "Yeni grup", icon: Users, run: onNewGroup },
+    { id: "contact", label: "Yeni kişi", icon: UserPlus, run: onNewContact },
     { id: "self", label: "Kendine not", icon: Star, run: onSelfNote },
     { id: "share", label: "Kimliğimi paylaş", icon: QrCode, run: onShare },
   ];
+
 
   return (
     <div
