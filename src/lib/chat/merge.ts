@@ -263,15 +263,19 @@ export async function pruneGhostConversations(): Promise<number> {
       continue;
     }
 
-    const name = resolveDisplayName(member).trim() || (conv.title ?? "").trim();
+    const resolved = resolveDisplayName(member).trim();
+    const name = resolved || (conv.title ?? "").trim();
+    const { isTechnicalLabel } = await import("@/lib/chat/display-name");
     const ghost =
-      !resolveDisplayName(member).trim() ||
+      !resolved ||
+      isTechnicalLabel(resolved) ||
       isSelfPerson({
         id: member,
         personId: nameKeyOf(member),
         phoneHash: resolvePhoneHash(member),
         name,
       });
+
     if (!ghost) continue;
     await deleteConversation(conv.id).catch(() => undefined);
     removed += 1;
