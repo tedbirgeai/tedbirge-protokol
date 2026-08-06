@@ -397,6 +397,28 @@ export async function removeConversation(convId: string) {
   await refreshConversations();
 }
 
+/**
+ * Sohbeti temizler: tüm mesajlar silinir, sohbet kaydı listede kalır.
+ * Yalnızca bu cihazı etkiler; karşı tarafın kopyası dokunulmaz.
+ */
+export async function clearConversation(convId: string): Promise<number> {
+  const rows = await listMessages(convId);
+  for (const m of rows) await deleteMessageRecord(m.id);
+  const conv = await getConversation(convId);
+  if (conv) await putConversation({ ...conv, lastText: "", unread: 0 });
+  await refreshMessages(convId);
+  await refreshConversations();
+  return rows.length;
+}
+
+/** Sohbeti okunmadı olarak işaretler (rozet görünür kalır). */
+export async function markUnread(convId: string) {
+  const conv = await getConversation(convId);
+  if (!conv) return;
+  if (!conv.unread) await putConversation({ ...conv, unread: 1 });
+  await refreshConversations();
+}
+
 export async function markRead(convId: string) {
   const conv = await getConversation(convId);
   if (!conv) return;

@@ -256,6 +256,33 @@
   color: var(--wa-text);
 }
 
+/* ------------------------------------------------------------------
+ * Sohbet pencereleri (Rehber, kimlik kartı, doğrulama) için tek renk
+ * dili: shadcn tokenları WhatsApp açık yeşil temasına bağlanır. Böylece
+ * pencerelerde koyu mavi/mor ton kalmaz.
+ * ---------------------------------------------------------------- */
+.wa-scope {
+  --background: #ffffff;
+  --foreground: #0d1b22;
+  --card: #ffffff;
+  --card-foreground: #0d1b22;
+  --popover: #ffffff;
+  --popover-foreground: #0d1b22;
+  --primary: #0b7d6c;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f4;
+  --secondary-foreground: #0d1b22;
+  --muted: #eef2f4;
+  --muted-foreground: #5b6b75;
+  --accent: #d9f1ea;
+  --accent-foreground: #0b5c50;
+  --border: #dde5e9;
+  --input: #dde5e9;
+  --ring: #0b7d6c;
+  background-color: var(--wa-panel, #ffffff);
+  color: var(--wa-text, #0d1b22);
+}
+
 /* Tam ekran kilidi: telefonda kabuk viewport'a sabitlenir, yatay kayma yok. */
 .wa-shell {
   height: var(--wa-vh, 100dvh);

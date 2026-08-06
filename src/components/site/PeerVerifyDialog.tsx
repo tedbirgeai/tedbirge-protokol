@@ -112,7 +112,7 @@ export function PeerVerifyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="wa wa-scope max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Parmak izi doğrulama

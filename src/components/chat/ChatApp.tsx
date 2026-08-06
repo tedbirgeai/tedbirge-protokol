@@ -32,6 +32,7 @@ import {
   Paperclip,
   Pencil,
   Phone,
+  Heart,
   Pin,
   Plus,
   Reply,
@@ -71,6 +72,8 @@ import {
   ensureSelfConversation,
   SELF_CONV_ID,
   markRead,
+  markUnread,
+  clearConversation,
   removeConversation,
   conversationTargets,
   sendMedia,
@@ -94,6 +97,8 @@ import { startPtt, stopPtt } from "@/lib/chat/ptt";
 import { ttlOf, ttlLabel } from "@/lib/chat/ephemeral";
 import {
   ARCHIVE,
+  assignFolder,
+  createFolder,
   folderOf,
   folderTabs,
   getFolders,
@@ -101,6 +106,18 @@ import {
   onFoldersChange,
   toggleArchive,
 } from "@/lib/chat/folders";
+import {
+  clearUnreadFlag,
+  forgetFlags,
+  isFavorite,
+  isMarkedUnread,
+  markUnreadFlag,
+  onFlagsChange,
+  toggleFavorite,
+} from "@/lib/chat/chat-flags";
+import { ChatRowMenu, type RowMenuState } from "@/components/chat/ChatRowMenu";
+import { NewContactForm } from "@/components/chat/NewContactForm";
+
 import { getPrivacy, onPrivacyChange } from "@/lib/chat/privacy";
 import { cachedTranslation, translateText } from "@/lib/chat/translate";
 import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
@@ -652,6 +669,10 @@ function MenuItem({
 }
 
 const CALLS_TAB = "__calls";
+// Süzgeç çipleri: gerçek klasör değil, listeyi daraltan görünümlerdir.
+const UNREAD_TAB = "__unread";
+const FAV_TAB = "__fav";
+const GROUPS_TAB = "__groups";
 
 export function ChatApp() {
   const [ready, setReady] = useState(false);
@@ -683,6 +704,9 @@ export function ChatApp() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [muteMenu, setMuteMenu] = useState(false);
   const [folderVersion, setFolderVersion] = useState(0);
+  const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
+  const [newContactOpen, setNewContactOpen] = useState(false);
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -703,6 +727,7 @@ export function ChatApp() {
   // Klasör ve gizlilik tercihleri değişince liste ve çeviri anında yenilenir.
   useEffect(() => {
     const offFolders = onFoldersChange(() => setFolderVersion((v) => v + 1));
+    const offFlags = onFlagsChange(() => setFolderVersion((v) => v + 1));
     const offPrivacy = onPrivacyChange(() => setPrivacyState({ ...getPrivacy() }));
     // Rehber sessizce tazelenir: sonradan katılan tanıdıklar kendiliğinden gelir.
     let stopSync: (() => void) | undefined;
@@ -711,6 +736,7 @@ export function ChatApp() {
     });
     return () => {
       offFolders();
+      offFlags();
       offPrivacy();
       stopSync?.();
     };
@@ -795,7 +821,10 @@ export function ChatApp() {
   }, [messages.length, activeId, atBottom]);
 
   useEffect(() => {
-    if (activeId) void markRead(activeId);
+    if (activeId) {
+      void markRead(activeId);
+      clearUnreadFlag(activeId);
+    }
   }, [activeId, messages.length]);
 
   // Taslak kalıcıdır: sohbetten çıkılsa da yazılan metin kaybolmaz.
@@ -858,9 +887,13 @@ export function ChatApp() {
   }, [chat.conversations]);
   const conversations = useMemo(
     () => {
+      const pseudo = folder === UNREAD_TAB || folder === FAV_TAB || folder === GROUPS_TAB;
       const rows = allConversations.filter((c) => {
         const f = folderOf(c.id);
-        if (folder === "" ? f === ARCHIVE : f !== folder) return false;
+        if (pseudo || folder === "" ? f === ARCHIVE : f !== folder) return false;
+        if (folder === UNREAD_TAB && !(c.unread > 0 || isMarkedUnread(c.id))) return false;
+        if (folder === FAV_TAB && !isFavorite(c.id)) return false;
+        if (folder === GROUPS_TAB && !c.group) return false;
         if (c.id === SELF_CONV_ID) return true;
         // Boş sohbet listeye girmez: en az bir mesaj ya da arama kaydı şart.
         const hasActivity = Boolean(c.lastText) || c.unread > 0;
@@ -952,6 +985,21 @@ export function ChatApp() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chats");
   // "+" eylem sayfası (yeni sohbet / grup / not / kimlik paylaş).
   const [plusOpen, setPlusOpen] = useState(false);
+
+  // Satır menüsünü konumlandırarak açar (sağ tık / basılı tutma).
+  const openRowMenu = (c: { id: string; group?: boolean }, x: number, y: number) => {
+    pressFeedback();
+    setRowMenu({
+      convId: c.id,
+      title: safeTitleOf(c as never),
+      x,
+      y,
+      archived: isArchived(c.id),
+      pinned: Boolean((c as { pinned?: boolean }).pinned),
+      favorite: isFavorite(c.id),
+      unread: isMarkedUnread(c.id) || Boolean((c as { unread?: number }).unread),
+    });
+  };
   const totalUnread = useMemo(
     () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
     [allConversations],
@@ -1480,7 +1528,29 @@ export function ChatApp() {
           >
             Aramalar
           </button>
+          {[
+            { id: UNREAD_TAB, label: "Okunmamış" },
+            { id: FAV_TAB, label: "Favoriler" },
+            { id: GROUPS_TAB, label: "Gruplar" },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                setFolder(folder === chip.id ? "" : chip.id);
+              }}
+              className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+              style={{
+                background: folder === chip.id ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                color: folder === chip.id ? "#fff" : "var(--wa-muted)",
+              }}
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
+
 
         {groupMode && (
           <div
@@ -1626,6 +1696,23 @@ export function ChatApp() {
                   tabIndex={0}
                   onClick={() => setActiveId(c.id)}
                   onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openRowMenu(c, e.clientX, e.clientY);
+                  }}
+                  onTouchStart={(e) => {
+                    const t = e.touches[0];
+                    const x = t?.clientX ?? 0;
+                    const y = t?.clientY ?? 0;
+                    if (longPressRef.current) clearTimeout(longPressRef.current);
+                    longPressRef.current = setTimeout(() => openRowMenu(c, x, y), 450);
+                  }}
+                  onTouchEnd={() => {
+                    if (longPressRef.current) clearTimeout(longPressRef.current);
+                  }}
+                  onTouchMove={() => {
+                    if (longPressRef.current) clearTimeout(longPressRef.current);
+                  }}
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
@@ -1661,6 +1748,20 @@ export function ChatApp() {
                       {c.lastText}
                     </p>
                   </div>
+                  {isFavorite(c.id) && (
+                    <Heart
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: "var(--wa-accent)" }}
+                      aria-hidden
+                    />
+                  )}
+                  {c.unread === 0 && isMarkedUnread(c.id) && (
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: "var(--wa-accent)" }}
+                      aria-label="Okunmadı olarak işaretli"
+                    />
+                  )}
                   {c.unread > 0 && (
                     <span
                       className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
@@ -2428,12 +2529,70 @@ export function ChatApp() {
           setMobileTab("chats");
           setGroupMode(true);
         }}
+        onNewContact={() => setNewContactOpen(true)}
         onSelfNote={() => {
           setMobileTab("chats");
           void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
         }}
         onShare={() => void shareInvite()}
       />
+
+      {/* Elle kişi ekleme (Ad · Soyadı · Ülke · Telefon) */}
+      <NewContactForm
+        open={newContactOpen}
+        onClose={() => setNewContactOpen(false)}
+        onSaved={(peerId, name) => {
+          setMobileTab("chats");
+          if (name && !isTechnicalLabel(name)) setNickname(peerId, name);
+          void ensureDirectConversation(peerId, name || undefined).then((c) => setActiveId(c.id));
+        }}
+      />
+
+      {/* Sohbet satırı menüsü: arşiv, sabitle, favori, liste, temizle, sil */}
+      <ChatRowMenu
+        state={rowMenu}
+        folders={getFolders().names}
+        onClose={() => setRowMenu(null)}
+        onArchive={() => {
+          if (rowMenu) toggleArchive(rowMenu.convId);
+        }}
+        onPin={() => {
+          if (rowMenu) void togglePin(rowMenu.convId);
+        }}
+        onToggleRead={() => {
+          if (!rowMenu) return;
+          if (rowMenu.unread) {
+            clearUnreadFlag(rowMenu.convId);
+            void markRead(rowMenu.convId);
+          } else {
+            markUnreadFlag(rowMenu.convId);
+            void markUnread(rowMenu.convId);
+          }
+        }}
+        onFavorite={() => {
+          if (rowMenu) toggleFavorite(rowMenu.convId);
+        }}
+        onAssignList={(name) => {
+          if (rowMenu) assignFolder(rowMenu.convId, name);
+        }}
+        onCreateList={() => {
+          const name = window.prompt("Yeni liste adı")?.trim();
+          if (!name || !rowMenu) return;
+          createFolder(name);
+          assignFolder(rowMenu.convId, name);
+        }}
+        onClear={() => {
+          if (rowMenu) void clearConversation(rowMenu.convId);
+        }}
+        onDelete={() => {
+          if (!rowMenu) return;
+          const id = rowMenu.convId;
+          forgetFlags(id);
+          if (activeId === id) setActiveId(null);
+          void removeConversation(id);
+        }}
+      />
+
 
       {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
       <AiAdvisor hideLauncher />
