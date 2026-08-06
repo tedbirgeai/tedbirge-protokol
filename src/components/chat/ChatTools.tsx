@@ -48,7 +48,7 @@ import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory"
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
 
 /** Ayarlar tek ekranda toplanır: altı sekme, tek pencere. */
-type SettingsTab =
+export type SettingsTab =
   | "profil"
   | "bildirim"
   | "gizlilik"
@@ -271,10 +271,12 @@ export function ChatSettingsDialog({
   open,
   onClose,
   convId,
+  initialTab,
 }: {
   open: boolean;
   onClose: () => void;
   convId: string | null;
+  initialTab?: SettingsTab;
 }) {
   const [pin, setPin] = useState("");
   const [pass, setPass] = useState("");
@@ -284,7 +286,7 @@ export function ChatSettingsDialog({
   const [ttl, setTtlValue] = useState(0);
   const [minutes, setMinutes] = useState(5);
   const [notify, setNotify] = useState(false);
-  const [tab, setTab] = useState<SettingsTab>("profil");
+  const [tab, setTab] = useState<SettingsTab>(initialTab ?? "profil");
   const [alias, setAliasValue] = useState("");
   const [email, setEmailValue] = useState("");
   const [syncing, setSyncing] = useState(false);
@@ -294,6 +296,7 @@ export function ChatSettingsDialog({
 
   useEffect(() => {
     if (!open) return;
+    if (initialTab) setTab(initialTab);
     setLocked(lockEnabled());
     setMinutes(autoLockMinutes());
     setNotify(notificationsAllowed());
@@ -302,7 +305,7 @@ export function ChatSettingsDialog({
     setEmailValue(getEmail());
     setMsg(null);
     setErr(null);
-  }, [open, convId]);
+  }, [open, convId, initialTab]);
 
   if (!open) return null;
 

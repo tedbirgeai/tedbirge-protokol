@@ -1,10 +1,12 @@
 import {
+  Bell,
   BookUser,
   ChevronRight,
   Laptop,
   Lock,
   MessageSquare,
   QrCode,
+  Sparkle,
   Star,
   UserCog,
   Volume2,
@@ -39,6 +41,9 @@ export function MePanel({
   onPairing,
   onToggleSound,
   onSelfNote,
+  onNotifications,
+  onSubscription,
+  planLabel,
   version,
 }: {
   name: string;
@@ -51,14 +56,21 @@ export function MePanel({
   onPairing: () => void;
   onToggleSound: () => void;
   onSelfNote: () => void;
+  onNotifications: () => void;
+  onSubscription: () => void;
+  planLabel: string;
   version: string;
 }) {
+  const groupZero: Item[] = [
+    { id: "plan", label: "Abonelikler", icon: Sparkle, onClick: onSubscription, right: planLabel },
+  ];
   const groupOne: Item[] = [
     { id: "contacts", label: "Rehber", icon: BookUser, onClick: onContacts },
     { id: "starred", label: "Kendine not", icon: Star, onClick: onSelfNote },
     { id: "devices", label: "Bağlı cihazlar", icon: Laptop, onClick: onPairing },
   ];
   const groupTwo: Item[] = [
+    { id: "notify", label: "Bildirimler", icon: Bell, onClick: onNotifications },
     { id: "account", label: "Hesap", icon: UserCog, onClick: onSettings },
     { id: "privacy", label: "Gizlilik", icon: Lock, onClick: onSettings },
     { id: "chats", label: "Sohbetler", icon: MessageSquare, onClick: onSettings },
@@ -89,6 +101,11 @@ export function MePanel({
             >
               <it.icon className="h-6 w-6 shrink-0" style={{ color: "var(--wa-text)" }} />
               <span className="min-w-0 flex-1 truncate text-[17px]">{it.label}</span>
+              {it.right && (
+                <span className="shrink-0 text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                  {it.right}
+                </span>
+              )}
               <ChevronRight className="h-5 w-5 shrink-0" style={{ color: "var(--wa-muted)" }} />
             </button>
           </li>
@@ -127,6 +144,7 @@ export function MePanel({
         </p>
       </div>
 
+      {renderGroup(groupZero)}
       {renderGroup(groupOne)}
       {renderGroup(groupTwo)}
 

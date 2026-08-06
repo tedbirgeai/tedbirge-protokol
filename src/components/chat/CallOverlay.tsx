@@ -195,13 +195,13 @@ export function CallOverlay() {
       : label;
 
   const ctlBase =
-    "wa-press flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20";
+    "wa-press flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20";
 
   const connecting = call.phase !== "active";
 
   return (
     <div
-      className="wa-call-overlay fixed inset-0 flex flex-col items-center justify-between bg-zinc-900 text-white"
+      className="wa-call-overlay fixed inset-0 flex flex-col items-center justify-between overflow-hidden bg-zinc-900 text-white"
       style={{ zIndex: 9999 }}
     >
       {/* Görüntülü kip: kamera görüntüsü tam ekran arka plan */}
@@ -338,7 +338,7 @@ export function CallOverlay() {
       </div>
 
       {/* Alt kontrol barı */}
-      <div className="relative z-10 flex items-center justify-center gap-3 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:gap-4 sm:pb-12">
+      <div className="relative z-10 flex w-full max-w-md flex-wrap items-center justify-center gap-3 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:gap-4 sm:pb-10">
         {call.phase === "ringing" ? (
           <>
             <button
@@ -347,7 +347,7 @@ export function CallOverlay() {
                 pressFeedback();
                 void acceptCall();
               }}
-               className="wa-press wa-ring flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white"
+               className="wa-press wa-ring flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-green-500 text-white"
               aria-label="Aramayı kabul et"
             >
               <PhoneIncoming className="h-7 w-7" />
@@ -358,7 +358,7 @@ export function CallOverlay() {
                 pressFeedback();
                 endCall();
               }}
-              className="wa-press flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white"
+              className="wa-press flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-red-600 text-white"
               aria-label="Aramayı reddet"
             >
               <PhoneOff className="h-7 w-7" />
@@ -452,7 +452,7 @@ export function CallOverlay() {
                 pressFeedback();
                 endCall();
               }}
-              className="wa-press flex h-16 w-16 items-center justify-center rounded-full bg-red-600 text-white"
+              className="wa-press flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-red-600 text-white"
               aria-label="Görüşmeyi bitir"
             >
               <PhoneOff className="h-7 w-7" />
