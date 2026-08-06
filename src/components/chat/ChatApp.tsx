@@ -1654,17 +1654,23 @@ export function ChatApp() {
         )}
 
         {folder === CALLS_TAB && (
-          <div className="flex-1 overflow-y-auto">
-            <CallHistory
+          <div className="flex min-h-0 flex-1 flex-col">
+            <CallsPanel
+              showHeader={false}
               onCall={(peer, video) => {
                 void ensureDirectConversation(peer).then((c) => {
                   setActiveId(c.id);
                   void startCall(peer, video, nameOf(peer));
                 });
               }}
+              onNewCall={() => setNewCallOpen(true)}
+              onSchedule={() => setScheduleOpen(true)}
+              onDialpad={() => setDialpadOpen(true)}
+              onFavorites={() => setContactsOpen(true)}
             />
           </div>
         )}
+
 
         <SyncWarningBar />
 
