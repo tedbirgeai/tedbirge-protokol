@@ -282,3 +282,40 @@ export async function pruneGhostConversations(): Promise<number> {
   }
   return removed;
 }
+
+/* ------------------------------ SÜREKLİ BUDAMA ------------------------------ */
+
+let lastSweep = 0;
+let sweepInFlight: Promise<number> | null = null;
+const SWEEP_MIN_GAP_MS = 30_000;
+
+/**
+ * TEK KAPI: hayalet kişi + hayalet sohbet + hayalet arama kaydı temizliği.
+ * Açılışta, sekme öne alındığında, ağ döndüğünde ve her eşitleme/kasa
+ * geri yüklemesinden sonra çağrılır. En fazla 30 saniyede bir çalışır.
+ */
+export async function sweepGhosts(force = false): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  if (sweepInFlight) return sweepInFlight;
+  if (!force && Date.now() - lastSweep < SWEEP_MIN_GAP_MS) return 0;
+  sweepInFlight = (async () => {
+    try {
+      const { pruneCallLog } = await import("@/lib/chat/call-log");
+      const contacts = await pruneGhostContacts().catch(() => 0);
+      const convs = await pruneGhostConversations().catch(() => 0);
+      const calls = await pruneCallLog().catch(() => 0);
+      const total = contacts + convs + calls;
+      if (total > 0) {
+        const { refreshContacts } = await import("@/lib/chat/contacts");
+        await refreshContacts().catch(() => undefined);
+        const { refreshAll } = await import("@/lib/chat/engine");
+        await refreshAll().catch(() => undefined);
+      }
+      return total;
+    } finally {
+      lastSweep = Date.now();
+      sweepInFlight = null;
+    }
+  })();
+  return sweepInFlight;
+}
