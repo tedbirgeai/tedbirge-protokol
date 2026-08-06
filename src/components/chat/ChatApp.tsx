@@ -4,6 +4,8 @@ import { MobileTabBar, type MobileTab } from "@/components/chat/MobileTabBar";
 import { CallsPanel } from "@/components/chat/CallsPanel";
 import { CommunitiesPanel } from "@/components/chat/CommunitiesPanel";
 import { MePanel } from "@/components/chat/MePanel";
+import { DesktopRail } from "@/components/chat/DesktopRail";
+import { NewChatSheet } from "@/components/chat/NewChatSheet";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
@@ -941,8 +943,10 @@ export function ChatApp() {
     [allConversations, folderVersion],
   );
 
-  // Mobil alt sekme durumu ve türetilmiş veriler.
+  // Sekme durumu: mobil alt çubuk ve masaüstü sol ray aynı değeri kullanır.
   const [mobileTab, setMobileTab] = useState<MobileTab>("chats");
+  // "+" eylem sayfası (yeni sohbet / grup / not / kimlik paylaş).
+  const [plusOpen, setPlusOpen] = useState(false);
   const totalUnread = useMemo(
     () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
     [allConversations],
@@ -959,22 +963,36 @@ export function ChatApp() {
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   const me = getAlias() || "Ben";
+  const label = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "");
+  /**
+   * HEDEF KİLİDİ
+   * Bir sohbetin gerçek muhatabı: önce görünen adla eşleşen cihaz, sonra
+   * çevrim içi cihaz, en son öğrenilen kimlik. Böylece "Ahmet"e basınca
+   * "Veli" açılmaz ve arama başka kişiye gitmez.
+   */
+  const targetOf = (conv: { title: string; members: string[]; group?: boolean }) => {
+    if (conv.group) return conv.members[0];
+    const wanted = humanName(conv.title, "").toLocaleLowerCase("tr");
+    const byName = wanted
+      ? conv.members.find((m) => label(m).toLocaleLowerCase("tr") === wanted)
+      : undefined;
+    return (
+      byName ??
+      conv.members.find((m) => peers.some((p) => p.nodeId === m)) ??
+      conv.members.at(-1)
+    );
+  };
+  const activeTarget = active ? targetOf(active) : undefined;
   const activeName = active
     ? active.group
       ? active.title
-      : humanName(contactLabel(active.members[0] ?? active.title, active.title), UNKNOWN_TITLE)
+      : humanName(contactLabel(activeTarget ?? active.title, active.title), UNKNOWN_TITLE)
     : "";
-  // Mükerrer sohbetler birleştirildiğinde üyelerde eski cihaz kimlikleri de
-  // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
-  // kimliği seç; listenin ilk (eski) kaydına körlemesine arama yapma.
-  const peerId = active
-    ? (active.members.find((member) => peers.some((peer) => peer.nodeId === member)) ??
-      active.members.at(-1))
-    : undefined;
+  const peerId = activeTarget;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   /** Çevrim içi / son görülme yalnızca rehberde eşleşmiş kişilerde gösterilir. */
   const peerKnown = Boolean(
-    active && !active.group && !isTechnicalLabel(contactLabel(active.members[0] ?? "", "")),
+    active && !active.group && !isTechnicalLabel(contactLabel(activeTarget ?? "", "")),
   );
   const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), UNKNOWN_TITLE);
 
@@ -1155,6 +1173,15 @@ export function ChatApp() {
 
 
       <div className="flex min-h-0 w-full flex-1 overflow-hidden">
+      {/* Masaüstü sol ray — mobil alt sekme çubuğunun karşılığı */}
+      <DesktopRail
+        value={mobileTab}
+        onChange={setMobileTab}
+        meName={me}
+        meAvatar={getMyAvatar() || undefined}
+        unread={totalUnread}
+        onSettings={() => setSettingsOpen(true)}
+      />
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
         className={`relative flex h-full w-full shrink-0 flex-col md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
@@ -1210,11 +1237,11 @@ export function ChatApp() {
               type="button"
               onClick={() => {
                 pressFeedback();
-                setGroupMode((v) => !v);
+                setPlusOpen(true);
               }}
               className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
               style={{ background: "var(--wa-accent)" }}
-              aria-label="Yeni sohbet veya grup"
+              aria-label="Yeni sohbet, grup veya kimlik paylaş"
             >
               <Plus className="h-6 w-6" />
             </button>
@@ -1357,11 +1384,11 @@ export function ChatApp() {
             type="button"
             onClick={() => {
               pressFeedback();
-              setGroupMode((v) => !v);
+              setPlusOpen(true);
             }}
             className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
-            aria-label="Yeni sohbet veya grup"
+            aria-label="Yeni sohbet, grup veya kimlik paylaş"
           >
             <Plus className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </button>
@@ -1370,7 +1397,7 @@ export function ChatApp() {
 
         {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
 
-        <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden md:block"}`}>
+        <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden"}`}>
           <div
             className="flex items-center gap-3 rounded-full px-4"
             style={{ background: "var(--wa-panel-soft)", height: "var(--wa-search-h, 44px)" }}
@@ -1403,9 +1430,9 @@ export function ChatApp() {
           </div>
         </div>
 
-        {/* Sohbetler sekmesi içeriği (masaüstünde daima görünür) */}
+        {/* Sohbetler sekmesi içeriği */}
         <div
-          className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden md:flex"}`}
+          className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden"}`}
         >
         {/* Klasör ve arşiv sekmeleri */}
         <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
@@ -1595,7 +1622,7 @@ export function ChatApp() {
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
-                  <Avatar name={name} src={c.group ? undefined : getAvatar(c.members[0])} />
+                  <Avatar name={name} src={c.group ? undefined : getAvatar(targetOf(c) ?? "")} />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
@@ -1682,9 +1709,9 @@ export function ChatApp() {
         </div>
         </div>
 
-        {/* Mobil: Aramalar sekmesi */}
+        {/* Aramalar sekmesi */}
         {mobileTab === "calls" && (
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
             <CallsPanel
               onCall={(peerId, video) => void startCall(peerId, video)}
               onNewCall={() => setContactsOpen(true)}
@@ -1692,9 +1719,9 @@ export function ChatApp() {
           </div>
         )}
 
-        {/* Mobil: Topluluklar sekmesi */}
+        {/* Topluluklar sekmesi */}
         {mobileTab === "communities" && (
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
             <CommunitiesPanel
               groups={communityRows}
               onOpen={(id) => {
@@ -1709,9 +1736,9 @@ export function ChatApp() {
           </div>
         )}
 
-        {/* Mobil: Siz sekmesi */}
+        {/* Siz sekmesi */}
         {mobileTab === "me" && (
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
             <MePanel
               name={me}
               avatar={getMyAvatar() || undefined}
@@ -2384,6 +2411,22 @@ export function ChatApp() {
           unread={totalUnread}
         />
       )}
+
+      {/* "+" eylem sayfası */}
+      <NewChatSheet
+        open={plusOpen}
+        onClose={() => setPlusOpen(false)}
+        onNewChat={() => setContactsOpen(true)}
+        onNewGroup={() => {
+          setMobileTab("chats");
+          setGroupMode(true);
+        }}
+        onSelfNote={() => {
+          setMobileTab("chats");
+          void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
+        }}
+        onShare={() => void shareInvite()}
+      />
 
       {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
       <AiAdvisor hideLauncher />

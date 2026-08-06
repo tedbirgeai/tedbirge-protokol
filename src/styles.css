@@ -251,6 +251,8 @@
   --wa-avatar: 52px;
   --wa-tabbar-h: 56px;
   --wa-search-h: 44px;
+  /* Masaüstü sol ray genişliği */
+  --wa-rail-w: 72px;
   color: var(--wa-text);
 }
 
