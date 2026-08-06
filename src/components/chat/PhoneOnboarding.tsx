@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setEmail, setPhone } from "@/lib/chat/profile";
 import { normalizePhone } from "@/lib/chat/directory";
-import { ensureNotificationPermission } from "@/lib/chat/push";
 import { refreshContacts, shortIdOf } from "@/lib/chat/contacts";
 import { qrPayload } from "@/lib/peer-trust";
 import { restoreContacts } from "@/lib/chat/vault";
@@ -269,7 +268,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
     setAlias(name.trim() || verifiedPhone || "Ben");
     if (verifiedPhone) setPhone(verifiedPhone);
     setEmail(email);
-    void ensureNotificationPermission();
     if (!verifiedPhone) return;
     try {
       const [{ syncPersonIdentity, getBrowserNodeId }, { syncMyDirectoryEntry }] =
