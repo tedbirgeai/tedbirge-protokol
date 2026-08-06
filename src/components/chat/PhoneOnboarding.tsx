@@ -74,12 +74,29 @@ const COUNTRIES: { code: string; flag: string; name: string }[] = [
   { code: "52", flag: "🇲🇽", name: "Meksika" },
 ];
 
+/** Katılım ekranı taslağı: olası bir sürüm tazelemesinde girilen bilgi kaybolmaz. */
+const DRAFT_KEY = "tedbirge.onboarding.draft";
+
+function readDraft(): { name?: string; email?: string; dial?: string; phone?: string } {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.sessionStorage.getItem(DRAFT_KEY) ?? "{}") as {
+      name?: string;
+      email?: string;
+      dial?: string;
+      phone?: string;
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<Step>("phone");
-  const [name, setName] = useState("");
-  const [email, setEmailInput] = useState("");
-  const [dial, setDial] = useState("90");
-  const [phone, setPhoneInput] = useState("");
+  const [name, setName] = useState(() => readDraft().name ?? "");
+  const [email, setEmailInput] = useState(() => readDraft().email ?? "");
+  const [dial, setDial] = useState(() => readDraft().dial ?? "90");
+  const [phone, setPhoneInput] = useState(() => readDraft().phone ?? "");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +111,15 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
 
 
   const e164 = normalizePhone(phone, dial);
+
+  // Yazılan bilgi anında oturum deposuna yazılır.
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ name, email, dial, phone }));
+    } catch {
+      /* gizli mod */
+    }
+  }, [name, email, dial, phone]);
 
   useEffect(() => {
     const update = () => setOnline(isOnline());
