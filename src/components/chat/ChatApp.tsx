@@ -1255,7 +1255,7 @@ export function ChatApp() {
       />
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
-        className={`relative flex h-full w-full shrink-0 flex-col md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
+        className={`relative flex h-full min-h-0 w-full shrink-0 flex-col overflow-hidden md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
         style={{ background: "var(--wa-panel)", borderRight: "1px solid var(--wa-border)" }}
       >
         <SearchPanel
