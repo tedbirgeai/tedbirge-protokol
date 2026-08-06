@@ -2412,6 +2412,22 @@ export function ChatApp() {
         />
       )}
 
+      {/* "+" eylem sayfası */}
+      <NewChatSheet
+        open={plusOpen}
+        onClose={() => setPlusOpen(false)}
+        onNewChat={() => setContactsOpen(true)}
+        onNewGroup={() => {
+          setMobileTab("chats");
+          setGroupMode(true);
+        }}
+        onSelfNote={() => {
+          setMobileTab("chats");
+          void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
+        }}
+        onShare={() => void shareInvite()}
+      />
+
       {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
       <AiAdvisor hideLauncher />
     </div>
