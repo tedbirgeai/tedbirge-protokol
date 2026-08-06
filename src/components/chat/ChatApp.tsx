@@ -87,7 +87,11 @@ import {
   directConvId,
 } from "@/lib/chat/engine";
 import { bootCalls, startCall, startConference } from "@/lib/call/engine";
-import { CallHistory } from "@/components/chat/CallHistory";
+import { NewCallSheet } from "@/components/chat/NewCallSheet";
+import { Dialpad } from "@/components/chat/Dialpad";
+import { CallLinkSheet } from "@/components/chat/CallLinkSheet";
+import { ScheduleCallSheet } from "@/components/chat/ScheduleCallSheet";
+
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { lastSeenLabel } from "@/lib/chat/last-seen";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
