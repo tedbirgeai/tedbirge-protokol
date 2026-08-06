@@ -1,4 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
+
+// Node ortamında yerel depolama taklidi (modüller window.localStorage okur).
+const store = new Map<string, string>();
+(globalThis as unknown as { window: unknown }).window = {
+  localStorage: {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+    clear: () => store.clear(),
+  },
+};
 import {
   NICK_KEY,
   ALIAS_KEY,
