@@ -100,14 +100,13 @@ rehber cihazdan çıkmaz.
 ## Derleme kontrol listesi
 
 ```bash
-npm run build
-npx cap sync
-npx cap open ios      # Archive > App Store Connect
-npx cap open android  # Build > Generate Signed Bundle (.aab)
+npm run mobile:setup   # derle + platformları hazırla + izinleri yaz + sync
+npm run mobile:ios     # Archive > App Store Connect
+npm run mobile:android # Build > Generate Signed Bundle (.aab)
 ```
 
-Mağaza sürümünde `capacitor.config.ts` içindeki `server.url` bloğunu
-kaldırmayı unutmayın.
+Mağaza modu varsayılandır; ek bir temizlik adımı gerekmez.
+
 
 ## Push jetonunun sunucuya kaydı (hazır)
 
