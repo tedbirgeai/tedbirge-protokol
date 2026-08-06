@@ -735,7 +735,11 @@ export function ChatApp() {
         /* çevrimdışı: yerel kimlik kullanılır */
       }
     })();
+    // Açılış ekranı hiçbir koşulda kilitlenmez: yerel depo yanıt vermezse
+    // en geç 2.5 sn sonra arayüz yine de açılır.
+    const splashGuard = window.setTimeout(() => setReady(true), 2500);
     void bootChat().then(() => {
+      window.clearTimeout(splashGuard);
       setReady(true);
       bootSessions();
     });
