@@ -1622,7 +1622,7 @@ export function ChatApp() {
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
-                  <Avatar name={name} src={c.group ? undefined : getAvatar(c.members[0])} />
+                  <Avatar name={name} src={c.group ? undefined : getAvatar(targetOf(c) ?? "")} />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
@@ -1709,9 +1709,9 @@ export function ChatApp() {
         </div>
         </div>
 
-        {/* Mobil: Aramalar sekmesi */}
+        {/* Aramalar sekmesi */}
         {mobileTab === "calls" && (
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
             <CallsPanel
               onCall={(peerId, video) => void startCall(peerId, video)}
               onNewCall={() => setContactsOpen(true)}
@@ -1719,9 +1719,9 @@ export function ChatApp() {
           </div>
         )}
 
-        {/* Mobil: Topluluklar sekmesi */}
+        {/* Topluluklar sekmesi */}
         {mobileTab === "communities" && (
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
             <CommunitiesPanel
               groups={communityRows}
               onOpen={(id) => {
@@ -1736,9 +1736,9 @@ export function ChatApp() {
           </div>
         )}
 
-        {/* Mobil: Siz sekmesi */}
+        {/* Siz sekmesi */}
         {mobileTab === "me" && (
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">
             <MePanel
               name={me}
               avatar={getMyAvatar() || undefined}
