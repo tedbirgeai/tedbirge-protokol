@@ -984,6 +984,21 @@ export function ChatApp() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chats");
   // "+" eylem sayfası (yeni sohbet / grup / not / kimlik paylaş).
   const [plusOpen, setPlusOpen] = useState(false);
+
+  // Satır menüsünü konumlandırarak açar (sağ tık / basılı tutma).
+  const openRowMenu = (c: { id: string; group?: boolean }, x: number, y: number) => {
+    pressFeedback();
+    setRowMenu({
+      convId: c.id,
+      title: safeTitleOf(c as never),
+      x,
+      y,
+      archived: isArchived(c.id),
+      pinned: Boolean((c as { pinned?: boolean }).pinned),
+      favorite: isFavorite(c.id),
+      unread: isMarkedUnread(c.id) || Boolean((c as { unread?: number }).unread),
+    });
+  };
   const totalUnread = useMemo(
     () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
     [allConversations],
@@ -1680,6 +1695,23 @@ export function ChatApp() {
                   tabIndex={0}
                   onClick={() => setActiveId(c.id)}
                   onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openRowMenu(c, e.clientX, e.clientY);
+                  }}
+                  onTouchStart={(e) => {
+                    const t = e.touches[0];
+                    const x = t?.clientX ?? 0;
+                    const y = t?.clientY ?? 0;
+                    if (longPressRef.current) clearTimeout(longPressRef.current);
+                    longPressRef.current = setTimeout(() => openRowMenu(c, x, y), 450);
+                  }}
+                  onTouchEnd={() => {
+                    if (longPressRef.current) clearTimeout(longPressRef.current);
+                  }}
+                  onTouchMove={() => {
+                    if (longPressRef.current) clearTimeout(longPressRef.current);
+                  }}
                   className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
                   style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
                 >
@@ -1715,6 +1747,20 @@ export function ChatApp() {
                       {c.lastText}
                     </p>
                   </div>
+                  {isFavorite(c.id) && (
+                    <Heart
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: "var(--wa-accent)" }}
+                      aria-hidden
+                    />
+                  )}
+                  {c.unread === 0 && isMarkedUnread(c.id) && (
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: "var(--wa-accent)" }}
+                      aria-label="Okunmadı olarak işaretli"
+                    />
+                  )}
                   {c.unread > 0 && (
                     <span
                       className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
