@@ -1827,11 +1827,15 @@ export function ChatApp() {
         {mobileTab === "calls" && (
           <div className="flex min-h-0 flex-1 flex-col">
             <CallsPanel
-              onCall={(peerId, video) => void startCall(peerId, video)}
-              onNewCall={() => setContactsOpen(true)}
+              onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+              onNewCall={() => setNewCallOpen(true)}
+              onSchedule={() => setScheduleOpen(true)}
+              onDialpad={() => setDialpadOpen(true)}
+              onFavorites={() => setContactsOpen(true)}
             />
           </div>
         )}
+
 
         {/* Topluluklar sekmesi */}
         {mobileTab === "communities" && (
