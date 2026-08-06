@@ -2575,6 +2575,30 @@ export function ChatApp() {
         onShare={() => void shareInvite()}
       />
 
+      {/* Arama ekranları: yeni arama, tuş takımı, bağlantı, planlama */}
+      <NewCallSheet
+        open={newCallOpen}
+        onClose={() => setNewCallOpen(false)}
+        onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+        onConference={(peerIds, video) =>
+          void startConference(
+            peerIds.map((peerId) => ({ peerId, alias: nameOf(peerId) })),
+            video,
+          )
+        }
+        onNewLink={() => setCallLinkOpen(true)}
+        onNewContact={() => setNewContactOpen(true)}
+      />
+      <Dialpad
+        open={dialpadOpen}
+        onClose={() => setDialpadOpen(false)}
+        onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+      />
+      <CallLinkSheet open={callLinkOpen} onClose={() => setCallLinkOpen(false)} />
+      <ScheduleCallSheet open={scheduleOpen} onClose={() => setScheduleOpen(false)} />
+
+
+
       {/* Elle kişi ekleme (Ad · Soyadı · Ülke · Telefon) */}
       <NewContactForm
         open={newContactOpen}
