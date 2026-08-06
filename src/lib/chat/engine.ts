@@ -1558,6 +1558,24 @@ export async function bootChat() {
   void import("@/lib/chat/self-heal")
     .then((m) => m.runSelfHeal())
     .catch((error: unknown) => console.error("[chat] sağlık denetimi başarısız", error));
+
+  // Sürüm kilidi: yeni sürümde eski önbellek kalıntıları bir kez temizlenir.
+  void import("@/lib/chat/version-lock")
+    .then((m) => m.applyVersionLock())
+    .catch(() => undefined);
+
+  // SÜREKLİ BUDAMA: hayalet kayıtlar yalnızca açılışta değil, sekme öne
+  // alındığında ve ağ geri geldiğinde de temizlenir.
+  const sweep = () =>
+    void import("@/lib/chat/merge")
+      .then((m) => m.sweepGhosts())
+      .catch(() => undefined);
+  window.addEventListener("online", sweep);
+  window.addEventListener("focus", sweep);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") sweep();
+  });
+  setInterval(sweep, 60_000);
 }
 
 
