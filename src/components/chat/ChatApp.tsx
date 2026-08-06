@@ -1153,13 +1153,18 @@ export function ChatApp() {
       <ContactsDialog
         open={contactsOpen}
         onOpenChange={setContactsOpen}
-        onOpenChat={(pid) => {
-          void ensureDirectConversation(pid, chat.aliases[pid]).then((c) => {
+        onOpenChat={(pid, displayName) => {
+          // Tıklanan kişi ile açılan sohbet DAİMA aynı olsun: seçilen ad
+          // önce bu cihaz kimliğine sabitlenir, sohbet o adla açılır.
+          const picked = (displayName || chat.aliases[pid] || "").trim();
+          if (picked && !isTechnicalLabel(picked)) writeNickname(pid, picked);
+          void ensureDirectConversation(pid, picked || undefined).then((c) => {
             setActiveId(c.id);
             setContactsOpen(false);
           });
         }}
       />
+
 
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
