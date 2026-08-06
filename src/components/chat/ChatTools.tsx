@@ -271,10 +271,12 @@ export function ChatSettingsDialog({
   open,
   onClose,
   convId,
+  initialTab,
 }: {
   open: boolean;
   onClose: () => void;
   convId: string | null;
+  initialTab?: SettingsTab;
 }) {
   const [pin, setPin] = useState("");
   const [pass, setPass] = useState("");
@@ -284,7 +286,7 @@ export function ChatSettingsDialog({
   const [ttl, setTtlValue] = useState(0);
   const [minutes, setMinutes] = useState(5);
   const [notify, setNotify] = useState(false);
-  const [tab, setTab] = useState<SettingsTab>("profil");
+  const [tab, setTab] = useState<SettingsTab>(initialTab ?? "profil");
   const [alias, setAliasValue] = useState("");
   const [email, setEmailValue] = useState("");
   const [syncing, setSyncing] = useState(false);
