@@ -963,22 +963,36 @@ export function ChatApp() {
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   const me = getAlias() || "Ben";
+  const label = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "");
+  /**
+   * HEDEF KİLİDİ
+   * Bir sohbetin gerçek muhatabı: önce görünen adla eşleşen cihaz, sonra
+   * çevrim içi cihaz, en son öğrenilen kimlik. Böylece "Ahmet"e basınca
+   * "Veli" açılmaz ve arama başka kişiye gitmez.
+   */
+  const targetOf = (conv: { title: string; members: string[]; group?: boolean }) => {
+    if (conv.group) return conv.members[0];
+    const wanted = humanName(conv.title, "").toLocaleLowerCase("tr");
+    const byName = wanted
+      ? conv.members.find((m) => label(m).toLocaleLowerCase("tr") === wanted)
+      : undefined;
+    return (
+      byName ??
+      conv.members.find((m) => peers.some((p) => p.nodeId === m)) ??
+      conv.members.at(-1)
+    );
+  };
+  const activeTarget = active ? targetOf(active) : undefined;
   const activeName = active
     ? active.group
       ? active.title
-      : humanName(contactLabel(active.members[0] ?? active.title, active.title), UNKNOWN_TITLE)
+      : humanName(contactLabel(activeTarget ?? active.title, active.title), UNKNOWN_TITLE)
     : "";
-  // Mükerrer sohbetler birleştirildiğinde üyelerde eski cihaz kimlikleri de
-  // bulunabilir. Aramada önce gerçekten bağlı cihazı, yoksa en son öğrenilen
-  // kimliği seç; listenin ilk (eski) kaydına körlemesine arama yapma.
-  const peerId = active
-    ? (active.members.find((member) => peers.some((peer) => peer.nodeId === member)) ??
-      active.members.at(-1))
-    : undefined;
+  const peerId = activeTarget;
   const peerOnline = Boolean(active?.members.some((m) => peers.some((p) => p.nodeId === m)));
   /** Çevrim içi / son görülme yalnızca rehberde eşleşmiş kişilerde gösterilir. */
   const peerKnown = Boolean(
-    active && !active.group && !isTechnicalLabel(contactLabel(active.members[0] ?? "", "")),
+    active && !active.group && !isTechnicalLabel(contactLabel(activeTarget ?? "", "")),
   );
   const nameOf = (id: string) => humanName(contactLabel(id, chat.aliases[id]), UNKNOWN_TITLE);
 
