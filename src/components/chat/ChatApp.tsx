@@ -71,6 +71,8 @@ import {
   ensureSelfConversation,
   SELF_CONV_ID,
   markRead,
+  markUnread,
+  clearConversation,
   removeConversation,
   conversationTargets,
   sendMedia,
