@@ -936,10 +936,25 @@ export function ChatApp() {
         const sorted = [...bucket].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
         const primary = sorted[0]!;
         if (sorted.length === 1) return primary;
-        const members = Array.from(new Set(sorted.flatMap((c) => c.members ?? [])));
-        return { ...primary, members };
+        // ÖNEMLİ: adı çözülen birincil cihaz kimliği daima members[0] kalır.
+        // Aksi halde birleştirilmiş satırın başlığı adsız bir cihaza düşüp
+        // "Tedbirge kullanıcısı" yer tutucusu olarak görünüyordu.
+        const head = primary.members?.[0];
+        const named =
+          sorted.map((c) => c.members?.[0]).find((m) => m && resolveDisplayName(m).trim()) ?? head;
+        const rest = Array.from(new Set(sorted.flatMap((c) => c.members ?? []))).filter(
+          (m) => m !== named,
+        );
+        const members = named ? [named, ...rest] : rest;
+        const title = sorted.map((c) => safeTitleOf(c)).find((t) => !isTechnicalLabel(t));
+        return { ...primary, members, title: title ?? primary.title };
       });
-      return [...out, ...collapsed].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+      // SON KAPI: birleştirme sonrası başlığı yine yer tutucuya düşen satır
+      // (adsız cihaz kalıntısı) listeye hiç girmez.
+      return [...out, ...collapsed]
+        .filter((c) => c.id === SELF_CONV_ID || c.group || !isTechnicalLabel(safeTitleOf(c)))
+        .sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+
 
     },
     [allConversations, folder, folderVersion, callTouched],
