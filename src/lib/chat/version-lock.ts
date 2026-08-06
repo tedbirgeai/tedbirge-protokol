@@ -7,7 +7,7 @@
  * ASLA silinmez — yalnızca önbellek ve hayalet kayıtlar temizlenir.
  */
 
-export const APP_DATA_VERSION = "2026.08.06-ghost-sweep";
+export const APP_DATA_VERSION = "2026.08.06-ghost-sweep-2";
 
 const KEY = "tedbirge.app.dataVersion";
 
@@ -37,6 +37,17 @@ async function clearStaleCaches() {
   }
 }
 
+/** Eski servis çalışanını bir kez tazeler (paket kalıntısı kalmasın). */
+async function refreshServiceWorker() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.allSettled(regs.map((r) => r.update()));
+  } catch {
+    /* servis çalışanı yok */
+  }
+}
+
 /**
  * Sürüm değiştiyse tek seferlik temizlik yapar. Dönen değer: temizlik
  * çalıştı mı.
@@ -52,5 +63,6 @@ export async function applyVersionLock(): Promise<boolean> {
   }
   await clearStaleCaches();
   writeVersion(APP_DATA_VERSION);
+  await refreshServiceWorker();
   return true;
 }
