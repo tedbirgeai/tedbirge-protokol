@@ -1593,12 +1593,17 @@ export function ChatApp() {
           style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
         >
           <Lock className="h-3 w-3" aria-hidden />
-          <span>
+          <span className="min-w-0 flex-1 truncate">
             {pendingCount > 0
               ? `Çevrimdışı — ${pendingCount} mesaj bekliyor`
               : "Bağlı · uçtan uca şifreli"}
           </span>
+          {/* Sürüm damgası: ekrandaki paketin hangi yayın olduğu tek bakışta bellidir. */}
+          <span className="shrink-0 opacity-70" title="Uygulama sürümü">
+            v{BUILD_LABEL}
+          </span>
         </div>
+
       </aside>
 
       {/* Sağ panel — aktif sohbet */}
