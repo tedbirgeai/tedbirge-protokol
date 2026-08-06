@@ -32,6 +32,7 @@ import {
   Paperclip,
   Pencil,
   Phone,
+  Heart,
   Pin,
   Plus,
   Reply,
