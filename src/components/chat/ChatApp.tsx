@@ -816,7 +816,10 @@ export function ChatApp() {
   }, [messages.length, activeId, atBottom]);
 
   useEffect(() => {
-    if (activeId) void markRead(activeId);
+    if (activeId) {
+      void markRead(activeId);
+      clearUnreadFlag(activeId);
+    }
   }, [activeId, messages.length]);
 
   // Taslak kalıcıdır: sohbetten çıkılsa da yazılan metin kaybolmaz.
