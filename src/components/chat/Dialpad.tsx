@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Delete, Phone, X } from "lucide-react";
 
 import { pressFeedback } from "@/lib/chat/sounds";
 import { useContacts } from "@/lib/chat/contacts";
-import { normalizePhone } from "@/lib/chat/directory";
+import { hashPhone, normalizePhone } from "@/lib/chat/directory";
 
 const KEYS: { d: string; letters?: string }[] = [
   { d: "1" },
@@ -25,7 +25,8 @@ const KEYS: { d: string; letters?: string }[] = [
  * ------------------------------------------------------------------
  * WhatsApp tuş takımı ölçüleriyle birebir: 72px daireler, üstte
  * yazılan numara, altta yeşil arama düğmesi. Numara rehberdeki bir
- * kişiyle eşleşirse doğrudan o kişi aranır.
+ * kişiyle eşleşirse doğrudan o kişi aranır. Eşleştirme numaranın
+ * kendisiyle değil, yalnızca numara özetiyle (hash) yapılır.
  */
 export function Dialpad({
   open,
@@ -37,15 +38,29 @@ export function Dialpad({
   onCall: (peerId: string, video: boolean) => void;
 }) {
   const [value, setValue] = useState("");
+  const [typedHash, setTypedHash] = useState("");
   const { contacts } = useContacts();
 
-  const match = useMemo(() => {
+  useEffect(() => {
+    let alive = true;
     const e164 = normalizePhone(value, "90");
-    if (!e164 || value.length < 6) return null;
-    return (
-      contacts.find((c) => c.displayName && (c.phone === e164 || c.phone === value)) ?? null
-    );
-  }, [contacts, value]);
+    if (!e164) {
+      setTypedHash("");
+      return;
+    }
+    void hashPhone(e164).then((h) => {
+      if (alive) setTypedHash(h);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [value]);
+
+  const match = useMemo(() => {
+    if (!typedHash) return null;
+    return contacts.find((c) => c.displayName && c.phoneHash === typedHash) ?? null;
+  }, [contacts, typedHash]);
+
 
   if (!open) return null;
 
