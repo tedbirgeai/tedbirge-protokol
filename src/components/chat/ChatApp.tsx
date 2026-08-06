@@ -1384,11 +1384,11 @@ export function ChatApp() {
             type="button"
             onClick={() => {
               pressFeedback();
-              setGroupMode((v) => !v);
+              setPlusOpen(true);
             }}
             className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
             style={{ color: "var(--wa-muted)" }}
-            aria-label="Yeni sohbet veya grup"
+            aria-label="Yeni sohbet, grup veya kimlik paylaş"
           >
             <Plus className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
           </button>
@@ -1397,7 +1397,7 @@ export function ChatApp() {
 
         {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
 
-        <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden md:block"}`}>
+        <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden"}`}>
           <div
             className="flex items-center gap-3 rounded-full px-4"
             style={{ background: "var(--wa-panel-soft)", height: "var(--wa-search-h, 44px)" }}
@@ -1430,9 +1430,9 @@ export function ChatApp() {
           </div>
         </div>
 
-        {/* Sohbetler sekmesi içeriği (masaüstünde daima görünür) */}
+        {/* Sohbetler sekmesi içeriği */}
         <div
-          className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden md:flex"}`}
+          className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden"}`}
         >
         {/* Klasör ve arşiv sekmeleri */}
         <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
