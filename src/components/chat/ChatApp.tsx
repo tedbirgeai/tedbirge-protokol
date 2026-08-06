@@ -112,7 +112,7 @@ import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node
 import { listCalls } from "@/lib/chat/call-log";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
 import { DirectoryPanel } from "@/components/chat/DirectoryPanel";
-import { contactLabel, refreshContacts, useContacts } from "@/lib/chat/contacts";
+import { contactLabel, refreshContacts, setNickname, useContacts } from "@/lib/chat/contacts";
 import {
   fileToAvatarDataUrl,
   getAvatar,
@@ -130,6 +130,7 @@ import {
   mergeGroupsByName,
   isSelfPerson,
   resolveDisplayName,
+  repairCrossLinks,
 } from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
@@ -1568,10 +1569,16 @@ export function ChatApp() {
                 peers={peers}
                 labelOf={nameOf}
                 onOpenPeer={(pid, name) => {
-                  void ensureDirectConversation(pid, name ?? chat.aliases[pid]).then((c) =>
+                  // KİMLİK ÇIPASI: tıklanan kişinin adı doğrudan o cihaza
+                  // yazılır; açılan sohbet başlığı asla başka kişiye kaymaz.
+                  repairCrossLinks();
+                  const picked = humanName(name ?? chat.aliases[pid], "");
+                  if (picked && !isTechnicalLabel(picked)) setNickname(pid, picked);
+                  void ensureDirectConversation(pid, picked || undefined).then((c) =>
                     setActiveId(c.id),
                   );
                 }}
+
                 onOpenSelfNote={() => {
                   void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
                 }}
