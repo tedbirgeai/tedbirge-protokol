@@ -122,6 +122,7 @@ import {
 } from "@/lib/chat/avatars";
 
 import { humanName, isTechnicalLabel } from "@/lib/chat/display-name";
+import { BUILD_LABEL } from "@/lib/build-id";
 import { isNamed, safeTitleOf, UNKNOWN_TITLE } from "@/lib/chat/safe-title";
 import {
   nameKeyOf,
@@ -131,6 +132,7 @@ import {
   isSelfPerson,
   resolveDisplayName,
   repairCrossLinks,
+  writeNickname,
 } from "@/lib/chat/name-resolver";
 
 import { getDraft, setDraft as persistDraft } from "@/lib/chat/drafts";
@@ -1152,13 +1154,18 @@ export function ChatApp() {
       <ContactsDialog
         open={contactsOpen}
         onOpenChange={setContactsOpen}
-        onOpenChat={(pid) => {
-          void ensureDirectConversation(pid, chat.aliases[pid]).then((c) => {
+        onOpenChat={(pid, displayName) => {
+          // Tıklanan kişi ile açılan sohbet DAİMA aynı olsun: seçilen ad
+          // önce bu cihaz kimliğine sabitlenir, sohbet o adla açılır.
+          const picked = (displayName || chat.aliases[pid] || "").trim();
+          if (picked && !isTechnicalLabel(picked)) writeNickname(pid, picked);
+          void ensureDirectConversation(pid, picked || undefined).then((c) => {
             setActiveId(c.id);
             setContactsOpen(false);
           });
         }}
       />
+
 
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
@@ -1593,12 +1600,17 @@ export function ChatApp() {
           style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
         >
           <Lock className="h-3 w-3" aria-hidden />
-          <span>
+          <span className="min-w-0 flex-1 truncate">
             {pendingCount > 0
               ? `Çevrimdışı — ${pendingCount} mesaj bekliyor`
               : "Bağlı · uçtan uca şifreli"}
           </span>
+          {/* Sürüm damgası: ekrandaki paketin hangi yayın olduğu tek bakışta bellidir. */}
+          <span className="shrink-0 opacity-70" title="Uygulama sürümü">
+            v{BUILD_LABEL}
+          </span>
         </div>
+
       </aside>
 
       {/* Sağ panel — aktif sohbet */}

@@ -67,7 +67,7 @@ function ContactRow({
   onVerify,
 }: {
   c: Contact;
-  onOpen?: (peerId: string) => void;
+  onOpen?: (peerId: string, displayName: string) => void;
   onVerify: (t: PeerVerifyTarget) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -182,7 +182,7 @@ function ContactRow({
                   size="sm"
                   variant="ghost"
                   className="h-7 px-2 text-[11px]"
-                  onClick={() => onOpen(c.peerId)}
+                  onClick={() => onOpen(c.peerId, c.displayName)}
                 >
                   Sohbeti aç
                 </Button>
@@ -337,7 +337,7 @@ export function ContactsDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onOpenChat?: (peerId: string) => void;
+  onOpenChat?: (peerId: string, displayName: string) => void;
 }) {
   const { contacts, me } = useContacts();
   const [q, setQ] = useState("");

@@ -10,6 +10,7 @@ import {
   Bell,
   Smartphone,
 } from "lucide-react";
+import { BUILD_LABEL } from "@/lib/build-id";
 import { getPrivacy, setPrivacy } from "@/lib/chat/privacy";
 import {
   listSessions,
@@ -209,6 +210,59 @@ export function SearchPanel({
         ))}
       </ul>
     </div>
+  );
+}
+
+/**
+ * SÜRÜM VE ONARIM
+ * Ekrandaki uygulamanın hangi paket olduğunu gösterir ve tek dokunuşla
+ * hayalet kayıt temizliği çalıştırır. Sonuç sayıyla ekranda görünür.
+ */
+function AppVersionSection() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  return (
+    <section className="mt-6">
+      <h3 className="text-sm font-semibold">Sürüm ve onarım</h3>
+      <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+        Sürüm: <span className="font-medium">{BUILD_LABEL}</span>
+      </p>
+      <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+        Listede adı görünmeyen boş kayıtlar oluştuysa buradan tek dokunuşla temizleyebilirsiniz.
+        Mesajlarınız, rehberiniz ve kimliğiniz silinmez.
+      </p>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setResult(null);
+          try {
+            const { repairNow } = await import("@/lib/chat/version-lock");
+            const { cleaned } = await repairNow();
+            setResult(
+              cleaned > 0
+                ? `${cleaned} boş kayıt temizlendi.`
+                : "Temizlenecek kayıt bulunamadı — listeniz zaten temiz.",
+            );
+          } catch {
+            setResult("Onarım tamamlanamadı, tekrar deneyin.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+        className="wa-press mt-3 min-h-11 rounded-full px-4 text-[13px] font-semibold disabled:opacity-50"
+        style={{ background: "var(--wa-accent)", color: "#fff" }}
+      >
+        {busy ? "Onarılıyor…" : "Onar ve temizle"}
+      </button>
+      {result && (
+        <p className="mt-2 text-xs" style={{ color: "var(--wa-muted)" }}>
+          {result}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -454,8 +508,10 @@ export function ChatSettingsDialog({
             <InstallAppButton />
           </div>
         </section>
+        <AppVersionSection />
         </>
         )}
+
 
 
 
