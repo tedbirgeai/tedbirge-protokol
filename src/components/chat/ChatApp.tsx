@@ -2496,14 +2496,15 @@ export function ChatApp() {
         onClose={() => setNewContactOpen(false)}
         onSaved={(peerId, name) => {
           setMobileTab("chats");
-          void openPeer(peerId, name);
+          if (name && !isTechnicalLabel(name)) setNickname(peerId, name);
+          void ensureDirectConversation(peerId, name || undefined).then((c) => setActiveId(c.id));
         }}
       />
 
       {/* Sohbet satırı menüsü: arşiv, sabitle, favori, liste, temizle, sil */}
       <ChatRowMenu
         state={rowMenu}
-        folders={getFolders()}
+        folders={getFolders().names}
         onClose={() => setRowMenu(null)}
         onArchive={() => {
           if (rowMenu) toggleArchive(rowMenu.convId);
