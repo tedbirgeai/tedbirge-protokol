@@ -668,6 +668,10 @@ function MenuItem({
 }
 
 const CALLS_TAB = "__calls";
+// Süzgeç çipleri: gerçek klasör değil, listeyi daraltan görünümlerdir.
+const UNREAD_TAB = "__unread";
+const FAV_TAB = "__fav";
+const GROUPS_TAB = "__groups";
 
 export function ChatApp() {
   const [ready, setReady] = useState(false);
