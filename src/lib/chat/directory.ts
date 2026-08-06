@@ -412,7 +412,21 @@ export function startContactAutoSync(): () => void {
     if (Date.now() - lastSyncAt() < AUTO_SYNC_INTERVAL_MS) return;
     running = true;
     try {
-      const r = await rematchSavedBook();
+      // Yerel (iOS/Android) kabukta sistem rehberi yeniden okunur: telefona
+      // sonradan eklenen kişiler kullanıcı hiçbir şey yapmadan belirir.
+      // Tarayıcıda cihazda saklı rehber yeniden eşleştirilir.
+      let native: Awaited<ReturnType<typeof importContacts>> | null = null;
+      try {
+        const { readNativeContacts } = await import("@/lib/chat/native-contacts");
+        const book = await readNativeContacts();
+        if (book && book.length > 0) {
+          saveLocalBook(book);
+          native = await importContacts(book);
+        }
+      } catch {
+        /* yerel köprü yok: tarayıcı yoluna düşülür */
+      }
+      const r = native ?? (await rematchSavedBook());
       try {
         window.localStorage.setItem(LAST_SYNC_KEY, String(Date.now()));
       } catch {
