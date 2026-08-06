@@ -275,6 +275,13 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Masaüstünde alt sekme çubuğu görünmez (md ve üzeri). */
+@media (min-width: 768px) {
+  .wa-tabbar {
+    display: none;
+  }
+}
+
 /* WhatsApp ölçülerinde liste satırı. */
 .wa-list-row {
   min-height: var(--wa-row-h);
