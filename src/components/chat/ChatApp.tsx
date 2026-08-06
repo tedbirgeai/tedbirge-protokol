@@ -731,6 +731,7 @@ export function ChatApp() {
     });
     return () => {
       offFolders();
+      offFlags();
       offPrivacy();
       stopSync?.();
     };
