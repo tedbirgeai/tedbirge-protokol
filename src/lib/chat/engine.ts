@@ -305,7 +305,7 @@ export function isSelfConversation(id: string) {
 }
 
 /** Not defterini oluşturur (varsa dokunmaz) ve listeye getirir. */
-export async function ensureSelfConversation(title = "Ben (Siz)"): Promise<Conversation> {
+export async function ensureSelfConversation(title = "Kendinize not"): Promise<Conversation> {
   const existing = await getConversation(SELF_CONV_ID);
   if (existing) return existing;
   const conv: Conversation = {

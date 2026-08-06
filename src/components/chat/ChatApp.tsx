@@ -6,6 +6,7 @@ import { CommunitiesPanel } from "@/components/chat/CommunitiesPanel";
 import { MePanel } from "@/components/chat/MePanel";
 import { DesktopRail } from "@/components/chat/DesktopRail";
 import { NewChatSheet } from "@/components/chat/NewChatSheet";
+import { SplashScreen } from "@/components/chat/SplashScreen";
 import { AiAdvisor } from "@/components/site/AiAdvisor";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
@@ -734,7 +735,11 @@ export function ChatApp() {
         /* çevrimdışı: yerel kimlik kullanılır */
       }
     })();
+    // Açılış ekranı hiçbir koşulda kilitlenmez: yerel depo yanıt vermezse
+    // en geç 2.5 sn sonra arayüz yine de açılır.
+    const splashGuard = window.setTimeout(() => setReady(true), 2500);
     void bootChat().then(() => {
+      window.clearTimeout(splashGuard);
       setReady(true);
       bootSessions();
     });
@@ -1125,6 +1130,8 @@ export function ChatApp() {
 
   if (lock.locked) return <AppLockScreen onUnlocked={() => undefined} />;
   if (!onboarded) return <PhoneOnboarding onDone={() => setOnboarded(true)} />;
+  // WhatsApp mantığı: yerel veri hazırlanana kadar yarım arayüz gösterilmez.
+  if (!ready) return <SplashScreen />;
 
   return (
     <div

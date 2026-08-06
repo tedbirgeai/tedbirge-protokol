@@ -30,9 +30,20 @@ export function safeNameOf(peerId: string | undefined | null, hint?: string): st
   return humanName(contactLabel(peerId, hint ?? ""), UNKNOWN_TITLE);
 }
 
+/**
+ * KENDİNİZE NOT — kalıcı "Tedbirge kullanıcısı" hayaletinin kök nedeni.
+ * Not defterinin tek üyesi kendi cihaz kimliğimdir (mob-…); bu kimlik
+ * rehberde bulunmadığı için başlık nötr yer tutucuya düşüyor, kayıt da
+ * her filtreden muaf olduğu için listede hayalet satır olarak kalıyordu.
+ * Başlık artık bu tek noktada sabitlenir.
+ */
+export const SELF_CONV_TITLE = "Kendinize not";
+const SELF_ID = "self_notes";
+
 /** Sohbet başlığı — grup adı ya da rehberdeki kişi adı. */
 export function safeTitleOf(conv: TitleLike | null | undefined): string {
   if (!conv) return UNKNOWN_TITLE;
+  if (conv.id === SELF_ID) return SELF_CONV_TITLE;
   if (conv.group) return humanName(conv.title, "Grup");
   const first = conv.members?.[0];
   return safeNameOf(first, conv.title);
@@ -41,6 +52,7 @@ export function safeTitleOf(conv: TitleLike | null | undefined): string {
 /** Başlık gerçekten bir insan adı mı? (Listelemede filtre olarak kullanılır.) */
 export function isNamed(conv: TitleLike | null | undefined): boolean {
   if (!conv) return false;
+  if (conv.id === SELF_ID) return true;
   if (conv.group) return !isTechnicalLabel(conv.title);
   const first = conv.members?.[0];
   if (first && resolveDisplayName(first)) return true;
