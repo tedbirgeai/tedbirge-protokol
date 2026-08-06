@@ -454,8 +454,10 @@ export function ChatSettingsDialog({
             <InstallAppButton />
           </div>
         </section>
+        <AppVersionSection />
         </>
         )}
+
 
 
 
