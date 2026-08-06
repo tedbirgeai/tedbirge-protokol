@@ -1512,7 +1512,29 @@ export function ChatApp() {
           >
             Aramalar
           </button>
+          {[
+            { id: UNREAD_TAB, label: "Okunmamış" },
+            { id: FAV_TAB, label: "Favoriler" },
+            { id: GROUPS_TAB, label: "Gruplar" },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                setFolder(folder === chip.id ? "" : chip.id);
+              }}
+              className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+              style={{
+                background: folder === chip.id ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                color: folder === chip.id ? "#fff" : "var(--wa-muted)",
+              }}
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
+
 
         {groupMode && (
           <div
