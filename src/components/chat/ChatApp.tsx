@@ -1843,6 +1843,7 @@ export function ChatApp() {
         {mobileTab === "calls" && (
           <div className="flex min-h-0 flex-1 flex-col">
             <CallsPanel
+              showHeader={false}
               onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
               onNewCall={() => setNewCallOpen(true)}
               onSchedule={() => setScheduleOpen(true)}
