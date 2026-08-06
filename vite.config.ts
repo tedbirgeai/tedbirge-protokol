@@ -14,6 +14,11 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    // Her derleme için benzersiz damga: Ayarlar > Hakkında bölümünde görünür
+    // ve sürüm kilidi bunu kullanır (eski paket kalıntısı kendiliğinden düşer).
+    define: {
+      __TEDBIRGE_BUILD_ID__: JSON.stringify(new Date().toISOString()),
+    },
     plugins: [
       VitePWA({
         strategies: "generateSW",
