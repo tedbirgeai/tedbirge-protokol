@@ -882,9 +882,13 @@ export function ChatApp() {
   }, [chat.conversations]);
   const conversations = useMemo(
     () => {
+      const pseudo = folder === UNREAD_TAB || folder === FAV_TAB || folder === GROUPS_TAB;
       const rows = allConversations.filter((c) => {
         const f = folderOf(c.id);
-        if (folder === "" ? f === ARCHIVE : f !== folder) return false;
+        if (pseudo || folder === "" ? f === ARCHIVE : f !== folder) return false;
+        if (folder === UNREAD_TAB && !(c.unread > 0 || isMarkedUnread(c.id))) return false;
+        if (folder === FAV_TAB && !isFavorite(c.id)) return false;
+        if (folder === GROUPS_TAB && !c.group) return false;
         if (c.id === SELF_CONV_ID) return true;
         // Boş sohbet listeye girmez: en az bir mesaj ya da arama kaydı şart.
         const hasActivity = Boolean(c.lastText) || c.unread > 0;
