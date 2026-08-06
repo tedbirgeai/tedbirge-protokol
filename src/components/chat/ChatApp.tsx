@@ -1125,6 +1125,8 @@ export function ChatApp() {
 
   if (lock.locked) return <AppLockScreen onUnlocked={() => undefined} />;
   if (!onboarded) return <PhoneOnboarding onDone={() => setOnboarded(true)} />;
+  // WhatsApp mantığı: yerel veri hazırlanana kadar yarım arayüz gösterilmez.
+  if (!ready) return <SplashScreen />;
 
   return (
     <div
