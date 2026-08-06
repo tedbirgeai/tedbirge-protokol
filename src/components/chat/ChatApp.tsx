@@ -1,4 +1,10 @@
 import { SyncWarningBar } from "@/components/chat/SyncStatusPanel";
+import { Avatar } from "@/components/chat/Avatar";
+import { MobileTabBar, type MobileTab } from "@/components/chat/MobileTabBar";
+import { CallsPanel } from "@/components/chat/CallsPanel";
+import { CommunitiesPanel } from "@/components/chat/CommunitiesPanel";
+import { MePanel } from "@/components/chat/MePanel";
+import { AiAdvisor } from "@/components/site/AiAdvisor";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -16,6 +22,7 @@ import {
   Globe,
   Home,
   Languages,
+  MoreHorizontal,
   Lock,
   MapPin,
   Mic,
@@ -230,44 +237,9 @@ function displayName(value: string, alias?: string) {
   return `Cihaz ${tail}`;
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toUpperCase();
-}
+/* Avatar ve baş harf yardımcıları ortak bileşene taşındı:
+   `@/components/chat/Avatar` (Avatar, initials, avatarColor). */
 
-/** Ada göre sabit, okunabilir avatar rengi. */
-const AVATAR_COLORS = ["#0a7cff", "#00a884", "#e0736d", "#7f66ff", "#f2a33c", "#0fb2c4", "#c2599a"];
-function avatarColor(name: string) {
-  let h = 0;
-  for (let i = 0; i < name.length; i += 1) h = (h * 31 + name.charCodeAt(i)) % 9973;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length]!;
-}
-
-function Avatar({ name, size = 44, src }: { name: string; size?: number; src?: string }) {
-  if (src)
-    return (
-      <img
-        src={src}
-        alt=""
-        className="shrink-0 rounded-full object-cover"
-        style={{ width: size, height: size }}
-        loading="lazy"
-      />
-    );
-  return (
-    <span
-      className="flex shrink-0 items-center justify-center rounded-full font-semibold text-white"
-      style={{ width: size, height: size, background: avatarColor(name), fontSize: size * 0.34 }}
-      aria-hidden
-    >
-      {initials(name) || "?"}
-    </span>
-  );
-}
 
 function StatusIcon({ msg }: { msg: ChatMessage }) {
   if (!msg.outgoing) return null;
@@ -969,6 +941,21 @@ export function ChatApp() {
     [allConversations, folderVersion],
   );
 
+  // Mobil alt sekme durumu ve türetilmiş veriler.
+  const [mobileTab, setMobileTab] = useState<MobileTab>("chats");
+  const totalUnread = useMemo(
+    () => allConversations.reduce((sum, c) => sum + (c.unread || 0), 0),
+    [allConversations],
+  );
+  const communityRows = useMemo(
+    () =>
+      allConversations
+        .filter((c) => c.group)
+        .map((c) => ({ id: c.id, title: c.title, members: c.members?.length ?? 0 })),
+    [allConversations],
+  );
+
+
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   const me = getAlias() || "Ben";
@@ -1123,7 +1110,7 @@ export function ChatApp() {
 
   return (
     <div
-      className="wa flex h-[100dvh] w-full overflow-hidden"
+      className="wa wa-shell flex w-full flex-col"
       style={{ background: "var(--wa-panel-soft)" }}
     >
       <PairingDialog nameOf={nameOf} />
@@ -1167,6 +1154,7 @@ export function ChatApp() {
       />
 
 
+      <div className="flex min-h-0 w-full flex-1 overflow-hidden">
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
         className={`relative flex h-full w-full shrink-0 flex-col md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
@@ -1185,8 +1173,68 @@ export function ChatApp() {
             }, 250);
           }}
         />
+        {/* Mobil büyük başlık — WhatsApp yerleşimi */}
         <div
-          className="flex flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4"
+          className="flex items-center justify-between gap-2 px-4 pb-1 md:hidden"
+          style={{
+            background: "var(--wa-panel)",
+            paddingTop: "calc(0.75rem + env(safe-area-inset-top))",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              setSettingsOpen(true);
+            }}
+            className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+            style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
+            aria-label="Menü"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                setContactsOpen(true);
+              }}
+              className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+              style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
+              aria-label="Rehber"
+            >
+              <BookUser className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                setGroupMode((v) => !v);
+              }}
+              className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
+              style={{ background: "var(--wa-accent)" }}
+              aria-label="Yeni sohbet veya grup"
+            >
+              <Plus className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+        <h2
+          className="px-4 pb-2 text-[34px] font-extrabold leading-none tracking-tight md:hidden"
+          style={{ color: "var(--wa-text)", background: "var(--wa-panel)" }}
+        >
+          {mobileTab === "calls"
+            ? "Aramalar"
+            : mobileTab === "communities"
+              ? "Topluluklar"
+              : mobileTab === "me"
+                ? "Siz"
+                : "Sohbetler"}
+        </h2>
+
+        <div
+          className="hidden flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4 md:flex"
           style={{
             background: "var(--wa-panel-soft)",
             borderBottom: "1px solid var(--wa-border)",
@@ -1322,24 +1370,46 @@ export function ChatApp() {
 
         {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
 
-        <div className="px-3 py-2">
+        <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden md:block"}`}>
           <div
-            className="flex items-center gap-3 rounded-lg px-3 py-2"
-            style={{ background: "var(--wa-panel-soft)" }}
+            className="flex items-center gap-3 rounded-full px-4"
+            style={{ background: "var(--wa-panel-soft)", height: "var(--wa-search-h, 44px)" }}
           >
-            <Search className="h-4 w-4" style={{ color: "var(--wa-muted)" }} aria-hidden />
+            <Search className="h-5 w-5 shrink-0" style={{ color: "var(--wa-muted)" }} aria-hidden />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ara veya yeni sohbet başlat"
-              className="w-full bg-transparent text-sm outline-none"
+              placeholder="AI'ye Sor veya Ara"
+              aria-label="AI'ye sor veya sohbetlerde ara"
+              className="w-full min-w-0 bg-transparent text-[16px] outline-none"
               style={{ color: "var(--wa-text)" }}
             />
+            <button
+              type="button"
+              onClick={() => {
+                pressFeedback();
+                window.dispatchEvent(
+                  new CustomEvent("tedbirge:advisor", {
+                    detail: query.trim() ? { prefill: query.trim() } : {},
+                  }),
+                );
+              }}
+              className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-semibold text-white"
+              style={{ background: "var(--wa-accent)" }}
+              aria-label="AI danışmana sor"
+            >
+              AI
+            </button>
           </div>
         </div>
 
+        {/* Sohbetler sekmesi içeriği (masaüstünde daima görünür) */}
+        <div
+          className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden md:flex"}`}
+        >
         {/* Klasör ve arşiv sekmeleri */}
         <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
+
           {tabs.map((t) => {
             const on = folder === t.id;
             const isArchive = t.id === ARCHIVE;
@@ -1610,8 +1680,59 @@ export function ChatApp() {
             v{BUILD_LABEL}
           </span>
         </div>
+        </div>
+
+        {/* Mobil: Aramalar sekmesi */}
+        {mobileTab === "calls" && (
+          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+            <CallsPanel
+              onCall={(peerId, video) => void startCall(peerId, video)}
+              onNewCall={() => setContactsOpen(true)}
+            />
+          </div>
+        )}
+
+        {/* Mobil: Topluluklar sekmesi */}
+        {mobileTab === "communities" && (
+          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+            <CommunitiesPanel
+              groups={communityRows}
+              onOpen={(id) => {
+                setMobileTab("chats");
+                setActiveId(id);
+              }}
+              onCreate={() => {
+                setMobileTab("chats");
+                setGroupMode(true);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Mobil: Siz sekmesi */}
+        {mobileTab === "me" && (
+          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+            <MePanel
+              name={me}
+              avatar={getMyAvatar() || undefined}
+              personId={getPersonId()}
+              soundOff={soundOff}
+              onAvatarPick={() => myAvatarInput.current?.click()}
+              onContacts={() => setContactsOpen(true)}
+              onSettings={() => setSettingsOpen(true)}
+              onPairing={() => setSettingsOpen(true)}
+              onToggleSound={() => setSoundOff((v) => !v)}
+              onSelfNote={() => {
+                setMobileTab("chats");
+                void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
+              }}
+              version={BUILD_LABEL}
+            />
+          </div>
+        )}
 
       </aside>
+
 
       {/* Sağ panel — aktif sohbet */}
       <section
@@ -2251,6 +2372,21 @@ export function ChatApp() {
           </>
         )}
       </section>
+      </div>
+
+      {/* Mobil alt sekme çubuğu — yalnızca liste görünümünde. */}
+      {!activeId && (
+        <MobileTabBar
+          value={mobileTab}
+          onChange={setMobileTab}
+          meName={me}
+          meAvatar={getMyAvatar() || undefined}
+          unread={totalUnread}
+        />
+      )}
+
+      {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
+      <AiAdvisor hideLauncher />
     </div>
   );
 }
