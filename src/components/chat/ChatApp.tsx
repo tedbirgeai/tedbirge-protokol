@@ -4,6 +4,7 @@ import { MobileTabBar, type MobileTab } from "@/components/chat/MobileTabBar";
 import { CallsPanel } from "@/components/chat/CallsPanel";
 import { CommunitiesPanel } from "@/components/chat/CommunitiesPanel";
 import { MePanel } from "@/components/chat/MePanel";
+import { COMMUNITY_NODE_LIMIT } from "@/lib/paddle-catalog";
 import { DesktopRail } from "@/components/chat/DesktopRail";
 import { NewChatSheet } from "@/components/chat/NewChatSheet";
 import { SplashScreen } from "@/components/chat/SplashScreen";
@@ -90,6 +91,7 @@ import { CallHistory } from "@/components/chat/CallHistory";
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { lastSeenLabel } from "@/lib/chat/last-seen";
 import { AppLockScreen, ChatSettingsDialog, SearchPanel } from "@/components/chat/ChatTools";
+import type { SettingsTab } from "@/components/chat/ChatTools";
 import { ForwardDialog } from "@/components/chat/ForwardDialog";
 import { EmergencyDialog } from "@/components/chat/EmergencyDialog";
 import { bootLock, useLock } from "@/lib/chat/lock";
@@ -694,6 +696,9 @@ export function ChatApp() {
   const [contactsOpen, setContactsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Ayarların hangi sekmeyle açılacağı ("Siz > Bildirimler" doğrudan
+  // bildirim sekmesine düşer; arama sırasında izin sorulmaz).
+  const [settingsTab, setSettingsTab] = useState<SettingsTab | undefined>(undefined);
   const [ptt, setPtt] = useState(false);
   const [visibleCount, setVisibleCount] = useState(60);
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -1210,6 +1215,7 @@ export function ChatApp() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         convId={activeId}
+        initialTab={settingsTab}
       />
       <ContactsDialog
         open={contactsOpen}
@@ -1854,8 +1860,20 @@ export function ChatApp() {
               soundOff={soundOff}
               onAvatarPick={() => myAvatarInput.current?.click()}
               onContacts={() => setContactsOpen(true)}
-              onSettings={() => setSettingsOpen(true)}
-              onPairing={() => setSettingsOpen(true)}
+              onSettings={() => {
+                setSettingsTab("profil");
+                setSettingsOpen(true);
+              }}
+              onPairing={() => {
+                setSettingsTab("profil");
+                setSettingsOpen(true);
+              }}
+              onNotifications={() => {
+                setSettingsTab("bildirim");
+                setSettingsOpen(true);
+              }}
+              onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
+              planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
               onToggleSound={() => setSoundOff((v) => !v)}
               onSelfNote={() => {
                 setMobileTab("chats");
