@@ -1173,6 +1173,15 @@ export function ChatApp() {
 
 
       <div className="flex min-h-0 w-full flex-1 overflow-hidden">
+      {/* Masaüstü sol ray — mobil alt sekme çubuğunun karşılığı */}
+      <DesktopRail
+        value={mobileTab}
+        onChange={setMobileTab}
+        meName={me}
+        meAvatar={getMyAvatar() || undefined}
+        unread={totalUnread}
+        onSettings={() => setSettingsOpen(true)}
+      />
       {/* Sol panel — profil, arama, konuşma listesi */}
       <aside
         className={`relative flex h-full w-full shrink-0 flex-col md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
