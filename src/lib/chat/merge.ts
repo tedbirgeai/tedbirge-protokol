@@ -301,9 +301,14 @@ export async function sweepGhosts(force = false): Promise<number> {
   sweepInFlight = (async () => {
     try {
       const { pruneCallLog } = await import("@/lib/chat/call-log");
-      const { purgePlaceholderNames } = await import("@/lib/chat/name-resolver");
+      const { purgePlaceholderNames, repairCrossLinks } = await import(
+        "@/lib/chat/name-resolver"
+      );
       // Önce nötr yer tutucu adlar silinir; budama doğru kararı verebilsin.
       purgePlaceholderNames();
+      // Farklı numaralara çıpalı kimlikler arasındaki yanlış bağlantılar
+      // onarılır (rehberde X seçilip Y sohbetinin açılması hatası).
+      repairCrossLinks();
       const contacts = await pruneGhostContacts().catch(() => 0);
       const convs = await pruneGhostConversations().catch(() => 0);
       const calls = await pruneCallLog().catch(() => 0);
