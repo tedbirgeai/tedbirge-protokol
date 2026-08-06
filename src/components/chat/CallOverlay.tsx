@@ -126,15 +126,19 @@ export function CallOverlay() {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
     const remote = remoteRef.current;
     if (remote) {
-      remote.srcObject = getRemoteStream();
-      if (call.phase === "active") {
+      // Uzak akış her katılımcı/iz değişiminde yeniden bağlanır; aksi
+      // halde geç gelen görüntü izi ekrana hiç düşmüyordu.
+      const next = getRemoteStream();
+      if (remote.srcObject !== next) remote.srcObject = next;
+      if (call.phase === "active" || call.phase === "outgoing") {
         void remote
           .play()
           .then(() => setPlayBlocked(false))
           .catch(() => setPlayBlocked(true));
       }
     }
-  }, [call.phase, call.video, call.streamVersion]);
+  }, [call.phase, call.video, call.streamVersion, call.peerId, call.participants.length]);
+
 
   async function enableCallAudio() {
     pressFeedback();
