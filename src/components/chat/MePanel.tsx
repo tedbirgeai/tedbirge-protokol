@@ -100,9 +100,11 @@ export function MePanel({
   return (
     <div
       className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-2"
-      // Alt sekme çubuğu ve ev çubuğu için ek boşluk: son kart kesilmez.
-      // eslint-disable-next-line react/jsx-props-no-multi-spaces
-      style={{ background: "var(--wa-panel-soft)" }}
+      style={{
+        background: "var(--wa-panel-soft)",
+        // Alt sekme çubuğu ve ev çubuğu için ek boşluk: son kart kesilmez.
+        paddingBottom: "calc(var(--wa-tabbar-h, 56px) + env(safe-area-inset-bottom) + 24px)",
+      }}
     >
       <div className="flex flex-col items-center gap-3 pt-4">
         <button
