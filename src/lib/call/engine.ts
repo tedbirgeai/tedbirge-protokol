@@ -293,9 +293,20 @@ export function getLocalStream() {
 }
 
 /** Birebir görüşmede karşı tarafın akışı (geriye dönük uyumluluk). */
+/** Birebir görüşmede aktif eşin kimliği. */
+export function primaryPeerId(): string | null {
+  if (state.peerId && legs.has(state.peerId)) return state.peerId;
+  const connected = Array.from(legs.entries()).find(
+    ([, l]) => l.pc.connectionState === "connected",
+  );
+  if (connected) return connected[0];
+  const first = legs.keys().next().value as string | undefined;
+  return first ?? null;
+}
+
 export function getRemoteStream() {
-  const first = legs.values().next().value as Leg | undefined;
-  return first?.stream ?? null;
+  const id = primaryPeerId();
+  return id ? (legs.get(id)?.stream ?? null) : null;
 }
 
 export function getPeerStream(peerId: string) {
@@ -356,10 +367,24 @@ function createLeg(peerId: string, alias: string) {
   const stream = new MediaStream();
   const leg: Leg = { pc, stream, alias, polite: peerId > nodeSelf() };
   pc.ontrack = (e) => {
-    e.streams[0]?.getTracks().forEach((t) => {
+    // TEK KAYNAK: gelen izin kendisi eklenir. Bazı uçlar parçayı akışa
+    // iliştirmeden gönderir; eski kod yalnız e.streams[0] okuduğu için
+    // karşı tarafın görüntüsü hiç görünmüyordu.
+    const incoming = [e.track, ...(e.streams[0]?.getTracks() ?? [])];
+    for (const t of incoming) {
+      if (!t) continue;
       if (!stream.getTracks().includes(t)) stream.addTrack(t);
-    });
+      t.addEventListener("ended", () => {
+        try {
+          stream.removeTrack(t);
+        } catch {
+          /* zaten kaldırıldı */
+        }
+        publish({ streamVersion: state.streamVersion + 1 });
+      });
+    }
     publish({ streamVersion: state.streamVersion + 1 });
+    syncParticipants();
   };
   pc.onicecandidate = (e) => {
     if (e.candidate)
@@ -561,6 +586,12 @@ function attachLocal(pc: RTCPeerConnection, stream: MediaStream | null, video: b
     stream.getTracks().forEach((t) => {
       if (!pc.getSenders().some((s) => s.track === t)) pc.addTrack(t, stream);
     });
+    // Kendi kameramız kapalı olsa bile karşı tarafın görüntüsü için
+    // mutlaka bir video hattı açılır; yoksa uzak görüntü hiç gelmez.
+    if (video && !pc.getTransceivers().some((t) => t.receiver.track?.kind === "video")) {
+      const hasVideoSender = pc.getSenders().some((s) => s.track?.kind === "video");
+      if (!hasVideoSender) pc.addTransceiver("video", { direction: "recvonly" });
+    }
     return;
   }
   if (pc.getTransceivers().length === 0) {
@@ -833,10 +864,11 @@ export async function acceptCall() {
     for (const [peerId, offer] of entries) {
       try {
       const leg = createLeg(peerId, offer.alias || peerId);
-      attachLocal(leg.pc, stream, state.video);
-
-      await tuneSenders(leg.pc);
+      // Önce uzak teklif uygulanır: böylece yerel izler karşı tarafın
+      // m-hatlarına oturur ve cevap "sendrecv" olur (görüntü çift yönlü).
       await leg.pc.setRemoteDescription(offer.desc);
+      attachLocal(leg.pc, stream, state.video || offer.video);
+      await tuneSenders(leg.pc);
 
       await applyPendingIce(peerId, leg.pc);
       const answer = await leg.pc.createAnswer();
@@ -973,9 +1005,23 @@ export async function switchCamera() {
     });
     const track = fresh.getVideoTracks()[0];
     if (!track) return;
-    for (const leg of legs.values()) {
+    for (const [peerId, leg] of legs.entries()) {
       const sender = leg.pc.getSenders().find((s) => s.track?.kind === "video");
-      await sender?.replaceTrack(track);
+      if (sender) {
+        await sender.replaceTrack(track);
+      } else {
+        // Görüntü hattı yoksa açılır ve karşı tarafla yeniden pazarlık yapılır.
+        leg.pc.addTrack(track, localStream ?? new MediaStream([track]));
+        const offer = await leg.pc.createOffer();
+        await leg.pc.setLocalDescription(offer);
+        void sendMesh("call", peerId, {
+          t: "offer",
+          sdp: offer.sdp,
+          restart: true,
+          video: true,
+          at: Date.now(),
+        });
+      }
       await tuneSenders(leg.pc);
     }
 
@@ -1222,12 +1268,15 @@ async function onCallSignal(from: string, raw: unknown) {
     if (state.phase === "active") {
       try {
         if (leg && leg.pc.signalingState !== "stable") return;
+        // BAYAT DAVET KALKANI: kurulmuş hattın üzerine, röleden geç gelen
+        // eski teklif uygulanırsa medya kopuyordu. Yeniden başlatma
+        // dışındaki tekrar teklifler yok sayılır.
+        if (leg?.pc.remoteDescription) return;
         const stream = await ensureMedia(state.video);
         const fresh = createLeg(from, p.alias ?? from);
-        attachLocal(fresh.pc, stream, state.video);
-
-        await tuneSenders(fresh.pc);
         await fresh.pc.setRemoteDescription(desc);
+        attachLocal(fresh.pc, stream, state.video || Boolean(p.video));
+        await tuneSenders(fresh.pc);
 
         await applyPendingIce(from, fresh.pc);
         const answer = await fresh.pc.createAnswer();
