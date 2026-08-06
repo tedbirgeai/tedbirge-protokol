@@ -541,6 +541,14 @@ export async function syncNow(): Promise<boolean> {
         chunks: stats.chunks,
         bytes: stats.bytes,
       });
+      // Eşitleme sonrası budama: başka cihazdan gelen adsız/hayalet
+      // kayıtlar listeye hiç düşmeden temizlenir.
+      try {
+        const { sweepGhosts } = await import("@/lib/chat/merge");
+        await sweepGhosts(true);
+      } catch {
+        /* budama bir sonraki turda yeniden denenir */
+      }
       logSync("bilgi", "Eşitleme", "Tur başarıyla tamamlandı");
       return true;
     } catch (error) {

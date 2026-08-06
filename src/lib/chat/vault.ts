@@ -240,6 +240,13 @@ export async function restoreContacts(phone?: string): Promise<number> {
       if (Array.isArray(book)) restored += book.length;
     }
     await refreshContacts();
+    // Kasa geri yüklemesi eski hayalet kayıtları da getirebilir: hemen budanır.
+    try {
+      const { sweepGhosts } = await import("@/lib/chat/merge");
+      await sweepGhosts(true);
+    } catch {
+      /* budama açılışta yeniden denenir */
+    }
     return restored;
   } catch (error) {
     console.error("[vault] geri yükleme hatası", error);
