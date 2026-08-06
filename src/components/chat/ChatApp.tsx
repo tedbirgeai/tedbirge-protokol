@@ -711,6 +711,12 @@ export function ChatApp() {
   const [folderVersion, setFolderVersion] = useState(0);
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
   const [newContactOpen, setNewContactOpen] = useState(false);
+  // Arama ekranları: yeni arama, tuş takımı, planlama ve arama bağlantısı.
+  const [newCallOpen, setNewCallOpen] = useState(false);
+  const [dialpadOpen, setDialpadOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [callLinkOpen, setCallLinkOpen] = useState(false);
+
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
