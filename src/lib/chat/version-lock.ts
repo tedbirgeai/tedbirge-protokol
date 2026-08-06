@@ -7,7 +7,14 @@
  * ASLA silinmez — yalnızca önbellek ve hayalet kayıtlar temizlenir.
  */
 
-export const APP_DATA_VERSION = "2026.08.06-identity-media-fix";
+import { BUILD_ID } from "@/lib/build-id";
+
+/**
+ * Sürüm kimliği artık elle yazılan bir sabit değil, derleme damgasıdır.
+ * Böylece her yeni yayın kilidi kendiliğinden tetikler; "düzeltme yayında
+ * ama ekranda eski paket duruyor" durumu oluşmaz.
+ */
+export const APP_DATA_VERSION = BUILD_ID;
 
 const KEY = "tedbirge.app.dataVersion";
 
