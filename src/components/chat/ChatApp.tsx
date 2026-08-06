@@ -699,6 +699,9 @@ export function ChatApp() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [muteMenu, setMuteMenu] = useState(false);
   const [folderVersion, setFolderVersion] = useState(0);
+  const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
+  const [newContactOpen, setNewContactOpen] = useState(false);
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
