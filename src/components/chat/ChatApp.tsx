@@ -2482,12 +2482,69 @@ export function ChatApp() {
           setMobileTab("chats");
           setGroupMode(true);
         }}
+        onNewContact={() => setNewContactOpen(true)}
         onSelfNote={() => {
           setMobileTab("chats");
           void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
         }}
         onShare={() => void shareInvite()}
       />
+
+      {/* Elle kişi ekleme (Ad · Soyadı · Ülke · Telefon) */}
+      <NewContactForm
+        open={newContactOpen}
+        onClose={() => setNewContactOpen(false)}
+        onSaved={(peerId, name) => {
+          setMobileTab("chats");
+          void openPeer(peerId, name);
+        }}
+      />
+
+      {/* Sohbet satırı menüsü: arşiv, sabitle, favori, liste, temizle, sil */}
+      <ChatRowMenu
+        state={rowMenu}
+        folders={getFolders()}
+        onClose={() => setRowMenu(null)}
+        onArchive={() => {
+          if (rowMenu) toggleArchive(rowMenu.convId);
+        }}
+        onPin={() => {
+          if (rowMenu) void togglePin(rowMenu.convId);
+        }}
+        onToggleRead={() => {
+          if (!rowMenu) return;
+          if (rowMenu.unread) {
+            clearUnreadFlag(rowMenu.convId);
+            void markRead(rowMenu.convId);
+          } else {
+            markUnreadFlag(rowMenu.convId);
+            void markUnread(rowMenu.convId);
+          }
+        }}
+        onFavorite={() => {
+          if (rowMenu) toggleFavorite(rowMenu.convId);
+        }}
+        onAssignList={(name) => {
+          if (rowMenu) assignFolder(rowMenu.convId, name);
+        }}
+        onCreateList={() => {
+          const name = window.prompt("Yeni liste adı")?.trim();
+          if (!name || !rowMenu) return;
+          createFolder(name);
+          assignFolder(rowMenu.convId, name);
+        }}
+        onClear={() => {
+          if (rowMenu) void clearConversation(rowMenu.convId);
+        }}
+        onDelete={() => {
+          if (!rowMenu) return;
+          const id = rowMenu.convId;
+          forgetFlags(id);
+          if (activeId === id) setActiveId(null);
+          void removeConversation(id);
+        }}
+      />
+
 
       {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
       <AiAdvisor hideLauncher />
