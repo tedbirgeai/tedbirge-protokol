@@ -1568,10 +1568,16 @@ export function ChatApp() {
                 peers={peers}
                 labelOf={nameOf}
                 onOpenPeer={(pid, name) => {
-                  void ensureDirectConversation(pid, name ?? chat.aliases[pid]).then((c) =>
+                  // KİMLİK ÇIPASI: tıklanan kişinin adı doğrudan o cihaza
+                  // yazılır; açılan sohbet başlığı asla başka kişiye kaymaz.
+                  repairCrossLinks();
+                  const picked = humanName(name ?? chat.aliases[pid], "");
+                  if (picked && !isTechnicalLabel(picked)) setNickname(pid, picked);
+                  void ensureDirectConversation(pid, picked || undefined).then((c) =>
                     setActiveId(c.id),
                   );
                 }}
+
                 onOpenSelfNote={() => {
                   void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
                 }}
