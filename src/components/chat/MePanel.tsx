@@ -162,9 +162,13 @@ export function MePanel({
               style={{ color: "var(--wa-text)" }}
             >
               <it.icon className="h-6 w-6 shrink-0" style={{ color: "var(--wa-text)" }} />
-              <span className="min-w-0 flex-1 truncate text-[17px]">{it.label}</span>
+              <span className="shrink-0 truncate text-[17px]">{it.label}</span>
+              <span className="min-w-0 flex-1" />
               {it.right && (
-                <span className="shrink-0 text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                <span
+                  className="min-w-0 truncate text-[13px]"
+                  style={{ color: "var(--wa-muted)" }}
+                >
                   {it.right}
                 </span>
               )}
