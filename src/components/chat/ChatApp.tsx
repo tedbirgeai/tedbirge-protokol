@@ -130,7 +130,9 @@ import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
 import { geoUri } from "@/lib/chat/location";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
-import { getAlias, isOnboarded } from "@/lib/chat/profile";
+import { getAbout, getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
+import { ProfileSheet } from "@/components/chat/ProfileSheet";
+import { QrCodeSheet } from "@/components/chat/QrCodeSheet";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
@@ -699,6 +701,10 @@ export function ChatApp() {
   const [soundOff, setSoundOff] = useState(false);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // "Siz" sekmesinden açılan profil ve karekod ekranları.
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [profileTick, setProfileTick] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Ayarların hangi sekmeyle açılacağı ("Siz > Bildirimler" doğrudan
   // bildirim sekmesine düşer; arama sırasında izin sorulmaz).
@@ -1030,6 +1036,8 @@ export function ChatApp() {
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
+  // `profileTick` yalnızca ad değiştiğinde yeniden okumayı tetikler.
+  void profileTick;
   const me = getAlias() || "Ben";
   const label = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "");
   /**
@@ -1878,9 +1886,18 @@ export function ChatApp() {
               name={me}
               avatar={getMyAvatar() || undefined}
               personId={getPersonId()}
+              about={getAbout()}
               soundOff={soundOff}
               onAvatarPick={() => myAvatarInput.current?.click()}
+              onProfile={() => setProfileOpen(true)}
+              onQr={() => setQrOpen(true)}
+              onSearch={() => setSearchOpen(true)}
               onContacts={() => setContactsOpen(true)}
+              onLists={() => setContactsOpen(true)}
+              onBroadcast={() => {
+                setMobileTab("chats");
+                setGroupMode(true);
+              }}
               onSettings={() => {
                 setSettingsTab("profil");
                 setSettingsOpen(true);
@@ -1893,8 +1910,19 @@ export function ChatApp() {
                 setSettingsTab("bildirim");
                 setSettingsOpen(true);
               }}
+              onStorage={() => {
+                setSettingsTab("depolama");
+                setSettingsOpen(true);
+              }}
+              onHelp={() => {
+                setSettingsTab("hakkinda");
+                setSettingsOpen(true);
+              }}
+              onInvite={() => void shareInvite()}
               onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
               planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
+              deviceCount={Object.keys(pairing.trusted).length}
+              chatCount={totalUnread}
               onToggleSound={() => setSoundOff((v) => !v)}
               onSelfNote={() => {
                 setMobileTab("chats");
@@ -2558,6 +2586,32 @@ export function ChatApp() {
           unread={totalUnread}
         />
       )}
+
+      {/* Profil ve QR kodu ekranları (mobil tam sayfa, masaüstü kart) */}
+      <ProfileSheet
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        name={me}
+        avatar={getMyAvatar() || undefined}
+        onAvatarPick={() => myAvatarInput.current?.click()}
+        onRename={(next) => {
+          setAlias(next);
+          setProfileTick((v) => v + 1);
+        }}
+        onLinks={() => void shareInvite()}
+      />
+      <QrCodeSheet
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        name={me}
+        avatar={getMyAvatar() || undefined}
+        personId={getPersonId()}
+        onShare={() => void shareInvite()}
+        onScan={() => {
+          setQrOpen(false);
+          setContactsOpen(true);
+        }}
+      />
 
       {/* "+" eylem sayfası */}
       <NewChatSheet

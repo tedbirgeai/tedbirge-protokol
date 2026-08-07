@@ -80,3 +80,46 @@ export function isOnboarded(): boolean {
   }
 }
 
+
+/* -------------------------------------------------------------------
+ * Görünür profil alanları (yalnızca bu cihazda saklanır):
+ * "Hakkımda" durumu ve isteğe bağlı kullanıcı adı.
+ * ----------------------------------------------------------------- */
+const ABOUT_KEY = "tedbirge.chat.about";
+const USERNAME_KEY = "tedbirge.chat.username";
+
+export function getAbout(): string {
+  try {
+    return window.localStorage.getItem(ABOUT_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setAbout(text: string) {
+  try {
+    const clean = text.trim().slice(0, 139);
+    if (clean) window.localStorage.setItem(ABOUT_KEY, clean);
+    else window.localStorage.removeItem(ABOUT_KEY);
+  } catch {
+    /* gizli mod */
+  }
+}
+
+export function getUsername(): string {
+  try {
+    return window.localStorage.getItem(USERNAME_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setUsername(name: string) {
+  try {
+    const clean = name.trim().replace(/^@+/, "").slice(0, 30);
+    if (clean) window.localStorage.setItem(USERNAME_KEY, clean);
+    else window.localStorage.removeItem(USERNAME_KEY);
+  } catch {
+    /* gizli mod */
+  }
+}
