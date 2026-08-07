@@ -2587,6 +2587,32 @@ export function ChatApp() {
         />
       )}
 
+      {/* Profil ve QR kodu ekranları (mobil tam sayfa, masaüstü kart) */}
+      <ProfileSheet
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        name={me}
+        avatar={getMyAvatar() || undefined}
+        onAvatarPick={() => myAvatarInput.current?.click()}
+        onRename={(next) => {
+          setAlias(next);
+          setProfileTick((v) => v + 1);
+        }}
+        onLinks={() => void shareInvite()}
+      />
+      <QrCodeSheet
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        name={me}
+        avatar={getMyAvatar() || undefined}
+        personId={getPersonId()}
+        onShare={() => void shareInvite()}
+        onScan={() => {
+          setQrOpen(false);
+          setContactsOpen(true);
+        }}
+      />
+
       {/* "+" eylem sayfası */}
       <NewChatSheet
         open={plusOpen}
