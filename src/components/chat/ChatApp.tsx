@@ -1036,6 +1036,8 @@ export function ChatApp() {
 
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
+  // `profileTick` yalnızca ad değiştiğinde yeniden okumayı tetikler.
+  void profileTick;
   const me = getAlias() || "Ben";
   const label = (id: string) => humanName(contactLabel(id, chat.aliases[id]), "");
   /**
