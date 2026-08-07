@@ -1878,9 +1878,18 @@ export function ChatApp() {
               name={me}
               avatar={getMyAvatar() || undefined}
               personId={getPersonId()}
+              about={getAbout()}
               soundOff={soundOff}
               onAvatarPick={() => myAvatarInput.current?.click()}
+              onProfile={() => setProfileOpen(true)}
+              onQr={() => setQrOpen(true)}
+              onSearch={() => setSearchOpen(true)}
               onContacts={() => setContactsOpen(true)}
+              onLists={() => setContactsOpen(true)}
+              onBroadcast={() => {
+                setMobileTab("chats");
+                setGroupMode(true);
+              }}
               onSettings={() => {
                 setSettingsTab("profil");
                 setSettingsOpen(true);
@@ -1893,8 +1902,19 @@ export function ChatApp() {
                 setSettingsTab("bildirim");
                 setSettingsOpen(true);
               }}
+              onStorage={() => {
+                setSettingsTab("depolama");
+                setSettingsOpen(true);
+              }}
+              onHelp={() => {
+                setSettingsTab("hakkinda");
+                setSettingsOpen(true);
+              }}
+              onInvite={() => void shareInvite()}
               onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
               planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
+              deviceCount={Object.keys(pairing.trusted).length}
+              chatCount={totalUnread}
               onToggleSound={() => setSoundOff((v) => !v)}
               onSelfNote={() => {
                 setMobileTab("chats");
