@@ -1,11 +1,18 @@
 import {
   Bell,
   BookUser,
+  ChevronDown,
   ChevronRight,
+  CircleHelp,
+  Database,
   Laptop,
   Lock,
   MessageSquare,
+  Megaphone,
+  Pencil,
   QrCode,
+  Search,
+  Share2,
   Sparkle,
   Star,
   UserCog,
@@ -22,43 +29,71 @@ type Item = {
   icon: typeof Lock;
   onClick: () => void;
   right?: string;
+  badge?: number;
 };
 
 /**
- * MOBİL "SİZ" SEKMESİ
+ * "SİZ" SEKMESİ
  * ------------------------------------------------------------------
- * Büyük profil kartı ve gruplanmış ayar satırları. Her satır zaten var
- * olan diyalogları açar; yeni iş mantığı eklemez.
+ * WhatsApp profil ekranının birebir karşılığı: üstte arama · karekod ·
+ * düzenle, ortada durum baloncuğu + büyük avatar ve ad, altında
+ * gruplanmış ayar kartları. Her satır var olan ekranı açar; yeni iş
+ * mantığı eklenmez.
+ *
+ * ÖNEMLİ: kabuk kaydırılabilir, kartlar `shrink-0` olduğu için asla
+ * ezilmez veya üst üste binmez (mobil · tablet · masaüstü aynı).
  */
 export function MePanel({
   name,
   avatar,
   personId,
+  about,
   soundOff,
   onAvatarPick,
+  onProfile,
+  onQr,
+  onSearch,
   onContacts,
+  onLists,
+  onBroadcast,
   onSettings,
   onPairing,
   onToggleSound,
   onSelfNote,
   onNotifications,
   onSubscription,
+  onStorage,
+  onHelp,
+  onInvite,
   planLabel,
+  deviceCount,
+  chatCount,
   version,
 }: {
   name: string;
   avatar?: string | undefined;
   personId: string;
+  about?: string;
   soundOff: boolean;
   onAvatarPick: () => void;
+  onProfile: () => void;
+  onQr: () => void;
+  onSearch: () => void;
   onContacts: () => void;
+  onLists: () => void;
+  onBroadcast: () => void;
   onSettings: () => void;
   onPairing: () => void;
   onToggleSound: () => void;
   onSelfNote: () => void;
   onNotifications: () => void;
   onSubscription: () => void;
+  onStorage: () => void;
+  onHelp: () => void;
+  onInvite: () => void;
   planLabel: string;
+  deviceCount?: number;
+  chatCount?: number;
   version: string;
 }) {
   const groupZero: Item[] = [
@@ -66,14 +101,37 @@ export function MePanel({
   ];
   const groupOne: Item[] = [
     { id: "contacts", label: "Rehber", icon: BookUser, onClick: onContacts },
-    { id: "starred", label: "Kendine not", icon: Star, onClick: onSelfNote },
-    { id: "devices", label: "Bağlı cihazlar", icon: Laptop, onClick: onPairing },
+    { id: "lists", label: "Listeler", icon: Star, onClick: onLists },
+    { id: "broadcast", label: "Toplu mesajlar", icon: Megaphone, onClick: onBroadcast },
+    { id: "starred", label: "Yıldızlı", icon: Star, onClick: onSelfNote },
+    ...(deviceCount !== undefined
+      ? [
+          {
+            id: "devices",
+            label: "Bağlı cihazlar",
+            icon: Laptop,
+            onClick: onPairing,
+            badge: deviceCount,
+          } as Item,
+        ]
+      : [{ id: "devices", label: "Bağlı cihazlar", icon: Laptop, onClick: onPairing } as Item]),
   ];
   const groupTwo: Item[] = [
-    { id: "notify", label: "Bildirimler", icon: Bell, onClick: onNotifications },
     { id: "account", label: "Hesap", icon: UserCog, onClick: onSettings },
     { id: "privacy", label: "Gizlilik", icon: Lock, onClick: onSettings },
-    { id: "chats", label: "Sohbetler", icon: MessageSquare, onClick: onSettings },
+    ...(chatCount !== undefined
+      ? [
+          {
+            id: "chats",
+            label: "Sohbetler",
+            icon: MessageSquare,
+            onClick: onSettings,
+            badge: chatCount,
+          } as Item,
+        ]
+      : [{ id: "chats", label: "Sohbetler", icon: MessageSquare, onClick: onSettings } as Item]),
+    { id: "notify", label: "Bildirimler", icon: Bell, onClick: onNotifications },
+    { id: "storage", label: "Depolama ve veriler", icon: Database, onClick: onStorage },
     {
       id: "sound",
       label: soundOff ? "Sesler kapalı" : "Sesler açık",
@@ -81,15 +139,19 @@ export function MePanel({
       onClick: onToggleSound,
     },
   ];
+  const groupThree: Item[] = [
+    { id: "help", label: "Yardım", icon: CircleHelp, onClick: onHelp },
+    { id: "invite", label: "Arkadaşlarını davet et", icon: Share2, onClick: onInvite },
+  ];
 
   function renderGroup(items: Item[]) {
     return (
-      <ul className="overflow-hidden rounded-2xl" style={{ background: "var(--wa-panel)" }}>
+      <ul
+        className="shrink-0 overflow-hidden rounded-2xl"
+        style={{ background: "var(--wa-panel)" }}
+      >
         {items.map((it, i) => (
-          <li
-            key={it.id}
-            style={i === 0 ? undefined : { borderTop: "1px solid var(--wa-border)" }}
-          >
+          <li key={it.id} style={i === 0 ? undefined : { borderTop: "1px solid var(--wa-border)" }}>
             <button
               type="button"
               onClick={() => {
@@ -106,6 +168,14 @@ export function MePanel({
                   {it.right}
                 </span>
               )}
+              {typeof it.badge === "number" && it.badge > 0 && (
+                <span
+                  className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-[12px] font-semibold text-white"
+                  style={{ background: "var(--wa-muted)" }}
+                >
+                  {it.badge}
+                </span>
+              )}
               <ChevronRight className="h-5 w-5 shrink-0" style={{ color: "var(--wa-muted)" }} />
             </button>
           </li>
@@ -120,10 +190,59 @@ export function MePanel({
       style={{
         background: "var(--wa-panel-soft)",
         // Alt sekme çubuğu ve ev çubuğu için ek boşluk: son kart kesilmez.
-        paddingBottom: "calc(var(--wa-tabbar-h, 56px) + env(safe-area-inset-bottom) + 24px)",
+        paddingBottom: "calc(var(--wa-tabbar-h, 56px) + env(safe-area-inset-bottom) + 32px)",
       }}
     >
-      <div className="flex flex-col items-center gap-3 pt-4">
+      {/* Üst eylemler: ara · karekod · düzenle */}
+      <div className="flex shrink-0 items-center justify-between pt-1">
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            onSearch();
+          }}
+          className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+          style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+          aria-label="Ara"
+        >
+          <Search className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              onQr();
+            }}
+            className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+            style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+            aria-label="QR kodu"
+          >
+            <QrCode className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              pressFeedback();
+              onProfile();
+            }}
+            className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+            style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+            aria-label="Profili düzenle"
+          >
+            <Pencil className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Durum baloncuğu + avatar + ad */}
+      <div className="flex shrink-0 flex-col items-center gap-2">
+        <span
+          className="rounded-2xl px-4 py-2 text-[15px]"
+          style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+        >
+          {about?.trim() || "Müsait"}
+        </span>
         <button
           type="button"
           onClick={() => {
@@ -135,9 +254,18 @@ export function MePanel({
         >
           <Avatar name={name} src={avatar} size={112} />
         </button>
-        <p className="text-[26px] font-bold leading-tight" style={{ color: "var(--wa-text)" }}>
-          {name}
-        </p>
+        <button
+          type="button"
+          onClick={() => {
+            pressFeedback();
+            onProfile();
+          }}
+          className="wa-press flex items-center gap-1"
+          style={{ color: "var(--wa-text)" }}
+        >
+          <span className="text-[26px] font-bold leading-tight">{name}</span>
+          <ChevronDown className="h-5 w-5" />
+        </button>
         <p className="flex items-center gap-2 text-[13px]" style={{ color: "var(--wa-muted)" }}>
           <QrCode className="h-4 w-4" aria-hidden />
           {personId}
@@ -147,8 +275,9 @@ export function MePanel({
       {renderGroup(groupZero)}
       {renderGroup(groupOne)}
       {renderGroup(groupTwo)}
+      {renderGroup(groupThree)}
 
-      <p className="pt-1 text-center text-[12px]" style={{ color: "var(--wa-muted)" }}>
+      <p className="shrink-0 pt-1 text-center text-[12px]" style={{ color: "var(--wa-muted)" }}>
         Tedbirge · v{version}
       </p>
     </div>
