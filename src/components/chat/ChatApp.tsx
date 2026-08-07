@@ -130,7 +130,9 @@ import { startTranscript, type TranscriptSession } from "@/lib/chat/transcribe";
 import { geoUri } from "@/lib/chat/location";
 import { acceptPairing, beginPairing, dismissPairing, usePairing } from "@/lib/chat/pairing";
 import { PairingDialog } from "@/components/chat/PairingDialog";
-import { getAlias, isOnboarded } from "@/lib/chat/profile";
+import { getAbout, getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
+import { ProfileSheet } from "@/components/chat/ProfileSheet";
+import { QrCodeSheet } from "@/components/chat/QrCodeSheet";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
