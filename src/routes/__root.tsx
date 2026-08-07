@@ -148,7 +148,8 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Gömülü uygulama kabuğu (sohbet): kurumsal şerit ve dok gizlenir.
-  const embedded = pathname.startsWith("/chat") || pathname.startsWith("/sohbet");
+  const embedded =
+    pathname.startsWith("/chat") || pathname.startsWith("/sohbet") || pathname.startsWith("/komuta");
 
   useEffect(() => {
     // Eski mükerrer kayıtları temizleyen tek seferlik sıfırlama; sayfa yenilenir.

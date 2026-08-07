@@ -34,6 +34,7 @@ import { Route as KapsamaRouteImport } from './routes/kapsama'
 import { Route as KarsilastirmaRouteImport } from './routes/karsilastirma'
 import { Route as KatilRouteImport } from './routes/katil'
 import { Route as KayitRouteImport } from './routes/kayit'
+import { Route as KomutaRouteImport } from './routes/komuta'
 import { Route as KosullarRouteImport } from './routes/kosullar'
 import { Route as KurRouteImport } from './routes/kur'
 import { Route as KurumsalRouteImport } from './routes/kurumsal'
@@ -189,6 +190,11 @@ const KatilRoute = KatilRouteImport.update({
 const KayitRoute = KayitRouteImport.update({
   id: '/kayit',
   path: '/kayit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KomutaRoute = KomutaRouteImport.update({
+  id: '/komuta',
+  path: '/komuta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KosullarRoute = KosullarRouteImport.update({
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/karsilastirma': typeof KarsilastirmaRoute
   '/katil': typeof KatilRoute
   '/kayit': typeof KayitRoute
+  '/komuta': typeof KomutaRoute
   '/kosullar': typeof KosullarRoute
   '/kur': typeof KurRoute
   '/kurumsal': typeof KurumsalRoute
@@ -437,6 +444,7 @@ export interface FileRoutesByTo {
   '/karsilastirma': typeof KarsilastirmaRoute
   '/katil': typeof KatilRoute
   '/kayit': typeof KayitRoute
+  '/komuta': typeof KomutaRoute
   '/kosullar': typeof KosullarRoute
   '/kur': typeof KurRoute
   '/kurumsal': typeof KurumsalRoute
@@ -497,6 +505,7 @@ export interface FileRoutesById {
   '/karsilastirma': typeof KarsilastirmaRoute
   '/katil': typeof KatilRoute
   '/kayit': typeof KayitRoute
+  '/komuta': typeof KomutaRoute
   '/kosullar': typeof KosullarRoute
   '/kur': typeof KurRoute
   '/kurumsal': typeof KurumsalRoute
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
     | '/karsilastirma'
     | '/katil'
     | '/kayit'
+    | '/komuta'
     | '/kosullar'
     | '/kur'
     | '/kurumsal'
@@ -615,6 +625,7 @@ export interface FileRouteTypes {
     | '/karsilastirma'
     | '/katil'
     | '/kayit'
+    | '/komuta'
     | '/kosullar'
     | '/kur'
     | '/kurumsal'
@@ -674,6 +685,7 @@ export interface FileRouteTypes {
     | '/karsilastirma'
     | '/katil'
     | '/kayit'
+    | '/komuta'
     | '/kosullar'
     | '/kur'
     | '/kurumsal'
@@ -734,6 +746,7 @@ export interface RootRouteChildren {
   KarsilastirmaRoute: typeof KarsilastirmaRoute
   KatilRoute: typeof KatilRoute
   KayitRoute: typeof KayitRoute
+  KomutaRoute: typeof KomutaRoute
   KosullarRoute: typeof KosullarRoute
   KurRoute: typeof KurRoute
   KurumsalRoute: typeof KurumsalRoute
@@ -939,6 +952,13 @@ declare module '@tanstack/react-router' {
       path: '/kayit'
       fullPath: '/kayit'
       preLoaderRoute: typeof KayitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/komuta': {
+      id: '/komuta'
+      path: '/komuta'
+      fullPath: '/komuta'
+      preLoaderRoute: typeof KomutaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kosullar': {
@@ -1211,6 +1231,7 @@ const rootRouteChildren: RootRouteChildren = {
   KarsilastirmaRoute: KarsilastirmaRoute,
   KatilRoute: KatilRoute,
   KayitRoute: KayitRoute,
+  KomutaRoute: KomutaRoute,
   KosullarRoute: KosullarRoute,
   KurRoute: KurRoute,
   KurumsalRoute: KurumsalRoute,
