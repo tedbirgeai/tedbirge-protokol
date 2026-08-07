@@ -699,6 +699,10 @@ export function ChatApp() {
   const [soundOff, setSoundOff] = useState(false);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // "Siz" sekmesinden açılan profil ve karekod ekranları.
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [profileTick, setProfileTick] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Ayarların hangi sekmeyle açılacağı ("Siz > Bildirimler" doğrudan
   // bildirim sekmesine düşer; arama sırasında izin sorulmaz).
