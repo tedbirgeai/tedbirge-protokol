@@ -56,6 +56,9 @@ export function ShellProvider({
     bootNodeRuntime();
     // Faz C: daha önce yüklenmiş .tbapp paketleri kayda geri konur.
     void import("@/apps/tbapp").then((m) => m.restoreInstalledTbApps());
+    // Sosyal akış ve dosya aktarımı gelen paketleri kabuk açılışında dinler.
+    void import("@/lib/social/feed").then((m) => m.bootFeed());
+    void import("@/lib/p2p/file-transfer").then((m) => m.bootFileTransfer());
   }, []);
 
   const open = useCallback((id: SurfaceId) => {
