@@ -55,14 +55,20 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
     const bump = () => force((n) => n + 1);
     const offA = onKernelTelemetry(bump);
     const offB = onKernelProviderChange(bump);
+    const offC = onKernelHealth(bump);
     return () => {
       offA();
       offB();
+      offC();
     };
   }, []);
 
   const m = kernelMetrics();
   const provider = activeKernelProvider();
+  const h = kernelHealth();
+  const healthText =
+    h.health === "healthy" ? "Sağlıklı" : h.health === "recovering" ? "Onarılıyor" : "Arızalı";
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
