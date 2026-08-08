@@ -44,7 +44,7 @@ export function NewChatSheet({
       <div
         role="dialog"
         aria-label="Yeni"
-        className="w-full max-w-md overflow-hidden rounded-t-3xl pb-[env(safe-area-inset-bottom)] md:rounded-3xl"
+        className="wa-scope w-full max-w-md overflow-hidden rounded-t-3xl pb-[env(safe-area-inset-bottom)] md:rounded-3xl"
         style={{ background: "var(--wa-panel)" }}
         onClick={(e) => e.stopPropagation()}
       >

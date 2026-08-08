@@ -46,7 +46,7 @@ export function InstallAppButton({ compact = false }: { compact?: boolean }) {
           onClick={() => setHelp(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+            className="wa-scope w-full max-w-sm rounded-2xl p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">

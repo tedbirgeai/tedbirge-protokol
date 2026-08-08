@@ -39,7 +39,7 @@ export function EmergencyDialog({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl p-6 shadow-xl"
+        className="wa-scope w-full max-w-md rounded-xl p-6 shadow-xl"
         style={panel}
         onClick={(e) => e.stopPropagation()}
       >
