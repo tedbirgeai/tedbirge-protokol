@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Boxes, Play, Trash2, Upload } from "lucide-react";
+import { Boxes, Play, Share2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { CapabilityDialog } from "@/components/shell/CapabilityDialog";
 import type { Capability } from "@/kernel/capabilities";
 import {
@@ -29,6 +30,14 @@ import {
   type TbAppManifest,
 } from "@/apps/tbapp";
 import {
+  TRUST_LABELS,
+  canInstall,
+  isDeveloperMode,
+  packageTrust,
+  setDeveloperMode,
+} from "@/apps/package";
+import { shareTbApp } from "@/apps/distribution";
+import {
   CAPABILITY_LABELS,
   grantCapabilities,
   grantedCapabilities,
@@ -38,21 +47,39 @@ import {
 export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [apps, setApps] = useState<TbAppManifest[]>([]);
   const [pending, setPending] = useState<TbAppManifest | null>(null);
+  const [dev, setDev] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     restoreInstalledTbApps();
     setApps(installedTbApps());
+    setDev(isDeveloperMode());
   }, [open]);
 
   async function pick(file: File) {
     try {
-      setPending(await readTbAppFile(file));
+      const m = await readTbAppFile(file);
+      const trust = packageTrust(m);
+      if (!canInstall(trust, dev)) {
+        toast.error(TRUST_LABELS[trust.level].detail);
+        return;
+      }
+      setPending(m);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Paket yüklenemedi.");
     }
   }
+
+  async function share(m: TbAppManifest) {
+    try {
+      await shareTbApp(m);
+      toast.success(`${m.name} yakındaki düğümlere gönderildi.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Paket paylaşılamadı.");
+    }
+  }
+
 
   async function run(m: TbAppManifest, granted: Capability[]) {
     try {
@@ -97,12 +124,30 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
             Paket ekle (.tbapp)
           </Button>
 
+          <label className="flex items-start gap-3 rounded-lg border p-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Geliştirici modu</p>
+              <p className="text-xs text-muted-foreground">
+                Açıkken imzasız paketler de kurulabilir. Bozuk paketler her durumda reddedilir.
+              </p>
+            </div>
+            <Switch
+              checked={dev}
+              onCheckedChange={(v) => {
+                setDeveloperMode(v);
+                setDev(v);
+              }}
+              aria-label="Geliştirici modu"
+            />
+          </label>
+
           <ul className="space-y-2">
             {apps.length === 0 && (
               <li className="text-sm text-muted-foreground">Henüz uygulama eklenmedi.</li>
             )}
             {apps.map((m) => {
               const granted = grantedCapabilities(m.id);
+              const trust = packageTrust(m);
               return (
                 <li key={m.id} className="flex items-start gap-3 rounded-lg border p-3">
                   <div className="min-w-0 flex-1">
@@ -114,7 +159,18 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
                         ? granted.map((c) => CAPABILITY_LABELS[c].title).join(" · ")
                         : "Yetki verilmedi"}
                     </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {TRUST_LABELS[trust.level].title} · {trust.fingerprint}
+                    </p>
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Paylaş"
+                    onClick={() => void share(m)}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
                   <Button size="icon" variant="ghost" aria-label="Çalıştır" onClick={() => void run(m, granted)}>
                     <Play className="h-4 w-4" />
                   </Button>
@@ -134,6 +190,7 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
               );
             })}
           </ul>
+
         </DialogContent>
       </Dialog>
 

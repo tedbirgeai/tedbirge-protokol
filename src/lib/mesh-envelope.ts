@@ -36,6 +36,7 @@ export function ttlForKind(kind: EnvelopeKind): number {
   if (kind === "alert" || kind === "call" || kind === "signal") return 8;
   if (kind === "chat" || kind === "text" || kind === "media" || kind === "receipt") return 6;
   if (kind === "ping" || kind === "pong" || kind === "presence") return 3;
+  if (kind === "app") return 3;
   return 4;
 }
 
@@ -56,7 +57,9 @@ export type EnvelopeKind =
   | "media"
   | "sync"
   | "session"
-  | "presence";
+  | "presence"
+  /** Faz D: düğümden düğüme .tbapp paket teklifi. */
+  | "app";
 
 
 export type MeshHeader = {

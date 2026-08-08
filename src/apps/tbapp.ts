@@ -30,6 +30,10 @@ export type TbAppManifest = {
   capabilities: Capability[];
   module: string;
   description?: string;
+  /** Faz D: paketi imzalayanın doğrulama anahtarı (varsa). */
+  spk?: string;
+  /** Faz D: paket imzası (varsa). */
+  sig?: string;
 };
 
 export class TbAppError extends Error {}
@@ -60,6 +64,8 @@ export function parseTbApp(text: string): TbAppManifest {
     capabilities: caps as Capability[],
     module: m.module,
     ...(m.description ? { description: String(m.description) } : {}),
+    ...(typeof m.spk === "string" ? { spk: m.spk } : {}),
+    ...(typeof m.sig === "string" ? { sig: m.sig } : {}),
   };
 }
 

@@ -134,6 +134,7 @@ import { getAbout, getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { ProfileSheet } from "@/components/chat/ProfileSheet";
 import { QrCodeSheet } from "@/components/chat/QrCodeSheet";
 import { AppsDialog } from "@/components/shell/AppsDialog";
+import { AppOfferHost } from "@/components/shell/AppOfferHost";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
@@ -2162,6 +2163,7 @@ function ChatAppInner() {
 
       {/* Faz C kabuk ekranları: uygulamalar (.tbapp), röle, ağ durumu */}
       <AppsDialog open={surface.isOpen("apps")} onClose={() => surface.close("apps")} />
+      <AppOfferHost />
       <RelaySettingsDialog open={surface.isOpen("relay")} onClose={() => surface.close("relay")} />
       <MeshStatusDialog
         open={surface.isOpen("meshStatus")}
