@@ -118,7 +118,11 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
             }}
           />
 
-          <Button variant="secondary" onClick={() => fileRef.current?.click()} className="gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => fileRef.current?.click()}
+            className="h-11 w-full gap-2"
+          >
             <Upload className="h-4 w-4" aria-hidden />
             Paket ekle (.tbapp)
           </Button>
@@ -165,6 +169,7 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
                   <Button
                     size="icon"
                     variant="ghost"
+                    className="h-11 w-11 shrink-0"
                     aria-label="Paylaş"
                     onClick={() => void share(m)}
                   >
@@ -173,6 +178,7 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
                   <Button
                     size="icon"
                     variant="ghost"
+                    className="h-11 w-11 shrink-0"
                     aria-label="Çalıştır"
                     onClick={() => void run(m, granted)}
                   >
@@ -181,6 +187,7 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
                   <Button
                     size="icon"
                     variant="ghost"
+                    className="h-11 w-11 shrink-0"
                     aria-label="Kaldır"
                     onClick={() => {
                       uninstallTbApp(m.id);
