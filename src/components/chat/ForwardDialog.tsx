@@ -43,7 +43,7 @@ export function ForwardDialog({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-xl p-5 shadow-xl"
+        className="wa-scope flex max-h-[80vh] w-full max-w-md flex-col rounded-xl p-5 shadow-xl"
         style={panel}
         onClick={(e) => e.stopPropagation()}
       >

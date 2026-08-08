@@ -10,6 +10,8 @@ import { refreshContacts, setNickname } from "@/lib/chat/contacts";
 import { logSync } from "@/lib/chat/sync-log";
 import { logError } from "@/lib/chat/errors";
 import { friendlyError } from "@/lib/friendly-error";
+import { openJson, sealJson } from "@/lib/chat/local-book";
+
 
 
 export type DeviceContact = { name: string; phone: string };
@@ -66,12 +68,13 @@ export async function pickDeviceContacts(): Promise<DeviceContact[]> {
 const LOCAL_BOOK_KEY = "tedbirge.chat.localBook";
 
 /**
- * Cihaz rehberini YALNIZCA bu cihazda saklar (KVKK: ham numara/ad
- * hiçbir zaman sunucuya veya ağa gönderilmez).
+ * Cihaz rehberini YALNIZCA bu cihazda ŞİFRELİ saklar (KVKK: ham
+ * numara/ad hiçbir zaman sunucuya veya ağa gönderilmez; cihazda da
+ * düz metin olarak durmaz).
  */
 export function saveLocalBook(list: DeviceContact[]): void {
   try {
-    window.localStorage.setItem(LOCAL_BOOK_KEY, JSON.stringify(list.slice(0, 1000)));
+    window.localStorage.setItem(LOCAL_BOOK_KEY, sealJson(list.slice(0, 1000)));
   } catch {
     /* gizli mod / kota */
   }
@@ -80,11 +83,22 @@ export function saveLocalBook(list: DeviceContact[]): void {
 export function loadLocalBook(): DeviceContact[] {
   try {
     const raw = window.localStorage.getItem(LOCAL_BOOK_KEY);
-    return raw ? (JSON.parse(raw) as DeviceContact[]) : [];
+    if (!raw) return [];
+    const sealed = openJson<DeviceContact[]>(raw);
+    if (sealed) return sealed;
+    // Eski düz metin kayıt: bir kez okunur ve hemen şifreliye taşınır.
+    const legacy = JSON.parse(raw) as DeviceContact[];
+    if (Array.isArray(legacy)) {
+      saveLocalBook(legacy);
+      return legacy;
+    }
+    return [];
   } catch {
     return [];
   }
 }
+
+
 
 /**
  * Cihaz rehberini otomatik eşitler: izin verilirse kişiler önce bu

@@ -85,7 +85,7 @@ export function AppLockScreen({ onUnlocked }: { onUnlocked: () => void }) {
             setPin("");
           }
         }}
-        className="w-full max-w-sm rounded-xl p-8 shadow-sm"
+        className="wa-scope w-full max-w-sm rounded-xl p-8 shadow-sm"
         style={panel}
       >
         <Lock className="h-6 w-6" style={{ color: "var(--wa-accent)" }} aria-hidden />
@@ -314,7 +314,7 @@ export function ChatSettingsDialog({
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-xl p-6 shadow-xl"
+        className="wa-scope max-h-[88vh] w-full max-w-md overflow-y-auto rounded-xl p-6 shadow-xl"
         style={panel}
         onClick={(e) => e.stopPropagation()}
       >

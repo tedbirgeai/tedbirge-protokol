@@ -38,7 +38,7 @@ export function PairingDialog({ nameOf }: { nameOf: (id: string) => string }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+      <div className="wa-scope w-full max-w-sm rounded-2xl p-6 shadow-xl">
         <div className="flex items-start gap-3">
           <span className="rounded-full p-2" style={{ background: "var(--wa-panel-soft)" }}>
             <ShieldCheck className="h-5 w-5" style={{ color: "var(--wa-accent)" }} aria-hidden />

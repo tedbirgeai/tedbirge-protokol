@@ -75,7 +75,7 @@ export function CallLinkSheet({ open, onClose }: { open: boolean; onClose: () =>
       onClick={onClose}
     >
       <div
-        className="wa w-full max-w-md rounded-t-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:rounded-3xl"
+        className="wa wa-scope w-full max-w-md rounded-t-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:rounded-3xl"
         style={{ background: "var(--wa-panel)" }}
         onClick={(e) => e.stopPropagation()}
       >

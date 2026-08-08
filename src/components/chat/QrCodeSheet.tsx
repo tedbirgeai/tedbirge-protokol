@@ -57,7 +57,7 @@ export function QrCodeSheet({
       <div
         role="dialog"
         aria-label="QR kodu"
-        className="flex max-h-[92dvh] w-full max-w-[420px] flex-col overflow-hidden rounded-t-3xl pb-[env(safe-area-inset-bottom)] md:rounded-3xl"
+        className="wa-scope flex max-h-[92dvh] w-full max-w-[420px] flex-col overflow-hidden rounded-t-3xl pb-[env(safe-area-inset-bottom)] md:rounded-3xl"
         style={{ background: "var(--wa-panel-soft)" }}
         onClick={(e) => e.stopPropagation()}
       >

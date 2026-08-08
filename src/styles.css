@@ -279,9 +279,24 @@
   --border: #dde5e9;
   --input: #dde5e9;
   --ring: #0b7d6c;
+  /* Kendi kendine yeten kapsam: .wa atası olmayan (portal/overlay) panellerde
+     de açık yeşil/gri tema tokenları tanımlı olsun. */
+  --wa-panel: #ffffff;
+  --wa-panel-soft: #eef2f4;
+  --wa-border: #dde5e9;
+  --wa-text: #0d1b22;
+  --wa-muted: #5b6b75;
+  --wa-accent: #0b7d6c;
+  --wa-accent-soft: #d9f1ea;
+  --wa-bubble-in: #ffffff;
+  --wa-bubble-out: #d9f1ea;
+  --wa-chat-bg: #f5f8f9;
+  --wa-tick: #7a8b94;
+  --wa-tick-read: #0b7d6c;
   background-color: var(--wa-panel, #ffffff);
   color: var(--wa-text, #0d1b22);
 }
+
 
 /* Tam ekran kilidi: telefonda kabuk viewport'a sabitlenir, yatay kayma yok. */
 .wa-shell {
