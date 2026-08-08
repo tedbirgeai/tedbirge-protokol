@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Boxes, Play, Trash2, Upload } from "lucide-react";
+import { Boxes, Play, Share2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { CapabilityDialog } from "@/components/shell/CapabilityDialog";
 import type { Capability } from "@/kernel/capabilities";
 import {
@@ -28,6 +29,14 @@ import {
   uninstallTbApp,
   type TbAppManifest,
 } from "@/apps/tbapp";
+import {
+  TRUST_LABELS,
+  canInstall,
+  isDeveloperMode,
+  packageTrust,
+  setDeveloperMode,
+} from "@/apps/package";
+import { shareTbApp } from "@/apps/distribution";
 import {
   CAPABILITY_LABELS,
   grantCapabilities,
