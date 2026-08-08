@@ -105,7 +105,14 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
           <Row label="Gönderilen paket" value={String(m.sent)} />
           <Row label="Başarısız" value={String(m.failed)} />
           <Row label="Ortalama süre" value={`${m.avgSendMs} ms`} />
+          <Row label="Dayanıklılık" value={healthText} />
+          <Row label="Yeniden deneme" value={String(h.retries)} />
+          <Row
+            label="Son onarım"
+            value={h.lastRecoveryAt ? new Date(h.lastRecoveryAt).toLocaleTimeString("tr-TR") : "—"}
+          />
           {m.lastError && <Row label="Son hata" value={m.lastError} />}
+
 
           <label className="mt-3 flex items-start justify-between gap-3">
             <span className="text-sm">
