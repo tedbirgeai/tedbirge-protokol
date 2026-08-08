@@ -1457,6 +1457,9 @@ function ChatAppInner() {
                   setSettingsOpen(true);
                 }}
                 onInvite={() => void shareInvite()}
+                onApps={() => surface.open("apps")}
+                onRelay={() => surface.open("relay")}
+                onMeshStatus={() => surface.open("meshStatus")}
                 onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
                 planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
                 deviceCount={Object.keys(pairing.trusted).length}
