@@ -39,7 +39,7 @@ export function AppOfferHost() {
   return (
     <>
       <Dialog open={offer !== null} onOpenChange={(v) => (!v ? setOffer(null) : undefined)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="wa wa-scope flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-y-auto sm:w-full">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <PackageCheck className="h-5 w-5" aria-hidden />
