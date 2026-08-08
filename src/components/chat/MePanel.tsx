@@ -146,6 +146,13 @@ export function MePanel({
       onClick: onToggleSound,
     },
   ];
+  const groupShell: Item[] = [
+    ...(onApps ? [{ id: "apps", label: "Uygulamalar", icon: Boxes, onClick: onApps } as Item] : []),
+    ...(onRelay ? [{ id: "relay", label: "Röle", icon: Radio, onClick: onRelay } as Item] : []),
+    ...(onMeshStatus
+      ? [{ id: "mesh", label: "Ağ durumu", icon: Activity, onClick: onMeshStatus } as Item]
+      : []),
+  ];
   const groupThree: Item[] = [
     { id: "help", label: "Yardım", icon: CircleHelp, onClick: onHelp },
     { id: "invite", label: "Arkadaşlarını davet et", icon: Share2, onClick: onInvite },
