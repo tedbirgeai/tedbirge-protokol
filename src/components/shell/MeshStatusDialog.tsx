@@ -27,6 +27,7 @@ import {
   setPreferredKernelProvider,
 } from "@/kernel/boot";
 import { kernelMetrics, onKernelTelemetry } from "@/kernel/telemetry";
+import { kernelHealth, onKernelHealth } from "@/kernel/supervisor";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (

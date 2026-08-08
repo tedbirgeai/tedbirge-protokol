@@ -53,14 +53,25 @@ let booting: Promise<KernelProviderId> | null = null;
 export async function bootKernel(
   pref: KernelProviderId = preferredKernelProvider(),
 ): Promise<KernelProviderId> {
-  registerKernel(instrument(tsKernel));
+  // Faz F: her sağlayıcı önce dayanıklılık, sonra ölçüm katmanından geçer.
+  const wrap = (k: typeof tsKernel, onDegraded?: () => void) =>
+    instrument(supervise(k, onDegraded ? { onDegraded } : {}));
+
+  registerKernel(wrap(tsKernel));
   setActive("ts");
   if (pref !== "wasm") return "ts";
 
   booting = (async () => {
     const wasm = await tryLoadWasmKernel(tsKernel);
     if (wasm) {
-      registerKernel(instrument(wasm));
+      // Hızlandırılmış çekirdek ısrarla arıza verirse standart çekirdeğe
+      // sessizce inilir; kullanıcı kesinti görmez.
+      registerKernel(
+        wrap(wasm, () => {
+          registerKernel(wrap(tsKernel));
+          setActive("ts");
+        }),
+      );
       setActive("wasm");
       return "wasm" as const;
     }
@@ -68,6 +79,7 @@ export async function bootKernel(
   })();
   return booting;
 }
+
 
 // Kabuk bu modülü içe aktardığında çekirdek kendiliğinden açılır.
 void bootKernel();
