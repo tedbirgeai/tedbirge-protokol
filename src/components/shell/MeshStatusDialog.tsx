@@ -27,6 +27,7 @@ import {
   setPreferredKernelProvider,
 } from "@/kernel/boot";
 import { kernelMetrics, onKernelTelemetry } from "@/kernel/telemetry";
+import { kernelHealth, onKernelHealth } from "@/kernel/supervisor";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -54,14 +55,20 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
     const bump = () => force((n) => n + 1);
     const offA = onKernelTelemetry(bump);
     const offB = onKernelProviderChange(bump);
+    const offC = onKernelHealth(bump);
     return () => {
       offA();
       offB();
+      offC();
     };
   }, []);
 
   const m = kernelMetrics();
   const provider = activeKernelProvider();
+  const h = kernelHealth();
+  const healthText =
+    h.health === "healthy" ? "Sağlıklı" : h.health === "recovering" ? "Onarılıyor" : "Arızalı";
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
@@ -98,7 +105,14 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
           <Row label="Gönderilen paket" value={String(m.sent)} />
           <Row label="Başarısız" value={String(m.failed)} />
           <Row label="Ortalama süre" value={`${m.avgSendMs} ms`} />
+          <Row label="Dayanıklılık" value={healthText} />
+          <Row label="Yeniden deneme" value={String(h.retries)} />
+          <Row
+            label="Son onarım"
+            value={h.lastRecoveryAt ? new Date(h.lastRecoveryAt).toLocaleTimeString("tr-TR") : "—"}
+          />
           {m.lastError && <Row label="Son hata" value={m.lastError} />}
+
 
           <label className="mt-3 flex items-start justify-between gap-3">
             <span className="text-sm">
