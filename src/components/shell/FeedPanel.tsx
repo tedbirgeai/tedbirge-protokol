@@ -76,7 +76,10 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       {/* Gönderi yazma alanı */}
-      <div className="shrink-0 p-3" style={{ borderBottom: "1px solid var(--wa-border)" }}>
+      <div
+        className="mx-auto w-full max-w-2xl shrink-0 p-3"
+        style={{ borderBottom: "1px solid var(--wa-border)" }}
+      >
         <div className="flex gap-3">
           <Avatar name={meName} size={40} />
           <div className="min-w-0 flex-1">
@@ -99,7 +102,12 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                 >
                   {media.name}
                 </span>
-                <button type="button" aria-label="Eki kaldır" onClick={() => setMedia(null)}>
+                <button
+                  type="button"
+                  aria-label="Eki kaldır"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
+                  onClick={() => setMedia(null)}
+                >
                   <X className="h-4 w-4" style={{ color: "var(--wa-muted)" }} />
                 </button>
               </div>
@@ -131,7 +139,7 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                   pressFeedback();
                   fileRef.current?.click();
                 }}
-                className="wa-press flex h-9 items-center gap-2 rounded-full px-3 text-[13px]"
+                className="wa-press flex h-10 min-w-11 items-center gap-2 rounded-full px-3 text-[13px]"
                 style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
               >
                 <ImageIcon className="h-4 w-4" /> Görsel
@@ -143,7 +151,7 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                     pressFeedback();
                     onTransfer();
                   }}
-                  className="wa-press h-9 rounded-full px-3 text-[13px]"
+                  className="wa-press h-10 rounded-full px-3 text-[13px]"
                   style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
                 >
                   Büyük dosya gönder
@@ -157,7 +165,7 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                   pressFeedback();
                   void submit();
                 }}
-                className="wa-press flex h-9 items-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white disabled:opacity-50"
+                className="wa-press flex h-10 min-w-11 items-center gap-2 rounded-full px-4 text-[14px] font-semibold text-white disabled:opacity-50"
                 style={{ background: "var(--wa-accent)" }}
               >
                 <Send className="h-4 w-4" /> Paylaş
@@ -184,11 +192,11 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
           </p>
         </div>
       ) : (
-        <ul className="p-3">
+        <ul className="mx-auto w-full max-w-2xl p-3">
           {posts.map((p) => (
             <li
               key={p.id}
-              className="mb-3 rounded-2xl p-3"
+              className="mb-3 rounded-2xl p-3 sm:p-4"
               style={{ background: "var(--wa-panel)", border: "1px solid var(--wa-border)" }}
             >
               <div className="flex items-center gap-3">
@@ -206,7 +214,12 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                   </p>
                 </div>
                 {p.mine && (
-                  <button type="button" aria-label="Gönderiyi sil" onClick={() => deletePost(p.id)}>
+                  <button
+                    type="button"
+                    aria-label="Gönderiyi sil"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full"
+                    onClick={() => deletePost(p.id)}
+                  >
                     <Trash2 className="h-4 w-4" style={{ color: "var(--wa-muted)" }} />
                   </button>
                 )}

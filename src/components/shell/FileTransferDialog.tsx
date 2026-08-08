@@ -66,7 +66,7 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
+      <DialogContent className="wa wa-scope flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-y-auto sm:w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileUp className="h-5 w-5" aria-hidden />
@@ -83,7 +83,7 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
           <select
             value={peer}
             onChange={(e) => setPeer(e.target.value)}
-            className="mt-1 w-full rounded-lg border bg-background p-2 text-sm"
+            className="mt-1 h-11 w-full rounded-lg border bg-background px-2 text-sm"
           >
             <option value="">Seçin…</option>
             {node.peers.map((p) => (
@@ -125,13 +125,19 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">{t.name}</span>
                 <span className="text-xs text-muted-foreground">{sizeLabel(t.size)}</span>
                 {t.dataUrl && (
-                  <a href={t.dataUrl} download={t.name} aria-label="İndir">
+                  <a
+                    href={t.dataUrl}
+                    download={t.name}
+                    aria-label="İndir"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-muted"
+                  >
                     <Download className="h-4 w-4" />
                   </a>
                 )}
                 <button
                   type="button"
                   aria-label="Listeden kaldır"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-muted"
                   onClick={() => clearTransfer(t.id)}
                 >
                   <Trash2 className="h-4 w-4 text-muted-foreground" />
