@@ -21,6 +21,9 @@ export function DesktopRail({
   meAvatar,
   unread,
   onSettings,
+  onApps,
+  onTransfer,
+  onMeshStatus,
 }: {
   value: MobileTab;
   onChange: (tab: MobileTab) => void;
@@ -28,6 +31,9 @@ export function DesktopRail({
   meAvatar?: string | undefined;
   unread?: number;
   onSettings: () => void;
+  onApps?: () => void;
+  onTransfer?: () => void;
+  onMeshStatus?: () => void;
 }) {
   return (
     <nav
@@ -79,6 +85,28 @@ export function DesktopRail({
       </div>
 
       <div className="flex flex-col items-center gap-2">
+        {[
+          { id: "apps", label: "Uygulamalar", Icon: Boxes, run: onApps },
+          { id: "transfer", label: "Dosya aktarımı", Icon: FileUp, run: onTransfer },
+          { id: "mesh", label: "Ağ durumu", Icon: Activity, run: onMeshStatus },
+        ]
+          .filter((b) => Boolean(b.run))
+          .map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              title={b.label}
+              aria-label={b.label}
+              onClick={() => {
+                pressFeedback();
+                b.run?.();
+              }}
+              className="wa-press flex h-12 w-12 items-center justify-center rounded-2xl"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              <b.Icon className="h-6 w-6" />
+            </button>
+          ))}
         <button
           type="button"
           title="Ayarlar"
