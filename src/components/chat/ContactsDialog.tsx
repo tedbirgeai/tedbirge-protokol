@@ -81,9 +81,7 @@ function ContactRow({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-medium">
-              {c.displayName}
-            </p>
+            <p className="truncate text-sm font-medium">{c.displayName}</p>
             <TrustBadge trust={c.trust} />
             {c.ambiguous && (
               <span className="inline-flex items-center gap-1 text-[11px] text-destructive">
@@ -284,7 +282,12 @@ function SyncContactsRow() {
       </div>
 
       <div className="flex shrink-0 gap-2">
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => fileRef.current?.click()}>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => fileRef.current?.click()}
+        >
           <Upload className="mr-1 h-4 w-4" /> Rehber dosyası yükle
         </Button>
         <Button size="sm" disabled={busy} onClick={runAuto}>
@@ -302,8 +305,8 @@ function SyncContactsRow() {
 
       <div className="w-full space-y-1 text-[11px] leading-relaxed text-muted-foreground">
         <p>
-          Tüm rehberin kendiliğinden gelmesi yalnızca Tedbirge mobil uygulamasında mümkündür
-          (sistem rehber izni). Android tarayıcıda seçtiğiniz kişiler; iPhone ve masaüstünde bir kez
+          Tüm rehberin kendiliğinden gelmesi yalnızca Tedbirge mobil uygulamasında mümkündür (sistem
+          rehber izni). Android tarayıcıda seçtiğiniz kişiler; iPhone ve masaüstünde bir kez
           yüklediğiniz rehber dosyası kullanılır — sonrası otomatik tazelenir.
         </p>
         <p>
@@ -312,7 +315,6 @@ function SyncContactsRow() {
           <strong> Outlook:</strong> Kişiler &gt; Yönet &gt; Kişileri dışa aktar (CSV).
         </p>
       </div>
-
 
       {people.length > 0 && (
         <ul className="w-full space-y-1 border-t border-border pt-3">
@@ -328,9 +330,7 @@ function SyncContactsRow() {
   );
 }
 
-
 export function ContactsDialog({
-
   open,
   onOpenChange,
   onOpenChat,
@@ -363,14 +363,8 @@ export function ContactsDialog({
   }, [open, me?.peerId, me?.signPublic]);
 
   // Adı bilinmeyen (yalnızca teknik kimlikten ibaret) kayıtlar listelenmez.
-  const named = useMemo(
-    () => contacts.filter((c) => c.displayName !== c.shortId),
-    [contacts],
-  );
-  const unnamed = useMemo(
-    () => contacts.filter((c) => c.displayName === c.shortId),
-    [contacts],
-  );
+  const named = useMemo(() => contacts.filter((c) => c.displayName !== c.shortId), [contacts]);
+  const unnamed = useMemo(() => contacts.filter((c) => c.displayName === c.shortId), [contacts]);
 
   const rows = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase("tr");
@@ -382,7 +376,6 @@ export function ContactsDialog({
         .includes(needle),
     );
   }, [named, q]);
-
 
   const myShort = me?.shortId ?? shortIdOf("local");
 
@@ -399,177 +392,180 @@ export function ContactsDialog({
           </DialogHeader>
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 pt-4">
-          <SyncContactsRow />
+            <SyncContactsRow />
 
+            {/* Kendi kimlik kartım */}
+            <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">
+              {qr && (
+                <img
+                  src={qr}
+                  alt="Kendi kimlik karekodunuz"
+                  width={120}
+                  height={120}
+                  className="rounded border"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  Sizin kimliğiniz
+                </p>
+                <p className="mt-1 font-mono text-lg tracking-wider">{myShort}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bu kod cihaz değiştirseniz bile aynı kalır ve kimseyle karışmaz.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(myShort);
+                      toast("Kimliğiniz kopyalandı");
+                    }}
+                  >
+                    <Copy className="mr-1.5 h-3.5 w-3.5" /> Kopyala
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const url = `${window.location.origin}/chat`;
+                      const text = `Tedbirge kimliğim: ${myShort} — ${url}`;
+                      if (navigator.share)
+                        void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
+                      else
+                        void navigator.clipboard
+                          ?.writeText(text)
+                          .then(() => toast("Davet kopyalandı"));
+                    }}
+                  >
+                    Paylaş
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-          {/* Kendi kimlik kartım */}
-          <div className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-card/50 p-4">
-            {qr && (
-              <img
-                src={qr}
-                alt="Kendi kimlik karekodunuz"
-                width={120}
-                height={120}
-                className="rounded border"
+            {/* Arama */}
+            <div className="flex items-center gap-2 rounded-md border border-border px-3">
+              <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Ad veya soyada göre ara"
+                className="h-10 w-full bg-transparent text-sm outline-none"
               />
+            </div>
+
+            <ul className="space-y-2">
+              {rows.map((c) => (
+                <ContactRow key={c.peerId} c={c} onOpen={onOpenChat} onVerify={setVerify} />
+              ))}
+              {rows.length === 0 && (
+                <li className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  Rehberinizde adıyla eşleşen kişi yok. Telefon rehberinizi yükleyin ya da
+                  kimliğinizi paylaşın.
+                </li>
+              )}
+            </ul>
+
+            {unnamed.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
+                <span>
+                  {unnamed.length} adsız kayıt gizlendi (adı bilinmeyen cihazlar listelenmez).
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[11px] text-destructive"
+                  onClick={() => {
+                    void Promise.all(unnamed.map((c) => eraseContact(c.peerId))).then(() =>
+                      toast(`${unnamed.length} adsız kayıt silindi`),
+                    );
+                  }}
+                >
+                  <Trash2 className="mr-1 h-3 w-3" /> Temizle
+                </Button>
+              </div>
             )}
-            <div className="min-w-0 flex-1">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                Sizin kimliğiniz
-              </p>
-              <p className="mt-1 font-mono text-lg tracking-wider">{myShort}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Bu kod cihaz değiştirseniz bile aynı kalır ve kimseyle karışmaz.
+
+            {/* KVKK / GDPR */}
+            <div className="rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
+              <p>
+                <strong className="text-foreground">Verileriniz sizde kalır.</strong> Rehber
+                yalnızca bu cihazda saklanır; sunucuya, buluta veya üçüncü kişilere aktarılmaz.
+                Telefon rehberiniz okunmaz, numara istenmez. Mesaj içerikleri uçtan uca şifrelidir
+                (KVKK m.4 veri minimizasyonu · GDPR m.5/25).
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    void navigator.clipboard?.writeText(myShort);
-                    toast("Kimliğiniz kopyalandı");
+                    void exportContactsData().then((json) => {
+                      download(
+                        `tedbirge-rehber-${new Date().toISOString().slice(0, 10)}.json`,
+                        json,
+                      );
+                      toast.success("Rehber dışa aktarıldı");
+                    });
                   }}
                 >
-                  <Copy className="mr-1.5 h-3.5 w-3.5" /> Kopyala
+                  <Download className="mr-1.5 h-3.5 w-3.5" /> Verilerimi indir
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    const url = `${window.location.origin}/chat`;
-                    const text = `Tedbirge kimliğim: ${myShort} — ${url}`;
-                    if (navigator.share)
-                      void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
-                    else
-                      void navigator.clipboard
-                        ?.writeText(text)
-                        .then(() => toast("Davet kopyalandı"));
+                    const phone = getPhone();
+                    if (!phone) {
+                      toast("Yedekleme için numaranızla katılmanız gerekir");
+                      return;
+                    }
+                    void backupContacts(phone).then((ok) =>
+                      ok
+                        ? toast.success("Rehber şifreli olarak yedeklendi")
+                        : toast("Yedekleme şu anda yapılamadı"),
+                    );
                   }}
                 >
-                  Paylaş
+                  Rehberi yedekle
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const phone = getPhone();
+                    if (!phone) {
+                      toast("Geri yükleme için numaranızla katılmanız gerekir");
+                      return;
+                    }
+                    void restoreContacts(phone).then((n) =>
+                      n > 0 ? toast.success(`${n} kişi geri yüklendi`) : toast("Yedek bulunamadı"),
+                    );
+                  }}
+                >
+                  Yedeği geri yükle
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive"
+                  onClick={() => {
+                    if (
+                      !window.confirm("Tüm rehber bu cihazdan silinsin mi? Mesajlarınız korunur.")
+                    )
+                      return;
+                    void eraseAllContacts().then((n) => toast(`${n} kişi silindi`));
+                  }}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Rehberi sil
                 </Button>
               </div>
+              <p className="mt-3">
+                Taşınabilirlik (KVKK m.11 / GDPR m.20) ve silme (KVKK m.7 / GDPR m.17) haklarınızı
+                buradan tek dokunuşla kullanabilirsiniz.
+              </p>
             </div>
-          </div>
-
-          {/* Arama */}
-          <div className="flex items-center gap-2 rounded-md border border-border px-3">
-            <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Ad veya soyada göre ara"
-              className="h-10 w-full bg-transparent text-sm outline-none"
-            />
-          </div>
-
-          <ul className="space-y-2">
-            {rows.map((c) => (
-              <ContactRow key={c.peerId} c={c} onOpen={onOpenChat} onVerify={setVerify} />
-            ))}
-            {rows.length === 0 && (
-              <li className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Rehberinizde adıyla eşleşen kişi yok. Telefon rehberinizi yükleyin ya da kimliğinizi
-                paylaşın.
-              </li>
-            )}
-          </ul>
-
-          {unnamed.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-              <span>
-                {unnamed.length} adsız kayıt gizlendi (adı bilinmeyen cihazlar listelenmez).
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-[11px] text-destructive"
-                onClick={() => {
-                  void Promise.all(unnamed.map((c) => eraseContact(c.peerId))).then(() =>
-                    toast(`${unnamed.length} adsız kayıt silindi`),
-                  );
-                }}
-              >
-                <Trash2 className="mr-1 h-3 w-3" /> Temizle
-              </Button>
-            </div>
-          )}
-
-
-          {/* KVKK / GDPR */}
-          <div className="rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
-            <p>
-              <strong className="text-foreground">Verileriniz sizde kalır.</strong> Rehber yalnızca
-              bu cihazda saklanır; sunucuya, buluta veya üçüncü kişilere aktarılmaz. Telefon
-              rehberiniz okunmaz, numara istenmez. Mesaj içerikleri uçtan uca şifrelidir (KVKK m.4
-              veri minimizasyonu · GDPR m.5/25).
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  void exportContactsData().then((json) => {
-                    download(`tedbirge-rehber-${new Date().toISOString().slice(0, 10)}.json`, json);
-                    toast.success("Rehber dışa aktarıldı");
-                  });
-                }}
-              >
-                <Download className="mr-1.5 h-3.5 w-3.5" /> Verilerimi indir
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const phone = getPhone();
-                  if (!phone) {
-                    toast("Yedekleme için numaranızla katılmanız gerekir");
-                    return;
-                  }
-                  void backupContacts(phone).then((ok) =>
-                    ok
-                      ? toast.success("Rehber şifreli olarak yedeklendi")
-                      : toast("Yedekleme şu anda yapılamadı"),
-                  );
-                }}
-              >
-                Rehberi yedekle
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const phone = getPhone();
-                  if (!phone) {
-                    toast("Geri yükleme için numaranızla katılmanız gerekir");
-                    return;
-                  }
-                  void restoreContacts(phone).then((n) =>
-                    n > 0 ? toast.success(`${n} kişi geri yüklendi`) : toast("Yedek bulunamadı"),
-                  );
-                }}
-              >
-                Yedeği geri yükle
-              </Button>
-
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-destructive"
-                onClick={() => {
-                  if (!window.confirm("Tüm rehber bu cihazdan silinsin mi? Mesajlarınız korunur."))
-                    return;
-                  void eraseAllContacts().then((n) => toast(`${n} kişi silindi`));
-                }}
-              >
-                <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Rehberi sil
-              </Button>
-            </div>
-            <p className="mt-3">
-              Taşınabilirlik (KVKK m.11 / GDPR m.20) ve silme (KVKK m.7 / GDPR m.17) haklarınızı
-              buradan tek dokunuşla kullanabilirsiniz.
-            </p>
-          </div>
           </div>
         </DialogContent>
       </Dialog>

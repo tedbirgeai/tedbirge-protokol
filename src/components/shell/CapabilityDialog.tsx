@@ -72,7 +72,9 @@ export function CapabilityDialog({
                 <Switch
                   checked={on}
                   onCheckedChange={(v) =>
-                    setAllowed((prev) => (v ? [...new Set([...prev, cap])] : prev.filter((c) => c !== cap)))
+                    setAllowed((prev) =>
+                      v ? [...new Set([...prev, cap])] : prev.filter((c) => c !== cap),
+                    )
                   }
                   aria-label={info.title}
                 />

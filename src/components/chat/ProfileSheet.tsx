@@ -3,13 +3,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 
 import { Avatar } from "@/components/chat/Avatar";
 import { pressFeedback } from "@/lib/chat/sounds";
-import {
-  getAbout,
-  getPhone,
-  getUsername,
-  setAbout,
-  setUsername,
-} from "@/lib/chat/profile";
+import { getAbout, getPhone, getUsername, setAbout, setUsername } from "@/lib/chat/profile";
 
 type Field = "name" | "about" | "username" | null;
 
@@ -158,7 +152,10 @@ export function ProfileSheet({
             style={{ background: "var(--wa-panel)" }}
           >
             {rows.map((r, i) => (
-              <li key={r.id} style={i === 0 ? undefined : { borderTop: "1px solid var(--wa-border)" }}>
+              <li
+                key={r.id}
+                style={i === 0 ? undefined : { borderTop: "1px solid var(--wa-border)" }}
+              >
                 {editing && r.id === editing ? (
                   <div className="flex min-h-16 items-center gap-3 px-4">
                     <input

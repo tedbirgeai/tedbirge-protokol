@@ -47,7 +47,10 @@ export function CallLinkSheet({ open, onClose }: { open: boolean; onClose: () =>
 
   const toCalendar = () => {
     pressFeedback();
-    const start = new Date(Date.now() + 15 * 60000).toISOString().replace(/[-:]/g, "").split(".")[0];
+    const start = new Date(Date.now() + 15 * 60000)
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .split(".")[0];
     const ics = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
@@ -67,7 +70,10 @@ export function CallLinkSheet({ open, onClose }: { open: boolean; onClose: () =>
   };
 
   return (
-    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-black/45 md:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[75] flex items-end justify-center bg-black/45 md:items-center"
+      onClick={onClose}
+    >
       <div
         className="wa w-full max-w-md rounded-t-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:rounded-3xl"
         style={{ background: "var(--wa-panel)" }}
@@ -133,7 +139,11 @@ export function CallLinkSheet({ open, onClose }: { open: boolean; onClose: () =>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
           <Action icon={<Copy className="h-5 w-5" />} label="Kopyala" onClick={() => void copy()} />
-          <Action icon={<Share2 className="h-5 w-5" />} label="Paylaş" onClick={() => void share()} />
+          <Action
+            icon={<Share2 className="h-5 w-5" />}
+            label="Paylaş"
+            onClick={() => void share()}
+          />
           <Action icon={<CalendarPlus className="h-5 w-5" />} label="Takvim" onClick={toCalendar} />
         </div>
       </div>
@@ -141,7 +151,15 @@ export function CallLinkSheet({ open, onClose }: { open: boolean; onClose: () =>
   );
 }
 
-function Action({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+function Action({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"

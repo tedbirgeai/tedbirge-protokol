@@ -80,8 +80,6 @@ function Row({
   );
 }
 
-
-
 export function DirectoryPanel({ query, peers, onOpenPeer, onOpenSelfNote }: Props) {
   const book = useContacts();
   useAvatars();

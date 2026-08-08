@@ -69,7 +69,6 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
   const healthText =
     h.health === "healthy" ? "Sağlıklı" : h.health === "recovering" ? "Onarılıyor" : "Arızalı";
 
-
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
       <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
@@ -112,7 +111,6 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
             value={h.lastRecoveryAt ? new Date(h.lastRecoveryAt).toLocaleTimeString("tr-TR") : "—"}
           />
           {m.lastError && <Row label="Son hata" value={m.lastError} />}
-
 
           <label className="mt-3 flex items-start justify-between gap-3">
             <span className="text-sm">

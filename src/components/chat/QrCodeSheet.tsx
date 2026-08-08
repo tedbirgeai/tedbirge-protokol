@@ -74,7 +74,10 @@ export function QrCodeSheet({
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <p className="min-w-0 flex-1 text-center text-[17px] font-bold" style={{ color: "var(--wa-text)" }}>
+          <p
+            className="min-w-0 flex-1 text-center text-[17px] font-bold"
+            style={{ color: "var(--wa-text)" }}
+          >
             QR kodu
           </p>
           <button
@@ -109,8 +112,8 @@ export function QrCodeSheet({
           </div>
 
           <p className="px-2 pt-5 text-center text-[15px]" style={{ color: "var(--wa-muted)" }}>
-            QR kodunuz size özeldir. Paylaştığınız kişiler Tedbirge kamerasıyla bu kodu tarayıp
-            sizi kişi olarak ekleyebilir.
+            QR kodunuz size özeldir. Paylaştığınız kişiler Tedbirge kamerasıyla bu kodu tarayıp sizi
+            kişi olarak ekleyebilir.
           </p>
 
           <button

@@ -164,7 +164,9 @@ export function MePanel({
     ...(onTransfer
       ? [{ id: "transfer", label: "Dosya aktarımı", icon: FileUp, onClick: onTransfer } as Item]
       : []),
-    ...(onFeed ? [{ id: "feed", label: "Topluluk akışı", icon: Rss, onClick: onFeed } as Item] : []),
+    ...(onFeed
+      ? [{ id: "feed", label: "Topluluk akışı", icon: Rss, onClick: onFeed } as Item]
+      : []),
   ];
   const groupThree: Item[] = [
     { id: "help", label: "Yardım", icon: CircleHelp, onClick: onHelp },
@@ -192,10 +194,7 @@ export function MePanel({
               <span className="shrink-0 truncate text-[17px]">{it.label}</span>
               <span className="min-w-0 flex-1" />
               {it.right && (
-                <span
-                  className="min-w-0 truncate text-[13px]"
-                  style={{ color: "var(--wa-muted)" }}
-                >
+                <span className="min-w-0 truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
                   {it.right}
                 </span>
               )}

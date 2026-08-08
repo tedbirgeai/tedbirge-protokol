@@ -26,14 +26,23 @@ function readFile(file: File): Promise<FeedMedia> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () =>
-      resolve({ name: file.name, mime: file.type || "application/octet-stream", dataUrl: String(r.result) });
+      resolve({
+        name: file.name,
+        mime: file.type || "application/octet-stream",
+        dataUrl: String(r.result),
+      });
     r.onerror = () => reject(r.error ?? new Error("Dosya okunamadı."));
     r.readAsDataURL(file);
   });
 }
 
 function timeLabel(ts: number) {
-  return new Date(ts).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  return new Date(ts).toLocaleString("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?: () => void }) {
@@ -80,8 +89,14 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
               style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
             />
             {media && (
-              <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "var(--wa-panel-soft)" }}>
-                <span className="min-w-0 flex-1 truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
+              <div
+                className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2"
+                style={{ background: "var(--wa-panel-soft)" }}
+              >
+                <span
+                  className="min-w-0 flex-1 truncate text-[13px]"
+                  style={{ color: "var(--wa-muted)" }}
+                >
                   {media.name}
                 </span>
                 <button type="button" aria-label="Eki kaldır" onClick={() => setMedia(null)}>
@@ -100,10 +115,14 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                   e.target.value = "";
                   if (!f) return;
                   if (f.size > MAX_FEED_MEDIA_BYTES) {
-                    toast.error("Ek 320 KB sınırını aşıyor. Büyük dosyalar için Dosya aktarımını kullanın.");
+                    toast.error(
+                      "Ek 320 KB sınırını aşıyor. Büyük dosyalar için Dosya aktarımını kullanın.",
+                    );
                     return;
                   }
-                  void readFile(f).then(setMedia).catch(() => toast.error("Dosya okunamadı."));
+                  void readFile(f)
+                    .then(setMedia)
+                    .catch(() => toast.error("Dosya okunamadı."));
                 }}
               />
               <button
@@ -160,8 +179,8 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
             Akış sunucusuz çalışır
           </h2>
           <p className="text-[15px]" style={{ color: "var(--wa-muted)" }}>
-            Yazdığınız gönderi cihazınızda kalır ve yakındaki doğrulanmış düğümlere doğrudan
-            ulaşır. İnternet kesikken de paylaşabilirsiniz.
+            Yazdığınız gönderi cihazınızda kalır ve yakındaki doğrulanmış düğümlere doğrudan ulaşır.
+            İnternet kesikken de paylaşabilirsiniz.
           </p>
         </div>
       ) : (
@@ -175,7 +194,10 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
               <div className="flex items-center gap-3">
                 <Avatar name={p.authorName} size={36} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold" style={{ color: "var(--wa-text)" }}>
+                  <p
+                    className="truncate text-[15px] font-semibold"
+                    style={{ color: "var(--wa-text)" }}
+                  >
                     {p.authorName}
                     {p.mine && <span style={{ color: "var(--wa-muted)" }}> · Siz</span>}
                   </p>
@@ -190,7 +212,10 @@ export function FeedPanel({ meName, onTransfer }: { meName: string; onTransfer?:
                 )}
               </div>
               {p.text && (
-                <p className="mt-2 whitespace-pre-wrap text-[15px]" style={{ color: "var(--wa-text)" }}>
+                <p
+                  className="mt-2 whitespace-pre-wrap text-[15px]"
+                  style={{ color: "var(--wa-text)" }}
+                >
                   {p.text}
                 </p>
               )}

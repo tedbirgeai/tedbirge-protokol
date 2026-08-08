@@ -878,8 +878,8 @@ function ChatAppInner() {
                 : mobileTab === "feed"
                   ? "Akış"
                   : mobileTab === "me"
-                  ? "Siz"
-                  : "Sohbetler"}
+                    ? "Siz"
+                    : "Sohbetler"}
           </h2>
 
           <div

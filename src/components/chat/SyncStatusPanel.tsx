@@ -70,7 +70,6 @@ function HealthSection() {
   useEffect(() => {
     if (!getHealthReport()) check();
     else setReport(getHealthReport());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <section className="mt-5">
@@ -86,7 +85,11 @@ function HealthSection() {
       {report && !report.ok && (
         <ul className="mt-2 space-y-2 text-[12px]">
           {report.issues.map((i) => (
-            <li key={i.title} className="rounded-lg p-2" style={{ background: "var(--wa-panel, rgba(0,0,0,.04))" }}>
+            <li
+              key={i.title}
+              className="rounded-lg p-2"
+              style={{ background: "var(--wa-panel, rgba(0,0,0,.04))" }}
+            >
               <strong className="block font-semibold">{i.title}</strong>
               <span style={{ color: "var(--wa-muted)" }}>{i.advice}</span>
             </li>
@@ -164,7 +167,9 @@ export function SyncStatusSection() {
         </div>
         <div className="flex items-start justify-between gap-3">
           <dt style={{ color: "var(--wa-muted)" }}>Son hata</dt>
-          <dd className={`max-w-[60%] text-right font-medium ${s.lastError ? "text-destructive" : ""}`}>
+          <dd
+            className={`max-w-[60%] text-right font-medium ${s.lastError ? "text-destructive" : ""}`}
+          >
             {s.lastError || "Yok"}
           </dd>
         </div>
@@ -208,9 +213,7 @@ export function SyncStatusSection() {
       <h4 className="mt-5 text-[13px] font-semibold">Eşitleme günlüğü (son 20 olay)</h4>
 
       <ul className="mt-2 space-y-1 text-[12px]">
-        {log.length === 0 && (
-          <li style={{ color: "var(--wa-muted)" }}>Henüz kayıt yok.</li>
-        )}
+        {log.length === 0 && <li style={{ color: "var(--wa-muted)" }}>Henüz kayıt yok.</li>}
         {log.map((e) => (
           <li key={`${e.at}-${e.step}-${e.detail}`} className="flex gap-2">
             <span className="shrink-0 tabular-nums" style={{ color: "var(--wa-muted)" }}>

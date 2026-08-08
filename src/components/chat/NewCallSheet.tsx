@@ -38,7 +38,10 @@ export function NewCallSheet({
   const [selected, setSelected] = useState<string[]>([]);
 
   const named = useMemo(
-    () => contacts.filter((c) => c.displayName).sort((a, b) => a.displayName.localeCompare(b.displayName, "tr")),
+    () =>
+      contacts
+        .filter((c) => c.displayName)
+        .sort((a, b) => a.displayName.localeCompare(b.displayName, "tr")),
     [contacts],
   );
 
@@ -55,7 +58,9 @@ export function NewCallSheet({
     const term = q.trim().toLocaleLowerCase("tr");
     if (!term) return named;
     return named.filter(
-      (c) => c.displayName.toLocaleLowerCase("tr").includes(term) || c.shortId.toLowerCase().includes(term),
+      (c) =>
+        c.displayName.toLocaleLowerCase("tr").includes(term) ||
+        c.shortId.toLowerCase().includes(term),
     );
   }, [named, q]);
 
@@ -91,7 +96,10 @@ export function NewCallSheet({
   };
 
   return (
-    <div className="wa fixed inset-0 z-[70] flex justify-center" style={{ background: "var(--wa-panel)" }}>
+    <div
+      className="wa fixed inset-0 z-[70] flex justify-center"
+      style={{ background: "var(--wa-panel)" }}
+    >
       <div className="flex min-h-0 w-full max-w-[520px] flex-col">
         <div
           className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-3"
@@ -105,7 +113,10 @@ export function NewCallSheet({
           >
             İptal
           </button>
-          <p className="truncate text-center text-[17px] font-semibold" style={{ color: "var(--wa-text)" }}>
+          <p
+            className="truncate text-center text-[17px] font-semibold"
+            style={{ color: "var(--wa-text)" }}
+          >
             Yeni arama
           </p>
           <span className="text-[13px]" style={{ color: "var(--wa-muted)" }}>
@@ -135,12 +146,29 @@ export function NewCallSheet({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto pb-24">
-          <ActionRow icon={<Link2 className="h-5 w-5" />} label="Yeni arama bağlantısı" onClick={() => { onClose(); onNewLink(); }} />
-          <ActionRow icon={<UserPlus className="h-5 w-5" />} label="Yeni kişi" onClick={() => { onClose(); onNewContact(); }} />
+          <ActionRow
+            icon={<Link2 className="h-5 w-5" />}
+            label="Yeni arama bağlantısı"
+            onClick={() => {
+              onClose();
+              onNewLink();
+            }}
+          />
+          <ActionRow
+            icon={<UserPlus className="h-5 w-5" />}
+            label="Yeni kişi"
+            onClick={() => {
+              onClose();
+              onNewContact();
+            }}
+          />
 
           {frequent.length > 0 && !q && (
             <>
-              <h3 className="px-4 pb-1 pt-4 text-[13px] font-semibold" style={{ color: "var(--wa-muted)" }}>
+              <h3
+                className="px-4 pb-1 pt-4 text-[13px] font-semibold"
+                style={{ color: "var(--wa-muted)" }}
+              >
                 Sık görüşülenler
               </h3>
               {frequent.map((c) => (
@@ -151,8 +179,14 @@ export function NewCallSheet({
                   avatar={getAvatar(c.peerId) || undefined}
                   checked={selected.includes(c.peerId)}
                   onToggle={() => toggle(c.peerId)}
-                  onCall={() => { onClose(); onCall(c.peerId, false); }}
-                  onVideo={() => { onClose(); onCall(c.peerId, true); }}
+                  onCall={() => {
+                    onClose();
+                    onCall(c.peerId, false);
+                  }}
+                  onVideo={() => {
+                    onClose();
+                    onCall(c.peerId, true);
+                  }}
                 />
               ))}
             </>
@@ -166,7 +200,10 @@ export function NewCallSheet({
 
           {groups.map(([letter, rows]) => (
             <div key={letter} id={`sec_${letter}`}>
-              <h3 className="px-4 pb-1 pt-4 text-[13px] font-semibold" style={{ color: "var(--wa-muted)" }}>
+              <h3
+                className="px-4 pb-1 pt-4 text-[13px] font-semibold"
+                style={{ color: "var(--wa-muted)" }}
+              >
                 {letter}
               </h3>
               {rows.map((c) => (
@@ -177,8 +214,14 @@ export function NewCallSheet({
                   avatar={getAvatar(c.peerId) || undefined}
                   checked={selected.includes(c.peerId)}
                   onToggle={() => toggle(c.peerId)}
-                  onCall={() => { onClose(); onCall(c.peerId, false); }}
-                  onVideo={() => { onClose(); onCall(c.peerId, true); }}
+                  onCall={() => {
+                    onClose();
+                    onCall(c.peerId, false);
+                  }}
+                  onVideo={() => {
+                    onClose();
+                    onCall(c.peerId, true);
+                  }}
                 />
               ))}
             </div>
@@ -193,7 +236,9 @@ export function NewCallSheet({
               type="button"
               className="pointer-events-auto px-1 text-[10px]"
               style={{ color: "var(--wa-accent)" }}
-              onClick={() => document.getElementById(`sec_${letter}`)?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() =>
+                document.getElementById(`sec_${letter}`)?.scrollIntoView({ behavior: "smooth" })
+              }
             >
               {letter}
             </button>
@@ -205,7 +250,10 @@ export function NewCallSheet({
             className="absolute inset-x-0 bottom-0 flex items-center gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3"
             style={{ background: "var(--wa-panel)", borderTop: "1px solid var(--wa-border)" }}
           >
-            <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: "var(--wa-muted)" }}>
+            <span
+              className="min-w-0 flex-1 truncate text-[14px]"
+              style={{ color: "var(--wa-muted)" }}
+            >
               {selected.length} kişi seçildi
             </span>
             <button
@@ -232,7 +280,15 @@ export function NewCallSheet({
   );
 }
 
-function ActionRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+function ActionRow({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"

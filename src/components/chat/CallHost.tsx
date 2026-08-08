@@ -73,7 +73,6 @@ export function CallHost() {
             await autoSyncContacts();
             await vault.backupContacts(phone);
           }
-
         };
         await syncDirectory().catch(async (error) => {
           const { logSync } = await import("@/lib/chat/sync-log");
@@ -109,4 +108,3 @@ export function CallHost() {
 
   return <CallOverlay />;
 }
-

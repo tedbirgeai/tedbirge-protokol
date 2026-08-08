@@ -61,11 +61,13 @@ export function Dialpad({
     return contacts.find((c) => c.displayName && c.phoneHash === typedHash) ?? null;
   }, [contacts, typedHash]);
 
-
   if (!open) return null;
 
   return (
-    <div className="wa fixed inset-0 z-[70] flex flex-col" style={{ background: "var(--wa-panel)" }}>
+    <div
+      className="wa fixed inset-0 z-[70] flex flex-col"
+      style={{ background: "var(--wa-panel)" }}
+    >
       <div
         className="flex items-center justify-between px-4 py-3"
         style={{ borderBottom: "1px solid var(--wa-border)" }}
@@ -112,7 +114,10 @@ export function Dialpad({
             >
               <span className="text-[28px] font-normal leading-none">{k.d}</span>
               {k.letters && (
-                <span className="mt-0.5 text-[10px] tracking-[0.15em]" style={{ color: "var(--wa-muted)" }}>
+                <span
+                  className="mt-0.5 text-[10px] tracking-[0.15em]"
+                  style={{ color: "var(--wa-muted)" }}
+                >
                   {k.letters}
                 </span>
               )}

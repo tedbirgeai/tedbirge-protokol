@@ -129,7 +129,11 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
                     <Download className="h-4 w-4" />
                   </a>
                 )}
-                <button type="button" aria-label="Listeden kaldır" onClick={() => clearTransfer(t.id)}>
+                <button
+                  type="button"
+                  aria-label="Listeden kaldır"
+                  onClick={() => clearTransfer(t.id)}
+                >
                   <Trash2 className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
@@ -141,7 +145,11 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {t.dir === "out" ? "Gönderiliyor" : "Alınıyor"} · {t.peer} ·{" "}
-                {t.status === "tamam" ? "Tamamlandı" : t.status === "hata" ? (t.error ?? "Hata") : `%${t.percent}`}
+                {t.status === "tamam"
+                  ? "Tamamlandı"
+                  : t.status === "hata"
+                    ? (t.error ?? "Hata")
+                    : `%${t.percent}`}
               </p>
             </li>
           ))}

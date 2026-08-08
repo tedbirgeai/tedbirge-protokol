@@ -44,7 +44,6 @@ import { SyncStatusSection } from "@/components/chat/SyncStatusPanel";
 import { getAlias, getEmail, getPhone, setAlias, setEmail } from "@/lib/chat/profile";
 import { autoSyncContacts, deviceContactsSupported } from "@/lib/chat/directory";
 
-
 const panel = { background: "var(--wa-panel)", color: "var(--wa-text)" } as const;
 
 /** Ayarlar tek ekranda toplanır: altı sekme, tek pencere. */
@@ -293,7 +292,6 @@ export function ChatSettingsDialog({
   const [syncInfo, setSyncInfo] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-
   useEffect(() => {
     if (!open) return;
     if (initialTab) setTab(initialTab);
@@ -355,343 +353,343 @@ export function ChatSettingsDialog({
         </div>
 
         {tab === "profil" && (
-        <section className="mt-5">
-          <h3 className="text-sm font-semibold">Profil</h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Adınız ve e-postanız yalnızca bu cihazda saklanır; kimliğiniz numaranıza bağlıdır.
-          </p>
-          <input
-            value={alias}
-            onChange={(e) => setAliasValue(e.target.value)}
-            placeholder="Ad Soyad"
-            className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-            style={{ borderColor: "var(--wa-border)" }}
-          />
-          <input
-            value={email}
-            onChange={(e) => setEmailValue(e.target.value)}
-            placeholder="E-posta (isteğe bağlı)"
-            inputMode="email"
-            className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-            style={{ borderColor: "var(--wa-border)" }}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setAlias(alias);
-              setEmail(email);
-              setMsg("Profil kaydedildi.");
-            }}
-            className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white"
-            style={{ background: "var(--wa-accent)" }}
-          >
-            Kaydet
-          </button>
-          <dl className="mt-3 space-y-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            <div className="flex justify-between gap-2">
-              <dt>Telefon</dt>
-              <dd className="font-mono">{getPhone() || "—"}</dd>
-            </div>
-            <div className="flex justify-between gap-2">
-              <dt>Kimlik</dt>
-              <dd className="font-mono">{getBrowserNodeId()}</dd>
-            </div>
-          </dl>
-        </section>
-        )}
-
-        {tab === "rehber" && (
-        <section className="mt-5">
-          <h3 className="text-sm font-semibold">Rehber</h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Rehberiniz uygulama ön plana geldiğinde ve altı saatte bir kendiliğinden eşitlenir.
-          </p>
-          <button
-            type="button"
-            disabled={syncing}
-            onClick={() => {
-              pressFeedback();
-              setSyncing(true);
-              void autoSyncContacts()
-                .then((r) => {
-                  if (r.source === "none") {
-                    setSyncInfo(
-                      deviceContactsSupported()
-                        ? "Rehber izni verilmedi. Cihaz ayarlarından Tedbirge rehber iznini açın."
-                        : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
-                    );
-                    return;
-                  }
-                  setSyncInfo(
-                    r.matched > 0
-                      ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
-                      : `${r.checked} kişi denetlendi · rehberinizden henüz katılan yok.`,
-                  );
-                })
-                .catch(() => setSyncInfo("Rehber eşitlenemedi."))
-                .finally(() => setSyncing(false));
-            }}
-            className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
-            style={{ background: "var(--wa-accent)" }}
-          >
-            {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
-          </button>
-          {syncInfo && (
-            <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--wa-muted)" }}>
-              {syncInfo}
+          <section className="mt-5">
+            <h3 className="text-sm font-semibold">Profil</h3>
+            <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+              Adınız ve e-postanız yalnızca bu cihazda saklanır; kimliğiniz numaranıza bağlıdır.
             </p>
-          )}
-          <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-            KVKK: numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez
-            özetlerle yapılır.
-          </p>
-        </section>
-        )}
-
-        
-        {tab === "bildirim" && (
-        <>
-        {/* Bildirimler */}
-        <section className="mt-5">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Bell className="h-4 w-4" aria-hidden /> Bildirimler
-          </h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Uygulama kapalıyken bile mesaj ve arama bildirimi alırsınız. Sunucu yalnızca
-            &quot;uyandırma&quot; sinyali yollar; mesaj içeriği ve rehberiniz cihazınızdan çıkmaz.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={notify || notificationsBlocked()}
-              onClick={() =>
-                void ensureNotificationPermission().then(async (ok) => {
-                  setNotify(ok);
-                  if (ok) await enableWebPush(getBrowserNodeId());
-                })
-              }
-              className="wa-press rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
-              style={{ background: "var(--wa-accent)" }}
-            >
-              {notify
-                ? "Bildirimler açık"
-                : notificationsBlocked()
-                  ? "Tarayıcı engelledi"
-                  : "Bildirimlere izin ver"}
-            </button>
-            {notify && (
-              <button
-                type="button"
-                onClick={() =>
-                  void disableWebPush().then(() => setNotify(notificationsAllowed()))
-                }
-                className="wa-press rounded-full border px-4 py-2 text-[13px] font-semibold"
-                style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
-              >
-                Bu cihazda kapat
-              </button>
-            )}
-          </div>
-          <NotificationHealth />
-        </section>
-        </>
-        )}
-
-        {tab === "hakkinda" && (
-        <>
-        {/* Uygulamayı yükle */}
-        <section className="mt-6">
-          <h3 className="text-sm font-semibold">Uygulamayı yükle</h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Telefon, tablet ve bilgisayarınıza ücretsiz kurun; çevrimdışıyken de açılır ve
-            güncellemeler otomatik iner.
-          </p>
-          <div className="mt-2">
-            <InstallAppButton />
-          </div>
-        </section>
-        <AppVersionSection />
-        </>
-        )}
-
-
-
-
-        {tab === "gizlilik" && (
-        <>
-        {/* Kaybolan mesajlar */}
-        <section className="mt-6">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Timer className="h-4 w-4" aria-hidden /> Kaybolan mesajlar
-          </h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            {convId
-              ? "Bu sohbette gönderilen mesajlar seçtiğiniz sürenin sonunda iki cihazdan da silinir."
-              : "Bir sohbet açtığınızda süre seçebilirsiniz."}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {TTL_OPTIONS.map((o) => (
-              <button
-                key={o.ms}
-                type="button"
-                disabled={!convId}
-                onClick={() => {
-                  if (!convId) return;
-                  setTtl(convId, o.ms);
-                  setTtlValue(o.ms);
-                }}
-                className="rounded-full px-3 py-1.5 text-[12px] disabled:opacity-40"
-                style={{
-                  border: "1px solid var(--wa-border)",
-                  background: ttl === o.ms ? "var(--wa-accent)" : "transparent",
-                  color: ttl === o.ms ? "#fff" : "var(--wa-muted)",
-                }}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </section>
-        <PrivacyPresenceSection />
-        <DeviceSessionsSection />
-        </>
-        )}
-
-        {tab === "gizlilik" && (
-        <>
-        {/* Ekran kilidi */}
-        <section className="mt-6">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="h-4 w-4" aria-hidden /> Ekran kilidi
-          </h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            En az 4 haneli PIN. Cihazda yalnızca PBKDF2 türevi saklanır, PIN'in kendisi saklanmaz.
-          </p>
-          <div className="mt-2 flex gap-2">
             <input
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              inputMode="numeric"
-              placeholder={locked ? "Mevcut PIN" : "Yeni PIN"}
-              className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+              value={alias}
+              onChange={(e) => setAliasValue(e.target.value)}
+              placeholder="Ad Soyad"
+              className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "var(--wa-border)" }}
+            />
+            <input
+              value={email}
+              onChange={(e) => setEmailValue(e.target.value)}
+              placeholder="E-posta (isteğe bağlı)"
+              inputMode="email"
+              className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
               style={{ borderColor: "var(--wa-border)" }}
             />
             <button
               type="button"
               onClick={() => {
                 pressFeedback();
-                const task = locked ? disableLock(pin) : enableLock(pin);
-                void task.then((ok) => {
-                  if (!ok) return setErr(locked ? "PIN hatalı." : "PIN en az 4 hane olmalı.");
-                  setErr(null);
-                  setPin("");
-                  setLocked(!locked);
-                  setMsg(
-                    locked ? "Kilit kapatıldı." : "Kilit açıldı — uygulama beklemede kilitlenir.",
-                  );
-                });
+                setAlias(alias);
+                setEmail(email);
+                setMsg("Profil kaydedildi.");
               }}
-              className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white"
-              style={{ background: locked ? "#e03131" : "var(--wa-accent)" }}
+              className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white"
+              style={{ background: "var(--wa-accent)" }}
             >
-              {locked ? "Kaldır" : "Etkinleştir"}
+              Kaydet
             </button>
-          </div>
-          {locked && (
-            <label
-              className="mt-2 flex items-center gap-2 text-xs"
-              style={{ color: "var(--wa-muted)" }}
+            <dl className="mt-3 space-y-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+              <div className="flex justify-between gap-2">
+                <dt>Telefon</dt>
+                <dd className="font-mono">{getPhone() || "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt>Kimlik</dt>
+                <dd className="font-mono">{getBrowserNodeId()}</dd>
+              </div>
+            </dl>
+          </section>
+        )}
+
+        {tab === "rehber" && (
+          <section className="mt-5">
+            <h3 className="text-sm font-semibold">Rehber</h3>
+            <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+              Rehberiniz uygulama ön plana geldiğinde ve altı saatte bir kendiliğinden eşitlenir.
+            </p>
+            <button
+              type="button"
+              disabled={syncing}
+              onClick={() => {
+                pressFeedback();
+                setSyncing(true);
+                void autoSyncContacts()
+                  .then((r) => {
+                    if (r.source === "none") {
+                      setSyncInfo(
+                        deviceContactsSupported()
+                          ? "Rehber izni verilmedi. Cihaz ayarlarından Tedbirge rehber iznini açın."
+                          : "Tarayıcılar rehbere erişemez. Tam otomatik rehber için Tedbirge'yi iOS/Android uygulaması olarak kurun.",
+                      );
+                      return;
+                    }
+                    setSyncInfo(
+                      r.matched > 0
+                        ? `${r.checked} kişi denetlendi · ${r.matched} kişi eşleşti.`
+                        : `${r.checked} kişi denetlendi · rehberinizden henüz katılan yok.`,
+                    );
+                  })
+                  .catch(() => setSyncInfo("Rehber eşitlenemedi."))
+                  .finally(() => setSyncing(false));
+              }}
+              className="wa-press mt-2 min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+              style={{ background: "var(--wa-accent)" }}
             >
-              Hareketsizlik süresi
-              <select
-                value={minutes}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setMinutes(v);
-                  setAutoLockMinutes(v);
-                }}
-                className="rounded-md border px-2 py-1"
-                style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
-              >
-                {[1, 5, 15, 60].map((m) => (
-                  <option key={m} value={m}>
-                    {m} dakika
-                  </option>
+              {syncing ? "Eşitleniyor…" : "Rehberimi şimdi eşitle"}
+            </button>
+            {syncInfo && (
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--wa-muted)" }}>
+                {syncInfo}
+              </p>
+            )}
+            <p className="mt-3 text-[11px]" style={{ color: "var(--wa-muted)" }}>
+              KVKK: numaralarınız cihazdan çıkmaz; eşleştirme yalnızca geri döndürülemez özetlerle
+              yapılır.
+            </p>
+          </section>
+        )}
+
+        {tab === "bildirim" && (
+          <>
+            {/* Bildirimler */}
+            <section className="mt-5">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <Bell className="h-4 w-4" aria-hidden /> Bildirimler
+              </h3>
+              <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+                Uygulama kapalıyken bile mesaj ve arama bildirimi alırsınız. Sunucu yalnızca
+                &quot;uyandırma&quot; sinyali yollar; mesaj içeriği ve rehberiniz cihazınızdan
+                çıkmaz.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={notify || notificationsBlocked()}
+                  onClick={() =>
+                    void ensureNotificationPermission().then(async (ok) => {
+                      setNotify(ok);
+                      if (ok) await enableWebPush(getBrowserNodeId());
+                    })
+                  }
+                  className="wa-press rounded-full px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+                  style={{ background: "var(--wa-accent)" }}
+                >
+                  {notify
+                    ? "Bildirimler açık"
+                    : notificationsBlocked()
+                      ? "Tarayıcı engelledi"
+                      : "Bildirimlere izin ver"}
+                </button>
+                {notify && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void disableWebPush().then(() => setNotify(notificationsAllowed()))
+                    }
+                    className="wa-press rounded-full border px-4 py-2 text-[13px] font-semibold"
+                    style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
+                  >
+                    Bu cihazda kapat
+                  </button>
+                )}
+              </div>
+              <NotificationHealth />
+            </section>
+          </>
+        )}
+
+        {tab === "hakkinda" && (
+          <>
+            {/* Uygulamayı yükle */}
+            <section className="mt-6">
+              <h3 className="text-sm font-semibold">Uygulamayı yükle</h3>
+              <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+                Telefon, tablet ve bilgisayarınıza ücretsiz kurun; çevrimdışıyken de açılır ve
+                güncellemeler otomatik iner.
+              </p>
+              <div className="mt-2">
+                <InstallAppButton />
+              </div>
+            </section>
+            <AppVersionSection />
+          </>
+        )}
+
+        {tab === "gizlilik" && (
+          <>
+            {/* Kaybolan mesajlar */}
+            <section className="mt-6">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <Timer className="h-4 w-4" aria-hidden /> Kaybolan mesajlar
+              </h3>
+              <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+                {convId
+                  ? "Bu sohbette gönderilen mesajlar seçtiğiniz sürenin sonunda iki cihazdan da silinir."
+                  : "Bir sohbet açtığınızda süre seçebilirsiniz."}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {TTL_OPTIONS.map((o) => (
+                  <button
+                    key={o.ms}
+                    type="button"
+                    disabled={!convId}
+                    onClick={() => {
+                      if (!convId) return;
+                      setTtl(convId, o.ms);
+                      setTtlValue(o.ms);
+                    }}
+                    className="rounded-full px-3 py-1.5 text-[12px] disabled:opacity-40"
+                    style={{
+                      border: "1px solid var(--wa-border)",
+                      background: ttl === o.ms ? "var(--wa-accent)" : "transparent",
+                      color: ttl === o.ms ? "#fff" : "var(--wa-muted)",
+                    }}
+                  >
+                    {o.label}
+                  </button>
                 ))}
-              </select>
-            </label>
-          )}
-        </section>
-        </>
+              </div>
+            </section>
+            <PrivacyPresenceSection />
+            <DeviceSessionsSection />
+          </>
+        )}
+
+        {tab === "gizlilik" && (
+          <>
+            {/* Ekran kilidi */}
+            <section className="mt-6">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <ShieldCheck className="h-4 w-4" aria-hidden /> Ekran kilidi
+              </h3>
+              <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+                En az 4 haneli PIN. Cihazda yalnızca PBKDF2 türevi saklanır, PIN'in kendisi
+                saklanmaz.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  inputMode="numeric"
+                  placeholder={locked ? "Mevcut PIN" : "Yeni PIN"}
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none"
+                  style={{ borderColor: "var(--wa-border)" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    const task = locked ? disableLock(pin) : enableLock(pin);
+                    void task.then((ok) => {
+                      if (!ok) return setErr(locked ? "PIN hatalı." : "PIN en az 4 hane olmalı.");
+                      setErr(null);
+                      setPin("");
+                      setLocked(!locked);
+                      setMsg(
+                        locked
+                          ? "Kilit kapatıldı."
+                          : "Kilit açıldı — uygulama beklemede kilitlenir.",
+                      );
+                    });
+                  }}
+                  className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white"
+                  style={{ background: locked ? "#e03131" : "var(--wa-accent)" }}
+                >
+                  {locked ? "Kaldır" : "Etkinleştir"}
+                </button>
+              </div>
+              {locked && (
+                <label
+                  className="mt-2 flex items-center gap-2 text-xs"
+                  style={{ color: "var(--wa-muted)" }}
+                >
+                  Hareketsizlik süresi
+                  <select
+                    value={minutes}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setMinutes(v);
+                      setAutoLockMinutes(v);
+                    }}
+                    className="rounded-md border px-2 py-1"
+                    style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
+                  >
+                    {[1, 5, 15, 60].map((m) => (
+                      <option key={m} value={m}>
+                        {m} dakika
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </section>
+          </>
         )}
 
         {tab === "esitleme" && <SyncStatusSection />}
 
         {tab === "depolama" && (
-        <>
-        {/* Yedekleme */}
-        <section className="mt-6">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Download className="h-4 w-4" aria-hidden /> Yedekleme ve cihaz taşıma
-          </h3>
-          <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
-            Tüm geçmiş, parolanızla şifrelenmiş tek bir .tbg dosyasına yazılır. Dosya buluta
-            yüklenmez.
-          </p>
-          <input
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-            type="password"
-            placeholder="Yedek parolası (en az 8 karakter)"
-            className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
-            style={{ borderColor: "var(--wa-border)" }}
-          />
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setErr(null);
-                void createBackup(pass)
-                  .then((b) => {
-                    downloadBackup(b);
-                    setMsg("Yedek indirildi.");
-                  })
-                  .catch((e: Error) => setErr(e.message));
-              }}
-              className="flex-1 rounded-lg px-3 py-2 text-[13px] font-semibold text-white"
-              style={{ background: "var(--wa-accent)" }}
-            >
-              Yedek al
-            </button>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex-1 rounded-lg px-3 py-2 text-[13px] font-semibold"
-              style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-            >
-              <Upload className="mr-1 inline h-3.5 w-3.5" /> Geri yükle
-            </button>
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".tbg,application/json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              e.target.value = "";
-              if (!f) return;
-              setErr(null);
-              void f
-                .text()
-                .then((t) => restoreBackup(t, pass))
-                .then((r) => setMsg(`${r.messages} mesaj geri yüklendi. Sayfayı yenileyin.`))
-                .catch((x: Error) => setErr(x.message));
-            }}
-          />
-        </section>
-        </>
+          <>
+            {/* Yedekleme */}
+            <section className="mt-6">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <Download className="h-4 w-4" aria-hidden /> Yedekleme ve cihaz taşıma
+              </h3>
+              <p className="mt-1 text-xs" style={{ color: "var(--wa-muted)" }}>
+                Tüm geçmiş, parolanızla şifrelenmiş tek bir .tbg dosyasına yazılır. Dosya buluta
+                yüklenmez.
+              </p>
+              <input
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                type="password"
+                placeholder="Yedek parolası (en az 8 karakter)"
+                className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                style={{ borderColor: "var(--wa-border)" }}
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setErr(null);
+                    void createBackup(pass)
+                      .then((b) => {
+                        downloadBackup(b);
+                        setMsg("Yedek indirildi.");
+                      })
+                      .catch((e: Error) => setErr(e.message));
+                  }}
+                  className="flex-1 rounded-lg px-3 py-2 text-[13px] font-semibold text-white"
+                  style={{ background: "var(--wa-accent)" }}
+                >
+                  Yedek al
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="flex-1 rounded-lg px-3 py-2 text-[13px] font-semibold"
+                  style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+                >
+                  <Upload className="mr-1 inline h-3.5 w-3.5" /> Geri yükle
+                </button>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".tbg,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  setErr(null);
+                  void f
+                    .text()
+                    .then((t) => restoreBackup(t, pass))
+                    .then((r) => setMsg(`${r.messages} mesaj geri yüklendi. Sayfayı yenileyin.`))
+                    .catch((x: Error) => setErr(x.message));
+                }}
+              />
+            </section>
+          </>
         )}
 
         {msg && (
@@ -767,7 +765,9 @@ function DeviceSessionsSection() {
             <span className="min-w-0">
               <span className="block truncate text-[13px] font-medium">{sx.label}</span>
               <span className="block text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                {sx.self ? "Bu cihaz" : `Son etkin: ${new Date(sx.lastSeen).toLocaleString("tr-TR")}`}
+                {sx.self
+                  ? "Bu cihaz"
+                  : `Son etkin: ${new Date(sx.lastSeen).toLocaleString("tr-TR")}`}
               </span>
             </span>
             {!sx.self && (

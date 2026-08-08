@@ -122,7 +122,8 @@ export function bootFeed() {
     if (!b || b.kind !== "feed.post" || !b.post || typeof b.post.id !== "string") return;
     const p = b.post;
     if (typeof p.text !== "string" || p.text.length > 5000) return;
-    if (p.media && (typeof p.media.dataUrl !== "string" || p.media.dataUrl.length > 700_000)) return;
+    if (p.media && (typeof p.media.dataUrl !== "string" || p.media.dataUrl.length > 700_000))
+      return;
     add({
       id: p.id,
       author: typeof p.author === "string" ? p.author : from,

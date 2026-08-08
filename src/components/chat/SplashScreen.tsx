@@ -33,7 +33,10 @@ export function SplashScreen({ label = "Yükleniyor…" }: { label?: string }) {
         className="h-[3px] w-56 overflow-hidden rounded-full"
         style={{ background: "var(--wa-border)" }}
       >
-        <div className="tb-splash-bar h-full w-1/3 rounded-full" style={{ background: "var(--wa-accent)" }} />
+        <div
+          className="tb-splash-bar h-full w-1/3 rounded-full"
+          style={{ background: "var(--wa-accent)" }}
+        />
       </div>
 
       <p className="sr-only">{label}</p>

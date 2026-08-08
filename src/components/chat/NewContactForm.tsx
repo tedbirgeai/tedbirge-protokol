@@ -189,10 +189,7 @@ function Field({ icon, children }: { icon?: React.ReactNode; children: React.Rea
       <span className="w-5 shrink-0" style={{ color: "var(--wa-muted)" }} aria-hidden>
         {icon}
       </span>
-      <div
-        className="min-w-0 flex-1"
-        style={{ borderBottom: "1px solid var(--wa-border)" }}
-      >
+      <div className="min-w-0 flex-1" style={{ borderBottom: "1px solid var(--wa-border)" }}>
         {children}
       </div>
     </div>
