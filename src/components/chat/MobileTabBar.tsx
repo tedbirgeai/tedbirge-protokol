@@ -2,15 +2,12 @@ import { MessageCircle, Phone, Users } from "lucide-react";
 
 import { pressFeedback } from "@/lib/chat/sounds";
 import { Avatar } from "@/components/chat/Avatar";
+import { MOBILE_APPS, type ShellAppId } from "@/shell/apps";
 
-export type MobileTab = "calls" | "communities" | "chats" | "me";
+/** Sekme kimliği = kabuk uygulama kimliği (bkz. src/shell/apps.ts). */
+export type MobileTab = ShellAppId;
 
-const TABS: { id: MobileTab; label: string }[] = [
-  { id: "calls", label: "Aramalar" },
-  { id: "communities", label: "Topluluklar" },
-  { id: "chats", label: "Sohbetler" },
-  { id: "me", label: "Siz" },
-];
+const TABS = MOBILE_APPS;
 
 /**
  * MOBİL ALT SEKME ÇUBUĞU

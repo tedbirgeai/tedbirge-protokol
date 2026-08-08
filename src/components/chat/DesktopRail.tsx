@@ -3,6 +3,7 @@ import { MessageCircle, Phone, Settings, Users } from "lucide-react";
 import { Avatar } from "@/components/chat/Avatar";
 import { pressFeedback } from "@/lib/chat/sounds";
 import type { MobileTab } from "@/components/chat/MobileTabBar";
+import { RAIL_APPS } from "@/shell/apps";
 
 /**
  * MASAÜSTÜ SOL RAY
@@ -11,11 +12,7 @@ import type { MobileTab } from "@/components/chat/MobileTabBar";
  * masaüstü karşılığıdır; aynı sekme durumunu kullanır, bu yüzden iki
  * düzen arasında davranış farkı oluşmaz. Genişlik `--wa-rail-w`.
  */
-const ITEMS: { id: MobileTab; label: string }[] = [
-  { id: "chats", label: "Sohbetler" },
-  { id: "calls", label: "Aramalar" },
-  { id: "communities", label: "Topluluklar" },
-];
+const ITEMS = RAIL_APPS;
 
 export function DesktopRail({
   value,

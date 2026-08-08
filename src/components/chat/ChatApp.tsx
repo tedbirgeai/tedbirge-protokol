@@ -142,7 +142,8 @@ import {
   unlockAudio,
   vibrate,
 } from "@/lib/chat/sounds";
-import { useNodeRuntime } from "@/lib/node-runtime";
+import { ShellProvider, useShell } from "@/shell/ShellProvider";
+import "@/kernel/ts-provider";
 import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { listCalls } from "@/lib/chat/call-log";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
@@ -185,496 +186,14 @@ import { IDB_BLOCKED_EVENT } from "@/lib/store/idb";
 
 import type { ChatMessage, Conversation } from "@/lib/store/idb";
 
-function timeOf(ts: number) {
-  return new Date(ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-}
-
-const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
-
-const EMOJIS = [
-  "😀",
-  "😃",
-  "😄",
-  "😁",
-  "😆",
-  "😅",
-  "😂",
-  "🤣",
-  "😊",
-  "🙂",
-  "😉",
-  "😍",
-  "😘",
-  "😗",
-  "🤗",
-  "🤔",
-  "😐",
-  "😴",
-  "😷",
-  "🤒",
-  "😎",
-  "🥳",
-  "😢",
-  "😭",
-  "😡",
-  "👍",
-  "👎",
-  "👏",
-  "🙏",
-  "💪",
-  "🤝",
-  "✌️",
-  "❤️",
-  "💔",
-  "🔥",
-  "⭐",
-  "✅",
-  "❌",
-  "⚠️",
-  "📍",
-  "📞",
-  "📷",
-  "🎉",
-  "☕",
-  "🍽️",
-  "🚗",
-  "🏠",
-  "🔋",
-];
-
-/** Gün ayırıcı etiketi — bugün / dün / tarih. */
-function dayLabel(ts: number) {
-  const d = new Date(ts);
-  const today = new Date();
-  const yest = new Date(today.getTime() - 86_400_000);
-  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  if (same(d, today)) return "Bugün";
-  if (same(d, yest)) return "Dün";
-  return d.toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
-}
-
-/** Ham cihaz kimliklerini gizler; kullanıcıya okunabilir bir ad gösterir. */
-function displayName(value: string, alias?: string) {
-  if (alias && alias.trim()) return alias;
-  const looksLikeId = /^[a-z]{2,6}-[0-9a-f]{6,}$/i.test(value) || /^[0-9a-f-]{16,}$/i.test(value);
-  if (!looksLikeId) return value;
-  const tail = value
-    .replace(/[^0-9a-z]/gi, "")
-    .slice(-4)
-    .toUpperCase();
-  return `Cihaz ${tail}`;
-}
-
-/* Avatar ve baş harf yardımcıları ortak bileşene taşındı:
-   `@/components/chat/Avatar` (Avatar, initials, avatarColor). */
-
-
-function StatusIcon({ msg }: { msg: ChatMessage }) {
-  if (!msg.outgoing) return null;
-  if (msg.status === "failed")
-    return (
-      <button
-        type="button"
-        className="wa-press inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-        style={{ background: "var(--wa-panel)", color: "var(--destructive)" }}
-        onClick={() => void retryMessage(msg.id)}
-        aria-label="İletilemedi — yeniden dene"
-      >
-        <RotateCw className="h-3.5 w-3.5" />
-        iletilemedi · yeniden dene
-      </button>
-    );
-  if (msg.status === "pending")
-    return (
-      <Clock
-        className="h-3.5 w-3.5"
-        style={{ color: "var(--wa-tick)" }}
-        aria-label="Bekliyor — bağlantı gelince gönderilecek"
-      />
-    );
-  if (msg.status === "read")
-    return (
-      <CheckCheck
-        className="h-4 w-4"
-        style={{ color: "var(--wa-tick-read)" }}
-        aria-label="Okundu"
-      />
-    );
-  if (msg.status === "delivered")
-    return (
-      <CheckCheck className="h-4 w-4" style={{ color: "var(--wa-tick)" }} aria-label="İletildi" />
-    );
-  return (
-    <Check
-      className="h-4 w-4"
-      style={{ color: "var(--wa-tick)" }}
-      aria-label="Röle üzerinden gönderildi"
-    />
-  );
-}
-
-/** Tek mesaj balonu — yanıt alıntısı, tepkiler ve hızlı eylemler. */
-function MessageRow({
-  msg,
-  authorName,
-  showAuthor,
-  progress,
-  pinned,
-  translateTo,
-  onReply,
-  onImage,
-  onEdit,
-  onForward,
-}: {
-  msg: ChatMessage;
-  authorName: string;
-  showAuthor: boolean;
-  progress?: number;
-  pinned?: boolean;
-  translateTo?: string;
-  onReply: (m: ChatMessage) => void;
-  onImage: (src: string) => void;
-  onEdit: (m: ChatMessage) => void;
-  onForward: (m: ChatMessage) => void;
-}) {
-  const [menu, setMenu] = useState(false);
-  const [translated, setTranslated] = useState<string | null>(null);
-  const reactions = Object.values(msg.reactions ?? {});
-
-  // Otomatik çeviri: yalnızca gelen metin mesajları, cihazda önbelleklenir.
-  useEffect(() => {
-    setTranslated(null);
-    const text = msg.text?.trim();
-    if (!translateTo || msg.outgoing || msg.deleted || !text) return;
-    const hit = cachedTranslation(text, translateTo);
-    if (hit) {
-      setTranslated(hit);
-      return;
-    }
-    let alive = true;
-    void translateText(text, translateTo).then((r) => {
-      if (alive && !r.error && r.text && r.text !== text) setTranslated(r.text);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [msg.id, msg.text, msg.outgoing, msg.deleted, translateTo]);
-
-  function quickReact(emoji: string) {
-    pressFeedback();
-    void reactToMessage(msg.id, emoji);
-    setMenu(false);
-  }
-
-  const isSos = msg.kind === "sos";
-
-  return (
-    <div className={`group flex ${msg.outgoing ? "justify-end" : "justify-start"}`}>
-      <div className="relative max-w-[80%]">
-        <div
-          className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
-          style={{
-            background: isSos
-              ? "#fff0f0"
-              : msg.outgoing
-                ? "var(--wa-bubble-out)"
-                : "var(--wa-bubble-in)",
-            color: "var(--wa-text)",
-            border: isSos ? "1px solid #e03131" : undefined,
-          }}
-          onDoubleClick={() => quickReact("👍")}
-        >
-          {showAuthor && !msg.outgoing && (
-            <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
-              {authorName}
-            </p>
-          )}
-
-          {(msg.forwarded || pinned) && (
-            <p
-              className="mb-0.5 flex items-center gap-1 text-[11px] italic"
-              style={{ color: "var(--wa-muted)" }}
-            >
-              {msg.forwarded && (
-                <>
-                  <Forward className="h-3 w-3" aria-hidden />
-                  İletildi{msg.forwardedFrom ? ` · ${msg.forwardedFrom}` : ""}
-                </>
-              )}
-              {pinned && (
-                <>
-                  <Pin className="h-3 w-3" aria-hidden /> Sabitlenmiş
-                </>
-              )}
-            </p>
-          )}
-
-          {msg.replyTo && (
-            <div
-              className="mb-1 rounded-md border-l-[3px] px-2 py-1 text-[12.5px]"
-              style={{
-                borderColor: "var(--wa-accent)",
-                background: "rgba(0,0,0,0.05)",
-                color: "var(--wa-muted)",
-              }}
-            >
-              <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
-                {msg.replyTo.author}
-              </span>
-              <span className="line-clamp-2 break-words">{msg.replyTo.text || "Ek"}</span>
-            </div>
-          )}
-
-          {msg.deleted ? (
-            <p className="italic" style={{ color: "var(--wa-muted)" }}>
-              Bu mesaj silindi
-            </p>
-          ) : msg.geo ? (
-            <div>
-              {isSos && (
-                <p
-                  className="mb-1 flex items-center gap-1 text-[13px] font-bold"
-                  style={{ color: "#e03131" }}
-                >
-                  <Siren className="h-4 w-4" aria-hidden /> ACİL DURUM YAYINI
-                </p>
-              )}
-              {msg.geo.frame && (
-                <img
-                  src={msg.geo.frame}
-                  alt="Çevrimdışı konum haritası"
-                  onClick={() => onImage(msg.geo!.frame!)}
-                  className="mb-1 max-h-56 cursor-zoom-in rounded-md"
-                />
-              )}
-              <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-              {msg.geo.note && (
-                <p className="mt-0.5 text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                  {msg.geo.note}
-                </p>
-              )}
-              {typeof msg.geo.battery === "number" && (
-                <p className="mt-0.5 text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  🔋 %{Math.round(msg.geo.battery)}
-                  {msg.geo.charging ? " · şarjda" : ""}
-                </p>
-              )}
-              <a
-                href={geoUri({ lat: msg.geo.lat, lon: msg.geo.lon, ts: msg.ts })}
-                className="mt-1 inline-flex items-center gap-1 text-[12px] underline"
-                style={{ color: "var(--wa-accent)" }}
-              >
-                <MapPin className="h-3 w-3" aria-hidden /> Harita uygulamasında aç
-              </a>
-            </div>
-          ) : msg.kind === "media" && msg.media ? (
-            msg.media.mime.startsWith("image/") ? (
-              <img
-                src={msg.media.dataUrl}
-                alt={msg.media.name}
-                onClick={() => onImage(msg.media!.dataUrl)}
-                className="max-h-64 cursor-zoom-in rounded-md"
-              />
-            ) : msg.media.mime.startsWith("audio/") ? (
-              <div>
-                <audio controls src={msg.media.dataUrl} className="w-56" />
-                {msg.transcript && (
-                  <p className="mt-1 text-[12.5px] italic" style={{ color: "var(--wa-muted)" }}>
-                    “{msg.transcript}”
-                  </p>
-                )}
-              </div>
-            ) : (
-              <a href={msg.media.dataUrl} download={msg.media.name} className="underline">
-                {msg.media.name} · {humanSize(msg.media.size)}
-              </a>
-            )
-          ) : (
-            <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-          )}
-
-          {translated && (
-            <p
-              className="mt-1 flex items-start gap-1 border-t pt-1 text-[13px]"
-              style={{ borderColor: "var(--wa-border)", color: "var(--wa-muted)" }}
-            >
-              <Languages className="mt-[3px] h-3 w-3 shrink-0" aria-hidden />
-              <span className="whitespace-pre-wrap break-words">{translated}</span>
-            </p>
-          )}
-
-          <div
-            className="mt-0.5 flex items-center justify-end gap-1 text-[11px]"
-            style={{ color: "var(--wa-muted)" }}
-          >
-            {msg.editedAt && <span>düzenlendi</span>}
-            {msg.starred && <Star className="h-3 w-3 fill-current" aria-label="Yıldızlı" />}
-            <span>{timeOf(msg.ts)}</span>
-            <StatusIcon msg={msg} />
-          </div>
-
-          {progress !== undefined && (
-            <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-              Aktarılıyor · %{progress}
-            </p>
-          )}
-
-          {reactions.length > 0 && (
-            <div
-              className="wa-pop absolute -bottom-3 right-2 flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-[12px] shadow"
-              aria-label="Tepkiler"
-            >
-              {Array.from(new Set(reactions))
-                .slice(0, 3)
-                .map((e) => (
-                  <span key={e}>{e}</span>
-                ))}
-              {reactions.length > 1 && (
-                <span className="text-[10px]" style={{ color: "var(--wa-muted)" }}>
-                  {reactions.length}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Hızlı eylemler */}
-        <button
-          type="button"
-          onClick={() => {
-            pressFeedback();
-            setMenu((v) => !v);
-          }}
-          className={`wa-press absolute top-1 ${msg.outgoing ? "-left-7" : "-right-7"} rounded-full p-1 opacity-0 group-hover:opacity-100 focus:opacity-100`}
-          style={{ color: "var(--wa-muted)" }}
-          aria-label="Mesaj seçenekleri"
-        >
-          <ChevronDown className="h-4 w-4" />
-        </button>
-
-        {menu && (
-          <div
-            className="wa-pop absolute z-20 mt-1 w-max rounded-xl bg-white p-1.5 shadow-lg"
-            style={{ [msg.outgoing ? "right" : "left"]: 0, top: "100%" }}
-          >
-            <div className="flex gap-1 px-1 pb-1.5">
-              {QUICK_REACTIONS.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => quickReact(e)}
-                  className="wa-press rounded-full px-1 text-lg"
-                  aria-label={`Tepki ${e}`}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-            <MenuItem
-              icon={<Reply className="h-4 w-4" />}
-              label="Yanıtla"
-              onClick={() => {
-                onReply(msg);
-                setMenu(false);
-              }}
-            />
-            {!msg.deleted && (
-              <MenuItem
-                icon={<Forward className="h-4 w-4" />}
-                label="İlet / alıntılı ilet"
-                onClick={() => {
-                  onForward(msg);
-                  setMenu(false);
-                }}
-              />
-            )}
-            {msg.outgoing && msg.kind === "text" && canEdit(msg) && (
-              <MenuItem
-                icon={<Pencil className="h-4 w-4" />}
-                label={`Düzenle (${remainingWindow(msg, EDIT_WINDOW_MS)})`}
-                onClick={() => {
-                  onEdit(msg);
-                  setMenu(false);
-                }}
-              />
-            )}
-            {!msg.deleted && (
-              <MenuItem
-                icon={<Pin className="h-4 w-4" />}
-                label={pinned ? "Sabitlemeyi kaldır" : "Sohbete sabitle"}
-                onClick={() => {
-                  void pinMessage(msg.convId, pinned ? null : msg.id);
-                  setMenu(false);
-                }}
-              />
-            )}
-            {msg.kind === "text" && !msg.deleted && (
-              <MenuItem
-                icon={<Copy className="h-4 w-4" />}
-                label="Kopyala"
-                onClick={() => {
-                  void navigator.clipboard.writeText(msg.text).catch(() => undefined);
-                  setMenu(false);
-                }}
-              />
-            )}
-            <MenuItem
-              icon={<Star className="h-4 w-4" />}
-              label={msg.starred ? "Yıldızı kaldır" : "Yıldızla"}
-              onClick={() => {
-                void toggleStar(msg.id);
-                setMenu(false);
-              }}
-            />
-            {canDeleteForEveryone(msg) && (
-              <MenuItem
-                icon={<Trash2 className="h-4 w-4" />}
-                label="Herkesten sil"
-                onClick={() => {
-                  void deleteMessage(msg.id, true);
-                  setMenu(false);
-                }}
-              />
-            )}
-            <MenuItem
-              icon={<Trash2 className="h-4 w-4" />}
-              label="Bende sil"
-              onClick={() => {
-                void deleteMessage(msg.id, false);
-                setMenu(false);
-              }}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MenuItem({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        pressFeedback();
-        onClick();
-      }}
-      className="wa-press flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-black/5"
-      style={{ color: "var(--wa-text)" }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+import {
+  dayLabel,
+  displayName,
+  EMOJIS,
+  MenuItem,
+  MessageRow,
+  timeOf,
+} from "@/apps/messenger/MessageRow";
 
 const CALLS_TAB = "__calls";
 // Süzgeç çipleri: gerçek klasör değil, listeyi daraltan görünümlerdir.
@@ -683,6 +202,16 @@ const FAV_TAB = "__fav";
 const GROUPS_TAB = "__groups";
 
 export function ChatApp() {
+  return (
+    <ShellProvider>
+      <ChatAppInner />
+    </ShellProvider>
+  );
+}
+
+function ChatAppInner() {
+  const shell = useShell();
+  const surface = shell.surfaces;
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
 
@@ -699,13 +228,18 @@ export function ChatApp() {
   const [recording, setRecording] = useState(false);
   const [recSecs, setRecSecs] = useState(0);
   const [soundOff, setSoundOff] = useState(false);
-  const [contactsOpen, setContactsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const contactsOpen = surface.isOpen("contacts");
+  const setContactsOpen = (v: boolean) => surface.set("contacts", v);
+  const searchOpen = surface.isOpen("search");
+  const setSearchOpen = (v: boolean) => surface.set("search", v);
   // "Siz" sekmesinden açılan profil ve karekod ekranları.
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [qrOpen, setQrOpen] = useState(false);
+  const profileOpen = surface.isOpen("profile");
+  const setProfileOpen = (v: boolean) => surface.set("profile", v);
+  const qrOpen = surface.isOpen("qr");
+  const setQrOpen = (v: boolean) => surface.set("qr", v);
   const [profileTick, setProfileTick] = useState(0);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsOpen = surface.isOpen("settings");
+  const setSettingsOpen = (v: boolean) => surface.set("settings", v);
   // Ayarların hangi sekmeyle açılacağı ("Siz > Bildirimler" doğrudan
   // bildirim sekmesine düşer; arama sırasında izin sorulmaz).
   const [settingsTab, setSettingsTab] = useState<SettingsTab | undefined>(undefined);
@@ -714,18 +248,25 @@ export function ChatApp() {
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [forwardMsg, setForwardMsg] = useState<ChatMessage | null>(null);
   const [editing, setEditing] = useState<ChatMessage | null>(null);
-  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const emergencyOpen = surface.isOpen("emergency");
+  const setEmergencyOpen = (v: boolean) => surface.set("emergency", v);
   const [folder, setFolder] = useState<string>("");
-  const [galleryOpen, setGalleryOpen] = useState(false);
+  const galleryOpen = surface.isOpen("gallery");
+  const setGalleryOpen = (v: boolean) => surface.set("gallery", v);
   const [muteMenu, setMuteMenu] = useState(false);
   const [folderVersion, setFolderVersion] = useState(0);
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
-  const [newContactOpen, setNewContactOpen] = useState(false);
+  const newContactOpen = surface.isOpen("newContact");
+  const setNewContactOpen = (v: boolean) => surface.set("newContact", v);
   // Arama ekranları: yeni arama, tuş takımı, planlama ve arama bağlantısı.
-  const [newCallOpen, setNewCallOpen] = useState(false);
-  const [dialpadOpen, setDialpadOpen] = useState(false);
-  const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [callLinkOpen, setCallLinkOpen] = useState(false);
+  const newCallOpen = surface.isOpen("newCall");
+  const setNewCallOpen = (v: boolean) => surface.set("newCall", v);
+  const dialpadOpen = surface.isOpen("dialpad");
+  const setDialpadOpen = (v: boolean) => surface.set("dialpad", v);
+  const scheduleOpen = surface.isOpen("schedule");
+  const setScheduleOpen = (v: boolean) => surface.set("schedule", v);
+  const callLinkOpen = surface.isOpen("callLink");
+  const setCallLinkOpen = (v: boolean) => surface.set("callLink", v);
 
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [privacy, setPrivacyState] = useState(() => getPrivacy());
@@ -742,7 +283,7 @@ export function ChatApp() {
 
   const lock = useLock();
   const chat = useChat();
-  const node = useNodeRuntime();
+  const node = shell.node;
   const messages = useConversationMessages(activeId);
 
   // Klasör ve gizlilik tercihleri değişince liste ve çeviri anında yenilenir.
@@ -906,96 +447,90 @@ export function ChatApp() {
     }
     return set;
   }, [chat.conversations]);
-  const conversations = useMemo(
-    () => {
-      const pseudo = folder === UNREAD_TAB || folder === FAV_TAB || folder === GROUPS_TAB;
-      const rows = allConversations.filter((c) => {
-        const f = folderOf(c.id);
-        if (pseudo || folder === "" ? f === ARCHIVE : f !== folder) return false;
-        if (folder === UNREAD_TAB && !(c.unread > 0 || isMarkedUnread(c.id))) return false;
-        if (folder === FAV_TAB && !isFavorite(c.id)) return false;
-        if (folder === GROUPS_TAB && !c.group) return false;
-        if (c.id === SELF_CONV_ID) return true;
-        // Boş sohbet listeye girmez: en az bir mesaj ya da arama kaydı şart.
-        const hasActivity = Boolean(c.lastText) || c.unread > 0;
-        if (!hasActivity && !callTouched.has(c.id)) return false;
-        // Adı çözülemeyen kayıt hiç oluşturulmaz.
-        if (!isNamed(c)) return false;
-        // Son güvenlik ağı: başlık yine de nötr etikete düşüyorsa listelenmez.
-        if (!c.group && isTechnicalLabel(safeTitleOf(c))) return false;
-        // Kendi diğer cihazlarım ayrı sohbet satırı açmaz ("Kendinize not" hariç).
-        if (
-          !c.group &&
-          isSelfPerson({
-            id: c.members?.[0],
-            personId: nameKeyOf(c.members?.[0] ?? ""),
-            phoneHash: resolvePhoneHash(c.members?.[0] ?? ""),
-            name: safeTitleOf(c),
-          })
-        )
-          return false;
-        return true;
-      });
-      // TEK KİŞİ = TEK SATIR. Aynı kişinin farklı cihazlarıyla açılmış
-      // sohbetler numara çıpası/kişi kimliği üzerinden tek satırda toplanır;
-      // en son hareket gören sohbet listede kalır.
-      const byPerson = new Map<string, (typeof rows)[number][]>();
-      const out: typeof rows = [];
-      for (const c of rows) {
-        const member = c.members?.[0];
-        if (c.group || c.id === SELF_CONV_ID || !member) {
-          out.push(c);
-          continue;
-        }
-        // Kanonik anahtar: numara özeti → kişi kimliği → normalize ad.
-        const linked = nameKeyOf(member);
-        const key = personGroupKey({
-          phoneHash: resolvePhoneHash(member),
-          personId: linked !== member ? linked : "",
+  const conversations = useMemo(() => {
+    const pseudo = folder === UNREAD_TAB || folder === FAV_TAB || folder === GROUPS_TAB;
+    const rows = allConversations.filter((c) => {
+      const f = folderOf(c.id);
+      if (pseudo || folder === "" ? f === ARCHIVE : f !== folder) return false;
+      if (folder === UNREAD_TAB && !(c.unread > 0 || isMarkedUnread(c.id))) return false;
+      if (folder === FAV_TAB && !isFavorite(c.id)) return false;
+      if (folder === GROUPS_TAB && !c.group) return false;
+      if (c.id === SELF_CONV_ID) return true;
+      // Boş sohbet listeye girmez: en az bir mesaj ya da arama kaydı şart.
+      const hasActivity = Boolean(c.lastText) || c.unread > 0;
+      if (!hasActivity && !callTouched.has(c.id)) return false;
+      // Adı çözülemeyen kayıt hiç oluşturulmaz.
+      if (!isNamed(c)) return false;
+      // Son güvenlik ağı: başlık yine de nötr etikete düşüyorsa listelenmez.
+      if (!c.group && isTechnicalLabel(safeTitleOf(c))) return false;
+      // Kendi diğer cihazlarım ayrı sohbet satırı açmaz ("Kendinize not" hariç).
+      if (
+        !c.group &&
+        isSelfPerson({
+          id: c.members?.[0],
+          personId: nameKeyOf(c.members?.[0] ?? ""),
+          phoneHash: resolvePhoneHash(c.members?.[0] ?? ""),
           name: safeTitleOf(c),
-          fallback: member,
-        });
-
-        const bucket = byPerson.get(key);
-        if (bucket) bucket.push(c);
-        else byPerson.set(key, [c]);
+        })
+      )
+        return false;
+      return true;
+    });
+    // TEK KİŞİ = TEK SATIR. Aynı kişinin farklı cihazlarıyla açılmış
+    // sohbetler numara çıpası/kişi kimliği üzerinden tek satırda toplanır;
+    // en son hareket gören sohbet listede kalır.
+    const byPerson = new Map<string, (typeof rows)[number][]>();
+    const out: typeof rows = [];
+    for (const c of rows) {
+      const member = c.members?.[0];
+      if (c.group || c.id === SELF_CONV_ID || !member) {
+        out.push(c);
+        continue;
       }
-      // İkinci geçiş: aynı ad = aynı kişi (numara özeti çakışmıyorsa).
-      mergeGroupsByName(
-        byPerson,
-        (bucket) => bucket.map((c) => safeTitleOf(c)).find((v) => v.trim()) ?? "",
-        (bucket) => bucket.map((c) => resolvePhoneHash(c.members?.[0] ?? "")).find(Boolean),
-      );
-      // Her kişiden en son hareket gören sohbet listede kalır; diğer
-      // cihazların kimlikleri üyelerde korunur (arama doğru cihaza gitsin).
-      const collapsed = Array.from(byPerson.values()).map((bucket) => {
-        const sorted = [...bucket].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
-        const primary = sorted[0]!;
-        if (sorted.length === 1) return primary;
-        // ÖNEMLİ: adı çözülen birincil cihaz kimliği daima members[0] kalır.
-        // Aksi halde birleştirilmiş satırın başlığı adsız bir cihaza düşüp
-        // "Tedbirge kullanıcısı" yer tutucusu olarak görünüyordu.
-        const head = primary.members?.[0];
-        const named =
-          sorted.map((c) => c.members?.[0]).find((m) => m && resolveDisplayName(m).trim()) ?? head;
-        const rest = Array.from(new Set(sorted.flatMap((c) => c.members ?? []))).filter(
-          (m) => m !== named,
-        );
-        const members = named ? [named, ...rest] : rest;
-        const title = sorted.map((c) => safeTitleOf(c)).find((t) => !isTechnicalLabel(t));
-        return { ...primary, members, title: title ?? primary.title };
+      // Kanonik anahtar: numara özeti → kişi kimliği → normalize ad.
+      const linked = nameKeyOf(member);
+      const key = personGroupKey({
+        phoneHash: resolvePhoneHash(member),
+        personId: linked !== member ? linked : "",
+        name: safeTitleOf(c),
+        fallback: member,
       });
-      // SON KAPI: birleştirme sonrası başlığı yine yer tutucuya düşen satır
-      // (adsız cihaz kalıntısı) listeye hiç girmez.
-      return [...out, ...collapsed]
-        .filter((c) => c.id === SELF_CONV_ID || c.group || !isTechnicalLabel(safeTitleOf(c)))
-        .sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
 
-
-    },
-    [allConversations, folder, folderVersion, callTouched],
-  );
-
+      const bucket = byPerson.get(key);
+      if (bucket) bucket.push(c);
+      else byPerson.set(key, [c]);
+    }
+    // İkinci geçiş: aynı ad = aynı kişi (numara özeti çakışmıyorsa).
+    mergeGroupsByName(
+      byPerson,
+      (bucket) => bucket.map((c) => safeTitleOf(c)).find((v) => v.trim()) ?? "",
+      (bucket) => bucket.map((c) => resolvePhoneHash(c.members?.[0] ?? "")).find(Boolean),
+    );
+    // Her kişiden en son hareket gören sohbet listede kalır; diğer
+    // cihazların kimlikleri üyelerde korunur (arama doğru cihaza gitsin).
+    const collapsed = Array.from(byPerson.values()).map((bucket) => {
+      const sorted = [...bucket].sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+      const primary = sorted[0]!;
+      if (sorted.length === 1) return primary;
+      // ÖNEMLİ: adı çözülen birincil cihaz kimliği daima members[0] kalır.
+      // Aksi halde birleştirilmiş satırın başlığı adsız bir cihaza düşüp
+      // "Tedbirge kullanıcısı" yer tutucusu olarak görünüyordu.
+      const head = primary.members?.[0];
+      const named =
+        sorted.map((c) => c.members?.[0]).find((m) => m && resolveDisplayName(m).trim()) ?? head;
+      const rest = Array.from(new Set(sorted.flatMap((c) => c.members ?? []))).filter(
+        (m) => m !== named,
+      );
+      const members = named ? [named, ...rest] : rest;
+      const title = sorted.map((c) => safeTitleOf(c)).find((t) => !isTechnicalLabel(t));
+      return { ...primary, members, title: title ?? primary.title };
+    });
+    // SON KAPI: birleştirme sonrası başlığı yine yer tutucuya düşen satır
+    // (adsız cihaz kalıntısı) listeye hiç girmez.
+    return [...out, ...collapsed]
+      .filter((c) => c.id === SELF_CONV_ID || c.group || !isTechnicalLabel(safeTitleOf(c)))
+      .sort((a, b) => (b.lastTs ?? 0) - (a.lastTs ?? 0));
+  }, [allConversations, folder, folderVersion, callTouched]);
 
   const archivedCount = useMemo(
     () => allConversations.filter((c) => isArchived(c.id)).length,
@@ -1003,9 +538,11 @@ export function ChatApp() {
   );
 
   // Sekme durumu: mobil alt çubuk ve masaüstü sol ray aynı değeri kullanır.
-  const [mobileTab, setMobileTab] = useState<MobileTab>("chats");
+  const mobileTab = shell.app;
+  const setMobileTab = shell.setApp;
   // "+" eylem sayfası (yeni sohbet / grup / not / kimlik paylaş).
-  const [plusOpen, setPlusOpen] = useState(false);
+  const plusOpen = surface.isOpen("newChat");
+  const setPlusOpen = (v: boolean) => surface.set("newChat", v);
 
   // Satır menüsünü konumlandırarak açar (sağ tık / basılı tutma).
   const openRowMenu = (c: { id: string; group?: boolean }, x: number, y: number) => {
@@ -1033,7 +570,6 @@ export function ChatApp() {
     [allConversations],
   );
 
-
   const active = chat.conversations.find((c) => c.id === activeId) ?? null;
   const peers: PeerInfo[] = node.peers ?? [];
   // `profileTick` yalnızca ad değiştiğinde yeniden okumayı tetikler.
@@ -1053,9 +589,7 @@ export function ChatApp() {
       ? conv.members.find((m) => label(m).toLocaleLowerCase("tr") === wanted)
       : undefined;
     return (
-      byName ??
-      conv.members.find((m) => peers.some((p) => p.nodeId === m)) ??
-      conv.members.at(-1)
+      byName ?? conv.members.find((m) => peers.some((p) => p.nodeId === m)) ?? conv.members.at(-1)
     );
   };
   const activeTarget = active ? targetOf(active) : undefined;
@@ -1250,1330 +784,1364 @@ export function ChatApp() {
         }}
       />
 
-
       <div className="flex min-h-0 w-full flex-1 overflow-hidden">
-      {/* Masaüstü sol ray — mobil alt sekme çubuğunun karşılığı */}
-      <DesktopRail
-        value={mobileTab}
-        onChange={setMobileTab}
-        meName={me}
-        meAvatar={getMyAvatar() || undefined}
-        unread={totalUnread}
-        onSettings={() => setSettingsOpen(true)}
-      />
-      {/* Sol panel — profil, arama, konuşma listesi */}
-      <aside
-        className={`relative flex h-full min-h-0 w-full shrink-0 flex-col overflow-hidden md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
-        style={{ background: "var(--wa-panel)", borderRight: "1px solid var(--wa-border)" }}
-      >
-        <SearchPanel
-          open={searchOpen}
-          onClose={() => setSearchOpen(false)}
-          onOpenMessage={(convId, messageId) => {
-            setActiveId(convId);
-            setSearchOpen(false);
-            setVisibleCount(5000);
-            setHighlightId(messageId);
-            setTimeout(() => {
-              document.getElementById(`msg_${messageId}`)?.scrollIntoView({ block: "center" });
-            }, 250);
-          }}
+        {/* Masaüstü sol ray — mobil alt sekme çubuğunun karşılığı */}
+        <DesktopRail
+          value={mobileTab}
+          onChange={setMobileTab}
+          meName={me}
+          meAvatar={getMyAvatar() || undefined}
+          unread={totalUnread}
+          onSettings={() => setSettingsOpen(true)}
         />
-        {/* Mobil büyük başlık — WhatsApp yerleşimi */}
-        <div
-          className="flex items-center justify-between gap-2 px-4 pb-1 md:hidden"
-          style={{
-            background: "var(--wa-panel)",
-            paddingTop: "calc(0.75rem + env(safe-area-inset-top))",
-          }}
+        {/* Sol panel — profil, arama, konuşma listesi */}
+        <aside
+          className={`relative flex h-full min-h-0 w-full shrink-0 flex-col overflow-hidden md:w-[380px] ${activeId ? "hidden md:flex" : "flex"}`}
+          style={{ background: "var(--wa-panel)", borderRight: "1px solid var(--wa-border)" }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setSettingsOpen(true);
+          <SearchPanel
+            open={searchOpen}
+            onClose={() => setSearchOpen(false)}
+            onOpenMessage={(convId, messageId) => {
+              setActiveId(convId);
+              setSearchOpen(false);
+              setVisibleCount(5000);
+              setHighlightId(messageId);
+              setTimeout(() => {
+                document.getElementById(`msg_${messageId}`)?.scrollIntoView({ block: "center" });
+              }, 250);
             }}
-            className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
-            style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
-            aria-label="Menü"
+          />
+          {/* Mobil büyük başlık — WhatsApp yerleşimi */}
+          <div
+            className="flex items-center justify-between gap-2 px-4 pb-1 md:hidden"
+            style={{
+              background: "var(--wa-panel)",
+              paddingTop: "calc(0.75rem + env(safe-area-inset-top))",
+            }}
           >
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
-          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => {
                 pressFeedback();
-                setContactsOpen(true);
+                setSettingsOpen(true);
               }}
               className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
               style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
-              aria-label="Rehber"
+              aria-label="Menü"
             >
-              <BookUser className="h-5 w-5" />
+              <MoreHorizontal className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                pressFeedback();
-                setPlusOpen(true);
-              }}
-              className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
-              style={{ background: "var(--wa-accent)" }}
-              aria-label="Yeni sohbet, grup veya kimlik paylaş"
-            >
-              <Plus className="h-6 w-6" />
-            </button>
-          </div>
-        </div>
-        <h2
-          className="px-4 pb-2 text-[34px] font-extrabold leading-none tracking-tight md:hidden"
-          style={{ color: "var(--wa-text)", background: "var(--wa-panel)" }}
-        >
-          {mobileTab === "calls"
-            ? "Aramalar"
-            : mobileTab === "communities"
-              ? "Topluluklar"
-              : mobileTab === "me"
-                ? "Siz"
-                : "Sohbetler"}
-        </h2>
-
-        <div
-          className="hidden flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4 md:flex"
-          style={{
-            background: "var(--wa-panel-soft)",
-            borderBottom: "1px solid var(--wa-border)",
-            paddingTop: "calc(0.625rem + env(safe-area-inset-top))",
-          }}
-        >
-
-          <button
-            type="button"
-            onClick={() => myAvatarInput.current?.click()}
-            className="wa-press rounded-full"
-            aria-label="Profil fotoğrafını değiştir"
-            title="Profil fotoğrafını değiştir"
-          >
-            <Avatar name={me} size={40} src={getMyAvatar()} />
-          </button>
-          <input
-            ref={myAvatarInput}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (!file) return;
-              void fileToAvatarDataUrl(file)
-                .then((url) => setMyAvatar(url))
-                .catch(() => undefined);
-            }}
-          />
-
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold" style={{ color: "var(--wa-text)" }}>
-              {me}
-            </p>
-            <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
-              {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : `${getPersonId()} · Bağlı`}
-            </p>
-          </div>
-          <div className="order-last flex w-full items-center justify-between gap-1 border-t pt-2 sm:order-none sm:w-auto sm:justify-end sm:border-0 sm:pt-0" style={{ borderColor: "var(--wa-border)" }}>
-          <Link
-            to="/"
-            className="flex h-12 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-medium hover:bg-black/5 sm:h-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label="Web sitesine dön"
-            title="Web sitesine dön"
-          >
-            <Home className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-            <span className="hidden sm:inline">Web sitesi</span>
-          </Link>
-
-          <Link
-            to="/kurumsal"
-            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label="Hakkında"
-            title="Hakkında"
-          >
-            <Globe className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setSearchOpen(true);
-            }}
-            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label="Mesajlarda ara"
-            title="Mesajlarda ara"
-          >
-            <Search className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setSettingsOpen(true);
-            }}
-            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label="Gizlilik ve yedekleme"
-            title="Gizlilik ve yedekleme"
-          >
-            <Settings className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setContactsOpen(true);
-            }}
-            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label="Rehber"
-            title={`Rehber · ${contactBook.contacts.length} kişi`}
-          >
-            <BookUser className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const next = !soundOff;
-              setSoundMuted(next);
-              setSoundOff(next);
-              if (!next) pressFeedback();
-            }}
-            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label={soundOff ? "Sesleri aç" : "Sesleri kapat"}
-            title={soundOff ? "Sesleri aç" : "Sesleri kapat"}
-          >
-            {soundOff ? (
-              <VolumeX className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-            ) : (
-              <Volume2 className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setPlusOpen(true);
-            }}
-            className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
-            style={{ color: "var(--wa-muted)" }}
-            aria-label="Yeni sohbet, grup veya kimlik paylaş"
-          >
-            <Plus className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-          </button>
-          </div>
-        </div>
-
-        {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
-
-        <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden"}`}>
-          <div
-            className="flex items-center gap-3 rounded-full px-4"
-            style={{ background: "var(--wa-panel-soft)", height: "var(--wa-search-h, 44px)" }}
-          >
-            <Search className="h-5 w-5 shrink-0" style={{ color: "var(--wa-muted)" }} aria-hidden />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="AI'ye Sor veya Ara"
-              aria-label="AI'ye sor veya sohbetlerde ara"
-              className="w-full min-w-0 bg-transparent text-[16px] outline-none"
-              style={{ color: "var(--wa-text)" }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                pressFeedback();
-                window.dispatchEvent(
-                  new CustomEvent("tedbirge:advisor", {
-                    detail: query.trim() ? { prefill: query.trim() } : {},
-                  }),
-                );
-              }}
-              className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-semibold text-white"
-              style={{ background: "var(--wa-accent)" }}
-              aria-label="AI danışmana sor"
-            >
-              AI
-            </button>
-          </div>
-        </div>
-
-        {/* Sohbetler sekmesi içeriği */}
-        <div
-          className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden"}`}
-        >
-        {/* Klasör ve arşiv sekmeleri */}
-        <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
-
-          {tabs.map((t) => {
-            const on = folder === t.id;
-            const isArchive = t.id === ARCHIVE;
-            if (isArchive && archivedCount === 0 && !on) return null;
-            return (
+            <div className="flex items-center gap-2">
               <button
-                key={t.id || "all"}
                 type="button"
                 onClick={() => {
                   pressFeedback();
-                  setFolder(t.id);
+                  setContactsOpen(true);
+                }}
+                className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
+                style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
+                aria-label="Rehber"
+              >
+                <BookUser className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setPlusOpen(true);
+                }}
+                className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
+                style={{ background: "var(--wa-accent)" }}
+                aria-label="Yeni sohbet, grup veya kimlik paylaş"
+              >
+                <Plus className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+          <h2
+            className="px-4 pb-2 text-[34px] font-extrabold leading-none tracking-tight md:hidden"
+            style={{ color: "var(--wa-text)", background: "var(--wa-panel)" }}
+          >
+            {mobileTab === "calls"
+              ? "Aramalar"
+              : mobileTab === "communities"
+                ? "Topluluklar"
+                : mobileTab === "me"
+                  ? "Siz"
+                  : "Sohbetler"}
+          </h2>
+
+          <div
+            className="hidden flex-wrap items-center gap-3 px-3 py-2.5 sm:px-4 md:flex"
+            style={{
+              background: "var(--wa-panel-soft)",
+              borderBottom: "1px solid var(--wa-border)",
+              paddingTop: "calc(0.625rem + env(safe-area-inset-top))",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => myAvatarInput.current?.click()}
+              className="wa-press rounded-full"
+              aria-label="Profil fotoğrafını değiştir"
+              title="Profil fotoğrafını değiştir"
+            >
+              <Avatar name={me} size={40} src={getMyAvatar()} />
+            </button>
+            <input
+              ref={myAvatarInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                void fileToAvatarDataUrl(file)
+                  .then((url) => setMyAvatar(url))
+                  .catch(() => undefined);
+              }}
+            />
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold" style={{ color: "var(--wa-text)" }}>
+                {me}
+              </p>
+              <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : `${getPersonId()} · Bağlı`}
+              </p>
+            </div>
+            <div
+              className="order-last flex w-full items-center justify-between gap-1 border-t pt-2 sm:order-none sm:w-auto sm:justify-end sm:border-0 sm:pt-0"
+              style={{ borderColor: "var(--wa-border)" }}
+            >
+              <Link
+                to="/"
+                className="flex h-12 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-medium hover:bg-black/5 sm:h-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Web sitesine dön"
+                title="Web sitesine dön"
+              >
+                <Home className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+                <span className="hidden sm:inline">Web sitesi</span>
+              </Link>
+
+              <Link
+                to="/kurumsal"
+                className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Hakkında"
+                title="Hakkında"
+              >
+                <Globe className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setSearchOpen(true);
+                }}
+                className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Mesajlarda ara"
+                title="Mesajlarda ara"
+              >
+                <Search className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setSettingsOpen(true);
+                }}
+                className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Gizlilik ve yedekleme"
+                title="Gizlilik ve yedekleme"
+              >
+                <Settings className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setContactsOpen(true);
+                }}
+                className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Rehber"
+                title={`Rehber · ${contactBook.contacts.length} kişi`}
+              >
+                <BookUser className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundOff;
+                  setSoundMuted(next);
+                  setSoundOff(next);
+                  if (!next) pressFeedback();
+                }}
+                className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label={soundOff ? "Sesleri aç" : "Sesleri kapat"}
+                title={soundOff ? "Sesleri aç" : "Sesleri kapat"}
+              >
+                {soundOff ? (
+                  <VolumeX className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+                ) : (
+                  <Volume2 className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setPlusOpen(true);
+                }}
+                className="wa-press flex h-12 w-12 items-center justify-center rounded-full hover:bg-black/5 sm:h-9 sm:w-9"
+                style={{ color: "var(--wa-muted)" }}
+                aria-label="Yeni sohbet, grup veya kimlik paylaş"
+              >
+                <Plus className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
+              </button>
+            </div>
+          </div>
+
+          {/* "Uygulamayı yükle" Ayarlar > Hakkında bölümüne taşındı. */}
+
+          <div className={`px-3 py-2 ${mobileTab === "chats" ? "" : "hidden"}`}>
+            <div
+              className="flex items-center gap-3 rounded-full px-4"
+              style={{ background: "var(--wa-panel-soft)", height: "var(--wa-search-h, 44px)" }}
+            >
+              <Search
+                className="h-5 w-5 shrink-0"
+                style={{ color: "var(--wa-muted)" }}
+                aria-hidden
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="AI'ye Sor veya Ara"
+                aria-label="AI'ye sor veya sohbetlerde ara"
+                className="w-full min-w-0 bg-transparent text-[16px] outline-none"
+                style={{ color: "var(--wa-text)" }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  window.dispatchEvent(
+                    new CustomEvent("tedbirge:advisor", {
+                      detail: query.trim() ? { prefill: query.trim() } : {},
+                    }),
+                  );
+                }}
+                className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-semibold text-white"
+                style={{ background: "var(--wa-accent)" }}
+                aria-label="AI danışmana sor"
+              >
+                AI
+              </button>
+            </div>
+          </div>
+
+          {/* Sohbetler sekmesi içeriği */}
+          <div className={`min-h-0 flex-1 flex-col ${mobileTab === "chats" ? "flex" : "hidden"}`}>
+            {/* Klasör ve arşiv sekmeleri */}
+            <div className="flex gap-1.5 overflow-x-auto px-3 pb-2">
+              {tabs.map((t) => {
+                const on = folder === t.id;
+                const isArchive = t.id === ARCHIVE;
+                if (isArchive && archivedCount === 0 && !on) return null;
+                return (
+                  <button
+                    key={t.id || "all"}
+                    type="button"
+                    onClick={() => {
+                      pressFeedback();
+                      setFolder(t.id);
+                    }}
+                    className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+                    style={{
+                      background: on ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                      color: on ? "#fff" : "var(--wa-muted)",
+                    }}
+                  >
+                    {isArchive ? `Arşiv${archivedCount ? ` · ${archivedCount}` : ""}` : t.label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => {
+                  pressFeedback();
+                  setFolder(CALLS_TAB);
                 }}
                 className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
                 style={{
-                  background: on ? "var(--wa-accent)" : "var(--wa-panel-soft)",
-                  color: on ? "#fff" : "var(--wa-muted)",
+                  background: folder === CALLS_TAB ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                  color: folder === CALLS_TAB ? "#fff" : "var(--wa-muted)",
                 }}
               >
-                {isArchive ? `Arşiv${archivedCount ? ` · ${archivedCount}` : ""}` : t.label}
+                Aramalar
               </button>
-            );
-          })}
-          <button
-            type="button"
-            onClick={() => {
-              pressFeedback();
-              setFolder(CALLS_TAB);
-            }}
-            className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
-            style={{
-              background: folder === CALLS_TAB ? "var(--wa-accent)" : "var(--wa-panel-soft)",
-              color: folder === CALLS_TAB ? "#fff" : "var(--wa-muted)",
-            }}
-          >
-            Aramalar
-          </button>
-          {[
-            { id: UNREAD_TAB, label: "Okunmamış" },
-            { id: FAV_TAB, label: "Favoriler" },
-            { id: GROUPS_TAB, label: "Gruplar" },
-          ].map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => {
-                pressFeedback();
-                setFolder(folder === chip.id ? "" : chip.id);
-              }}
-              className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
-              style={{
-                background: folder === chip.id ? "var(--wa-accent)" : "var(--wa-panel-soft)",
-                color: folder === chip.id ? "#fff" : "var(--wa-muted)",
-              }}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
+              {[
+                { id: UNREAD_TAB, label: "Okunmamış" },
+                { id: FAV_TAB, label: "Favoriler" },
+                { id: GROUPS_TAB, label: "Gruplar" },
+              ].map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setFolder(folder === chip.id ? "" : chip.id);
+                  }}
+                  className="wa-press shrink-0 rounded-full px-3 py-1 text-[12px] font-medium"
+                  style={{
+                    background: folder === chip.id ? "var(--wa-accent)" : "var(--wa-panel-soft)",
+                    color: folder === chip.id ? "#fff" : "var(--wa-muted)",
+                  }}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
 
-
-        {groupMode && (
-          <div
-            className="p-4"
-            style={{
-              borderTop: "1px solid var(--wa-border)",
-              borderBottom: "1px solid var(--wa-border)",
-            }}
-          >
-            <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
-              Yakındaki cihazlar otomatik listelenir. Dokunarak sohbet açabilirsiniz.
-            </p>
-            <div className="mt-3 space-y-2">
-              {peers.length === 0 && (
+            {groupMode && (
+              <div
+                className="p-4"
+                style={{
+                  borderTop: "1px solid var(--wa-border)",
+                  borderBottom: "1px solid var(--wa-border)",
+                }}
+              >
                 <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
-                  Henüz yakında cihaz yok — karekod ile davet edin.
+                  Yakındaki cihazlar otomatik listelenir. Dokunarak sohbet açabilirsiniz.
                 </p>
-              )}
-              {peers
-                .filter((p) => !isTechnicalLabel(contactLabel(p.nodeId, chat.aliases[p.nodeId])))
-                .map((p) => {
-                  const paired = Boolean(pairing.trusted[p.nodeId]);
-
-                  return (
-                    <button
-                      key={p.nodeId}
-                      type="button"
-                      onClick={() => {
-                        void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then(
-                          (c) => {
-                            setActiveId(c.id);
-                            setGroupMode(false);
-                          },
-                        );
-                      }}
-                      className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
-                      style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-                    >
-                      <span className="truncate">
-                        {humanName(
-                          contactLabel(p.nodeId, chat.aliases[p.nodeId]),
-                          "Kayıtsız cihaz",
-                        )}
-                      </span>
-                      <span
-                        className="text-[11px]"
-                        style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
-                      >
-                        {paired ? "çevrimiçi" : "yakında"}
-                      </span>
-                    </button>
-                  );
-                })}
-            </div>
-            <div className="mt-3 flex gap-2">
-              <input
-                value={newPeer}
-                onChange={(e) => setNewPeer(e.target.value)}
-                placeholder="Grup adı veya davet kodu"
-                className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const value = newPeer.trim();
-                  if (!value) return;
-                  const known = peers.some((p) => p.nodeId === value);
-                  const task = known
-                    ? ensureDirectConversation(value)
-                    : createGroup(
-                        value,
-                        peers.map((p: PeerInfo) => p.nodeId),
-                      );
-                  void task.then((c) => {
-                    setActiveId(c.id);
-                    setNewPeer("");
-                    setGroupMode(false);
-                  });
-                }}
-                className="rounded-lg px-3 py-2 text-white"
-                style={{ background: "var(--wa-accent)" }}
-                aria-label="Grup oluştur"
-              >
-                <Users className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {folder === CALLS_TAB && (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <CallsPanel
-              showHeader={false}
-              onCall={(peer, video) => {
-                void ensureDirectConversation(peer).then((c) => {
-                  setActiveId(c.id);
-                  void startCall(peer, video, nameOf(peer));
-                });
-              }}
-              onNewCall={() => setNewCallOpen(true)}
-              onSchedule={() => setScheduleOpen(true)}
-              onDialpad={() => setDialpadOpen(true)}
-              onFavorites={() => setContactsOpen(true)}
-            />
-          </div>
-        )}
-
-
-        <SyncWarningBar />
-
-        <ul className={`flex-1 overflow-y-auto ${folder === CALLS_TAB ? "hidden" : ""}`}>
-
-          {pairing.incoming.map((req) => (
-            <li
-              key={`req_${req.nodeId}`}
-              className="px-4 py-3"
-              style={{ background: "var(--wa-panel-soft)" }}
-            >
-              <p className="text-[13px] font-medium" style={{ color: "var(--wa-text)" }}>
-                {nameOf(req.nodeId)} cihazını hesabınıza bağlamak istiyor
-              </p>
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => acceptPairing(req.nodeId, chat.aliases[req.nodeId])}
-                  className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
-                  style={{ background: "var(--wa-accent)" }}
-                >
-                  Kod gir
-                </button>
-                <button
-                  type="button"
-                  onClick={() => dismissPairing(req.nodeId)}
-                  className="rounded-full px-3 py-1.5 text-[12px]"
-                  style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
-                >
-                  Yoksay
-                </button>
-              </div>
-            </li>
-          ))}
-          {conversations.map((c) => {
-            const name = humanName(titleOf(c));
-            return (
-              <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setActiveId(c.id)}
-                  onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openRowMenu(c, e.clientX, e.clientY);
-                  }}
-                  onTouchStart={(e) => {
-                    const t = e.touches[0];
-                    const x = t?.clientX ?? 0;
-                    const y = t?.clientY ?? 0;
-                    if (longPressRef.current) clearTimeout(longPressRef.current);
-                    longPressRef.current = setTimeout(() => openRowMenu(c, x, y), 450);
-                  }}
-                  onTouchEnd={() => {
-                    if (longPressRef.current) clearTimeout(longPressRef.current);
-                  }}
-                  onTouchMove={() => {
-                    if (longPressRef.current) clearTimeout(longPressRef.current);
-                  }}
-                  className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
-                  style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
-                >
-                  <Avatar name={name} src={c.group ? undefined : getAvatar(targetOf(c) ?? "")} />
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p
-                        className="truncate text-[15px] font-medium"
-                        style={{ color: "var(--wa-text)" }}
-                      >
-                        {c.pinned && (
-                          <Pin
-                            className="mr-1 inline h-3 w-3"
-                            style={{ color: "var(--wa-accent)" }}
-                            aria-hidden
-                          />
-                        )}
-                        {name}
-                        {isMuted(c.id) && (
-                          <VolumeX
-                            className="ml-1 inline h-3 w-3"
-                            style={{ color: "var(--wa-muted)" }}
-                            aria-hidden
-                          />
-                        )}
-                      </p>
-                      <span className="shrink-0 text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                        {c.lastTs ? timeOf(c.lastTs) : ""}
-                      </span>
-                    </div>
-                    <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
-                      {c.lastText}
+                <div className="mt-3 space-y-2">
+                  {peers.length === 0 && (
+                    <p className="text-xs" style={{ color: "var(--wa-muted)" }}>
+                      Henüz yakında cihaz yok — karekod ile davet edin.
                     </p>
-                  </div>
-                  {isFavorite(c.id) && (
-                    <Heart
-                      className="h-3.5 w-3.5 shrink-0"
-                      style={{ color: "var(--wa-accent)" }}
-                      aria-hidden
-                    />
                   )}
-                  {c.unread === 0 && isMarkedUnread(c.id) && (
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ background: "var(--wa-accent)" }}
-                      aria-label="Okunmadı olarak işaretli"
-                    />
-                  )}
-                  {c.unread > 0 && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
-                      style={{ background: "var(--wa-accent)" }}
-                    >
-                      {c.unread}
-                    </span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-          {ready && (
-            <li>
-              <DirectoryPanel
-                query={query}
-                peers={peers}
-                labelOf={nameOf}
-                onOpenPeer={(pid, name) => {
-                  // KİMLİK ÇIPASI: tıklanan kişinin adı doğrudan o cihaza
-                  // yazılır; açılan sohbet başlığı asla başka kişiye kaymaz.
-                  repairCrossLinks();
-                  const picked = humanName(name ?? chat.aliases[pid], "");
-                  if (picked && !isTechnicalLabel(picked)) setNickname(pid, picked);
-                  void ensureDirectConversation(pid, picked || undefined).then((c) =>
-                    setActiveId(c.id),
-                  );
-                }}
+                  {peers
+                    .filter(
+                      (p) => !isTechnicalLabel(contactLabel(p.nodeId, chat.aliases[p.nodeId])),
+                    )
+                    .map((p) => {
+                      const paired = Boolean(pairing.trusted[p.nodeId]);
 
-                onOpenSelfNote={() => {
-                  void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
-                }}
-                onShareInvite={() => void shareInvite()}
-              />
-            </li>
-          )}
-        </ul>
-
-        <div
-          className="flex items-center gap-2 px-4 py-2 text-[11px]"
-          style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
-        >
-          <Lock className="h-3 w-3" aria-hidden />
-          <span className="min-w-0 flex-1 truncate">
-            {pendingCount > 0
-              ? `Çevrimdışı — ${pendingCount} mesaj bekliyor`
-              : "Bağlı · uçtan uca şifreli"}
-          </span>
-          {/* Sürüm damgası: ekrandaki paketin hangi yayın olduğu tek bakışta bellidir. */}
-          <span className="shrink-0 opacity-70" title="Uygulama sürümü">
-            v{BUILD_LABEL}
-          </span>
-        </div>
-        </div>
-
-        {/* Aramalar sekmesi */}
-        {mobileTab === "calls" && (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <CallsPanel
-              showHeader={false}
-              onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
-              onNewCall={() => setNewCallOpen(true)}
-              onSchedule={() => setScheduleOpen(true)}
-              onDialpad={() => setDialpadOpen(true)}
-              onFavorites={() => setContactsOpen(true)}
-            />
-          </div>
-        )}
-
-
-        {/* Topluluklar sekmesi */}
-        {mobileTab === "communities" && (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <CommunitiesPanel
-              groups={communityRows}
-              onOpen={(id) => {
-                setMobileTab("chats");
-                setActiveId(id);
-              }}
-              onCreate={() => {
-                setMobileTab("chats");
-                setGroupMode(true);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Siz sekmesi */}
-        {mobileTab === "me" && (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <MePanel
-              name={me}
-              avatar={getMyAvatar() || undefined}
-              personId={getPersonId()}
-              about={getAbout()}
-              soundOff={soundOff}
-              onAvatarPick={() => myAvatarInput.current?.click()}
-              onProfile={() => setProfileOpen(true)}
-              onQr={() => setQrOpen(true)}
-              onSearch={() => setSearchOpen(true)}
-              onContacts={() => setContactsOpen(true)}
-              onLists={() => setContactsOpen(true)}
-              onBroadcast={() => {
-                setMobileTab("chats");
-                setGroupMode(true);
-              }}
-              onSettings={() => {
-                setSettingsTab("profil");
-                setSettingsOpen(true);
-              }}
-              onPairing={() => {
-                setSettingsTab("profil");
-                setSettingsOpen(true);
-              }}
-              onNotifications={() => {
-                setSettingsTab("bildirim");
-                setSettingsOpen(true);
-              }}
-              onStorage={() => {
-                setSettingsTab("depolama");
-                setSettingsOpen(true);
-              }}
-              onHelp={() => {
-                setSettingsTab("hakkinda");
-                setSettingsOpen(true);
-              }}
-              onInvite={() => void shareInvite()}
-              onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
-              planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
-              deviceCount={Object.keys(pairing.trusted).length}
-              chatCount={totalUnread}
-              onToggleSound={() => setSoundOff((v) => !v)}
-              onSelfNote={() => {
-                setMobileTab("chats");
-                void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
-              }}
-              version={BUILD_LABEL}
-            />
-          </div>
-        )}
-
-      </aside>
-
-
-      {/* Sağ panel — aktif sohbet */}
-      <section
-        className={`relative flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}
-      >
-        {!active ? (
-          <div
-            className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center"
-            style={{ background: "var(--wa-panel-soft)" }}
-          >
-            <p className="text-lg font-medium" style={{ color: "var(--wa-text)" }}>
-              Tedbirge Mesajlaşma
-            </p>
-            <p className="max-w-md text-sm" style={{ color: "var(--wa-muted)" }}>
-              Bir sohbet seçin. Mesajlarınız internet varken bulut üzerinden, internet yokken
-              yakındaki cihazlar üzerinden iletilir — siz hiçbir ayar yapmazsınız.
-            </p>
-
-            {/* Son sohbetler ve arşiv kısayolu */}
-            {conversations.length > 0 && (
-              <div className="w-full max-w-md text-left">
-                <p
-                  className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide"
-                  style={{ color: "var(--wa-muted)" }}
-                >
-                  Son sohbetler
-                </p>
-                <ul className="overflow-hidden rounded-xl" style={{ background: "var(--wa-panel)" }}>
-                  {conversations.slice(0, 5).map((c) => (
-                    <li key={`recent_${c.id}`} style={{ borderBottom: "1px solid var(--wa-border)" }}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveId(c.id)}
-                        className="wa-press flex w-full items-center gap-3 px-3 py-2.5 text-left"
-                      >
-                        <Avatar name={titleOf(c)} />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[14px] font-medium">
-                            {titleOf(c)}
+                      return (
+                        <button
+                          key={p.nodeId}
+                          type="button"
+                          onClick={() => {
+                            void ensureDirectConversation(p.nodeId, chat.aliases[p.nodeId]).then(
+                              (c) => {
+                                setActiveId(c.id);
+                                setGroupMode(false);
+                              },
+                            );
+                          }}
+                          className="wa-press wa-row flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-black/5"
+                          style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+                        >
+                          <span className="truncate">
+                            {humanName(
+                              contactLabel(p.nodeId, chat.aliases[p.nodeId]),
+                              "Kayıtsız cihaz",
+                            )}
                           </span>
                           <span
-                            className="block truncate text-[12px]"
+                            className="text-[11px]"
+                            style={{ color: paired ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                          >
+                            {paired ? "çevrimiçi" : "yakında"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={newPeer}
+                    onChange={(e) => setNewPeer(e.target.value)}
+                    placeholder="Grup adı veya davet kodu"
+                    className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                    style={{ border: "1px solid var(--wa-border)", color: "var(--wa-text)" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const value = newPeer.trim();
+                      if (!value) return;
+                      const known = peers.some((p) => p.nodeId === value);
+                      const task = known
+                        ? ensureDirectConversation(value)
+                        : createGroup(
+                            value,
+                            peers.map((p: PeerInfo) => p.nodeId),
+                          );
+                      void task.then((c) => {
+                        setActiveId(c.id);
+                        setNewPeer("");
+                        setGroupMode(false);
+                      });
+                    }}
+                    className="rounded-lg px-3 py-2 text-white"
+                    style={{ background: "var(--wa-accent)" }}
+                    aria-label="Grup oluştur"
+                  >
+                    <Users className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {folder === CALLS_TAB && (
+              <div className="flex min-h-0 flex-1 flex-col">
+                <CallsPanel
+                  showHeader={false}
+                  onCall={(peer, video) => {
+                    void ensureDirectConversation(peer).then((c) => {
+                      setActiveId(c.id);
+                      void startCall(peer, video, nameOf(peer));
+                    });
+                  }}
+                  onNewCall={() => setNewCallOpen(true)}
+                  onSchedule={() => setScheduleOpen(true)}
+                  onDialpad={() => setDialpadOpen(true)}
+                  onFavorites={() => setContactsOpen(true)}
+                />
+              </div>
+            )}
+
+            <SyncWarningBar />
+
+            <ul className={`flex-1 overflow-y-auto ${folder === CALLS_TAB ? "hidden" : ""}`}>
+              {pairing.incoming.map((req) => (
+                <li
+                  key={`req_${req.nodeId}`}
+                  className="px-4 py-3"
+                  style={{ background: "var(--wa-panel-soft)" }}
+                >
+                  <p className="text-[13px] font-medium" style={{ color: "var(--wa-text)" }}>
+                    {nameOf(req.nodeId)} cihazını hesabınıza bağlamak istiyor
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => acceptPairing(req.nodeId, chat.aliases[req.nodeId])}
+                      className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-white"
+                      style={{ background: "var(--wa-accent)" }}
+                    >
+                      Kod gir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dismissPairing(req.nodeId)}
+                      className="rounded-full px-3 py-1.5 text-[12px]"
+                      style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
+                    >
+                      Yoksay
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {conversations.map((c) => {
+                const name = humanName(titleOf(c));
+                return (
+                  <li key={c.id} style={{ borderBottom: "1px solid var(--wa-border)" }}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setActiveId(c.id)}
+                      onKeyDown={(e) => e.key === "Enter" && setActiveId(c.id)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        openRowMenu(c, e.clientX, e.clientY);
+                      }}
+                      onTouchStart={(e) => {
+                        const t = e.touches[0];
+                        const x = t?.clientX ?? 0;
+                        const y = t?.clientY ?? 0;
+                        if (longPressRef.current) clearTimeout(longPressRef.current);
+                        longPressRef.current = setTimeout(() => openRowMenu(c, x, y), 450);
+                      }}
+                      onTouchEnd={() => {
+                        if (longPressRef.current) clearTimeout(longPressRef.current);
+                      }}
+                      onTouchMove={() => {
+                        if (longPressRef.current) clearTimeout(longPressRef.current);
+                      }}
+                      className="wa-row flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-black/[0.03]"
+                      style={activeId === c.id ? { background: "var(--wa-panel-soft)" } : undefined}
+                    >
+                      <Avatar
+                        name={name}
+                        src={c.group ? undefined : getAvatar(targetOf(c) ?? "")}
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p
+                            className="truncate text-[15px] font-medium"
+                            style={{ color: "var(--wa-text)" }}
+                          >
+                            {c.pinned && (
+                              <Pin
+                                className="mr-1 inline h-3 w-3"
+                                style={{ color: "var(--wa-accent)" }}
+                                aria-hidden
+                              />
+                            )}
+                            {name}
+                            {isMuted(c.id) && (
+                              <VolumeX
+                                className="ml-1 inline h-3 w-3"
+                                style={{ color: "var(--wa-muted)" }}
+                                aria-hidden
+                              />
+                            )}
+                          </p>
+                          <span
+                            className="shrink-0 text-[11px]"
                             style={{ color: "var(--wa-muted)" }}
                           >
-                            {c.lastText}
+                            {c.lastTs ? timeOf(c.lastTs) : ""}
                           </span>
+                        </div>
+                        <p className="truncate text-[13px]" style={{ color: "var(--wa-muted)" }}>
+                          {c.lastText}
+                        </p>
+                      </div>
+                      {isFavorite(c.id) && (
+                        <Heart
+                          className="h-3.5 w-3.5 shrink-0"
+                          style={{ color: "var(--wa-accent)" }}
+                          aria-hidden
+                        />
+                      )}
+                      {c.unread === 0 && isMarkedUnread(c.id) && (
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ background: "var(--wa-accent)" }}
+                          aria-label="Okunmadı olarak işaretli"
+                        />
+                      )}
+                      {c.unread > 0 && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+                          style={{ background: "var(--wa-accent)" }}
+                        >
+                          {c.unread}
                         </span>
-                        <span className="text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                          {c.lastTs ? timeOf(c.lastTs) : ""}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {archivedCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setFolder(ARCHIVE)}
-                className="wa-press min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold"
-                style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
-              >
-                Arşiv · {archivedCount}
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            <header
-              className="grid min-h-16 grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] items-center gap-1 px-2 py-2 sm:gap-2 sm:px-4"
-              style={{
-                background: "var(--wa-panel-soft)",
-                borderBottom: "1px solid var(--wa-border)",
-                paddingTop: "calc(0.5rem + env(safe-area-inset-top))",
-              }}
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+              {ready && (
+                <li>
+                  <DirectoryPanel
+                    query={query}
+                    peers={peers}
+                    labelOf={nameOf}
+                    onOpenPeer={(pid, name) => {
+                      // KİMLİK ÇIPASI: tıklanan kişinin adı doğrudan o cihaza
+                      // yazılır; açılan sohbet başlığı asla başka kişiye kaymaz.
+                      repairCrossLinks();
+                      const picked = humanName(name ?? chat.aliases[pid], "");
+                      if (picked && !isTechnicalLabel(picked)) setNickname(pid, picked);
+                      void ensureDirectConversation(pid, picked || undefined).then((c) =>
+                        setActiveId(c.id),
+                      );
+                    }}
+                    onOpenSelfNote={() => {
+                      void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
+                    }}
+                    onShareInvite={() => void shareInvite()}
+                  />
+                </li>
+              )}
+            </ul>
+
+            <div
+              className="flex items-center gap-2 px-4 py-2 text-[11px]"
+              style={{ borderTop: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
             >
-              <button
-                type="button"
-                onClick={() => setActiveId(null)}
-                className="wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/5 md:hidden"
-                style={{ color: "var(--wa-muted)" }}
-                aria-label="Listeye dön"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <Avatar name={activeName} size={44} src={getAvatar(peerId)} />
-              <div className="min-w-0 flex-1">
-                <p
-                  className="truncate text-[15px] font-semibold"
-                  style={{ color: "var(--wa-text)" }}
+              <Lock className="h-3 w-3" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">
+                {pendingCount > 0
+                  ? `Çevrimdışı — ${pendingCount} mesaj bekliyor`
+                  : "Bağlı · uçtan uca şifreli"}
+              </span>
+              {/* Sürüm damgası: ekrandaki paketin hangi yayın olduğu tek bakışta bellidir. */}
+              <span className="shrink-0 opacity-70" title="Uygulama sürümü">
+                v{BUILD_LABEL}
+              </span>
+            </div>
+          </div>
+
+          {/* Aramalar sekmesi */}
+          {mobileTab === "calls" && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <CallsPanel
+                showHeader={false}
+                onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+                onNewCall={() => setNewCallOpen(true)}
+                onSchedule={() => setScheduleOpen(true)}
+                onDialpad={() => setDialpadOpen(true)}
+                onFavorites={() => setContactsOpen(true)}
+              />
+            </div>
+          )}
+
+          {/* Topluluklar sekmesi */}
+          {mobileTab === "communities" && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <CommunitiesPanel
+                groups={communityRows}
+                onOpen={(id) => {
+                  setMobileTab("chats");
+                  setActiveId(id);
+                }}
+                onCreate={() => {
+                  setMobileTab("chats");
+                  setGroupMode(true);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Siz sekmesi */}
+          {mobileTab === "me" && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <MePanel
+                name={me}
+                avatar={getMyAvatar() || undefined}
+                personId={getPersonId()}
+                about={getAbout()}
+                soundOff={soundOff}
+                onAvatarPick={() => myAvatarInput.current?.click()}
+                onProfile={() => setProfileOpen(true)}
+                onQr={() => setQrOpen(true)}
+                onSearch={() => setSearchOpen(true)}
+                onContacts={() => setContactsOpen(true)}
+                onLists={() => setContactsOpen(true)}
+                onBroadcast={() => {
+                  setMobileTab("chats");
+                  setGroupMode(true);
+                }}
+                onSettings={() => {
+                  setSettingsTab("profil");
+                  setSettingsOpen(true);
+                }}
+                onPairing={() => {
+                  setSettingsTab("profil");
+                  setSettingsOpen(true);
+                }}
+                onNotifications={() => {
+                  setSettingsTab("bildirim");
+                  setSettingsOpen(true);
+                }}
+                onStorage={() => {
+                  setSettingsTab("depolama");
+                  setSettingsOpen(true);
+                }}
+                onHelp={() => {
+                  setSettingsTab("hakkinda");
+                  setSettingsOpen(true);
+                }}
+                onInvite={() => void shareInvite()}
+                onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
+                planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
+                deviceCount={Object.keys(pairing.trusted).length}
+                chatCount={totalUnread}
+                onToggleSound={() => setSoundOff((v) => !v)}
+                onSelfNote={() => {
+                  setMobileTab("chats");
+                  void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
+                }}
+                version={BUILD_LABEL}
+              />
+            </div>
+          )}
+        </aside>
+
+        {/* Sağ panel — aktif sohbet */}
+        <section
+          className={`relative flex h-full min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden md:flex"}`}
+        >
+          {!active ? (
+            <div
+              className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center"
+              style={{ background: "var(--wa-panel-soft)" }}
+            >
+              <p className="text-lg font-medium" style={{ color: "var(--wa-text)" }}>
+                Tedbirge Mesajlaşma
+              </p>
+              <p className="max-w-md text-sm" style={{ color: "var(--wa-muted)" }}>
+                Bir sohbet seçin. Mesajlarınız internet varken bulut üzerinden, internet yokken
+                yakındaki cihazlar üzerinden iletilir — siz hiçbir ayar yapmazsınız.
+              </p>
+
+              {/* Son sohbetler ve arşiv kısayolu */}
+              {conversations.length > 0 && (
+                <div className="w-full max-w-md text-left">
+                  <p
+                    className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide"
+                    style={{ color: "var(--wa-muted)" }}
+                  >
+                    Son sohbetler
+                  </p>
+                  <ul
+                    className="overflow-hidden rounded-xl"
+                    style={{ background: "var(--wa-panel)" }}
+                  >
+                    {conversations.slice(0, 5).map((c) => (
+                      <li
+                        key={`recent_${c.id}`}
+                        style={{ borderBottom: "1px solid var(--wa-border)" }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setActiveId(c.id)}
+                          className="wa-press flex w-full items-center gap-3 px-3 py-2.5 text-left"
+                        >
+                          <Avatar name={titleOf(c)} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[14px] font-medium">
+                              {titleOf(c)}
+                            </span>
+                            <span
+                              className="block truncate text-[12px]"
+                              style={{ color: "var(--wa-muted)" }}
+                            >
+                              {c.lastText}
+                            </span>
+                          </span>
+                          <span className="text-[11px]" style={{ color: "var(--wa-muted)" }}>
+                            {c.lastTs ? timeOf(c.lastTs) : ""}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {archivedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFolder(ARCHIVE)}
+                  className="wa-press min-h-11 rounded-full px-4 py-2 text-[13px] font-semibold"
+                  style={{ border: "1px solid var(--wa-border)", color: "var(--wa-muted)" }}
                 >
-                  {activeName}
-                </p>
-                <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
-                  {activeTtl > 0 ? `⏱ ${ttlLabel(activeTtl)} · ` : ""}
-                  {peerTyping
-                    ? "yazıyor…"
-                    : active.group
-                      ? "Grup"
-                      : !peerKnown
-                        ? "uçtan uca şifreli"
-                        : peerOnline
-                          ? "çevrimiçi"
-                          : privacy.hideLastSeen
-                            ? "uçtan uca şifreli"
-                            : lastSeenLabel(peerId ?? "")}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  if (active.group)
-                    void startConference(
-                      active.members.map((m) => ({ peerId: m, alias: nameOf(m) })),
-                      false,
-                      activeName,
-                    );
-                  else if (peerId) void startCall(peerId, false, activeName);
+                  Arşiv · {archivedCount}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <header
+                className="grid min-h-16 grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] items-center gap-1 px-2 py-2 sm:gap-2 sm:px-4"
+                style={{
+                  background: "var(--wa-panel-soft)",
+                  borderBottom: "1px solid var(--wa-border)",
+                  paddingTop: "calc(0.5rem + env(safe-area-inset-top))",
                 }}
-                disabled={!peerId}
-                className="wa-press flex h-13 w-13 shrink-0 items-center justify-center rounded-full border disabled:opacity-40"
-                style={{ color: "var(--wa-accent)", background: "var(--wa-panel)", borderColor: "var(--wa-border)" }}
-                aria-label="Sesli ara"
               >
-                <Phone className="h-6 w-6" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  if (active.group)
-                    void startConference(
-                      active.members.map((m) => ({ peerId: m, alias: nameOf(m) })),
-                      true,
-                      activeName,
-                    );
-                  else if (peerId) void startCall(peerId, true, activeName);
-                }}
-                disabled={!peerId}
-                className="wa-press flex h-13 w-13 shrink-0 items-center justify-center rounded-full border disabled:opacity-40"
-                style={{ color: "var(--wa-accent)", background: "var(--wa-panel)", borderColor: "var(--wa-border)" }}
-                aria-label="Görüntülü ara"
-              >
-                <Video className="h-6 w-6" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  setGalleryOpen(true);
-                }}
-                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
-                style={{ color: "var(--wa-muted)" }}
-                aria-label="Medya ve belgeler"
-                title="Medya ve belgeler"
-              >
-                <ImageIcon className="h-5 w-5" />
-              </button>
-              <div className="relative hidden lg:block">
+                <button
+                  type="button"
+                  onClick={() => setActiveId(null)}
+                  className="wa-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/5 md:hidden"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="Listeye dön"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <Avatar name={activeName} size={44} src={getAvatar(peerId)} />
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-[15px] font-semibold"
+                    style={{ color: "var(--wa-text)" }}
+                  >
+                    {activeName}
+                  </p>
+                  <p className="truncate text-[12px]" style={{ color: "var(--wa-muted)" }}>
+                    {activeTtl > 0 ? `⏱ ${ttlLabel(activeTtl)} · ` : ""}
+                    {peerTyping
+                      ? "yazıyor…"
+                      : active.group
+                        ? "Grup"
+                        : !peerKnown
+                          ? "uçtan uca şifreli"
+                          : peerOnline
+                            ? "çevrimiçi"
+                            : privacy.hideLastSeen
+                              ? "uçtan uca şifreli"
+                              : lastSeenLabel(peerId ?? "")}
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
                     pressFeedback();
-                    setMuteMenu((v) => !v);
+                    if (active.group)
+                      void startConference(
+                        active.members.map((m) => ({ peerId: m, alias: nameOf(m) })),
+                        false,
+                        activeName,
+                      );
+                    else if (peerId) void startCall(peerId, false, activeName);
                   }}
-                  className="wa-press flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"
-                  style={{ color: isMuted(active.id) ? "var(--wa-accent)" : "var(--wa-muted)" }}
-                  aria-label={isMuted(active.id) ? "Sesi aç" : "Sessize al"}
-                  title={isMuted(active.id) ? muteUntilLabel(active.id) : "Sessize al"}
+                  disabled={!peerId}
+                  className="wa-press flex h-13 w-13 shrink-0 items-center justify-center rounded-full border disabled:opacity-40"
+                  style={{
+                    color: "var(--wa-accent)",
+                    background: "var(--wa-panel)",
+                    borderColor: "var(--wa-border)",
+                  }}
+                  aria-label="Sesli ara"
                 >
-                  {isMuted(active.id) ? (
-                    <BellOff className="h-5 w-5" />
-                  ) : (
-                    <Bell className="h-5 w-5" />
-                  )}
+                  <Phone className="h-6 w-6" />
                 </button>
-                {muteMenu && (
-                  <div
-                    className="absolute right-0 top-12 z-30 w-44 overflow-hidden rounded-lg shadow-lg"
-                    style={{ background: "var(--wa-panel)", border: "1px solid var(--wa-border)" }}
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    if (active.group)
+                      void startConference(
+                        active.members.map((m) => ({ peerId: m, alias: nameOf(m) })),
+                        true,
+                        activeName,
+                      );
+                    else if (peerId) void startCall(peerId, true, activeName);
+                  }}
+                  disabled={!peerId}
+                  className="wa-press flex h-13 w-13 shrink-0 items-center justify-center rounded-full border disabled:opacity-40"
+                  style={{
+                    color: "var(--wa-accent)",
+                    background: "var(--wa-panel)",
+                    borderColor: "var(--wa-border)",
+                  }}
+                  aria-label="Görüntülü ara"
+                >
+                  <Video className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setGalleryOpen(true);
+                  }}
+                  className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="Medya ve belgeler"
+                  title="Medya ve belgeler"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                </button>
+                <div className="relative hidden lg:block">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pressFeedback();
+                      setMuteMenu((v) => !v);
+                    }}
+                    className="wa-press flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/5"
+                    style={{ color: isMuted(active.id) ? "var(--wa-accent)" : "var(--wa-muted)" }}
+                    aria-label={isMuted(active.id) ? "Sesi aç" : "Sessize al"}
+                    title={isMuted(active.id) ? muteUntilLabel(active.id) : "Sessize al"}
                   >
                     {isMuted(active.id) ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          unmuteConversation(active.id);
-                          setMuteMenu(false);
-                        }}
-                        className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
-                        style={{ color: "var(--wa-text)" }}
-                      >
-                        Bildirimleri aç
-                      </button>
+                      <BellOff className="h-5 w-5" />
                     ) : (
-                      MUTE_OPTIONS.map((o) => (
+                      <Bell className="h-5 w-5" />
+                    )}
+                  </button>
+                  {muteMenu && (
+                    <div
+                      className="absolute right-0 top-12 z-30 w-44 overflow-hidden rounded-lg shadow-lg"
+                      style={{
+                        background: "var(--wa-panel)",
+                        border: "1px solid var(--wa-border)",
+                      }}
+                    >
+                      {isMuted(active.id) ? (
                         <button
-                          key={o.id}
                           type="button"
                           onClick={() => {
-                            muteConversation(active.id, o.id);
+                            unmuteConversation(active.id);
                             setMuteMenu(false);
                           }}
                           className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
                           style={{ color: "var(--wa-text)" }}
                         >
-                          {o.label}
+                          Bildirimleri aç
                         </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => void togglePin(active.id)}
-                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
-                style={{ color: "var(--wa-muted)" }}
-                aria-label="Sabitle"
-              >
-                <Pin className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  toggleArchive(active.id);
-                  setActiveId(null);
-                }}
-                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
-                style={{ color: "var(--wa-muted)" }}
-                aria-label={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
-                title={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
-              >
-                <Archive className="h-5 w-5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  void removeConversation(active.id);
-                  setActiveId(null);
-                }}
-                className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
-                style={{ color: "var(--wa-muted)" }}
-                aria-label="Sohbeti sil"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </header>
-
-            <div
-              ref={scrollRef}
-              onScroll={(e) => {
-                const el = e.currentTarget;
-                setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
-              }}
-              className="wa-chat-bg relative flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12"
-            >
-              <div
-                className="mx-auto mb-3 w-fit rounded-md bg-white/70 px-3 py-1 text-[11px]"
-                style={{ color: "var(--wa-muted)" }}
-              >
-                <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
-              </div>
-              {/* Sabitlenmiş mesaj şeridi */}
-              {active.pinnedMessageId &&
-                (() => {
-                  const pm = messages.find((x) => x.id === active.pinnedMessageId);
-                  if (!pm) return null;
-                  return (
-                    <div
-                      className="sticky top-0 z-10 mx-auto mb-2 flex w-full max-w-2xl items-center gap-2 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
-                      style={{ borderLeft: "3px solid var(--wa-accent)" }}
-                    >
-                      <Pin
-                        className="h-3.5 w-3.5"
-                        style={{ color: "var(--wa-accent)" }}
-                        aria-hidden
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setHighlightId(pm.id);
-                          document
-                            .getElementById(`msg_${pm.id}`)
-                            ?.scrollIntoView({ block: "center", behavior: "smooth" });
-                        }}
-                        className="min-w-0 flex-1 truncate text-left text-[12.5px]"
-                        style={{ color: "var(--wa-text)" }}
-                      >
-                        {pm.text || pm.media?.name || "Ek"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void pinMessage(active.id, null)}
-                        className="wa-press rounded-full p-1"
-                        style={{ color: "var(--wa-muted)" }}
-                        aria-label="Sabitlemeyi kaldır"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
+                      ) : (
+                        MUTE_OPTIONS.map((o) => (
+                          <button
+                            key={o.id}
+                            type="button"
+                            onClick={() => {
+                              muteConversation(active.id, o.id);
+                              setMuteMenu(false);
+                            }}
+                            className="wa-press block w-full px-3 py-2.5 text-left text-[13px]"
+                            style={{ color: "var(--wa-text)" }}
+                          >
+                            {o.label}
+                          </button>
+                        ))
+                      )}
                     </div>
-                  );
-                })()}
-
-              {hiddenCount > 0 && (
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((v) => v + 200)}
-                  className="wa-press mx-auto block rounded-full bg-white/80 px-4 py-1.5 text-[12px]"
+                  onClick={() => void togglePin(active.id)}
+                  className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
                   style={{ color: "var(--wa-muted)" }}
+                  aria-label="Sabitle"
                 >
-                  {hiddenCount} eski mesajı yükle
+                  <Pin className="h-5 w-5" />
                 </button>
-              )}
-              {shownMessages.map((m, i) => {
-                const prev = shownMessages[i - 1];
-                const newDay =
-                  !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
-                return (
-                  <div
-                    key={m.id}
-                    id={`msg_${m.id}`}
-                    className={`space-y-1.5 ${highlightId === m.id ? "rounded-lg ring-2 ring-offset-2" : ""}`}
-                    style={
-                      highlightId === m.id ? { boxShadow: "0 0 0 2px var(--wa-accent)" } : undefined
-                    }
-                  >
-                    {newDay && (
-                      <div
-                        className="mx-auto w-fit rounded-md bg-white/80 px-3 py-1 text-[11px] font-medium"
-                        style={{ color: "var(--wa-muted)" }}
-                      >
-                        {dayLabel(m.ts)}
-                      </div>
-                    )}
-                    <MessageRow
-                      msg={m}
-                      authorName={nameOf(m.from)}
-                      showAuthor={Boolean(active.group)}
-                      progress={chat.transfers[m.id]}
-                      pinned={active.pinnedMessageId === m.id}
-                      translateTo={privacy.autoTranslateTo || undefined}
-                      onReply={setReplyTo}
-                      onImage={setLightbox}
-                      onEdit={(msg) => {
-                        setEditing(msg);
-                        setReplyTo(null);
-                        setDraft(msg.text);
-                        inputRef.current?.focus();
-                      }}
-                      onForward={setForwardMsg}
-                    />
-                  </div>
-                );
-              })}
-              {peerTyping && (
-                <div className="flex justify-start">
-                  <div
-                    className="wa-bubble rounded-lg px-3 py-2 shadow-sm"
-                    style={{ background: "var(--wa-bubble-in)", color: "var(--wa-muted)" }}
-                  >
-                    <span className="wa-typing inline-flex items-center">
-                      <span />
-                      <span />
-                      <span />
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div ref={endRef} />
-            </div>
-
-            {!atBottom && (
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  setAtBottom(true);
-                  endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-                }}
-                className="wa-press absolute bottom-24 right-6 z-10 rounded-full bg-white p-2.5 shadow-lg"
-                style={{ color: "var(--wa-muted)" }}
-                aria-label="En alta git"
-              >
-                <ChevronDown className="h-5 w-5" />
-              </button>
-            )}
-
-            {ptt && (
-              <p className="px-5 pb-1 text-xs font-semibold" style={{ color: "#e03131" }}>
-                Telsiz açık — konuşun, bıraktığınızda kayıt sohbete düşer.
-              </p>
-            )}
-            {error && (
-              <p className="px-5 pb-2 text-xs" style={{ color: "#c0392b" }}>
-                {error}
-              </p>
-            )}
-
-            {editing && (
-              <div
-                className="wa-pop flex items-center gap-2 px-3 pt-2"
-                style={{ background: "var(--wa-panel-soft)" }}
-              >
-                <div
-                  className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
-                  style={{
-                    borderColor: "var(--wa-accent)",
-                    background: "var(--wa-panel)",
-                    color: "var(--wa-muted)",
-                  }}
-                >
-                  <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
-                    Mesajı düzenle · {remainingWindow(editing, EDIT_WINDOW_MS)}
-                  </span>
-                  <span className="line-clamp-1 break-words">{editing.text}</span>
-                </div>
                 <button
                   type="button"
                   onClick={() => {
-                    setEditing(null);
-                    setDraft("");
+                    pressFeedback();
+                    toggleArchive(active.id);
+                    setActiveId(null);
                   }}
-                  className="wa-press rounded-full p-2 hover:bg-black/5"
+                  className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
                   style={{ color: "var(--wa-muted)" }}
-                  aria-label="Düzenlemeyi iptal et"
+                  aria-label={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
+                  title={isArchived(active.id) ? "Arşivden çıkar" : "Arşivle"}
                 >
-                  <X className="h-4 w-4" />
+                  <Archive className="h-5 w-5" />
                 </button>
-              </div>
-            )}
 
-            {replyTo && (
-              <div
-                className="wa-pop flex items-start gap-2 px-3 pt-2"
-                style={{ background: "var(--wa-panel-soft)" }}
-              >
-                <div
-                  className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
-                  style={{
-                    borderColor: "var(--wa-accent)",
-                    background: "var(--wa-panel)",
-                    color: "var(--wa-muted)",
-                  }}
-                >
-                  <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
-                    {replyTo.outgoing ? me : activeName}
-                  </span>
-                  <span className="line-clamp-1 break-words">
-                    {replyTo.text || replyTo.media?.name || "Ek"}
-                  </span>
-                </div>
                 <button
                   type="button"
-                  onClick={() => setReplyTo(null)}
-                  className="wa-press rounded-full p-2 hover:bg-black/5"
+                  onClick={() => {
+                    void removeConversation(active.id);
+                    setActiveId(null);
+                  }}
+                  className="wa-press hidden h-11 w-11 items-center justify-center rounded-full hover:bg-black/5 lg:flex"
                   style={{ color: "var(--wa-muted)" }}
-                  aria-label="Yanıtı iptal et"
+                  aria-label="Sohbeti sil"
                 >
-                  <X className="h-4 w-4" />
+                  <Trash2 className="h-5 w-5" />
                 </button>
-              </div>
-            )}
+              </header>
 
-            {emojiOpen && (
               <div
-                className="wa-pop grid max-h-44 grid-cols-8 gap-1 overflow-y-auto px-3 pt-2 sm:grid-cols-12"
-                style={{ background: "var(--wa-panel-soft)" }}
+                ref={scrollRef}
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+                }}
+                className="wa-chat-bg relative flex-1 space-y-1.5 overflow-y-auto px-4 py-4 md:px-12"
               >
-                {EMOJIS.map((e) => (
+                <div
+                  className="mx-auto mb-3 w-fit rounded-md bg-white/70 px-3 py-1 text-[11px]"
+                  style={{ color: "var(--wa-muted)" }}
+                >
+                  <Lock className="mr-1 inline h-3 w-3" aria-hidden /> Mesajlar uçtan uca şifrelidir
+                </div>
+                {/* Sabitlenmiş mesaj şeridi */}
+                {active.pinnedMessageId &&
+                  (() => {
+                    const pm = messages.find((x) => x.id === active.pinnedMessageId);
+                    if (!pm) return null;
+                    return (
+                      <div
+                        className="sticky top-0 z-10 mx-auto mb-2 flex w-full max-w-2xl items-center gap-2 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
+                        style={{ borderLeft: "3px solid var(--wa-accent)" }}
+                      >
+                        <Pin
+                          className="h-3.5 w-3.5"
+                          style={{ color: "var(--wa-accent)" }}
+                          aria-hidden
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHighlightId(pm.id);
+                            document
+                              .getElementById(`msg_${pm.id}`)
+                              ?.scrollIntoView({ block: "center", behavior: "smooth" });
+                          }}
+                          className="min-w-0 flex-1 truncate text-left text-[12.5px]"
+                          style={{ color: "var(--wa-text)" }}
+                        >
+                          {pm.text || pm.media?.name || "Ek"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void pinMessage(active.id, null)}
+                          className="wa-press rounded-full p-1"
+                          style={{ color: "var(--wa-muted)" }}
+                          aria-label="Sabitlemeyi kaldır"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                {hiddenCount > 0 && (
                   <button
-                    key={e}
+                    type="button"
+                    onClick={() => setVisibleCount((v) => v + 200)}
+                    className="wa-press mx-auto block rounded-full bg-white/80 px-4 py-1.5 text-[12px]"
+                    style={{ color: "var(--wa-muted)" }}
+                  >
+                    {hiddenCount} eski mesajı yükle
+                  </button>
+                )}
+                {shownMessages.map((m, i) => {
+                  const prev = shownMessages[i - 1];
+                  const newDay =
+                    !prev || new Date(prev.ts).toDateString() !== new Date(m.ts).toDateString();
+                  return (
+                    <div
+                      key={m.id}
+                      id={`msg_${m.id}`}
+                      className={`space-y-1.5 ${highlightId === m.id ? "rounded-lg ring-2 ring-offset-2" : ""}`}
+                      style={
+                        highlightId === m.id
+                          ? { boxShadow: "0 0 0 2px var(--wa-accent)" }
+                          : undefined
+                      }
+                    >
+                      {newDay && (
+                        <div
+                          className="mx-auto w-fit rounded-md bg-white/80 px-3 py-1 text-[11px] font-medium"
+                          style={{ color: "var(--wa-muted)" }}
+                        >
+                          {dayLabel(m.ts)}
+                        </div>
+                      )}
+                      <MessageRow
+                        msg={m}
+                        authorName={nameOf(m.from)}
+                        showAuthor={Boolean(active.group)}
+                        progress={chat.transfers[m.id]}
+                        pinned={active.pinnedMessageId === m.id}
+                        translateTo={privacy.autoTranslateTo || undefined}
+                        onReply={setReplyTo}
+                        onImage={setLightbox}
+                        onEdit={(msg) => {
+                          setEditing(msg);
+                          setReplyTo(null);
+                          setDraft(msg.text);
+                          inputRef.current?.focus();
+                        }}
+                        onForward={setForwardMsg}
+                      />
+                    </div>
+                  );
+                })}
+                {peerTyping && (
+                  <div className="flex justify-start">
+                    <div
+                      className="wa-bubble rounded-lg px-3 py-2 shadow-sm"
+                      style={{ background: "var(--wa-bubble-in)", color: "var(--wa-muted)" }}
+                    >
+                      <span className="wa-typing inline-flex items-center">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div ref={endRef} />
+              </div>
+
+              {!atBottom && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setAtBottom(true);
+                    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+                  }}
+                  className="wa-press absolute bottom-24 right-6 z-10 rounded-full bg-white p-2.5 shadow-lg"
+                  style={{ color: "var(--wa-muted)" }}
+                  aria-label="En alta git"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </button>
+              )}
+
+              {ptt && (
+                <p className="px-5 pb-1 text-xs font-semibold" style={{ color: "#e03131" }}>
+                  Telsiz açık — konuşun, bıraktığınızda kayıt sohbete düşer.
+                </p>
+              )}
+              {error && (
+                <p className="px-5 pb-2 text-xs" style={{ color: "#c0392b" }}>
+                  {error}
+                </p>
+              )}
+
+              {editing && (
+                <div
+                  className="wa-pop flex items-center gap-2 px-3 pt-2"
+                  style={{ background: "var(--wa-panel-soft)" }}
+                >
+                  <div
+                    className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
+                    style={{
+                      borderColor: "var(--wa-accent)",
+                      background: "var(--wa-panel)",
+                      color: "var(--wa-muted)",
+                    }}
+                  >
+                    <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                      Mesajı düzenle · {remainingWindow(editing, EDIT_WINDOW_MS)}
+                    </span>
+                    <span className="line-clamp-1 break-words">{editing.text}</span>
+                  </div>
+                  <button
                     type="button"
                     onClick={() => {
-                      vibrate(8);
-                      setDraft((d) => d + e);
-                      inputRef.current?.focus();
+                      setEditing(null);
+                      setDraft("");
                     }}
-                    className="wa-press rounded-md py-1 text-xl hover:bg-black/5"
-                    aria-label={`Emoji ${e}`}
+                    className="wa-press rounded-full p-2 hover:bg-black/5"
+                    style={{ color: "var(--wa-muted)" }}
+                    aria-label="Düzenlemeyi iptal et"
                   >
-                    {e}
+                    <X className="h-4 w-4" />
                   </button>
-                ))}
-              </div>
-            )}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitDraft();
-              }}
-              className="flex w-full max-w-full flex-wrap items-center justify-between gap-1.5 overflow-x-hidden p-2 sm:flex-nowrap sm:gap-2 sm:p-2.5"
-              style={{
-                background: "var(--wa-panel-soft)",
-                borderTop: "1px solid var(--wa-border)",
-                boxSizing: "border-box",
-                paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))",
-              }}
-            >
-              <input
-                ref={fileRef}
-                type="file"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  e.target.value = "";
-                  if (!file) return;
-                  setError(null);
-                  void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  setEmojiOpen((v) => !v);
-                }}
-                className="wa-press order-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none"
-                style={{ color: emojiOpen ? "var(--wa-accent)" : "var(--wa-muted)", background: "var(--wa-panel)", borderColor: "var(--wa-border)" }}
-                aria-label="Emoji ekle"
-              >
-                <Smile className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  fileRef.current?.click();
-                }}
-                className="wa-press order-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none"
-                style={{ color: "var(--wa-muted)", background: "var(--wa-panel)", borderColor: "var(--wa-border)" }}
-                aria-label="Dosya ekle"
-              >
-                <Paperclip className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
-                  setEmergencyOpen(true);
-                }}
-                className="wa-press order-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none"
-                style={{ color: "#e03131", background: "var(--wa-panel)", borderColor: "var(--wa-border)" }}
-                aria-label="Konum paylaş veya acil durum yayını"
-                title="Konum paylaş · Acil durum yayını (SOS)"
-              >
-                <Siren className="h-5 w-5" />
-              </button>
-
-              {recording ? (
-                <div
-                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2.5 text-sm sm:px-4"
-                  style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
-                >
-                  <span
-                    className="wa-rec h-2.5 w-2.5 rounded-full"
-                    style={{ background: "#e03131" }}
-                    aria-hidden
-                  />
-                  <span>
-                    Ses kaydediliyor · {String(Math.floor(recSecs / 60)).padStart(2, "0")}:
-                    {String(recSecs % 60).padStart(2, "0")}
-                  </span>
                 </div>
-              ) : (
-                <input
-                  ref={inputRef}
-                  value={draft}
-                  onChange={(e) => {
-                    setDraft(e.target.value);
-                    if (active) void sendTyping(active.id, e.target.value.length > 0);
-                  }}
-                  placeholder="Bir mesaj yazın"
-                  className="order-1 h-12 w-full min-w-0 rounded-lg px-3 text-base outline-none sm:order-none sm:flex-1 sm:px-4 sm:text-sm"
-                  style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
-                />
               )}
-              <button
-                type="button"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  void pttDown();
-                }}
-                onPointerUp={() => void pttUp()}
-                onPointerLeave={() => void pttUp()}
-                onPointerCancel={() => void pttUp()}
-                className={`wa-press order-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none ${ptt ? "wa-ring text-white" : ""}`}
-                style={{
-                  color: ptt ? "#fff" : "var(--wa-muted)",
-                  background: ptt ? "#e03131" : "var(--wa-panel)",
-                  borderColor: "var(--wa-border)",
-                }}
-                aria-label="Bas-konuş (telsiz)"
-                title="Basılı tutun — telsiz gibi konuşun"
-              >
-                <Radio className="h-5 w-5" />
-              </button>
-              {draft.trim() ? (
-                <button
-                  type="submit"
-                  className="wa-press order-6 flex h-13 w-13 shrink-0 items-center justify-center rounded-full text-white sm:order-none"
-                  style={{ background: "var(--wa-accent)" }}
-                  aria-label="Gönder"
+
+              {replyTo && (
+                <div
+                  className="wa-pop flex items-start gap-2 px-3 pt-2"
+                  style={{ background: "var(--wa-panel-soft)" }}
                 >
-                  <Send className="h-5 w-5" />
-                </button>
-              ) : (
+                  <div
+                    className="flex-1 rounded-md border-l-[3px] px-3 py-2 text-[12.5px]"
+                    style={{
+                      borderColor: "var(--wa-accent)",
+                      background: "var(--wa-panel)",
+                      color: "var(--wa-muted)",
+                    }}
+                  >
+                    <span className="block font-semibold" style={{ color: "var(--wa-accent)" }}>
+                      {replyTo.outgoing ? me : activeName}
+                    </span>
+                    <span className="line-clamp-1 break-words">
+                      {replyTo.text || replyTo.media?.name || "Ek"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    className="wa-press rounded-full p-2 hover:bg-black/5"
+                    style={{ color: "var(--wa-muted)" }}
+                    aria-label="Yanıtı iptal et"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {emojiOpen && (
+                <div
+                  className="wa-pop grid max-h-44 grid-cols-8 gap-1 overflow-y-auto px-3 pt-2 sm:grid-cols-12"
+                  style={{ background: "var(--wa-panel-soft)" }}
+                >
+                  {EMOJIS.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => {
+                        vibrate(8);
+                        setDraft((d) => d + e);
+                        inputRef.current?.focus();
+                      }}
+                      className="wa-press rounded-md py-1 text-xl hover:bg-black/5"
+                      aria-label={`Emoji ${e}`}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitDraft();
+                }}
+                className="flex w-full max-w-full flex-wrap items-center justify-between gap-1.5 overflow-x-hidden p-2 sm:flex-nowrap sm:gap-2 sm:p-2.5"
+                style={{
+                  background: "var(--wa-panel-soft)",
+                  borderTop: "1px solid var(--wa-border)",
+                  boxSizing: "border-box",
+                  paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))",
+                }}
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    setError(null);
+                    void sendMedia(active.id, file).catch((err: Error) => setError(err.message));
+                  }}
+                />
                 <button
                   type="button"
-                  onClick={() => void toggleRecording()}
-                  className={`wa-press order-6 flex h-13 w-13 shrink-0 items-center justify-center rounded-full text-white sm:order-none ${recording ? "wa-ring" : ""}`}
-                  style={{ background: recording ? "#e03131" : "var(--wa-accent)" }}
-                  aria-label={recording ? "Kaydı bitir ve gönder" : "Sesli not kaydet"}
+                  onClick={() => {
+                    pressFeedback();
+                    setEmojiOpen((v) => !v);
+                  }}
+                  className="wa-press order-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none"
+                  style={{
+                    color: emojiOpen ? "var(--wa-accent)" : "var(--wa-muted)",
+                    background: "var(--wa-panel)",
+                    borderColor: "var(--wa-border)",
+                  }}
+                  aria-label="Emoji ekle"
                 >
-                  {recording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  <Smile className="h-5 w-5" />
                 </button>
-              )}
-            </form>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    fileRef.current?.click();
+                  }}
+                  className="wa-press order-3 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none"
+                  style={{
+                    color: "var(--wa-muted)",
+                    background: "var(--wa-panel)",
+                    borderColor: "var(--wa-border)",
+                  }}
+                  aria-label="Dosya ekle"
+                >
+                  <Paperclip className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    pressFeedback();
+                    setEmergencyOpen(true);
+                  }}
+                  className="wa-press order-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none"
+                  style={{
+                    color: "#e03131",
+                    background: "var(--wa-panel)",
+                    borderColor: "var(--wa-border)",
+                  }}
+                  aria-label="Konum paylaş veya acil durum yayını"
+                  title="Konum paylaş · Acil durum yayını (SOS)"
+                >
+                  <Siren className="h-5 w-5" />
+                </button>
 
-            {lightbox && (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6"
-                onClick={() => setLightbox(null)}
-                role="presentation"
-              >
-                <img
-                  src={lightbox}
-                  alt="Büyütülmüş görsel"
-                  className="max-h-full max-w-full rounded-md"
-                />
-              </div>
-            )}
-          </>
-        )}
-      </section>
+                {recording ? (
+                  <div
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2.5 text-sm sm:px-4"
+                    style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+                  >
+                    <span
+                      className="wa-rec h-2.5 w-2.5 rounded-full"
+                      style={{ background: "#e03131" }}
+                      aria-hidden
+                    />
+                    <span>
+                      Ses kaydediliyor · {String(Math.floor(recSecs / 60)).padStart(2, "0")}:
+                      {String(recSecs % 60).padStart(2, "0")}
+                    </span>
+                  </div>
+                ) : (
+                  <input
+                    ref={inputRef}
+                    value={draft}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      if (active) void sendTyping(active.id, e.target.value.length > 0);
+                    }}
+                    placeholder="Bir mesaj yazın"
+                    className="order-1 h-12 w-full min-w-0 rounded-lg px-3 text-base outline-none sm:order-none sm:flex-1 sm:px-4 sm:text-sm"
+                    style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
+                  />
+                )}
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    void pttDown();
+                  }}
+                  onPointerUp={() => void pttUp()}
+                  onPointerLeave={() => void pttUp()}
+                  onPointerCancel={() => void pttUp()}
+                  className={`wa-press order-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border sm:order-none ${ptt ? "wa-ring text-white" : ""}`}
+                  style={{
+                    color: ptt ? "#fff" : "var(--wa-muted)",
+                    background: ptt ? "#e03131" : "var(--wa-panel)",
+                    borderColor: "var(--wa-border)",
+                  }}
+                  aria-label="Bas-konuş (telsiz)"
+                  title="Basılı tutun — telsiz gibi konuşun"
+                >
+                  <Radio className="h-5 w-5" />
+                </button>
+                {draft.trim() ? (
+                  <button
+                    type="submit"
+                    className="wa-press order-6 flex h-13 w-13 shrink-0 items-center justify-center rounded-full text-white sm:order-none"
+                    style={{ background: "var(--wa-accent)" }}
+                    aria-label="Gönder"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void toggleRecording()}
+                    className={`wa-press order-6 flex h-13 w-13 shrink-0 items-center justify-center rounded-full text-white sm:order-none ${recording ? "wa-ring" : ""}`}
+                    style={{ background: recording ? "#e03131" : "var(--wa-accent)" }}
+                    aria-label={recording ? "Kaydı bitir ve gönder" : "Sesli not kaydet"}
+                  >
+                    {recording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  </button>
+                )}
+              </form>
+
+              {lightbox && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6"
+                  onClick={() => setLightbox(null)}
+                  role="presentation"
+                >
+                  <img
+                    src={lightbox}
+                    alt="Büyütülmüş görsel"
+                    className="max-h-full max-w-full rounded-md"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </section>
       </div>
 
       {/* Mobil alt sekme çubuğu — yalnızca liste görünümünde. */}
@@ -2652,8 +2220,6 @@ export function ChatApp() {
       <CallLinkSheet open={callLinkOpen} onClose={() => setCallLinkOpen(false)} />
       <ScheduleCallSheet open={scheduleOpen} onClose={() => setScheduleOpen(false)} />
 
-
-
       {/* Elle kişi ekleme (Ad · Soyadı · Ülke · Telefon) */}
       <NewContactForm
         open={newContactOpen}
@@ -2709,7 +2275,6 @@ export function ChatApp() {
           void removeConversation(id);
         }}
       />
-
 
       {/* AI danışman: arama çubuğundaki "AI'ye Sor" ile açılır. */}
       <AiAdvisor hideLauncher />
