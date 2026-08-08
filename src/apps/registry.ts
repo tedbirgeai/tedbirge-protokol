@@ -12,7 +12,9 @@ import type { Capability } from "@/kernel/capabilities";
 
 export type AppKind = "builtin" | "wasm";
 
-export type AppManifest = ShellApp & {
+export type AppManifest = Omit<ShellApp, "id"> & {
+  /** Yerleşiklerde `ShellAppId`, .tbapp paketlerinde paket kimliği. */
+  id: ShellAppId | string;
   kind: AppKind;
   /** Uygulamanın çekirdekten istediği yetenekler. */
   capabilities: Capability[];
