@@ -47,21 +47,39 @@ import {
 export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [apps, setApps] = useState<TbAppManifest[]>([]);
   const [pending, setPending] = useState<TbAppManifest | null>(null);
+  const [dev, setDev] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     restoreInstalledTbApps();
     setApps(installedTbApps());
+    setDev(isDeveloperMode());
   }, [open]);
 
   async function pick(file: File) {
     try {
-      setPending(await readTbAppFile(file));
+      const m = await readTbAppFile(file);
+      const trust = packageTrust(m);
+      if (!canInstall(trust, dev)) {
+        toast.error(TRUST_LABELS[trust.level].detail);
+        return;
+      }
+      setPending(m);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Paket yüklenemedi.");
     }
   }
+
+  async function share(m: TbAppManifest) {
+    try {
+      await shareTbApp(m);
+      toast.success(`${m.name} yakındaki düğümlere gönderildi.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Paket paylaşılamadı.");
+    }
+  }
+
 
   async function run(m: TbAppManifest, granted: Capability[]) {
     try {
