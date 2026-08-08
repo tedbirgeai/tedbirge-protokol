@@ -10,6 +10,8 @@ import { refreshContacts, setNickname } from "@/lib/chat/contacts";
 import { logSync } from "@/lib/chat/sync-log";
 import { logError } from "@/lib/chat/errors";
 import { friendlyError } from "@/lib/friendly-error";
+import { openJson, sealJson } from "@/lib/chat/local-book";
+
 
 
 export type DeviceContact = { name: string; phone: string };
