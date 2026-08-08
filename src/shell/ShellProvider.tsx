@@ -21,6 +21,10 @@ import type { ShellAppId } from "@/shell/apps";
 import type { SurfaceApi, SurfaceId } from "@/shell/surfaces";
 import { bootNodeRuntime, useNodeRuntime } from "@/lib/node-runtime";
 import type { BrowserNodeState } from "@/lib/browser-node";
+import "@/kernel/boot";
+import type { Kernel } from "@/kernel/contract";
+import { grantKernel } from "@/kernel/capabilities";
+import { capabilitiesOf } from "@/apps/registry";
 
 export type ShellContextValue = {
   /** Etkin uygulama (sekme). */
@@ -29,6 +33,8 @@ export type ShellContextValue = {
   surfaces: SurfaceApi;
   /** Kabuk seviyesinde yönetilen düğüm durumu. */
   node: BrowserNodeState;
+  /** Uygulamanın yetenekleriyle sınırlanmış çekirdek vekili. */
+  kernelFor: (appId: string) => Kernel;
 };
 
 const ShellContext = createContext<ShellContextValue | null>(null);
@@ -69,9 +75,22 @@ export function ShellProvider({
     [stack, open, close],
   );
 
+  // Uygulama başına çekirdek vekili; aynı uygulama için tek örnek üretilir.
+  const grants = useMemo(() => new Map<string, Kernel>(), []);
+  const kernelFor = useCallback(
+    (appId: string) => {
+      const cached = grants.get(appId);
+      if (cached) return cached;
+      const k = grantKernel(appId, capabilitiesOf(appId));
+      grants.set(appId, k);
+      return k;
+    },
+    [grants],
+  );
+
   const value = useMemo<ShellContextValue>(
-    () => ({ app, setApp, surfaces, node }),
-    [app, surfaces, node],
+    () => ({ app, setApp, surfaces, node, kernelFor }),
+    [app, surfaces, node, kernelFor],
   );
 
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;

@@ -143,7 +143,6 @@ import {
   vibrate,
 } from "@/lib/chat/sounds";
 import { ShellProvider, useShell } from "@/shell/ShellProvider";
-import "@/kernel/ts-provider";
 import { getBrowserNodeId, getPersonId, type PeerInfo } from "@/lib/browser-node";
 import { listCalls } from "@/lib/chat/call-log";
 import { ContactsDialog } from "@/components/chat/ContactsDialog";
