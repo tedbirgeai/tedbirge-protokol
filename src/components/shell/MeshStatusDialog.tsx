@@ -2,10 +2,12 @@
  * AĞ DURUMU EKRANI
  * ------------------------------------------------------------------
  * Kabuğun sahip olduğu düğüm durumunu okunur biçimde gösterir:
- * bağlantı, komşu sayısı, kuyruk, keşif yöntemi ve röle durumu.
+ * bağlantı, komşu sayısı, kuyruk, keşif yöntemi, röle durumu ve
+ * (Faz E) çalışan çekirdek sağlayıcısı ile yerel çekirdek ölçümleri.
  */
 
-import { Activity } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, Cpu } from "lucide-react";
 
 import {
   Dialog,
@@ -14,9 +16,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { useShell } from "@/shell/ShellProvider";
 import { describeNode } from "@/lib/node-runtime";
 import { isRelayEnabled } from "@/shell/relay";
+import {
+  activeKernelProvider,
+  onKernelProviderChange,
+  preferredKernelProvider,
+  setPreferredKernelProvider,
+} from "@/kernel/boot";
+import { kernelMetrics, onKernelTelemetry } from "@/kernel/telemetry";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -33,9 +43,29 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
   const discovery =
     node.discovery === "local" ? "Yerel ağ" : node.discovery === "none" ? "Yok" : "Bulut";
 
+  const [, force] = useState(0);
+  const [wantWasm, setWantWasm] = useState(false);
+
+  useEffect(() => {
+    setWantWasm(preferredKernelProvider() === "wasm");
+  }, [open]);
+
+  useEffect(() => {
+    const bump = () => force((n) => n + 1);
+    const offA = onKernelTelemetry(bump);
+    const offB = onKernelProviderChange(bump);
+    return () => {
+      offA();
+      offB();
+    };
+  }, []);
+
+  const m = kernelMetrics();
+  const provider = activeKernelProvider();
+
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" aria-hidden />
@@ -54,6 +84,38 @@ export function MeshStatusDialog({ open, onClose }: { open: boolean; onClose: ()
           <Row label="Gecikme" value={node.rttMs === null ? "—" : `${node.rttMs} ms`} />
           <Row label="Röle" value={isRelayEnabled() ? "Açık" : "Kapalı"} />
           <Row label="Kimlik" value={node.nodeId || "—"} />
+        </div>
+
+        <div className="rounded-lg border p-3">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+            <Cpu className="h-4 w-4" aria-hidden />
+            Çekirdek
+          </div>
+          <Row
+            label="Çalışan sağlayıcı"
+            value={provider === "wasm" ? "Yerel çekirdek (Wasm)" : "Standart çekirdek"}
+          />
+          <Row label="Gönderilen paket" value={String(m.sent)} />
+          <Row label="Başarısız" value={String(m.failed)} />
+          <Row label="Ortalama süre" value={`${m.avgSendMs} ms`} />
+          {m.lastError && <Row label="Son hata" value={m.lastError} />}
+
+          <label className="mt-3 flex items-start justify-between gap-3">
+            <span className="text-sm">
+              Hızlandırılmış çekirdeği dene
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Cihazda yerel çekirdek modülü varsa yönlendirme onunla yapılır; yoksa uygulama
+                kesintisiz standart çekirdekte kalır.
+              </span>
+            </span>
+            <Switch
+              checked={wantWasm}
+              onCheckedChange={(v) => {
+                setWantWasm(v);
+                void setPreferredKernelProvider(v ? "wasm" : "ts");
+              }}
+            />
+          </label>
         </div>
 
         {node.error && <p className="text-xs text-destructive">{node.error}</p>}
