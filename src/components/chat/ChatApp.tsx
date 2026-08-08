@@ -133,6 +133,9 @@ import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAbout, getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { ProfileSheet } from "@/components/chat/ProfileSheet";
 import { QrCodeSheet } from "@/components/chat/QrCodeSheet";
+import { AppsDialog } from "@/components/shell/AppsDialog";
+import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
+import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
