@@ -1,4 +1,4 @@
-import { MessageCircle, Phone, Settings, Users } from "lucide-react";
+import { Activity, Boxes, FileUp, MessageCircle, Phone, Rss, Settings, Users } from "lucide-react";
 
 import { Avatar } from "@/components/chat/Avatar";
 import { pressFeedback } from "@/lib/chat/sounds";
@@ -63,6 +63,7 @@ export function DesktopRail({
                 {it.id === "chats" && <MessageCircle className="h-6 w-6" />}
                 {it.id === "calls" && <Phone className="h-6 w-6" />}
                 {it.id === "communities" && <Users className="h-6 w-6" />}
+                {it.id === "feed" && <Rss className="h-6 w-6" />}
                 {it.id === "chats" && !!unread && unread > 0 && (
                   <span
                     className="absolute -right-2 -top-1 rounded-full px-1.5 text-[10px] font-bold text-white"

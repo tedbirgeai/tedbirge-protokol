@@ -24,7 +24,9 @@ export type SurfaceId =
   /** Faz C: .tbapp uygulama yöneticisi, röle ayarı, ağ durumu. */
   | "apps"
   | "relay"
-  | "meshStatus";
+  | "meshStatus"
+  /** P2P dosya/medya aktarım ekranı. */
+  | "transfer";
 
 export type SurfaceApi = {
   /** Açık yüzeylerin yığını (en son açılan sonda). */
