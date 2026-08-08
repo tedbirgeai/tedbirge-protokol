@@ -2160,6 +2160,14 @@ function ChatAppInner() {
         />
       )}
 
+      {/* Faz C kabuk ekranları: uygulamalar (.tbapp), röle, ağ durumu */}
+      <AppsDialog open={surface.isOpen("apps")} onClose={() => surface.close("apps")} />
+      <RelaySettingsDialog open={surface.isOpen("relay")} onClose={() => surface.close("relay")} />
+      <MeshStatusDialog
+        open={surface.isOpen("meshStatus")}
+        onClose={() => surface.close("meshStatus")}
+      />
+
       {/* Profil ve QR kodu ekranları (mobil tam sayfa, masaüstü kart) */}
       <ProfileSheet
         open={profileOpen}
