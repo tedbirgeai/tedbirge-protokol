@@ -91,6 +91,10 @@ export function MePanel({
   onStorage: () => void;
   onHelp: () => void;
   onInvite: () => void;
+  /** Faz C: kabuk ekranları. */
+  onApps?: () => void;
+  onRelay?: () => void;
+  onMeshStatus?: () => void;
   planLabel: string;
   deviceCount?: number;
   chatCount?: number;
