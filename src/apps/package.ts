@@ -14,7 +14,7 @@
 
 import { sha256 } from "@noble/hashes/sha2.js";
 
-import { fingerprintOfKey, signBytes, toB64, verifyBytes } from "@/lib/crypto/identity";
+import { fingerprintOfKey, signBytes, verifyBytes } from "@/lib/crypto/identity";
 import type { TbAppManifest } from "@/apps/tbapp";
 
 export type SignedTbApp = TbAppManifest & {
@@ -114,6 +114,3 @@ export function canInstall(trust: PackageTrust, devMode = isDeveloperMode()): bo
   return devMode;
 }
 
-export function toB64Bytes(bytes: Uint8Array): string {
-  return toB64(bytes);
-}
