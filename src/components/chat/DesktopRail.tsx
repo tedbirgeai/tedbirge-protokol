@@ -1,4 +1,4 @@
-import { MessageCircle, Phone, Settings, Users } from "lucide-react";
+import { Activity, Boxes, FileUp, MessageCircle, Phone, Rss, Settings, Users } from "lucide-react";
 
 import { Avatar } from "@/components/chat/Avatar";
 import { pressFeedback } from "@/lib/chat/sounds";
@@ -21,6 +21,9 @@ export function DesktopRail({
   meAvatar,
   unread,
   onSettings,
+  onApps,
+  onTransfer,
+  onMeshStatus,
 }: {
   value: MobileTab;
   onChange: (tab: MobileTab) => void;
@@ -28,6 +31,9 @@ export function DesktopRail({
   meAvatar?: string | undefined;
   unread?: number;
   onSettings: () => void;
+  onApps?: () => void;
+  onTransfer?: () => void;
+  onMeshStatus?: () => void;
 }) {
   return (
     <nav
@@ -63,6 +69,7 @@ export function DesktopRail({
                 {it.id === "chats" && <MessageCircle className="h-6 w-6" />}
                 {it.id === "calls" && <Phone className="h-6 w-6" />}
                 {it.id === "communities" && <Users className="h-6 w-6" />}
+                {it.id === "feed" && <Rss className="h-6 w-6" />}
                 {it.id === "chats" && !!unread && unread > 0 && (
                   <span
                     className="absolute -right-2 -top-1 rounded-full px-1.5 text-[10px] font-bold text-white"
@@ -78,6 +85,28 @@ export function DesktopRail({
       </div>
 
       <div className="flex flex-col items-center gap-2">
+        {[
+          { id: "apps", label: "Uygulamalar", Icon: Boxes, run: onApps },
+          { id: "transfer", label: "Dosya aktarımı", Icon: FileUp, run: onTransfer },
+          { id: "mesh", label: "Ağ durumu", Icon: Activity, run: onMeshStatus },
+        ]
+          .filter((b) => Boolean(b.run))
+          .map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              title={b.label}
+              aria-label={b.label}
+              onClick={() => {
+                pressFeedback();
+                b.run?.();
+              }}
+              className="wa-press flex h-12 w-12 items-center justify-center rounded-2xl"
+              style={{ color: "var(--wa-muted)" }}
+            >
+              <b.Icon className="h-6 w-6" />
+            </button>
+          ))}
         <button
           type="button"
           title="Ayarlar"

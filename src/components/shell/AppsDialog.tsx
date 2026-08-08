@@ -80,7 +80,6 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
     }
   }
 
-
   async function run(m: TbAppManifest, granted: Capability[]) {
     try {
       const inst = await instantiateTbApp(m, granted);
@@ -171,7 +170,12 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
                   >
                     <Share2 className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" aria-label="Çalıştır" onClick={() => void run(m, granted)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Çalıştır"
+                    onClick={() => void run(m, granted)}
+                  >
                     <Play className="h-4 w-4" />
                   </Button>
                   <Button
@@ -190,7 +194,6 @@ export function AppsDialog({ open, onClose }: { open: boolean; onClose: () => vo
               );
             })}
           </ul>
-
         </DialogContent>
       </Dialog>
 

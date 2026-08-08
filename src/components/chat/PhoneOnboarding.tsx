@@ -27,8 +27,6 @@ import {
 
 type Step = "phone" | "code" | "done";
 
-
-
 /** Ülke kodu seçici (bayrak + arama kodu). Varsayılan Türkiye. */
 const COUNTRIES: { code: string; flag: string; name: string }[] = [
   { code: "90", flag: "🇹🇷", name: "Türkiye" },
@@ -108,7 +106,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [myShortId, setMyShortId] = useState("");
   const [myQr, setMyQr] = useState<string | null>(null);
   const [restored, setRestored] = useState(0);
-
 
   const e164 = normalizePhone(phone, dial);
 
@@ -251,7 +248,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
     [name, onDone],
   );
 
-
   async function verify() {
     if (!e164) return;
     setBusy(true);
@@ -286,9 +282,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   }
-
-
-
 
   async function finish(verifiedPhone: string | null) {
     setAlias(name.trim() || verifiedPhone || "Ben");
@@ -342,7 +335,10 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
                 className="relative flex items-center rounded-lg border px-3"
                 style={{ borderColor: "var(--wa-border)" }}
               >
-                <span className="pointer-events-none truncate text-sm" style={{ color: "var(--wa-text)" }}>
+                <span
+                  className="pointer-events-none truncate text-sm"
+                  style={{ color: "var(--wa-text)" }}
+                >
                   {COUNTRIES.find((c) => c.code === dial)?.flag ?? "🌐"} +{dial}
                 </span>
                 <select
@@ -387,7 +383,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
             <p className="mt-1 text-[11px]" style={{ color: "var(--wa-muted)" }}>
               E-posta yalnızca bu cihazda saklanır; katılım için zorunlu değildir.
             </p>
-
 
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
@@ -538,8 +533,12 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
                   onClick={() => {
                     const url = `${window.location.origin}/chat`;
                     const text = `Tedbirge kimliğim: ${myShortId} — ${url}`;
-                    if (navigator.share) void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
-                    else void navigator.clipboard?.writeText(text).then(() => toast("Davet kopyalandı"));
+                    if (navigator.share)
+                      void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
+                    else
+                      void navigator.clipboard
+                        ?.writeText(text)
+                        .then(() => toast("Davet kopyalandı"));
                   }}
                   className="wa-press rounded-full border px-4 py-2 text-xs font-medium"
                   style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
@@ -566,15 +565,10 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
           </>
         )}
 
-
-
-
         <p className="mt-5 text-[11px] leading-relaxed" style={{ color: "var(--wa-muted)" }}>
           Numaranız yalnızca uçtan uca şifreli ağ kimliğinizi doğrulamak için kullanılır. 6698
           sayılı KVKK kapsamında numaranız 3. taraflarla asla paylaşılmaz.
         </p>
-
-
       </div>
     </div>
   );

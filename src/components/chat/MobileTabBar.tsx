@@ -1,4 +1,4 @@
-import { MessageCircle, Phone, Users } from "lucide-react";
+import { MessageCircle, Phone, Rss, Users } from "lucide-react";
 
 import { pressFeedback } from "@/lib/chat/sounds";
 import { Avatar } from "@/components/chat/Avatar";
@@ -53,6 +53,7 @@ export function MobileTabBar({
             <span className="relative flex h-7 items-center justify-center">
               {t.id === "calls" && <Phone className="h-6 w-6" strokeWidth={on ? 2.6 : 1.9} />}
               {t.id === "communities" && <Users className="h-6 w-6" strokeWidth={on ? 2.6 : 1.9} />}
+              {t.id === "feed" && <Rss className="h-6 w-6" strokeWidth={on ? 2.6 : 1.9} />}
               {t.id === "chats" && (
                 <>
                   <MessageCircle className="h-6 w-6" strokeWidth={on ? 2.6 : 1.9} />

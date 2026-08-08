@@ -26,6 +26,7 @@ const CAPS: Record<ShellAppId, Capability[]> = {
   chats: ["mesh.send", "mesh.receive", "mesh.route", "identity.read", "status.read"],
   calls: ["mesh.send", "mesh.receive", "mesh.route", "identity.read", "status.read"],
   communities: ["mesh.send", "mesh.receive", "identity.read", "status.read"],
+  feed: ["mesh.send", "mesh.receive", "identity.read", "status.read"],
   me: ["identity.read", "status.read"],
 };
 

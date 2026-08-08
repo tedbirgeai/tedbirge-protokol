@@ -41,7 +41,6 @@ import {
 import { getAvatar, useAvatars } from "@/lib/chat/avatars";
 import { useContacts } from "@/lib/chat/contacts";
 
-
 function ParticipantVideo({ peerId, version }: { peerId: string; version: number }) {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
@@ -121,7 +120,6 @@ export function CallOverlay() {
   );
   const roomFull = call.participants.length + 1 >= CONFERENCE_LIMIT;
 
-
   useEffect(() => {
     if (localRef.current) localRef.current.srcObject = getLocalStream();
     const remote = remoteRef.current;
@@ -138,7 +136,6 @@ export function CallOverlay() {
       }
     }
   }, [call.phase, call.video, call.streamVersion, call.peerId, call.participants.length]);
-
 
   async function enableCallAudio() {
     pressFeedback();
@@ -230,8 +227,16 @@ export function CallOverlay() {
       {call.video && call.conference && call.phase === "active" && (
         <div className="absolute inset-0 grid auto-rows-fr grid-cols-2 gap-1 bg-zinc-950 p-1 sm:grid-cols-3">
           <div className="relative min-h-0 overflow-hidden rounded-lg bg-zinc-800">
-            <video ref={localRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-            <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs">Siz</span>
+            <video
+              ref={localRef}
+              autoPlay
+              playsInline
+              muted
+              className="h-full w-full object-cover"
+            />
+            <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs">
+              Siz
+            </span>
           </div>
           {call.participants.map((participant) => (
             <div
@@ -245,7 +250,6 @@ export function CallOverlay() {
                 {participant.alias}
                 {participant.reconnecting ? " · yeniden bağlanıyor" : ""}
               </span>
-
             </div>
           ))}
         </div>
@@ -260,7 +264,8 @@ export function CallOverlay() {
           }}
         />
       )}
-      {!call.video && call.conference &&
+      {!call.video &&
+        call.conference &&
         call.participants.map((participant) => (
           <ParticipantAudio
             key={`audio_${participant.peerId}`}
@@ -347,7 +352,7 @@ export function CallOverlay() {
                 pressFeedback();
                 void acceptCall();
               }}
-               className="wa-press wa-ring flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-green-500 text-white"
+              className="wa-press wa-ring flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-green-500 text-white"
               aria-label="Aramayı kabul et"
             >
               <PhoneIncoming className="h-7 w-7" />
@@ -505,7 +510,5 @@ export function CallOverlay() {
         </div>
       )}
     </div>
-
   );
 }
-

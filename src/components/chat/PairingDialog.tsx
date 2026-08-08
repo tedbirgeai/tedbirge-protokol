@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { KeyRound, ShieldCheck, X } from "lucide-react";
-import {
-  dismissPairing,
-  pairQrPayload,
-  submitPin,
-  usePairing,
-} from "@/lib/chat/pairing";
+import { dismissPairing, pairQrPayload, submitPin, usePairing } from "@/lib/chat/pairing";
 
 /**
  * Cihazı Eşleştir modalı — 4 haneli PIN veya QR ile el sıkışma.

@@ -6,7 +6,7 @@
  * uygulamaları aynı kayda eklenebilir; kabuk kodu değişmez.
  */
 
-export type ShellAppId = "chats" | "calls" | "communities" | "me";
+export type ShellAppId = "chats" | "calls" | "communities" | "feed" | "me";
 
 export type ShellApp = {
   id: ShellAppId;
@@ -22,8 +22,9 @@ export type ShellApp = {
 export const SHELL_APPS: ShellApp[] = [
   { id: "calls", label: "Aramalar", mobileOrder: 0, railOrder: 1 },
   { id: "communities", label: "Topluluklar", mobileOrder: 1, railOrder: 2 },
+  { id: "feed", label: "Akış", mobileOrder: 3, railOrder: 3 },
   { id: "chats", label: "Sohbetler", mobileOrder: 2, railOrder: 0, badge: "unread" },
-  { id: "me", label: "Siz", mobileOrder: 3, railOrder: null },
+  { id: "me", label: "Siz", mobileOrder: 4, railOrder: null },
 ];
 
 export const MOBILE_APPS = [...SHELL_APPS].sort((a, b) => a.mobileOrder - b.mobileOrder);

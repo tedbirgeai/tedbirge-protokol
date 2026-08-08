@@ -137,6 +137,8 @@ import { AppsDialog } from "@/components/shell/AppsDialog";
 import { AppOfferHost } from "@/components/shell/AppOfferHost";
 import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
 import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
+import { FileTransferDialog } from "@/components/shell/FileTransferDialog";
+import { FeedPanel } from "@/components/shell/FeedPanel";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
@@ -796,6 +798,9 @@ function ChatAppInner() {
           meAvatar={getMyAvatar() || undefined}
           unread={totalUnread}
           onSettings={() => setSettingsOpen(true)}
+          onApps={() => surface.open("apps")}
+          onTransfer={() => surface.open("transfer")}
+          onMeshStatus={() => surface.open("meshStatus")}
         />
         {/* Sol panel — profil, arama, konuşma listesi */}
         <aside
@@ -870,9 +875,11 @@ function ChatAppInner() {
               ? "Aramalar"
               : mobileTab === "communities"
                 ? "Topluluklar"
-                : mobileTab === "me"
-                  ? "Siz"
-                  : "Sohbetler"}
+                : mobileTab === "feed"
+                  ? "Akış"
+                  : mobileTab === "me"
+                    ? "Siz"
+                    : "Sohbetler"}
           </h2>
 
           <div
@@ -1421,6 +1428,13 @@ function ChatAppInner() {
             </div>
           )}
 
+          {/* Topluluk / Sosyal akış sekmesi */}
+          {mobileTab === "feed" && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <FeedPanel meName={me} onTransfer={() => surface.open("transfer")} />
+            </div>
+          )}
+
           {/* Siz sekmesi */}
           {mobileTab === "me" && (
             <div className="flex min-h-0 flex-1 flex-col">
@@ -1464,6 +1478,8 @@ function ChatAppInner() {
                 onApps={() => surface.open("apps")}
                 onRelay={() => surface.open("relay")}
                 onMeshStatus={() => surface.open("meshStatus")}
+                onTransfer={() => surface.open("transfer")}
+                onFeed={() => setMobileTab("feed")}
                 onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
                 planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
                 deviceCount={Object.keys(pairing.trusted).length}
@@ -2168,6 +2184,10 @@ function ChatAppInner() {
       <MeshStatusDialog
         open={surface.isOpen("meshStatus")}
         onClose={() => surface.close("meshStatus")}
+      />
+      <FileTransferDialog
+        open={surface.isOpen("transfer")}
+        onClose={() => surface.close("transfer")}
       />
 
       {/* Profil ve QR kodu ekranları (mobil tam sayfa, masaüstü kart) */}

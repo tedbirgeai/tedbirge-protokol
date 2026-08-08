@@ -16,7 +16,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { isRelayEnabled, setRelayEnabled, RELAY_LEGAL_TEXT, RELAY_LEGAL_TITLE } from "@/shell/relay";
+import {
+  isRelayEnabled,
+  setRelayEnabled,
+  RELAY_LEGAL_TEXT,
+  RELAY_LEGAL_TITLE,
+} from "@/shell/relay";
 
 export function RelaySettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [on, setOn] = useState(true);

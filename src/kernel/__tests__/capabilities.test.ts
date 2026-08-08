@@ -29,7 +29,7 @@ describe("yetenek kapısı", () => {
   });
 
   it("tüm yerleşik uygulamalar kayıtlıdır", () => {
-    expect(listApps().map((a) => a.id).sort()).toEqual(["calls", "chats", "communities", "me"]);
+    expect(listApps().map((a) => a.id).sort()).toEqual(["calls", "chats", "communities", "feed", "me"]);
     expect(listApps().every((a) => a.kind === "builtin")).toBe(true);
   });
 });

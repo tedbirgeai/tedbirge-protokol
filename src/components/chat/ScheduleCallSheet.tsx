@@ -58,7 +58,10 @@ export function ScheduleCallSheet({ open, onClose }: { open: boolean; onClose: (
   };
 
   return (
-    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-black/45 md:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[75] flex items-end justify-center bg-black/45 md:items-center"
+      onClick={onClose}
+    >
       <div
         className="wa max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:rounded-3xl"
         style={{ background: "var(--wa-panel)" }}

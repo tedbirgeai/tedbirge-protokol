@@ -35,7 +35,6 @@ export function NewChatSheet({
     { id: "share", label: "Kimliğimi paylaş", icon: QrCode, run: onShare },
   ];
 
-
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 md:items-center"
