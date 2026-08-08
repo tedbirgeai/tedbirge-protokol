@@ -46,7 +46,7 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
   }, []);
 
   useEffect(() => {
-    if (open && !peer && node.peers[0]) setPeer(node.peers[0]);
+    if (open && !peer && node.peers[0]) setPeer(node.peers[0].nodeId);
   }, [open, peer, node.peers]);
 
   async function send(files: FileList | null) {
@@ -87,8 +87,9 @@ export function FileTransferDialog({ open, onClose }: { open: boolean; onClose: 
           >
             <option value="">Seçin…</option>
             {node.peers.map((p) => (
-              <option key={p} value={p}>
-                {p}
+              <option key={p.nodeId} value={p.nodeId}>
+                {p.nodeId}
+                {p.verified ? " · doğrulanmış" : ""}
               </option>
             ))}
           </select>
