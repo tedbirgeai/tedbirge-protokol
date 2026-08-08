@@ -1,5 +1,8 @@
 import {
+  Activity,
   Bell,
+  Boxes,
+  Radio,
   BookUser,
   ChevronDown,
   ChevronRight,
@@ -65,6 +68,9 @@ export function MePanel({
   onStorage,
   onHelp,
   onInvite,
+  onApps,
+  onRelay,
+  onMeshStatus,
   planLabel,
   deviceCount,
   chatCount,
@@ -91,6 +97,10 @@ export function MePanel({
   onStorage: () => void;
   onHelp: () => void;
   onInvite: () => void;
+  /** Faz C: kabuk ekranları. */
+  onApps?: () => void;
+  onRelay?: () => void;
+  onMeshStatus?: () => void;
   planLabel: string;
   deviceCount?: number;
   chatCount?: number;
@@ -138,6 +148,13 @@ export function MePanel({
       icon: soundOff ? VolumeX : Volume2,
       onClick: onToggleSound,
     },
+  ];
+  const groupShell: Item[] = [
+    ...(onApps ? [{ id: "apps", label: "Uygulamalar", icon: Boxes, onClick: onApps } as Item] : []),
+    ...(onRelay ? [{ id: "relay", label: "Röle", icon: Radio, onClick: onRelay } as Item] : []),
+    ...(onMeshStatus
+      ? [{ id: "mesh", label: "Ağ durumu", icon: Activity, onClick: onMeshStatus } as Item]
+      : []),
   ];
   const groupThree: Item[] = [
     { id: "help", label: "Yardım", icon: CircleHelp, onClick: onHelp },
@@ -279,6 +296,7 @@ export function MePanel({
       {renderGroup(groupZero)}
       {renderGroup(groupOne)}
       {renderGroup(groupTwo)}
+      {groupShell.length > 0 && renderGroup(groupShell)}
       {renderGroup(groupThree)}
 
       <p className="shrink-0 pt-1 text-center text-[12px]" style={{ color: "var(--wa-muted)" }}>

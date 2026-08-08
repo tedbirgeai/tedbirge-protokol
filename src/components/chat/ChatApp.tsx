@@ -133,6 +133,9 @@ import { PairingDialog } from "@/components/chat/PairingDialog";
 import { getAbout, getAlias, isOnboarded, setAlias } from "@/lib/chat/profile";
 import { ProfileSheet } from "@/components/chat/ProfileSheet";
 import { QrCodeSheet } from "@/components/chat/QrCodeSheet";
+import { AppsDialog } from "@/components/shell/AppsDialog";
+import { RelaySettingsDialog } from "@/components/shell/RelaySettingsDialog";
+import { MeshStatusDialog } from "@/components/shell/MeshStatusDialog";
 import { PhoneOnboarding } from "@/components/chat/PhoneOnboarding";
 import { humanSize } from "@/lib/chat/media";
 import {
@@ -1457,6 +1460,9 @@ function ChatAppInner() {
                   setSettingsOpen(true);
                 }}
                 onInvite={() => void shareInvite()}
+                onApps={() => surface.open("apps")}
+                onRelay={() => surface.open("relay")}
+                onMeshStatus={() => surface.open("meshStatus")}
                 onSubscription={() => window.open("/fiyatlandirma", "_blank", "noopener")}
                 planLabel={`Community · ${COMMUNITY_NODE_LIMIT} cihaz ücretsiz`}
                 deviceCount={Object.keys(pairing.trusted).length}
@@ -2153,6 +2159,14 @@ function ChatAppInner() {
           unread={totalUnread}
         />
       )}
+
+      {/* Faz C kabuk ekranları: uygulamalar (.tbapp), röle, ağ durumu */}
+      <AppsDialog open={surface.isOpen("apps")} onClose={() => surface.close("apps")} />
+      <RelaySettingsDialog open={surface.isOpen("relay")} onClose={() => surface.close("relay")} />
+      <MeshStatusDialog
+        open={surface.isOpen("meshStatus")}
+        onClose={() => surface.close("meshStatus")}
+      />
 
       {/* Profil ve QR kodu ekranları (mobil tam sayfa, masaüstü kart) */}
       <ProfileSheet

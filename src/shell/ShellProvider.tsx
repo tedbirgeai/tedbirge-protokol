@@ -54,6 +54,8 @@ export function ShellProvider({
   // yapmaz, yalnızca durumu okur. Çağrı fikirdaştır (idempotent).
   useEffect(() => {
     bootNodeRuntime();
+    // Faz C: daha önce yüklenmiş .tbapp paketleri kayda geri konur.
+    void import("@/apps/tbapp").then((m) => m.restoreInstalledTbApps());
   }, []);
 
   const open = useCallback((id: SurfaceId) => {

@@ -1,3 +1,4 @@
+import { isRelayEnabled } from "@/shell/relay";
 /**
  * Tarayıcı Düğümü (Browser Node) — v2 mimarisi
  * ------------------------------------------------------------------
@@ -1103,7 +1104,8 @@ export class BrowserNode {
     if (env.h.to === this.nodeId || env.h.to === "*") await this.handleForMe(env);
 
     // 3) Röle: gövde OPAKTIR, yalnız başlık güncellenir.
-    if (env.h.to !== this.nodeId) {
+    // Kullanıcı röleyi kapattıysa hiçbir yabancı paket taşınmaz.
+    if (env.h.to !== this.nodeId && isRelayEnabled()) {
       const fwd = forwardEnvelope(env);
       if (fwd) {
         this.broadcastRaw(encodeEnvelope(fwd), from);
