@@ -11,6 +11,7 @@
 
 import { registerKernel } from "@/kernel/contract";
 import { instrument } from "@/kernel/telemetry";
+import { supervise } from "@/kernel/supervisor";
 import { tsKernel } from "@/kernel/ts-provider";
 import { tryLoadWasmKernel } from "@/kernel/wasm-provider";
 
