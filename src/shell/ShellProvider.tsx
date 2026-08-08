@@ -75,9 +75,22 @@ export function ShellProvider({
     [stack, open, close],
   );
 
+  // Uygulama başına çekirdek vekili; aynı uygulama için tek örnek üretilir.
+  const grants = useMemo(() => new Map<string, Kernel>(), []);
+  const kernelFor = useCallback(
+    (appId: string) => {
+      const cached = grants.get(appId);
+      if (cached) return cached;
+      const k = grantKernel(appId, capabilitiesOf(appId));
+      grants.set(appId, k);
+      return k;
+    },
+    [grants],
+  );
+
   const value = useMemo<ShellContextValue>(
-    () => ({ app, setApp, surfaces, node }),
-    [app, surfaces, node],
+    () => ({ app, setApp, surfaces, node, kernelFor }),
+    [app, surfaces, node, kernelFor],
   );
 
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;
