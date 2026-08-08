@@ -296,6 +296,7 @@ export function MePanel({
       {renderGroup(groupZero)}
       {renderGroup(groupOne)}
       {renderGroup(groupTwo)}
+      {groupShell.length > 0 && renderGroup(groupShell)}
       {renderGroup(groupThree)}
 
       <p className="shrink-0 pt-1 text-center text-[12px]" style={{ color: "var(--wa-muted)" }}>
