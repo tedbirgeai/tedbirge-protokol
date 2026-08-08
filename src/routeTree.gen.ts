@@ -14,6 +14,7 @@ import { Route as UyumlulukRouteImport } from './routes/uyumluluk'
 import { Route as UrunRouteImport } from './routes/urun'
 import { Route as TurkiyeMevzuatRouteImport } from './routes/turkiye-mevzuat'
 import { Route as TasiyicilarRouteImport } from './routes/tasiyicilar'
+import { Route as SystemRouteImport } from './routes/system'
 import { Route as SohbetRouteImport } from './routes/sohbet'
 import { Route as SertifikasyonRouteImport } from './routes/sertifikasyon'
 import { Route as SahaRouteImport } from './routes/saha'
@@ -91,6 +92,11 @@ const TurkiyeMevzuatRoute = TurkiyeMevzuatRouteImport.update({
 const TasiyicilarRoute = TasiyicilarRouteImport.update({
   id: '/tasiyicilar',
   path: '/tasiyicilar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SystemRoute = SystemRouteImport.update({
+  id: '/system',
+  path: '/system',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SohbetRoute = SohbetRouteImport.update({
@@ -395,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/sohbet': typeof SohbetRoute
+  '/system': typeof SystemRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
@@ -454,6 +461,7 @@ export interface FileRoutesByTo {
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/sohbet': typeof SohbetRoute
+  '/system': typeof SystemRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
@@ -515,6 +523,7 @@ export interface FileRoutesById {
   '/saha': typeof SahaRoute
   '/sertifikasyon': typeof SertifikasyonRoute
   '/sohbet': typeof SohbetRoute
+  '/system': typeof SystemRoute
   '/tasiyicilar': typeof TasiyicilarRoute
   '/turkiye-mevzuat': typeof TurkiyeMevzuatRoute
   '/urun': typeof UrunRoute
@@ -576,6 +585,7 @@ export interface FileRouteTypes {
     | '/saha'
     | '/sertifikasyon'
     | '/sohbet'
+    | '/system'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
     | '/urun'
@@ -635,6 +645,7 @@ export interface FileRouteTypes {
     | '/saha'
     | '/sertifikasyon'
     | '/sohbet'
+    | '/system'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
     | '/urun'
@@ -695,6 +706,7 @@ export interface FileRouteTypes {
     | '/saha'
     | '/sertifikasyon'
     | '/sohbet'
+    | '/system'
     | '/tasiyicilar'
     | '/turkiye-mevzuat'
     | '/urun'
@@ -756,6 +768,7 @@ export interface RootRouteChildren {
   SahaRoute: typeof SahaRoute
   SertifikasyonRoute: typeof SertifikasyonRoute
   SohbetRoute: typeof SohbetRoute
+  SystemRoute: typeof SystemRoute
   TasiyicilarRoute: typeof TasiyicilarRoute
   TurkiyeMevzuatRoute: typeof TurkiyeMevzuatRoute
   UrunRoute: typeof UrunRoute
@@ -812,6 +825,13 @@ declare module '@tanstack/react-router' {
       path: '/tasiyicilar'
       fullPath: '/tasiyicilar'
       preLoaderRoute: typeof TasiyicilarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/system': {
+      id: '/system'
+      path: '/system'
+      fullPath: '/system'
+      preLoaderRoute: typeof SystemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sohbet': {
@@ -1241,6 +1261,7 @@ const rootRouteChildren: RootRouteChildren = {
   SahaRoute: SahaRoute,
   SertifikasyonRoute: SertifikasyonRoute,
   SohbetRoute: SohbetRoute,
+  SystemRoute: SystemRoute,
   TasiyicilarRoute: TasiyicilarRoute,
   TurkiyeMevzuatRoute: TurkiyeMevzuatRoute,
   UrunRoute: UrunRoute,

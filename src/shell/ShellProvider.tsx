@@ -59,6 +59,15 @@ export function ShellProvider({
     // Sosyal akış ve dosya aktarımı gelen paketleri kabuk açılışında dinler.
     void import("@/lib/social/feed").then((m) => m.bootFeed());
     void import("@/lib/p2p/file-transfer").then((m) => m.bootFileTransfer());
+    // Sıfır-pencere arama: mikrofon/kamera izni açılışta bir kez alınır,
+    // arama anında tarayıcı izin penceresi çıkmaz.
+    void import("@/lib/call/media-prewarm").then((m) => m.bootMediaPrewarm());
+    // Rehber, kullanıcı hiçbir seçim yapmadan şifreli olarak eşitlenir.
+    let stopSync: (() => void) | undefined;
+    void import("@/lib/chat/directory").then((m) => {
+      stopSync = m.startContactAutoSync();
+    });
+    return () => stopSync?.();
   }, []);
 
   const open = useCallback((id: SurfaceId) => {
