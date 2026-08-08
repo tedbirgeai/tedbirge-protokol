@@ -20,7 +20,11 @@ export type SurfaceId =
   | "schedule"
   | "callLink"
   | "emergency"
-  | "gallery";
+  | "gallery"
+  /** Faz C: .tbapp uygulama yöneticisi, röle ayarı, ağ durumu. */
+  | "apps"
+  | "relay"
+  | "meshStatus";
 
 export type SurfaceApi = {
   /** Açık yüzeylerin yığını (en son açılan sonda). */
