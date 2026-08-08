@@ -21,6 +21,10 @@ import type { ShellAppId } from "@/shell/apps";
 import type { SurfaceApi, SurfaceId } from "@/shell/surfaces";
 import { bootNodeRuntime, useNodeRuntime } from "@/lib/node-runtime";
 import type { BrowserNodeState } from "@/lib/browser-node";
+import "@/kernel/boot";
+import type { Kernel } from "@/kernel/contract";
+import { grantKernel } from "@/kernel/capabilities";
+import { capabilitiesOf } from "@/apps/registry";
 
 export type ShellContextValue = {
   /** Etkin uygulama (sekme). */
@@ -29,6 +33,8 @@ export type ShellContextValue = {
   surfaces: SurfaceApi;
   /** Kabuk seviyesinde yönetilen düğüm durumu. */
   node: BrowserNodeState;
+  /** Uygulamanın yetenekleriyle sınırlanmış çekirdek vekili. */
+  kernelFor: (appId: string) => Kernel;
 };
 
 const ShellContext = createContext<ShellContextValue | null>(null);
