@@ -1,3 +1,4 @@
+import { isRelayEnabled } from "@/shell/relay";
 /**
  * Tarayıcı Düğümü (Browser Node) — v2 mimarisi
  * ------------------------------------------------------------------
