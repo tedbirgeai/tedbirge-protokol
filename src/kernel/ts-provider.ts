@@ -1,12 +1,12 @@
 /**
  * KERNEL — TYPESCRIPT SAĞLAYICISI
  * ------------------------------------------------------------------
- * Bugünkü tarayıcı düğümü, `Kernel` sözleşmesinin tek sağlayıcısıdır.
- * Rust/Wasm çekirdeği geldiğinde yalnız bu dosyanın karşılığı yazılır;
- * kabuk ve uygulamalar değişmez.
+ * Bugünkü tarayıcı düğümü, `Kernel` sözleşmesinin temel sağlayıcısıdır.
+ * Kayıt işlemi Faz E ile `boot.ts` tarafına alındı; burada yalnız
+ * uygulama tanımlanır.
  */
 
-import { registerKernel, type Kernel } from "@/kernel/contract";
+import type { Kernel } from "@/kernel/contract";
 import { onMesh } from "@/lib/mesh-bus";
 import { knownPeerIds, sendMesh } from "@/lib/node-runtime";
 import { getBrowserNodeId, getPersonId } from "@/lib/browser-node";
@@ -44,5 +44,3 @@ export const tsKernel: Kernel = {
     peers: knownPeerIds().length,
   }),
 };
-
-registerKernel(tsKernel);
