@@ -63,7 +63,7 @@ export function ScheduleCallSheet({ open, onClose }: { open: boolean; onClose: (
       onClick={onClose}
     >
       <div
-        className="wa max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:rounded-3xl"
+        className="wa wa-scope max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:rounded-3xl"
         style={{ background: "var(--wa-panel)" }}
         onClick={(e) => e.stopPropagation()}
       >

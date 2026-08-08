@@ -91,7 +91,7 @@ export function NewContactForm({
       <div
         role="dialog"
         aria-label="Yeni kişi"
-        className="wa max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl pb-[env(safe-area-inset-bottom)] md:rounded-3xl"
+        className="wa wa-scope max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl pb-[env(safe-area-inset-bottom)] md:rounded-3xl"
         style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
         onClick={(e) => e.stopPropagation()}
       >

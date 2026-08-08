@@ -52,7 +52,7 @@ export function MediaGallery({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-xl shadow-xl"
+        className="wa-scope flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-xl shadow-xl"
         style={{ background: "var(--wa-panel)", color: "var(--wa-text)" }}
         onClick={(e) => e.stopPropagation()}
       >
