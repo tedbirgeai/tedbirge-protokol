@@ -8,6 +8,8 @@ import {
   ChevronRight,
   CircleHelp,
   Database,
+  FileUp,
+  Rss,
   Laptop,
   Lock,
   MessageSquare,
@@ -71,6 +73,8 @@ export function MePanel({
   onApps,
   onRelay,
   onMeshStatus,
+  onTransfer,
+  onFeed,
   planLabel,
   deviceCount,
   chatCount,
@@ -101,6 +105,8 @@ export function MePanel({
   onApps?: () => void;
   onRelay?: () => void;
   onMeshStatus?: () => void;
+  onTransfer?: () => void;
+  onFeed?: () => void;
   planLabel: string;
   deviceCount?: number;
   chatCount?: number;
@@ -155,6 +161,10 @@ export function MePanel({
     ...(onMeshStatus
       ? [{ id: "mesh", label: "Ağ durumu", icon: Activity, onClick: onMeshStatus } as Item]
       : []),
+    ...(onTransfer
+      ? [{ id: "transfer", label: "Dosya aktarımı", icon: FileUp, onClick: onTransfer } as Item]
+      : []),
+    ...(onFeed ? [{ id: "feed", label: "Topluluk akışı", icon: Rss, onClick: onFeed } as Item] : []),
   ];
   const groupThree: Item[] = [
     { id: "help", label: "Yardım", icon: CircleHelp, onClick: onHelp },
