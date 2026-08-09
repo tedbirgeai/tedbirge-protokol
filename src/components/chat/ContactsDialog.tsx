@@ -418,8 +418,8 @@ export function ContactsDialog({
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      void navigator.clipboard?.writeText(myShort);
-                      toast("Kimliğiniz kopyalandı");
+                      void navigator.clipboard?.writeText(getPhone() || `${window.location.origin}/chat`);
+                      toast("Kopyalandı");
                     }}
                   >
                     <Copy className="mr-1.5 h-3.5 w-3.5" /> Kopyala
@@ -429,7 +429,7 @@ export function ContactsDialog({
                     variant="outline"
                     onClick={() => {
                       const url = `${window.location.origin}/chat`;
-                      const text = `Tedbirge kimliğim: ${myShort} — ${url}`;
+                      const text = `Tedbirge'de bana ulaş — ${url}`;
                       if (navigator.share)
                         void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
                       else
