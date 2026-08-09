@@ -263,6 +263,9 @@ function ChatAppInner() {
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
   const newContactOpen = surface.isOpen("newContact");
   const setNewContactOpen = (v: boolean) => surface.set("newContact", v);
+  // Tuş takımından "Ekle" ile gelen doğrulanmış numara.
+  const [dialPrefill, setDialPrefill] = useState("");
+
   // Arama ekranları: yeni arama, tuş takımı, planlama ve arama bağlantısı.
   const newCallOpen = surface.isOpen("newCall");
   const setNewCallOpen = (v: boolean) => surface.set("newCall", v);
