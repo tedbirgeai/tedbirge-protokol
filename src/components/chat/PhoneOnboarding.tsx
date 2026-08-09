@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setEmail, setPhone } from "@/lib/chat/profile";
 import { normalizePhone } from "@/lib/chat/directory";
-import { refreshContacts, shortIdOf } from "@/lib/chat/contacts";
+import { refreshContacts } from "@/lib/chat/contacts";
 import { qrPayload } from "@/lib/peer-trust";
 import { restoreContacts } from "@/lib/chat/vault";
 import {
@@ -103,7 +103,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [ttl, setTtl] = useState(30);
   const [online, setOnline] = useState(true);
   // Katılım sonrası gösterilen kalıcı kimlik kartı.
-  const [myShortId, setMyShortId] = useState("");
   const [myQr, setMyQr] = useState<string | null>(null);
   const [restored, setRestored] = useState(0);
 
@@ -228,8 +227,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
         const { getBrowserNodeId } = await import("@/lib/browser-node");
         const nodeId = getBrowserNodeId();
         const identity = await getIdentity(nodeId).catch(() => null);
-        const short = shortIdOf(identity?.signPublic ?? nodeId);
-        setMyShortId(short);
         if (identity?.signPublic) {
           const url = await QRCode.toDataURL(qrPayload(nodeId, identity.signPublic), {
             margin: 1,
