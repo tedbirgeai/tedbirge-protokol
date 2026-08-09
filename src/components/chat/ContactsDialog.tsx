@@ -408,10 +408,11 @@ export function ContactsDialog({
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                   Sizin kimliğiniz
                 </p>
-                <p className="mt-1 font-mono text-lg tracking-wider">{myShort}</p>
+                <p className="mt-1 text-lg font-semibold">{getPhone() || "Telefon numaranız"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Bu kod cihaz değiştirseniz bile aynı kalır ve kimseyle karışmaz.
+                  Kimliğiniz numaranıza bağlıdır; cihaz değiştirseniz bile aynı kalır.
                 </p>
+
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     size="sm"
