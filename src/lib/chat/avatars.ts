@@ -72,12 +72,30 @@ export function setMyAvatar(dataUrl: string) {
  * dikey çekilen fotoğraflar ters/yan görünür.
  */
 export async function fileToAvatarDataUrl(file: File, size = 256): Promise<string> {
-  let bitmap: ImageBitmap;
+  let bitmap: ImageBitmap | null = null;
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
   } catch {
-    bitmap = await createImageBitmap(file);
+    bitmap = null;
   }
+  if (!bitmap) {
+    // Safari/iOS yedeği: <img> çözümlemesi EXIF yönünü kendiliğinden uygular.
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+      await (img.decode?.() ??
+        new Promise<void>((res, rej) => {
+          img.onload = () => res();
+          img.onerror = () => rej(new Error("Görsel okunamadı"));
+        }));
+      bitmap = await createImageBitmap(img);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   const side = Math.min(bitmap.width, bitmap.height);
   const canvas = document.createElement("canvas");
   canvas.width = size;

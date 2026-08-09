@@ -848,18 +848,6 @@ function ChatAppInner() {
                 type="button"
                 onClick={() => {
                   pressFeedback();
-                  setContactsOpen(true);
-                }}
-                className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
-                aria-label="Rehber"
-              >
-                <BookUser className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
                   setPlusOpen(true);
                 }}
                 className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
@@ -922,7 +910,7 @@ function ChatAppInner() {
                 {me}
               </p>
               <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : `${getPersonId()} · Bağlı`}
+                {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : "Bağlı"}
               </p>
             </div>
             <div
@@ -2223,17 +2211,18 @@ function ChatAppInner() {
       <NewChatSheet
         open={plusOpen}
         onClose={() => setPlusOpen(false)}
-        onNewChat={() => setContactsOpen(true)}
+        onOpenChat={(peerId, name) => {
+          setMobileTab("chats");
+          void ensureDirectConversation(peerId, name || nameOf(peerId)).then((c) =>
+            setActiveId(c.id),
+          );
+        }}
         onNewGroup={() => {
           setMobileTab("chats");
           setGroupMode(true);
         }}
         onNewContact={() => setNewContactOpen(true)}
-        onSelfNote={() => {
-          setMobileTab("chats");
-          void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
-        }}
-        onShare={() => void shareInvite()}
+        onNewCommunity={() => setMobileTab("communities")}
       />
 
       {/* Arama ekranları: yeni arama, tuş takımı, bağlantı, planlama */}
@@ -2282,7 +2271,6 @@ function ChatAppInner() {
           void ensureDirectConversation(peerId, name || undefined).then((c) => setActiveId(c.id));
         }}
       />
-
 
       {/* Sohbet satırı menüsü: arşiv, sabitle, favori, liste, temizle, sil */}
       <ChatRowMenu

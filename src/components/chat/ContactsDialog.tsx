@@ -321,7 +321,6 @@ function SyncContactsRow() {
           {people.map((p) => (
             <li key={p.peerId} className="flex items-center justify-between gap-3 text-sm">
               <span className="truncate font-medium">{p.name}</span>
-              <span className="font-mono text-[11px] text-muted-foreground">{p.shortId}</span>
             </li>
           ))}
         </ul>
@@ -377,8 +376,6 @@ export function ContactsDialog({
     );
   }, [named, q]);
 
-  const myShort = me?.shortId ?? shortIdOf("local");
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -386,8 +383,8 @@ export function ContactsDialog({
           <DialogHeader className="shrink-0 border-b border-border p-6 pb-4">
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
-              Herkesin değişmeyen bir kısa kimliği vardır; adları siz verirsiniz. Numarasıyla
-              katılanları telefon rehberinizden eşleştirebilirsiniz.
+              Kişileriniz telefon numarasıyla eşleşir; adları siz verirsiniz. Doğrulama arka planda
+              kendiliğinden yapılır.
             </DialogDescription>
           </DialogHeader>
 
@@ -409,17 +406,20 @@ export function ContactsDialog({
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                   Sizin kimliğiniz
                 </p>
-                <p className="mt-1 font-mono text-lg tracking-wider">{myShort}</p>
+                <p className="mt-1 text-lg font-semibold">{getPhone() || "Telefon numaranız"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Bu kod cihaz değiştirseniz bile aynı kalır ve kimseyle karışmaz.
+                  Kimliğiniz numaranıza bağlıdır; cihaz değiştirseniz bile aynı kalır.
                 </p>
+
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      void navigator.clipboard?.writeText(myShort);
-                      toast("Kimliğiniz kopyalandı");
+                      void navigator.clipboard?.writeText(
+                        getPhone() || `${window.location.origin}/chat`,
+                      );
+                      toast("Kopyalandı");
                     }}
                   >
                     <Copy className="mr-1.5 h-3.5 w-3.5" /> Kopyala
@@ -429,7 +429,7 @@ export function ContactsDialog({
                     variant="outline"
                     onClick={() => {
                       const url = `${window.location.origin}/chat`;
-                      const text = `Tedbirge kimliğim: ${myShort} — ${url}`;
+                      const text = `Tedbirge'de bana ulaş — ${url}`;
                       if (navigator.share)
                         void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
                       else

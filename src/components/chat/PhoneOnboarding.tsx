@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setAlias, setEmail, setPhone } from "@/lib/chat/profile";
 import { normalizePhone } from "@/lib/chat/directory";
-import { refreshContacts, shortIdOf } from "@/lib/chat/contacts";
+import { refreshContacts } from "@/lib/chat/contacts";
 import { qrPayload } from "@/lib/peer-trust";
 import { restoreContacts } from "@/lib/chat/vault";
 import {
@@ -103,7 +103,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
   const [ttl, setTtl] = useState(30);
   const [online, setOnline] = useState(true);
   // Katılım sonrası gösterilen kalıcı kimlik kartı.
-  const [myShortId, setMyShortId] = useState("");
   const [myQr, setMyQr] = useState<string | null>(null);
   const [restored, setRestored] = useState(0);
 
@@ -228,8 +227,6 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
         const { getBrowserNodeId } = await import("@/lib/browser-node");
         const nodeId = getBrowserNodeId();
         const identity = await getIdentity(nodeId).catch(() => null);
-        const short = shortIdOf(identity?.signPublic ?? nodeId);
-        setMyShortId(short);
         if (identity?.signPublic) {
           const url = await QRCode.toDataURL(qrPayload(nodeId, identity.signPublic), {
             margin: 1,
@@ -506,33 +503,27 @@ export function PhoneOnboarding({ onDone }: { onDone: () => void }) {
                   Karekod hazırlanıyor…
                 </div>
               )}
-              <p
-                className="font-mono text-lg tracking-[0.18em]"
-                style={{ color: "var(--wa-text)" }}
-              >
-                {myShortId || "TBG-••••-••••"}
-              </p>
               <p className="text-center text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                Bu kod cihaz değiştirseniz de aynı kalır. Karşı taraf karekodu okutarak sizi
+                Kimliğiniz telefon numaranıza bağlıdır. Karşı taraf karekodu okutarak sizi
                 doğrulayabilir.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    void navigator.clipboard?.writeText(myShortId);
-                    toast("Kimliğiniz kopyalandı");
+                    void navigator.clipboard?.writeText(`${window.location.origin}/chat`);
+                    toast("Davet bağlantısı kopyalandı");
                   }}
                   className="wa-press rounded-full border px-4 py-2 text-xs font-medium"
                   style={{ borderColor: "var(--wa-border)", color: "var(--wa-text)" }}
                 >
-                  Kimliği kopyala
+                  Bağlantıyı kopyala
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     const url = `${window.location.origin}/chat`;
-                    const text = `Tedbirge kimliğim: ${myShortId} — ${url}`;
+                    const text = `Tedbirge'de bana ulaş — ${url}`;
                     if (navigator.share)
                       void navigator.share({ title: "Tedbirge", text, url }).catch(() => {});
                     else
