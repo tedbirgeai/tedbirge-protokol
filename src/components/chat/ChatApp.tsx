@@ -2211,17 +2211,19 @@ function ChatAppInner() {
       <NewChatSheet
         open={plusOpen}
         onClose={() => setPlusOpen(false)}
-        onNewChat={() => setContactsOpen(true)}
+        onOpenChat={(peerId, name) => {
+          setMobileTab("chats");
+          void ensureDirectConversation(peerId, name || nameOf(peerId)).then((c) =>
+            setActiveId(c.id),
+          );
+        }}
         onNewGroup={() => {
           setMobileTab("chats");
           setGroupMode(true);
         }}
         onNewContact={() => setNewContactOpen(true)}
-        onSelfNote={() => {
-          setMobileTab("chats");
-          void ensureSelfConversation(`${me} (Siz)`).then((c) => setActiveId(c.id));
-        }}
-        onShare={() => void shareInvite()}
+        onNewCommunity={() => setMobileTab("communities")}
+
       />
 
       {/* Arama ekranları: yeni arama, tuş takımı, bağlantı, planlama */}
