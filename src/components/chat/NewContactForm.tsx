@@ -10,7 +10,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Phone, User, X } from "lucide-react";
 
-import { importContacts, loadLocalBook, normalizePhone, saveLocalBook } from "@/lib/chat/directory";
+import { importContacts, loadLocalBook, saveLocalBook } from "@/lib/chat/directory";
+import { checkPhone } from "@/lib/chat/phone-validate";
 import { pressFeedback } from "@/lib/chat/sounds";
 
 const COUNTRIES = [
@@ -26,10 +27,13 @@ export function NewContactForm({
   open,
   onClose,
   onSaved,
+  prefillPhone,
 }: {
   open: boolean;
   onClose: () => void;
   onSaved?: (peerId: string, name: string) => void;
+  /** Tuş takımından gelen, doğrulanmış E.164 numarası. */
+  prefillPhone?: string;
 }) {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -42,11 +46,11 @@ export function NewContactForm({
     if (!open) return;
     setFirst("");
     setLast("");
-    setPhone("");
+    setPhone(prefillPhone ?? "");
     setBusy(false);
     const t = window.setTimeout(() => firstRef.current?.focus(), 60);
     return () => window.clearTimeout(t);
-  }, [open]);
+  }, [open, prefillPhone]);
 
   if (!open) return null;
 
@@ -56,11 +60,12 @@ export function NewContactForm({
       toast.error("Kişinin adını yazın.");
       return;
     }
-    const e164 = normalizePhone(phone, code);
-    if (!e164) {
-      toast.error("Telefon numarası geçersiz. Örnek: 532 000 00 00");
+    const parsed = checkPhone(phone, code);
+    if (!parsed.ok) {
+      toast.error(parsed.reason);
       return;
     }
+    const e164 = parsed.e164;
     setBusy(true);
     try {
       // Kopya kişi yasağı: aynı numara varsa kayıt güncellenir, yenisi açılmaz.

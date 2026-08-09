@@ -263,6 +263,9 @@ function ChatAppInner() {
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
   const newContactOpen = surface.isOpen("newContact");
   const setNewContactOpen = (v: boolean) => surface.set("newContact", v);
+  // Tuş takımından "Ekle" ile gelen doğrulanmış numara.
+  const [dialPrefill, setDialPrefill] = useState("");
+
   // Arama ekranları: yeni arama, tuş takımı, planlama ve arama bağlantısı.
   const newCallOpen = surface.isOpen("newCall");
   const setNewCallOpen = (v: boolean) => surface.set("newCall", v);
@@ -2251,6 +2254,15 @@ function ChatAppInner() {
         open={dialpadOpen}
         onClose={() => setDialpadOpen(false)}
         onCall={(peerId, video) => void startCall(peerId, video, nameOf(peerId))}
+        onMessage={(peerId) => {
+          setMobileTab("chats");
+          void ensureDirectConversation(peerId, nameOf(peerId)).then((c) => setActiveId(c.id));
+        }}
+        onAddContact={(phone) => {
+          setDialpadOpen(false);
+          setDialPrefill(phone);
+          setNewContactOpen(true);
+        }}
       />
       <CallLinkSheet open={callLinkOpen} onClose={() => setCallLinkOpen(false)} />
       <ScheduleCallSheet open={scheduleOpen} onClose={() => setScheduleOpen(false)} />
@@ -2258,13 +2270,19 @@ function ChatAppInner() {
       {/* Elle kişi ekleme (Ad · Soyadı · Ülke · Telefon) */}
       <NewContactForm
         open={newContactOpen}
-        onClose={() => setNewContactOpen(false)}
+        prefillPhone={dialPrefill}
+        onClose={() => {
+          setNewContactOpen(false);
+          setDialPrefill("");
+        }}
         onSaved={(peerId, name) => {
           setMobileTab("chats");
+          setDialPrefill("");
           if (name && !isTechnicalLabel(name)) setNickname(peerId, name);
           void ensureDirectConversation(peerId, name || undefined).then((c) => setActiveId(c.id));
         }}
       />
+
 
       {/* Sohbet satırı menüsü: arşiv, sabitle, favori, liste, temizle, sil */}
       <ChatRowMenu
