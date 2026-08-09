@@ -36,7 +36,7 @@ export function Avatar({
       <img
         src={src}
         alt=""
-        className="shrink-0 rounded-full object-cover"
+        className="aspect-square shrink-0 rounded-full object-cover object-center"
         style={{ width: size, height: size }}
         loading="lazy"
       />
