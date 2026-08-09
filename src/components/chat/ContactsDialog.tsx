@@ -321,7 +321,6 @@ function SyncContactsRow() {
           {people.map((p) => (
             <li key={p.peerId} className="flex items-center justify-between gap-3 text-sm">
               <span className="truncate font-medium">{p.name}</span>
-              <span className="font-mono text-[11px] text-muted-foreground">{p.shortId}</span>
             </li>
           ))}
         </ul>

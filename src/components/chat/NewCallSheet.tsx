@@ -175,7 +175,7 @@ export function NewCallSheet({
                 <ContactRow
                   key={`f_${c.peerId}`}
                   name={c.displayName}
-                  sub={c.shortId}
+                  sub="Tedbirge'de"
                   avatar={getAvatar(c.peerId) || undefined}
                   checked={selected.includes(c.peerId)}
                   onToggle={() => toggle(c.peerId)}
@@ -210,7 +210,7 @@ export function NewCallSheet({
                 <ContactRow
                   key={c.peerId}
                   name={c.displayName}
-                  sub={c.shortId}
+                  sub="Tedbirge'de"
                   avatar={getAvatar(c.peerId) || undefined}
                   checked={selected.includes(c.peerId)}
                   onToggle={() => toggle(c.peerId)}
