@@ -2223,7 +2223,6 @@ function ChatAppInner() {
         }}
         onNewContact={() => setNewContactOpen(true)}
         onNewCommunity={() => setMobileTab("communities")}
-
       />
 
       {/* Arama ekranları: yeni arama, tuş takımı, bağlantı, planlama */}
@@ -2272,7 +2271,6 @@ function ChatAppInner() {
           void ensureDirectConversation(peerId, name || undefined).then((c) => setActiveId(c.id));
         }}
       />
-
 
       {/* Sohbet satırı menüsü: arşiv, sabitle, favori, liste, temizle, sil */}
       <ChatRowMenu

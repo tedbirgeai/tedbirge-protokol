@@ -128,7 +128,9 @@ export function NewChatSheet({
 
           {rows.length === 0 ? (
             <p className="px-5 py-8 text-center text-sm" style={{ color: "var(--wa-muted)" }}>
-              {q ? "Eşleşen kişi yok." : "Henüz kayıtlı kişi yok. “Yeni kişi” ile ekleyebilirsiniz."}
+              {q
+                ? "Eşleşen kişi yok."
+                : "Henüz kayıtlı kişi yok. “Yeni kişi” ile ekleyebilirsiniz."}
             </p>
           ) : (
             rows.map((c) => (

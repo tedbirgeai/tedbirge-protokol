@@ -376,7 +376,6 @@ export function ContactsDialog({
     );
   }, [named, q]);
 
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -384,8 +383,8 @@ export function ContactsDialog({
           <DialogHeader className="shrink-0 border-b border-border p-6 pb-4">
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
-              Kişileriniz telefon numarasıyla eşleşir; adları siz verirsiniz. Doğrulama arka
-              planda kendiliğinden yapılır.
+              Kişileriniz telefon numarasıyla eşleşir; adları siz verirsiniz. Doğrulama arka planda
+              kendiliğinden yapılır.
             </DialogDescription>
           </DialogHeader>
 
@@ -417,7 +416,9 @@ export function ContactsDialog({
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      void navigator.clipboard?.writeText(getPhone() || `${window.location.origin}/chat`);
+                      void navigator.clipboard?.writeText(
+                        getPhone() || `${window.location.origin}/chat`,
+                      );
                       toast("Kopyalandı");
                     }}
                   >
