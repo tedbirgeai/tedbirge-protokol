@@ -848,18 +848,6 @@ function ChatAppInner() {
                 type="button"
                 onClick={() => {
                   pressFeedback();
-                  setContactsOpen(true);
-                }}
-                className="wa-press flex h-10 w-10 items-center justify-center rounded-full"
-                style={{ background: "var(--wa-panel-soft)", color: "var(--wa-text)" }}
-                aria-label="Rehber"
-              >
-                <BookUser className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  pressFeedback();
                   setPlusOpen(true);
                 }}
                 className="wa-press flex h-10 w-10 items-center justify-center rounded-full text-white"
@@ -922,7 +910,7 @@ function ChatAppInner() {
                 {me}
               </p>
               <p className="truncate text-[11px]" style={{ color: "var(--wa-muted)" }}>
-                {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : `${getPersonId()} · Bağlı`}
+                {pendingCount > 0 ? `${pendingCount} mesaj bekliyor` : "Bağlı"}
               </p>
             </div>
             <div

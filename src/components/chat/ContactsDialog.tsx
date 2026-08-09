@@ -376,7 +376,6 @@ export function ContactsDialog({
     );
   }, [named, q]);
 
-  const myShort = me?.shortId ?? shortIdOf("local");
 
   return (
     <>
@@ -385,8 +384,8 @@ export function ContactsDialog({
           <DialogHeader className="shrink-0 border-b border-border p-6 pb-4">
             <DialogTitle>Rehber</DialogTitle>
             <DialogDescription>
-              Herkesin değişmeyen bir kısa kimliği vardır; adları siz verirsiniz. Numarasıyla
-              katılanları telefon rehberinizden eşleştirebilirsiniz.
+              Kişileriniz telefon numarasıyla eşleşir; adları siz verirsiniz. Doğrulama arka
+              planda kendiliğinden yapılır.
             </DialogDescription>
           </DialogHeader>
 
