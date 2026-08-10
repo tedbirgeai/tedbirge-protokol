@@ -41,6 +41,7 @@ import {
   ensureLiveNode,
   measureRoute,
   nodeLabel,
+  subscribeLivePeers,
   toLivePeers,
   onLiveMessage,
   type LiveMessage,
