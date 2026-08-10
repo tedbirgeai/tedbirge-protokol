@@ -76,43 +76,43 @@ export function peerAlias(id: string): string {
 
 
 /**
- * Yerel medya: izin verilmezse arayüz çökmez, cihaz "Sadece Veri Düğümü"
- * olarak ağda kalmaya devam eder.
+ * Yerel medya — TALEP ÜZERİNE.
+ * Sayfa açılışında ASLA izin istenmez; cihaz "sadece veri düğümü" olarak
+ * ağa katılır. Kamera/mikrofon yalnız kullanıcı butona bastığında açılır.
  */
 function useLocalMedia() {
-  const [mode, setMode] = useState<"pending" | "av" | "audio" | "data">("pending");
+  const [mode, setMode] = useState<"av" | "audio" | "data">("data");
+  const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    let cancelled = false;
-    const stop = () => stream?.getTracks().forEach((t) => t.stop());
+  const stop = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setMode("data");
+  };
 
-    const run = async () => {
-      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        if (!cancelled) setMode("data");
-        return;
-      }
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        if (!cancelled) setMode("av");
-      } catch {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          if (!cancelled) setMode("audio");
-        } catch {
-          if (!cancelled) setMode("data");
-        }
-      }
-      stop();
-    };
-    void run();
-    return () => {
-      cancelled = true;
-      stop();
-    };
-  }, []);
+  /** Yalnızca kullanıcı etkileşimiyle çağrılır. */
+  const request = async (kind: "av" | "audio") => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setMode("data");
+      return false;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        kind === "av" ? { audio: true, video: true } : { audio: true },
+      );
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = stream;
+      setMode(kind);
+      return true;
+    } catch {
+      setMode("data");
+      return false;
+    }
+  };
 
-  return mode;
+  useEffect(() => () => stop(), []);
+
+  return { mode, request, stop };
 }
 
 /** Mini mesh topolojisi — yeniden boyutlandırmaya duyarlı canvas döngüsü. */
