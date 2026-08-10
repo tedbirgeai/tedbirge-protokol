@@ -16,13 +16,55 @@ export type CarrierId =
   | "eth";
 
 export const CARRIERS = [
-  { id: "lora", name: "LoRa 868 MHz", baseKm: 5, mobile: true, note: "Düşük hız (0.3–37 kbps): internet değil, mesaj/telemetri; LoRa modül + anten gerekir" },
-  { id: "halow", name: "Wi-Fi HaLow 802.11ah", baseKm: 1.2, mobile: true, note: "IP trafiği, ~1–15 Mbps; telefonda değil ayrı HaLow donanımda çalışır" },
-  { id: "tvws", name: "TVWS (470–790 MHz)", baseKm: 8, mobile: false, note: "Veritabanı/izin + TVWS radyo gerekir" },
-  { id: "wifi", name: "Wi-Fi 2.4/5 GHz yönlü", baseKm: 3, mobile: false, note: "Sabit nokta-nokta, LoS şart; telefon Wi‑Fi roaming'i değildir" },
-  { id: "wigig", name: "WiGig 60 GHz", baseKm: 1, mobile: false, note: "Gigabit, yağmurdan etkilenir; hizalı özel donanım gerekir" },
-  { id: "fso", name: "FSO lazer", baseKm: 2, mobile: false, note: "Sisde kesilir; optik hizalama ve özel donanım gerekir" },
-  { id: "cellular", name: "Hücresel (LTE/5G)", baseKm: 0, mobile: true, note: "Operatör kapsaması varsa sınırsız" },
+  {
+    id: "lora",
+    name: "LoRa 868 MHz",
+    baseKm: 5,
+    mobile: true,
+    note: "Düşük hız (0.3–37 kbps): internet değil, mesaj/telemetri; LoRa modül + anten gerekir",
+  },
+  {
+    id: "halow",
+    name: "Wi-Fi HaLow 802.11ah",
+    baseKm: 1.2,
+    mobile: true,
+    note: "IP trafiği, ~1–15 Mbps; telefonda değil ayrı HaLow donanımda çalışır",
+  },
+  {
+    id: "tvws",
+    name: "TVWS (470–790 MHz)",
+    baseKm: 8,
+    mobile: false,
+    note: "Veritabanı/izin + TVWS radyo gerekir",
+  },
+  {
+    id: "wifi",
+    name: "Wi-Fi 2.4/5 GHz yönlü",
+    baseKm: 3,
+    mobile: false,
+    note: "Sabit nokta-nokta, LoS şart; telefon Wi‑Fi roaming'i değildir",
+  },
+  {
+    id: "wigig",
+    name: "WiGig 60 GHz",
+    baseKm: 1,
+    mobile: false,
+    note: "Gigabit, yağmurdan etkilenir; hizalı özel donanım gerekir",
+  },
+  {
+    id: "fso",
+    name: "FSO lazer",
+    baseKm: 2,
+    mobile: false,
+    note: "Sisde kesilir; optik hizalama ve özel donanım gerekir",
+  },
+  {
+    id: "cellular",
+    name: "Hücresel (LTE/5G)",
+    baseKm: 0,
+    mobile: true,
+    note: "Operatör kapsaması varsa sınırsız",
+  },
   { id: "satellite", name: "Uydu", baseKm: 0, mobile: true, note: "Gökyüzü görüşü varsa sınırsız" },
   { id: "eth", name: "Ethernet / fiber", baseKm: 0.1, mobile: false, note: "Sabit omurga" },
 ] as const;

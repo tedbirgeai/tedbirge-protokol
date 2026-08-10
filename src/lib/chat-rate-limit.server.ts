@@ -11,11 +11,7 @@ export type RateLimitResult =
 function clientIp(request: Request): string {
   const fwd = request.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0]!.trim();
-  return (
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-real-ip") ??
-    "unknown"
-  );
+  return request.headers.get("cf-connecting-ip") ?? request.headers.get("x-real-ip") ?? "unknown";
 }
 
 async function sha256(value: string): Promise<string> {
@@ -79,9 +75,7 @@ export async function checkChatRateLimit(request: Request): Promise<RateLimitRes
       };
     }
 
-    const dayStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
+    const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const daily = await bump(`${hash}:day`, dayStart, DAILY_LIMIT);
     if (!daily.allowed) {
       return {

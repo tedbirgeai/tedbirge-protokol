@@ -123,7 +123,11 @@ export const INTEROP_TARGETS: InteropTarget[] = [
     gap: "Uydu bağlantısı pahalı ve tek noktadadır; terminalin bulunduğu yerden uzaktaki ekip yararlanamaz.",
     handshake:
       "Tek uydu terminali ağ girişi olarak işaretlenir; çevredeki tüm düğümler bu çıkışı paylaşır ve trafik önceliklendirilir. Böylece bir abonelik, bir ekibi ayakta tutar.",
-    surface: ["Çıkış düğümü rolü", "Yol seçimi ve öncelik kuyruğu", "Veri tasarrufu için tekrar eleme"],
+    surface: [
+      "Çıkış düğümü rolü",
+      "Yol seçimi ve öncelik kuyruğu",
+      "Veri tasarrufu için tekrar eleme",
+    ],
     legal: "Terminalin tip onayı ve abonelik sorumluluğu kullanıcıdadır.",
     status: "kismi",
   },
@@ -166,7 +170,11 @@ export const INTEROP_TARGETS: InteropTarget[] = [
     gap: "Ekip iletişimi tamamen buluta bağlıdır; hat koptuğunda ekip birbirini kaybeder ve gölge kanallara (kişisel uygulamalar) kayar.",
     handshake:
       "Düğüm ağı, bağlantı yokken çalışan yerel mesajlaşma katmanı sağlar; bağlantı dönünce kayıtlar mevcut araca aktarılabilir. Böylece gölge kanal riski ve veri kaçağı ortadan kalkar.",
-    surface: ["Uçtan uca şifreli sohbet ve arama", "Kaybolan mesaj ve yerel yedek", "Web kancası ile dışa aktarım"],
+    surface: [
+      "Uçtan uca şifreli sohbet ve arama",
+      "Kaybolan mesaj ve yerel yedek",
+      "Web kancası ile dışa aktarım",
+    ],
     legal: "İçerik cihazda kalır; kurum kendi saklama politikasını uygular.",
     status: "hazir",
   },

@@ -107,4 +107,3 @@ export function bootMediaPrewarm(): void {
   started = true;
   void mediaPermissionState();
 }
-

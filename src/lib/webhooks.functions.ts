@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const EVENTS = ["license_event", "field_report", "device_offline", "rate_limited", "ir_alarm"] as const;
+const EVENTS = [
+  "license_event",
+  "field_report",
+  "device_offline",
+  "rate_limited",
+  "ir_alarm",
+] as const;
 
 const SaveInput = z.object({
   id: z.string().uuid().optional(),

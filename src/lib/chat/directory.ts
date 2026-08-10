@@ -12,8 +12,6 @@ import { logError } from "@/lib/chat/errors";
 import { friendlyError } from "@/lib/friendly-error";
 import { openJson, sealJson } from "@/lib/chat/local-book";
 
-
-
 export type DeviceContact = { name: string; phone: string };
 
 /** Yerel numarayı E.164 biçimine getirir (varsayılan ülke kodu +90). */
@@ -98,8 +96,6 @@ export function loadLocalBook(): DeviceContact[] {
   }
 }
 
-
-
 /**
  * Cihaz rehberini otomatik eşitler: izin verilirse kişiler önce bu
  * cihazın yerel hafızasına yazılır, ardından yalnızca geri döndürülemez
@@ -149,7 +145,6 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
     if (r && r.checked > 0) return { ...r, source: "device" };
   }
 
-
   const saved = loadLocalBook();
   if (saved.length > 0) {
     const r = await importContacts(saved);
@@ -164,8 +159,16 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
     if (phone) {
       const vault = await import("@/lib/chat/vault");
       const restored = await vault.restoreContacts(phone).catch((error: unknown) => {
-        logError("rehber", error, "Rehber yedeği geri yüklenemedi. Bağlantı gelince yeniden denenecek.");
-        logSync("hata", "kasa-geri-yükleme", friendlyError(error, "Rehber yedeği geri yüklenemedi."));
+        logError(
+          "rehber",
+          error,
+          "Rehber yedeği geri yüklenemedi. Bağlantı gelince yeniden denenecek.",
+        );
+        logSync(
+          "hata",
+          "kasa-geri-yükleme",
+          friendlyError(error, "Rehber yedeği geri yüklenemedi."),
+        );
         return 0;
       });
       if (restored > 0) {
@@ -184,7 +187,6 @@ export async function autoSyncContacts(): Promise<AutoSyncResult> {
 
   return { checked: 0, matched: 0, people: [], source: "none" };
 }
-
 
 /** Eşleşen kişinin arayüzde gösterilecek özeti. */
 export type MatchedContact = { peerId: string; name: string; shortId: string };
@@ -239,7 +241,8 @@ function csvRow(line: string, sep: string): string[] {
 export function parseContactsCsv(text: string): DeviceContact[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
-  const sep = (lines[0]!.match(/;/g)?.length ?? 0) > (lines[0]!.match(/,/g)?.length ?? 0) ? ";" : ",";
+  const sep =
+    (lines[0]!.match(/;/g)?.length ?? 0) > (lines[0]!.match(/,/g)?.length ?? 0) ? ";" : ",";
   const head = csvRow(lines[0]!, sep).map((h) => h.toLowerCase());
   const nameCols = head
     .map((h, i) => (/name|ad|isim/.test(h) && !/file|nick|user/.test(h) ? i : -1))
@@ -291,7 +294,6 @@ export async function importContactsFile(file: File): Promise<ImportResult> {
   return { ...result, checked: parsed.length };
 }
 
-
 /**
  * Kişileri eşleştirir ve bulunanları yerel rehbere ekler.
  * Rehberdeki ad yerel kalır; ağa gönderilmez.
@@ -327,9 +329,8 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   // Aynı kişinin birden çok cihazı varsa tek kişi olarak sayılır; en son
   // görülen cihaz birincil kabul edilir (WhatsApp bağlı-cihaz modeli).
   const seenPersons = new Set<string>();
-  const { linkNodeToPerson, writeClaimedName, cleanPersonLabel, writePhoneHash } = await import(
-    "@/lib/chat/name-resolver"
-  );
+  const { linkNodeToPerson, writeClaimedName, cleanPersonLabel, writePhoneHash } =
+    await import("@/lib/chat/name-resolver");
 
   for (const m of matches) {
     const local = byHash.get(m.hash);
@@ -362,7 +363,6 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
     writePhoneHash(target, m.hash);
     if (m.personId) writePhoneHash(m.personId, m.hash);
 
-
     const personKey = m.personId || target;
     if (seenPersons.has(personKey)) continue;
     seenPersons.add(personKey);
@@ -388,7 +388,6 @@ export async function importContacts(list: DeviceContact[]): Promise<ImportResul
   await refreshContacts();
   return { checked: rows.length, matched, people };
 }
-
 
 /**
  * SESSİZ YENİDEN EŞLEŞTİRME.

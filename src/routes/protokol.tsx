@@ -105,7 +105,9 @@ function ProtocolPage() {
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {RAAS_TIERS.map((t) => (
               <div key={t.key} className="rounded-sm border border-border bg-background/60 p-6">
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">{t.name}</p>
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
+                  {t.name}
+                </p>
                 <p className="mt-4 text-2xl font-semibold tracking-tight">{t.price}</p>
                 <p className="mt-1 font-mono text-[11px] text-muted-foreground">{t.note}</p>
                 <p className="mt-4 text-sm text-muted-foreground">{t.for}</p>

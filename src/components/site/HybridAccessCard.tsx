@@ -37,7 +37,10 @@ export function HybridAccessCard() {
     <div className="rounded-sm border border-border bg-card/60 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className={`h-3 w-3 rounded-full ${dot} ${info.tone === "ok" ? "animate-pulse" : ""}`} aria-hidden />
+          <span
+            className={`h-3 w-3 rounded-full ${dot} ${info.tone === "ok" ? "animate-pulse" : ""}`}
+            aria-hidden
+          />
           <div>
             <p className="text-sm font-semibold text-foreground">{info.label}</p>
             <p className="text-sm text-muted-foreground">{info.message}</p>
@@ -76,7 +79,10 @@ export function HybridAccessCard() {
             <div className="h-40 w-40 animate-pulse rounded-sm bg-muted" aria-hidden />
           )}
           <div className="text-sm text-muted-foreground">
-            <p>Yeni cihaz bu kodu okutup tek dokunuşla ağa katılır. Kurulum, hesap veya internet gerekmez.</p>
+            <p>
+              Yeni cihaz bu kodu okutup tek dokunuşla ağa katılır. Kurulum, hesap veya internet
+              gerekmez.
+            </p>
             <p className="mt-2 break-all font-mono text-xs text-foreground">{joinUrl(access)}</p>
             <Link to="/katil" className="mt-2 inline-block text-primary hover:underline">
               Katılım sayfasını aç →

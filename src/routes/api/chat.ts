@@ -14,9 +14,11 @@ function messageText(message: unknown): string {
   const parts = (message as { parts?: unknown }).parts;
   if (!Array.isArray(parts)) return "";
   return parts
-    .map((p) => (p && typeof p === "object" && (p as { type?: string }).type === "text"
-      ? String((p as { text?: unknown }).text ?? "")
-      : ""))
+    .map((p) =>
+      p && typeof p === "object" && (p as { type?: string }).type === "text"
+        ? String((p as { text?: unknown }).text ?? "")
+        : "",
+    )
     .join("");
 }
 
@@ -69,7 +71,6 @@ export const Route = createFileRoute("/api/chat")({
         if (!key) return new Response("AI yapılandırması eksik", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
-
 
         const kaydet_talep = tool({
           description:
@@ -164,7 +165,6 @@ export const Route = createFileRoute("/api/chat")({
               console.error("[ai_leads] insert exception", e);
               return { ok: false, hata: "Kayıt sırasında teknik hata oluştu." };
             }
-
           },
         });
 

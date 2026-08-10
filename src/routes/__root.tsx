@@ -5,7 +5,6 @@ import {
   createRootRouteWithContext,
   useRouter,
   useRouterState,
-
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -21,8 +20,8 @@ import { bootNodeRuntime, startNode } from "../lib/node-runtime";
 import { bootAccessEngine } from "../lib/access-tiers";
 import { ensureOfflineGrant } from "../lib/offline-license";
 import { runOneTimePurge } from "../lib/hard-reset";
-
-
+import { syncViewportUnits } from "../lib/ui/viewport";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -91,7 +90,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { httpEquiv: "Content-Security-Policy", content: "upgrade-insecure-requests" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Tedbirge Protokol — Off-Grid Mesh Ağ Geçidi" },
-      { name: "description", content: "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı." },
+      {
+        name: "description",
+        content: "Taşıyıcı-bağımsız, sıfır-bilgi tünel geçidi ve mesh SDK'sı.",
+      },
       { name: "author", content: "Tedbirge Protokol" },
       { property: "og:title", content: "Tedbirge Protokol" },
       { property: "og:description", content: "İnternet olmadan çalışan kurumsal mesh altyapısı." },
@@ -159,18 +161,17 @@ function RootComponent() {
     void startNode();
     bootAccessEngine();
     void ensureOfflineGrant();
+    return syncViewportUnits();
   }, []);
-
 
   return (
     <QueryClientProvider client={queryClient}>
       {!embedded && <OfflineBanner />}
       {/* Gelen arama her sayfada karşılanır (telefon mantığı). */}
       <CallHost />
+      <Toaster />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
   );
 }
-
-

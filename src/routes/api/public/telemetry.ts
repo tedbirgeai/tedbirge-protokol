@@ -102,7 +102,6 @@ export const Route = createFileRoute("/api/public/telemetry")({
           });
         }
 
-
         let parsed;
         try {
           parsed = Body.parse(await request.json());
@@ -121,7 +120,6 @@ export const Route = createFileRoute("/api/public/telemetry")({
           await logUsage(403);
           return json({ error: "license_expired" }, 403);
         }
-
 
         const { data: existing } = await supabaseAdmin
           .from("devices")
@@ -194,10 +192,7 @@ export const Route = createFileRoute("/api/public/telemetry")({
             detected_at: nowIso,
             resolved_at: nowIso,
           });
-          await supabaseAdmin
-            .from("devices")
-            .update({ active_uplink: true })
-            .eq("id", device.id);
+          await supabaseAdmin.from("devices").update({ active_uplink: true }).eq("id", device.id);
 
           // Kesinti olay kaydı kapatılır (süre hesaplanarak kalıcı arşive geçer).
           const { data: openOutage } = await supabaseAdmin
@@ -248,7 +243,6 @@ export const Route = createFileRoute("/api/public/telemetry")({
             actor: "node",
           });
         }
-
 
         const hasMetric =
           parsed.rtt_ms !== undefined ||

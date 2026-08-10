@@ -5,12 +5,7 @@
  * sonuç sunucuya gönderilmez; rapor yerelde üretilir.
  */
 
-import {
-  ensureIdentity,
-  fingerprintOfKey,
-  fromB64,
-  toB64,
-} from "@/lib/crypto/identity";
+import { ensureIdentity, fingerprintOfKey, fromB64, toB64 } from "@/lib/crypto/identity";
 import {
   createEnvelope,
   forwardEnvelope,
@@ -106,7 +101,7 @@ const SPECS: Spec[] = [
       if (!sealed?.ct) return { ok: false, detail: "Şifreli kök gizli kaydı bulunamadı." };
       const bytes = fromB64(sealed.ct);
       return {
-        ok: bytes.length > 16 && !JSON.stringify(rec).includes("seed\":\"") ,
+        ok: bytes.length > 16 && !JSON.stringify(rec).includes('seed":"'),
         detail: `AES-256-GCM ile mühürlü, ${bytes.length} bayt; açık seed kaydı yok.`,
       };
     },
@@ -240,5 +235,8 @@ export async function reportDigest(report: AuditReport): Promise<string> {
     "SHA-256",
     new TextEncoder().encode(`${report.ts}|${report.fingerprint}|${canonical}`),
   );
-  return toB64(new Uint8Array(digest)).replace(/[^A-Za-z0-9]/g, "").slice(0, 32).toUpperCase();
+  return toB64(new Uint8Array(digest))
+    .replace(/[^A-Za-z0-9]/g, "")
+    .slice(0, 32)
+    .toUpperCase();
 }

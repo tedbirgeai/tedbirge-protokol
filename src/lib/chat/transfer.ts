@@ -71,7 +71,12 @@ export async function sendBackupToPeer(
   if (!metaOk) throw new Error("Hedef cihaza ulaşılamadı. İki cihaz da aynı ağda/menzilde olmalı.");
 
   for (let i = 0; i < parts.length; i += 1) {
-    await sendMesh("sync", peerId, { t: "bk-part", id, i, data: parts[i]! } satisfies PartPacket, 1);
+    await sendMesh(
+      "sync",
+      peerId,
+      { t: "bk-part", id, i, data: parts[i]! } satisfies PartPacket,
+      1,
+    );
     onProgress?.(Math.round(((i + 1) / parts.length) * 100));
   }
 }

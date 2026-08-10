@@ -9,7 +9,6 @@ import {
   REGION_PROFILE_SNIPPET,
 } from "@/lib/regulation";
 
-
 const TITLE = "Spektrum & Uyum Matrisi — Ülke Bazlı Taşıyıcı Kuralları";
 const DESC =
   "Tedbirge Protokol taşıyıcılarının bölge bazlı spektrum, güç ve görev döngüsü sınırları: AB/TR, ABD/Kanada, Birleşik Krallık, Körfez, APAC ve Afrika profilleri.";
@@ -33,7 +32,6 @@ export const Route = createFileRoute("/uyumluluk")({
 
 const regions = REGION_MATRIX;
 
-
 const rules = RUNTIME_RULES;
 
 function Compliance() {
@@ -47,9 +45,9 @@ function Compliance() {
             Her bölgede yasal sınırlar içinde çalışan taşıyıcı profilleri
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Protokol on fiziksel katmanı destekler, ancak hepsi her ülkede
-            lisanssız değildir. Aşağıdaki matris, üretim profillerinin bölgeye göre nasıl
-            sınırlandırıldığını gösterir.
+            Tedbirge Protokol on fiziksel katmanı destekler, ancak hepsi her ülkede lisanssız
+            değildir. Aşağıdaki matris, üretim profillerinin bölgeye göre nasıl sınırlandırıldığını
+            gösterir.
           </p>
         </div>
       </section>
@@ -90,9 +88,7 @@ function Compliance() {
             </tbody>
           </table>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">
-{MATRIX_NOTE}
-        </p>
+        <p className="mt-4 text-xs text-muted-foreground">{MATRIX_NOTE}</p>
         <p className="mt-2 text-xs text-muted-foreground">{MATRIX_SOURCES}</p>
       </section>
 
@@ -131,16 +127,14 @@ function Compliance() {
         </div>
       </section>
 
-
-
       <section className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-6 py-20 md:flex-row md:items-center">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
             Bölgeniz listede yok mu?
           </h2>
           <p className="mt-3 max-w-xl text-muted-foreground">
-            Konuşlanma yapacağınız ülkeyi yazın; düzenleyici çerçeveye göre profil çıkarıp
-            hangi taşıyıcıların açılabileceğini raporlayalım.
+            Konuşlanma yapacağınız ülkeyi yazın; düzenleyici çerçeveye göre profil çıkarıp hangi
+            taşıyıcıların açılabileceğini raporlayalım.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

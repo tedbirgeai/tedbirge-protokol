@@ -36,14 +36,70 @@ export const TRUST_LABEL: Record<TrustStatus, string> = {
 
 /** Sözlü karşılaştırma için 5 sembollük emoji seti (64 sembollük sabit sözlük). */
 export const EMOJI_SET = [
-  "🐝", "🌊", "🔥", "🌲", "⭐", "🍀", "🌙", "⚡",
-  "🎯", "🔑", "🛡️", "🚀", "⛰️", "🧭", "📡", "🔭",
-  "🐬", "🦅", "🐢", "🦊", "🐘", "🦉", "🐝", "🦋",
-  "🍎", "🍋", "🍇", "🌵", "🌻", "🍄", "🌾", "🌍",
-  "🎵", "🎨", "📕", "🕯️", "⏳", "🧲", "🔔", "🪙",
-  "🚂", "⛵", "🛰️", "🚁", "🏔️", "🏝️", "🌋", "🗼",
-  "☂️", "❄️", "🌈", "☀️", "🌪️", "💧", "🪵", "🪨",
-  "🧊", "🧩", "🪞", "🔦", "🪃", "🥁", "🎲", "🧬",
+  "🐝",
+  "🌊",
+  "🔥",
+  "🌲",
+  "⭐",
+  "🍀",
+  "🌙",
+  "⚡",
+  "🎯",
+  "🔑",
+  "🛡️",
+  "🚀",
+  "⛰️",
+  "🧭",
+  "📡",
+  "🔭",
+  "🐬",
+  "🦅",
+  "🐢",
+  "🦊",
+  "🐘",
+  "🦉",
+  "🐝",
+  "🦋",
+  "🍎",
+  "🍋",
+  "🍇",
+  "🌵",
+  "🌻",
+  "🍄",
+  "🌾",
+  "🌍",
+  "🎵",
+  "🎨",
+  "📕",
+  "🕯️",
+  "⏳",
+  "🧲",
+  "🔔",
+  "🪙",
+  "🚂",
+  "⛵",
+  "🛰️",
+  "🚁",
+  "🏔️",
+  "🏝️",
+  "🌋",
+  "🗼",
+  "☂️",
+  "❄️",
+  "🌈",
+  "☀️",
+  "🌪️",
+  "💧",
+  "🪵",
+  "🪨",
+  "🧊",
+  "🧩",
+  "🪞",
+  "🔦",
+  "🪃",
+  "🥁",
+  "🎲",
+  "🧬",
 ] as const;
 
 function digestOf(signPublicB64: string): Uint8Array {
@@ -134,7 +190,10 @@ export async function observePeerKey(input: {
 }
 
 /** Kullanıcı doğrulamayı onayladı (QR / emoji / manuel). */
-export async function confirmPeerVerified(peerId: string, signPublic?: string): Promise<TrustStatus> {
+export async function confirmPeerVerified(
+  peerId: string,
+  signPublic?: string,
+): Promise<TrustStatus> {
   const prev = await getPeer(peerId);
   const spk = signPublic ?? prev?.verifyKey;
   const rec: PeerRecord = {
@@ -171,10 +230,7 @@ export async function trustMap(): Promise<Record<string, TrustStatus>> {
  * QR bağlantısıyla gelen kimliği rehbere ekler (TOFU sabitlemesi).
  * Aynı kimlik daha önce farklı anahtarla kayıtlıysa değişim işaretlenir.
  */
-export async function importPeerFromQr(
-  peerId: string,
-  signPublic: string,
-): Promise<TrustStatus> {
+export async function importPeerFromQr(peerId: string, signPublic: string): Promise<TrustStatus> {
   const prev = await getPeer(peerId);
   const changed = Boolean(prev?.knownSignPublic && prev.knownSignPublic !== signPublic);
   const rec: PeerRecord = {

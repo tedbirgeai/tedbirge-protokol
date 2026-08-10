@@ -224,7 +224,6 @@ export const acknowledgeLinkAlert = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
 /** /kapsama sayfasından gerçek saha ölçümü kaydı. */
 export const saveFieldMeasurement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -274,4 +273,3 @@ export const listFieldMeasurements = createServerFn({ method: "GET" }).handler(a
     link_ok: Boolean(m.link_ok),
   }));
 });
-

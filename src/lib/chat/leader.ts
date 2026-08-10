@@ -16,7 +16,7 @@ const STALE_MS = 4_500;
 const tabId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 let channel: BroadcastChannel | null = null;
-let peers = new Map<string, number>();
+const peers = new Map<string, number>();
 let leader = true;
 let timer: ReturnType<typeof setInterval> | null = null;
 const listeners = new Set<(isLeader: boolean) => void>();

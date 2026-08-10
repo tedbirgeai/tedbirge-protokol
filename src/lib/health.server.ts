@@ -1,6 +1,8 @@
 /** Sistem sağlık hesaplaması — tamamen gerçek tablo verisinden türetilir. */
 
 type AnyClient = {
+  // Supabase sorgu zinciri jenerik tipleri burada taşınamıyor.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
 };
 
@@ -9,19 +11,29 @@ export type HealthReport = {
   status: "saglikli" | "uyari" | "kritik";
   nodes: { total: number; online: number; offline: number; revoked: number };
   telemetry: { lastSeenAt: string | null; ageSeconds: number | null; samples24h: number };
-  queue: { pending: number; delivered24h: number; failed24h: number; lagSeconds: number; deliveryRatePct: number };
+  queue: {
+    pending: number;
+    delivered24h: number;
+    failed24h: number;
+    lagSeconds: number;
+    deliveryRatePct: number;
+  };
   outages: { open: number; total24h: number };
   api: { requests24h: number; rateLimited24h: number };
 };
 
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
-export async function computeHealth(client: AnyClient, licenseIds: string[]): Promise<HealthReport> {
+export async function computeHealth(
+  client: AnyClient,
+  licenseIds: string[],
+): Promise<HealthReport> {
   const now = Date.now();
   const since = new Date(now - 24 * 60 * 60 * 1000).toISOString();
   const empty = licenseIds.length === 0;
 
-  const inList = <T,>(q: T): T => (empty ? q : (q as any).in("license_id", licenseIds));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inList = <T>(q: T): T => (empty ? q : (q as any).in("license_id", licenseIds));
 
   const [devicesRes, samplesRes, queueRes, outagesRes, apiRes] = await Promise.all([
     empty
@@ -38,25 +50,32 @@ export async function computeHealth(client: AnyClient, licenseIds: string[]): Pr
             .select("status, queued_at, delivered_at, created_at")
             .gte("created_at", since),
         ),
+    empty ? { data: [] } : inList(client.from("outage_events").select("resolved, started_at")),
     empty
       ? { data: [] }
-      : inList(client.from("outage_events").select("resolved, started_at")),
-    empty
-      ? { data: [] }
-      : inList(client.from("api_usage_events").select("status_code, created_at").gte("created_at", since)),
+      : inList(
+          client
+            .from("api_usage_events")
+            .select("status_code, created_at")
+            .gte("created_at", since),
+        ),
   ]);
 
   const devices = (devicesRes.data ?? []) as { status: string; last_seen_at: string | null }[];
   const online = devices.filter(
-    (d) => d.status === "active" && d.last_seen_at && now - new Date(d.last_seen_at).getTime() < ONLINE_WINDOW_MS,
+    (d) =>
+      d.status === "active" &&
+      d.last_seen_at &&
+      now - new Date(d.last_seen_at).getTime() < ONLINE_WINDOW_MS,
   ).length;
   const revoked = devices.filter((d) => d.status !== "active").length;
 
-  const lastSeen = devices
-    .map((d) => d.last_seen_at)
-    .filter((v): v is string => !!v)
-    .sort()
-    .pop() ?? null;
+  const lastSeen =
+    devices
+      .map((d) => d.last_seen_at)
+      .filter((v): v is string => !!v)
+      .sort()
+      .pop() ?? null;
 
   const queue = (queueRes.data ?? []) as {
     status: string;
@@ -74,7 +93,8 @@ export async function computeHealth(client: AnyClient, licenseIds: string[]): Pr
   const api = (apiRes.data ?? []) as { status_code: number }[];
 
   const totalDeliverable = delivered + failed;
-  const deliveryRatePct = totalDeliverable === 0 ? 100 : Math.round((delivered / totalDeliverable) * 1000) / 10;
+  const deliveryRatePct =
+    totalDeliverable === 0 ? 100 : Math.round((delivered / totalDeliverable) * 1000) / 10;
   const ageSeconds = lastSeen ? Math.round((now - new Date(lastSeen).getTime()) / 1000) : null;
   const lagSeconds = oldestPending ? Math.round((now - oldestPending) / 1000) : 0;
   const openOutages = outages.filter((o) => !o.resolved).length;
@@ -105,7 +125,8 @@ export async function computeHealth(client: AnyClient, licenseIds: string[]): Pr
     },
     outages: {
       open: openOutages,
-      total24h: outages.filter((o) => new Date(o.started_at).getTime() >= now - 24 * 60 * 60 * 1000).length,
+      total24h: outages.filter((o) => new Date(o.started_at).getTime() >= now - 24 * 60 * 60 * 1000)
+        .length,
     },
     api: {
       requests24h: api.length,

@@ -147,7 +147,10 @@ function loadSubs() {
   if (subsLoaded) return;
   subsLoaded = true;
   try {
-    subscriptions = JSON.parse(window.localStorage.getItem(SUB_KEY) ?? "{}") as Record<string, boolean>;
+    subscriptions = JSON.parse(window.localStorage.getItem(SUB_KEY) ?? "{}") as Record<
+      string,
+      boolean
+    >;
   } catch {
     subscriptions = {};
   }
@@ -177,7 +180,6 @@ export function carrierAuthorized(carrier: CarrierId) {
   return carrierSubscribed(carrier);
 }
 
-
 export type BridgeLink = {
   carrier: CarrierId;
   transport: "serial" | "bluetooth" | "wss";
@@ -199,7 +201,10 @@ export type BridgeLink = {
   error: string | null;
 };
 
-type BridgeState = { links: Record<string, BridgeLink>; supported: { serial: boolean; bluetooth: boolean } };
+type BridgeState = {
+  links: Record<string, BridgeLink>;
+  supported: { serial: boolean; bluetooth: boolean };
+};
 
 let state: BridgeState = { links: {}, supported: { serial: false, bluetooth: false } };
 const listeners = new Set<() => void>();
@@ -304,7 +309,9 @@ async function postTelemetry(carrier: CarrierId) {
     });
     upsert(carrier, {
       uploaded: res.ok ? link.uploaded + 1 : link.uploaded,
-      error: res.ok ? null : `Panele yazılamadı (HTTP ${res.status}) — lisans anahtarını kontrol edin.`,
+      error: res.ok
+        ? null
+        : `Panele yazılamadı (HTTP ${res.status}) — lisans anahtarını kontrol edin.`,
     });
   } catch {
     upsert(carrier, { error: "Bulut erişilemedi; ölçüm yerelde tutuluyor." });
@@ -384,7 +391,9 @@ export function sendOverCarrier(
 
 /** Bu taşıyıcı gerçekten veri taşıyabiliyor mu (yazma kanalı var mı)? */
 export function dataPlaneReady(carrier: CarrierId) {
-  return Boolean(handles.get(carrier)?.write) && carrierAllowed(carrier) && carrierAuthorized(carrier);
+  return (
+    Boolean(handles.get(carrier)?.write) && carrierAllowed(carrier) && carrierAuthorized(carrier)
+  );
 }
 
 /** Görev döngüsü bütçesi — UI göstergesi için. */
@@ -434,7 +443,8 @@ export function scoreCarrier(carrier: CarrierId, priority: Priority = 2): Carrie
   const costPenalty = 1 + def.costPerMb * costWeight;
   const loss = 1 - Math.min(0.95, (link?.lossPct ?? 0) / 100);
 
-  const raw = (linkQuality * loss * Math.log10(def.capacityKbps + 10)) / (latencyPenalty * costPenalty);
+  const raw =
+    (linkQuality * loss * Math.log10(def.capacityKbps + 10)) / (latencyPenalty * costPenalty);
   return {
     carrier,
     name: def.name,
@@ -449,7 +459,9 @@ export function scoreCarrier(carrier: CarrierId, priority: Priority = 2): Carrie
 
 /** Tüm taşıyıcıların skor tablosu — panelde failover sıralaması olarak gösterilir. */
 export function carrierRanking(priority: Priority = 2): CarrierScore[] {
-  return BRIDGEABLE_CARRIERS.map((c) => scoreCarrier(c.id, priority)).sort((a, b) => b.score - a.score);
+  return BRIDGEABLE_CARRIERS.map((c) => scoreCarrier(c.id, priority)).sort(
+    (a, b) => b.score - a.score,
+  );
 }
 
 /** Geçiş histerezisi: mevcut taşıyıcı, adayın %20 altına düşmedikçe korunur. */
@@ -497,13 +509,17 @@ export function sendOverBestCarrier(
   return { ok: false, carrier: null, frames: 0, reason: res.reason };
 }
 
-
 /** USB/UART modem: Web Serial ile bağlanır ve satır satır okur. */
 export async function connectSerialCarrier(carrier: CarrierId) {
   if (!carrierAuthorized(carrier))
-    throw new Error("Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.");
+    throw new Error(
+      "Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.",
+    );
+  // Web Serial/Bluetooth tarayıcı tipleri standart d.ts'de yok.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = navigator as unknown as { serial?: { requestPort: () => Promise<any> } };
-  if (!nav.serial) throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
+  if (!nav.serial)
+    throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
   const def = BRIDGEABLE_CARRIERS.find((c) => c.id === carrier)!;
   const port = await nav.serial.requestPort();
   await port.open({ baudRate: def.baud });
@@ -539,7 +555,9 @@ export async function connectSerialCarrier(carrier: CarrierId) {
       buf = lines.pop() ?? "";
       lines.forEach((l) => ingest(carrier, l));
     }
-  })().catch((e) => upsert(carrier, { error: e instanceof Error ? e.message : "seri okuma hatası" }));
+  })().catch((e) =>
+    upsert(carrier, { error: e instanceof Error ? e.message : "seri okuma hatası" }),
+  );
 
   // Veri düzlemi yazıcısı: zarf çerçeveleri modeme bu kanaldan yazılır.
   const encoderStream = new TextEncoderStream();
@@ -581,7 +599,10 @@ const NUS_TX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 /** BLE modem (Meshtastic / Nordic UART): Web Bluetooth ile bağlanır. */
 export async function connectBluetoothCarrier(carrier: CarrierId) {
   if (!carrierAuthorized(carrier))
-    throw new Error("Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.");
+    throw new Error(
+      "Bu taşıyıcı operatör aboneliği gerektirir. Önce hat/abonelik beyanını işaretleyin.",
+    );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = navigator as unknown as { bluetooth?: any };
   if (!nav.bluetooth) throw new Error("Bu tarayıcı Web Bluetooth desteklemiyor.");
   const device = await nav.bluetooth.requestDevice({
@@ -689,7 +710,9 @@ export function normalizeGatewayUrl(input: string): string {
     throw new Error("Adres geçersiz. Örnek: 192.168.0.1:8443");
   }
   if (!u.port) u.port = "8443";
-  const isLocal = /^(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(u.hostname);
+  const isLocal = /^(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(
+    u.hostname,
+  );
   if (u.protocol === "ws:" && !isLocal)
     throw new Error("Yalnızca wss:// (veya yerel ağda ws://) adresleri kabul edilir.");
   return `${u.protocol}//${u.host}`;

@@ -36,7 +36,6 @@ export function AiAdvisor({ hideLauncher = false }: { hideLauncher?: boolean }) 
     return () => window.removeEventListener("tedbirge:advisor", handler);
   }, []);
 
-
   useEffect(() => {
     if (!busy) inputRef.current?.focus();
   }, [busy]);

@@ -113,10 +113,7 @@ export const setDeviceStatus = createServerFn({ method: "POST" })
     if (!device || device.user_id !== context.userId) throw new Error("Düğüm bulunamadı.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("devices")
-      .update({ status })
-      .eq("id", device.id);
+    const { error } = await supabaseAdmin.from("devices").update({ status }).eq("id", device.id);
     if (error) throw new Error("Düğüm güncellenemedi.");
 
     await supabaseAdmin.from("license_events").insert({

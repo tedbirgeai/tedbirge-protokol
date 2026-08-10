@@ -14,7 +14,6 @@ import {
   Copy,
   Download,
   Image as ImageIcon,
-
   Forward,
   Languages,
   MapPin,
@@ -291,7 +290,6 @@ export function MessageRow({
           onPointerLeave={holdEnd}
           onPointerCancel={holdEnd}
         >
-
           {showAuthor && !msg.outgoing && (
             <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
               {authorName}

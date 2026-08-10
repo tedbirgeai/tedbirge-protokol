@@ -216,8 +216,8 @@ function Comparison() {
         </div>
         <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted-foreground">
           Karşılaştırma, projelerin kamuya açık dokümantasyonundaki yeteneklere dayanır ve
-          bilgilendirme amaçlıdır. Ürünler farklı katmanlarda çalıştığı için bazı satırlar
-          ilgili proje için tasarım hedefi dışındadır.
+          bilgilendirme amaçlıdır. Ürünler farklı katmanlarda çalıştığı için bazı satırlar ilgili
+          proje için tasarım hedefi dışındadır.
         </p>
       </section>
 

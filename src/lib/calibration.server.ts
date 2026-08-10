@@ -60,13 +60,24 @@ export function runCalibration(
 
   relevant.forEach((sample, index) => {
     const rest = relevant.filter((_, i) => i !== index);
-    const plan = buildMeshPlan({ carrierId, terrainId, heightId, distanceKm: 1, measurements: rest });
+    const plan = buildMeshPlan({
+      carrierId,
+      terrainId,
+      heightId,
+      distanceKm: 1,
+      measurements: rest,
+    });
     const distance = Number(sample.distance_km);
     const predictedOk = distance <= plan.hopKm;
     if (predictedOk === sample.link_ok) correct += 1;
     else errorSum += Math.abs(distance - plan.hopKm);
     hopSum += plan.hopKm;
-    folds.push({ distanceKm: distance, linkOk: sample.link_ok, predictedOk, hopKm: round(plan.hopKm) });
+    folds.push({
+      distanceKm: distance,
+      linkOk: sample.link_ok,
+      predictedOk,
+      hopKm: round(plan.hopKm),
+    });
   });
 
   const accuracy = (correct / relevant.length) * 100;

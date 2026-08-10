@@ -88,7 +88,8 @@ export function DiagnosticsPanel({ compact = false }: { compact?: boolean }) {
           <Progress value={dutyPct} />
           <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
             <span className={dutyTone}>
-              {(sched.usedMs / 1000).toFixed(1)} sn / {(sched.budgetMs / 1000).toFixed(0)} sn — %{dutyPct}
+              {(sched.usedMs / 1000).toFixed(1)} sn / {(sched.budgetMs / 1000).toFixed(0)} sn — %
+              {dutyPct}
             </span>
             <span>
               {sched.region} · kuyruk {sched.queued} · gönderilen {sched.sent} · beklemeye alınan{" "}
@@ -98,8 +99,8 @@ export function DiagnosticsPanel({ compact = false }: { compact?: boolean }) {
           <p className="text-[11px] text-muted-foreground">{sched.limitNote}</p>
           {sched.nextWindowAt && (
             <p className="text-[11px] text-amber-500">
-              Bütçe doldu — pencere {new Date(sched.nextWindowAt).toLocaleTimeString("tr-TR")} itibarıyla
-              açılıyor. Paketler atılmadı, öncelik sırasıyla bekliyor.
+              Bütçe doldu — pencere {new Date(sched.nextWindowAt).toLocaleTimeString("tr-TR")}{" "}
+              itibarıyla açılıyor. Paketler atılmadı, öncelik sırasıyla bekliyor.
             </p>
           )}
         </CardContent>
@@ -121,7 +122,10 @@ export function DiagnosticsPanel({ compact = false }: { compact?: boolean }) {
                 <div key={h.hop} className="flex items-center gap-2 text-xs">
                   <span className="w-16 font-mono text-muted-foreground">{h.hop} atlama</span>
                   <div className="h-2 flex-1 overflow-hidden rounded bg-muted">
-                    <div className="h-full bg-primary" style={{ width: `${(h.count / hopMax) * 100}%` }} />
+                    <div
+                      className="h-full bg-primary"
+                      style={{ width: `${(h.count / hopMax) * 100}%` }}
+                    />
                   </div>
                   <span className="w-8 text-right font-mono">{h.count}</span>
                 </div>
@@ -140,7 +144,9 @@ export function DiagnosticsPanel({ compact = false }: { compact?: boolean }) {
             </CardHeader>
             <CardContent className="space-y-2">
               {links.length === 0 && (
-                <p className="text-xs text-muted-foreground">Bağlı fiziksel taşıyıcı yok (IP üzerinden).</p>
+                <p className="text-xs text-muted-foreground">
+                  Bağlı fiziksel taşıyıcı yok (IP üzerinden).
+                </p>
               )}
               {links.map((l) => (
                 <div key={l.carrier} className="flex items-center justify-between gap-2 text-xs">

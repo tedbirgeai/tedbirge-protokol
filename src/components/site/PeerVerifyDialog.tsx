@@ -119,8 +119,8 @@ export function PeerVerifyDialog({
             <TrustBadge trust={target?.trust} />
           </DialogTitle>
           <DialogDescription>
-            Karşı cihazdaki değerlerle birebir aynı olmalıdır. Farklıysa <strong>onaylamayın</strong> —
-            araya giren bir düğüm olabilir.
+            Karşı cihazdaki değerlerle birebir aynı olmalıdır. Farklıysa{" "}
+            <strong>onaylamayın</strong> — araya giren bir düğüm olabilir.
           </DialogDescription>
         </DialogHeader>
 
@@ -146,7 +146,13 @@ export function PeerVerifyDialog({
 
               <TabsContent value="qr" className="flex flex-col items-center gap-3 py-4">
                 {qr ? (
-                  <img src={qr} alt="Eş parmak izi QR kodu" className="rounded-md border" width={240} height={240} />
+                  <img
+                    src={qr}
+                    alt="Eş parmak izi QR kodu"
+                    className="rounded-md border"
+                    width={240}
+                    height={240}
+                  />
                 ) : (
                   <p className="text-sm text-muted-foreground">QR üretiliyor…</p>
                 )}

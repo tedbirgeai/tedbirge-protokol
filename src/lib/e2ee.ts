@@ -124,7 +124,13 @@ export async function open<T = unknown>(privateKeyB64: string, env: Envelope): P
 
 export function isEnvelope(value: unknown): value is Envelope {
   const v = value as Partial<Envelope> | null;
-  return Boolean(v && typeof v.alg === "string" && typeof v.epk === "string" && typeof v.iv === "string" && typeof v.ct === "string");
+  return Boolean(
+    v &&
+    typeof v.alg === "string" &&
+    typeof v.epk === "string" &&
+    typeof v.iv === "string" &&
+    typeof v.ct === "string",
+  );
 }
 
 /** Düğüm özel anahtarını yalnızca bu cihazın tarayıcısında saklar. */

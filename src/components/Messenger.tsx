@@ -35,9 +35,12 @@ import {
   Video,
 } from "lucide-react";
 
+import { toast } from "sonner";
+
 import { useNodeRuntime } from "@/lib/node-runtime";
 import { NodeSettingsPanel } from "@/components/shell/NodeSettingsPanel";
 import { SecurityPanel } from "@/components/shell/SecurityPanel";
+import { AppErrorBoundary } from "@/components/shell/AppErrorBoundary";
 
 import {
   broadcastText,
@@ -78,7 +81,6 @@ export function peerAlias(id: string): string {
   return ALIAS_POOL[sum % ALIAS_POOL.length]!;
 }
 
-
 /**
  * Yerel medya — TALEP ÜZERİNE.
  * Sayfa açılışında ASLA izin istenmez; cihaz "sadece veri düğümü" olarak
@@ -98,6 +100,7 @@ function useLocalMedia() {
   const request = async (kind: "av" | "audio") => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setMode("data");
+      toast.error("Bu cihazda kamera/mikrofon erişimi yok. Veri düğümü olarak devam ediliyor.");
       return false;
     }
     try {
@@ -110,6 +113,11 @@ function useLocalMedia() {
       return true;
     } catch {
       setMode("data");
+      toast.error(
+        kind === "av"
+          ? "Kamera ve mikrofon izni verilmedi. Görüşme veri düğümü olarak sürüyor."
+          : "Mikrofon izni verilmedi. Görüşme veri düğümü olarak sürüyor.",
+      );
       return false;
     }
   };
@@ -246,9 +254,10 @@ function MiniMeshCanvas() {
     };
   }, []);
 
-  return <canvas id="meshTopologyCanvas" ref={ref} className="block h-full w-full bg-transparent" />;
+  return (
+    <canvas id="meshTopologyCanvas" ref={ref} className="block h-full w-full bg-transparent" />
+  );
 }
-
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -361,7 +370,6 @@ function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
     </div>
   );
 }
-
 
 /** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
 export default function Messenger() {
@@ -499,8 +507,8 @@ export default function Messenger() {
   };
 
   const peers = node.peers.length + (sim && livePeers.length === 0 ? 1 : 0);
-  const directPeers = node.peers.filter((p) => p.direct).length + (sim && livePeers.length === 0 ? 1 : 0);
-
+  const directPeers =
+    node.peers.filter((p) => p.direct).length + (sim && livePeers.length === 0 ? 1 : 0);
 
   return (
     <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[#06090e] font-osui text-slate-400">
@@ -622,7 +630,6 @@ export default function Messenger() {
               >
                 <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
               </button>
-
             </nav>
           </div>
 
@@ -711,13 +718,15 @@ export default function Messenger() {
               </span>
             </PanelTitle>
 
-
             {center === "settings" ? (
-              <NodeSettingsPanel />
+              <AppErrorBoundary title="Ayarlar penceresi yüklenemedi">
+                <NodeSettingsPanel />
+              </AppErrorBoundary>
             ) : center === "security" ? (
-              <SecurityPanel />
+              <AppErrorBoundary title="Güvenlik penceresi yüklenemedi">
+                <SecurityPanel />
+              </AppErrorBoundary>
             ) : center === "network" ? (
-
               <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
                 <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
                   <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
@@ -752,7 +761,11 @@ export default function Messenger() {
             ) : (
               <div className="my-2 grid h-full min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 sm:grid-cols-2 lg:grid-cols-3">
                 {slots.map((p, i) =>
-                  p ? <VideoTile key={p.id} p={p} camOn={camOn} /> : <EmptyTile key={`empty-${i}`} />,
+                  p ? (
+                    <VideoTile key={p.id} p={p} camOn={camOn} />
+                  ) : (
+                    <EmptyTile key={`empty-${i}`} />
+                  ),
                 )}
               </div>
             )}
@@ -761,7 +774,6 @@ export default function Messenger() {
               className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2"
               hidden={center === "security" || center === "settings"}
             >
-
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
                 {!inCall
                   ? "GÖRÜŞME SONLANDIRILDI"
@@ -872,7 +884,6 @@ export default function Messenger() {
             </div>
           </div>
 
-
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
           <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
@@ -966,7 +977,6 @@ export default function Messenger() {
               </button>
             </form>
           </div>
-
         </main>
       </div>
 

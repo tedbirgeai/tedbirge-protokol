@@ -123,7 +123,10 @@ export const Route = createFileRoute("/api/public/queue")({
             typeof p.ct === "string";
           if (device?.e2ee && !parsed.messages.every((m) => isEnvelope(m.payload))) {
             await logUsage(400);
-            return json({ error: "e2ee_required", detail: "Bu düğüm için şifreli zarf zorunlu." }, 400);
+            return json(
+              { error: "e2ee_required", detail: "Bu düğüm için şifreli zarf zorunlu." },
+              400,
+            );
           }
 
           const rows = parsed.messages.map((m) => ({
@@ -145,7 +148,11 @@ export const Route = createFileRoute("/api/public/queue")({
             .select("id");
           if (error) return json({ error: "enqueue_failed" }, 500);
           await logUsage(200);
-          return json({ ok: true, accepted: inserted?.length ?? 0, ids: inserted?.map((r) => r.id) ?? [] });
+          return json({
+            ok: true,
+            accepted: inserted?.length ?? 0,
+            ids: inserted?.map((r) => r.id) ?? [],
+          });
         }
 
         if (parsed.action === "fetch") {

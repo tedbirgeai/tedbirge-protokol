@@ -15,7 +15,11 @@ const navGroups = [
     label: "Protokol",
     items: [
       { to: "/", label: "Genel Bakış", hint: "Tedbirge Protocol'e giriş" },
-      { to: "/protokol", label: "7 Katmanlı Mimari", hint: "Trust · Edge · Loop · Off-Grid · Sense · Console · Relay" },
+      {
+        to: "/protokol",
+        label: "7 Katmanlı Mimari",
+        hint: "Trust · Edge · Loop · Off-Grid · Sense · Console · Relay",
+      },
 
       { to: "/urun", label: "Ürün", hint: "Yetenekler ve mimari" },
       { to: "/demo", label: "Demo", hint: "Tarayıcıda canlı ağ" },
@@ -52,7 +56,6 @@ const navGroups = [
     ],
   },
 ] as const;
-
 
 type NavItem = (typeof navGroups)[number]["items"][number];
 
@@ -294,7 +297,6 @@ function MobileMenu({ activePath }: { activePath: string }) {
               Pilot Başlat
             </Link>
           </div>
-
         </div>
       )}
     </div>
@@ -318,7 +320,6 @@ export function SiteHeader() {
           <span className="whitespace-nowrap font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
             TEDBİRGE PROTOCOL
           </span>
-
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Ana menü">
@@ -346,7 +347,6 @@ export function SiteHeader() {
             Uygulamaya Gir
           </Link>
 
-
           <Link
             to="/iletisim"
             className="hidden rounded-sm border border-border px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-foreground transition-colors hover:bg-secondary lg:block"
@@ -360,7 +360,6 @@ export function SiteHeader() {
     </header>
   );
 }
-
 
 function FooterHeading({ children }: { children: ReactNode }) {
   return (
@@ -384,47 +383,118 @@ export function SiteFooter() {
               Kurumsal bağlantı sürekliliği platformu: uçtan uca şifreli, kurulum gerektirmeyen,
               internet kesildiğinde de çalışan yedi katmanlı mimari.
             </p>
-
           </div>
 
           <div className="min-w-0">
             <FooterHeading>Protokol</FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/protokol" className={footerLinkClass}>7 katmanlı mimari</Link></li>
-              <li><Link to="/urun" className={footerLinkClass}>Yetenekler</Link></li>
+              <li>
+                <Link to="/protokol" className={footerLinkClass}>
+                  7 katmanlı mimari
+                </Link>
+              </li>
+              <li>
+                <Link to="/urun" className={footerLinkClass}>
+                  Yetenekler
+                </Link>
+              </li>
 
-              <li><Link to="/hibrit-model" className={footerLinkClass}>Hibrit model</Link></li>
-              <li><Link to="/tasiyicilar" className={footerLinkClass}>Taşıyıcılar</Link></li>
-              <li><Link to="/afet-kamu" className={footerLinkClass}>Afet & Kamu</Link></li>
-              <li><Link to="/karsilastirma" className={footerLinkClass}>Karşılaştırma</Link></li>
-              <li><Link to="/demo" className={footerLinkClass}>Canlı demo</Link></li>
+              <li>
+                <Link to="/hibrit-model" className={footerLinkClass}>
+                  Hibrit model
+                </Link>
+              </li>
+              <li>
+                <Link to="/tasiyicilar" className={footerLinkClass}>
+                  Taşıyıcılar
+                </Link>
+              </li>
+              <li>
+                <Link to="/afet-kamu" className={footerLinkClass}>
+                  Afet & Kamu
+                </Link>
+              </li>
+              <li>
+                <Link to="/karsilastirma" className={footerLinkClass}>
+                  Karşılaştırma
+                </Link>
+              </li>
+              <li>
+                <Link to="/demo" className={footerLinkClass}>
+                  Canlı demo
+                </Link>
+              </li>
             </ul>
             <FooterHeading>
               <span className="mt-6 block">Ticari</span>
             </FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/fiyatlandirma" className={footerLinkClass}>Fiyatlandırma</Link></li>
-              <li><Link to="/dokumanlar" className={footerLinkClass}>Dokümanlar</Link></li>
+              <li>
+                <Link to="/fiyatlandirma" className={footerLinkClass}>
+                  Fiyatlandırma
+                </Link>
+              </li>
+              <li>
+                <Link to="/dokumanlar" className={footerLinkClass}>
+                  Dokümanlar
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div className="min-w-0">
             <FooterHeading>Başlangıç & Saha</FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/kur" className={footerLinkClass}>Kolay kurulum sihirbazı</Link></li>
-              <li><Link to="/katil" className={footerLinkClass}>Ağa katıl (karşılama)</Link></li>
-              <li><Link to="/saha" className={footerLinkClass}>Saha erişimi (ücretsiz)</Link></li>
-              <li><Link to="/kapsama" className={footerLinkClass}>Kapsama planlayıcı</Link></li>
-              <li><Link to="/saha-raporu" className={footerLinkClass}>Saha test raporu</Link></li>
-              <li><Link to="/kablosuz-sarj" className={footerLinkClass}>Kablosuz şarj & enerji</Link></li>
+              <li>
+                <Link to="/kur" className={footerLinkClass}>
+                  Kolay kurulum sihirbazı
+                </Link>
+              </li>
+              <li>
+                <Link to="/katil" className={footerLinkClass}>
+                  Ağa katıl (karşılama)
+                </Link>
+              </li>
+              <li>
+                <Link to="/saha" className={footerLinkClass}>
+                  Saha erişimi (ücretsiz)
+                </Link>
+              </li>
+              <li>
+                <Link to="/kapsama" className={footerLinkClass}>
+                  Kapsama planlayıcı
+                </Link>
+              </li>
+              <li>
+                <Link to="/saha-raporu" className={footerLinkClass}>
+                  Saha test raporu
+                </Link>
+              </li>
+              <li>
+                <Link to="/kablosuz-sarj" className={footerLinkClass}>
+                  Kablosuz şarj & enerji
+                </Link>
+              </li>
             </ul>
             <FooterHeading>
               <span className="mt-6 block">Geliştirici</span>
             </FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/rehber" className={footerLinkClass}>Rehber</Link></li>
-              <li><Link to="/api-dokumantasyon" className={footerLinkClass}>Telemetri API'si</Link></li>
-              <li><a href="/tedbirge-teknik-ozet.md" download className={footerLinkClass}>Teknik özet (.md)</a></li>
+              <li>
+                <Link to="/rehber" className={footerLinkClass}>
+                  Rehber
+                </Link>
+              </li>
+              <li>
+                <Link to="/api-dokumantasyon" className={footerLinkClass}>
+                  Telemetri API'si
+                </Link>
+              </li>
+              <li>
+                <a href="/tedbirge-teknik-ozet.md" download className={footerLinkClass}>
+                  Teknik özet (.md)
+                </a>
+              </li>
               <li>
                 <a
                   href="https://github.com/tedbirgeai/tedbirge-protokol"
@@ -441,49 +511,113 @@ export function SiteFooter() {
           <div className="min-w-0">
             <FooterHeading>Uyum & Regülasyon</FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/mevzuat" className={footerLinkClass}>Regülasyon merkezi</Link></li>
-              <li><Link to="/uyumluluk" className={footerLinkClass}>Spektrum & uyum</Link></li>
-              <li><Link to="/sertifikasyon" className={footerLinkClass}>Sertifikasyon & test</Link></li>
-              <li><Link to="/turkiye-mevzuat" className={footerLinkClass}>Türkiye mevzuatı</Link></li>
-              <li><Link to="/izinler" className={footerLinkClass}>Devlet izinleri</Link></li>
-              <li><Link to="/pilot-panosu" className={footerLinkClass}>Pilot uyum panosu</Link></li>
-              <li><Link to="/ihracat-uyum" className={footerLinkClass}>İhracat kontrolü</Link></li>
-              <li><Link to="/yasal" className={footerLinkClass}>Sözleşme ekleri (örnek şablon)</Link></li>
+              <li>
+                <Link to="/mevzuat" className={footerLinkClass}>
+                  Regülasyon merkezi
+                </Link>
+              </li>
+              <li>
+                <Link to="/uyumluluk" className={footerLinkClass}>
+                  Spektrum & uyum
+                </Link>
+              </li>
+              <li>
+                <Link to="/sertifikasyon" className={footerLinkClass}>
+                  Sertifikasyon & test
+                </Link>
+              </li>
+              <li>
+                <Link to="/turkiye-mevzuat" className={footerLinkClass}>
+                  Türkiye mevzuatı
+                </Link>
+              </li>
+              <li>
+                <Link to="/izinler" className={footerLinkClass}>
+                  Devlet izinleri
+                </Link>
+              </li>
+              <li>
+                <Link to="/pilot-panosu" className={footerLinkClass}>
+                  Pilot uyum panosu
+                </Link>
+              </li>
+              <li>
+                <Link to="/ihracat-uyum" className={footerLinkClass}>
+                  İhracat kontrolü
+                </Link>
+              </li>
+              <li>
+                <Link to="/yasal" className={footerLinkClass}>
+                  Sözleşme ekleri (örnek şablon)
+                </Link>
+              </li>
 
-              <li><Link to="/guvenlik" className={footerLinkClass}>Güvenlik & tehdit modeli</Link></li>
+              <li>
+                <Link to="/guvenlik" className={footerLinkClass}>
+                  Güvenlik & tehdit modeli
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div className="min-w-0">
             <FooterHeading>Kurumsal</FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/hakkimizda" className={footerLinkClass}>Hakkımızda</Link></li>
-              <li><Link to="/iletisim" className={footerLinkClass}>İletişim</Link></li>
-              <li><Link to="/panel" className={footerLinkClass}>Müşteri paneli</Link></li>
-              <li><Link to="/en" className={footerLinkClass}>English overview</Link></li>
+              <li>
+                <Link to="/hakkimizda" className={footerLinkClass}>
+                  Hakkımızda
+                </Link>
+              </li>
+              <li>
+                <Link to="/iletisim" className={footerLinkClass}>
+                  İletişim
+                </Link>
+              </li>
+              <li>
+                <Link to="/panel" className={footerLinkClass}>
+                  Müşteri paneli
+                </Link>
+              </li>
+              <li>
+                <Link to="/en" className={footerLinkClass}>
+                  English overview
+                </Link>
+              </li>
             </ul>
             <FooterHeading>
               <span className="mt-6 block">Yasal</span>
             </FooterHeading>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/kosullar" className={footerLinkClass}>Kullanım Koşulları</Link></li>
-              <li><Link to="/gizlilik" className={footerLinkClass}>Gizlilik Bildirimi</Link></li>
-              <li><Link to="/iade" className={footerLinkClass}>İade Politikası</Link></li>
+              <li>
+                <Link to="/kosullar" className={footerLinkClass}>
+                  Kullanım Koşulları
+                </Link>
+              </li>
+              <li>
+                <Link to="/gizlilik" className={footerLinkClass}>
+                  Gizlilik Bildirimi
+                </Link>
+              </li>
+              <li>
+                <Link to="/iade" className={footerLinkClass}>
+                  İade Politikası
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
       </div>
       <div className="border-t border-border/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-5 font-mono text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Tedbirge Protocol · Mehmet DİNÇ (Tedbirge Protokol)</span>
+          <span>
+            © {new Date().getFullYear()} Tedbirge Protocol · Mehmet DİNÇ (Tedbirge Protokol)
+          </span>
           <span>Uçtan uca şifreli · Sıfır-bilgi · Doğrulanmış düğüm</span>
-
         </div>
       </div>
     </footer>
   );
 }
-
 
 const CRUMB_LABELS: Record<string, string> = {
   protokol: "7 Katmanlı Mimari",
@@ -530,8 +664,7 @@ const CRUMB_LABELS: Record<string, string> = {
 
 function crumbLabel(segment: string) {
   return (
-    CRUMB_LABELS[segment] ??
-    segment.replace(/-/g, " ").replace(/^\p{Ll}/u, (c) => c.toUpperCase())
+    CRUMB_LABELS[segment] ?? segment.replace(/-/g, " ").replace(/^\p{Ll}/u, (c) => c.toUpperCase())
   );
 }
 
@@ -573,7 +706,10 @@ function BackBar() {
                 {last ? (
                   <span className="text-foreground">{crumbLabel(seg)}</span>
                 ) : (
-                  <Link to={href as string as never} className="transition-colors hover:text-primary">
+                  <Link
+                    to={href as string as never}
+                    className="transition-colors hover:text-primary"
+                  >
                     {crumbLabel(seg)}
                   </Link>
                 )}
@@ -607,7 +743,5 @@ export function SitePage({
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">{children}</p>
-  );
+  return <p className="font-mono text-xs uppercase tracking-[0.3em] text-primary">{children}</p>;
 }

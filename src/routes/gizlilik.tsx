@@ -53,11 +53,26 @@ function Privacy() {
 
         <Section title="2. İşlenen veri kategorileri ve amaçları">
           <ul className="list-disc space-y-1 pl-5">
-            <li><strong>Kimlik ve iletişim</strong> (ad soyad, kurum, e-posta, telefon) — hesap açma, pilot başvurusu değerlendirme, sözleşme kurma ve destek.</li>
-            <li><strong>Hesap ve oturum verileri</strong> (kullanıcı kimliği, oturum jetonları) — kimlik doğrulama ve güvenlik.</li>
-            <li><strong>Abonelik ve lisans verileri</strong> (plan, düğüm sayısı, dönem, lisans anahtarı) — sözleşmenin ifası ve lisans yönetimi.</li>
-            <li><strong>Teknik/kullanım verileri</strong> (IP adresi, cihaz ve tarayıcı bilgisi, taşınan bayt sayısı, SHA-256 özetleri) — güvenlik, dolandırıcılık önleme, faturalama ölçümü ve ürün iyileştirme.</li>
-            <li><strong>Destek yazışmaları</strong> — talep yönetimi ve kayıt.</li>
+            <li>
+              <strong>Kimlik ve iletişim</strong> (ad soyad, kurum, e-posta, telefon) — hesap açma,
+              pilot başvurusu değerlendirme, sözleşme kurma ve destek.
+            </li>
+            <li>
+              <strong>Hesap ve oturum verileri</strong> (kullanıcı kimliği, oturum jetonları) —
+              kimlik doğrulama ve güvenlik.
+            </li>
+            <li>
+              <strong>Abonelik ve lisans verileri</strong> (plan, düğüm sayısı, dönem, lisans
+              anahtarı) — sözleşmenin ifası ve lisans yönetimi.
+            </li>
+            <li>
+              <strong>Teknik/kullanım verileri</strong> (IP adresi, cihaz ve tarayıcı bilgisi,
+              taşınan bayt sayısı, SHA-256 özetleri) — güvenlik, dolandırıcılık önleme, faturalama
+              ölçümü ve ürün iyileştirme.
+            </li>
+            <li>
+              <strong>Destek yazışmaları</strong> — talep yönetimi ve kayıt.
+            </li>
           </ul>
           <p>
             Ağ üzerinden taşınan mesaj içerikleri sıfır-bilgi ilkesiyle işlenir: yalnızca bayt
@@ -67,16 +82,18 @@ function Privacy() {
 
         <Section title="3. Hukuki sebepler">
           <p>
-            Sözleşmenin kurulması ve ifası (KVKK m.5/2-c; GDPR m.6/1-b), hukuki yükümlülük
-            (m.5/2-ç; m.6/1-c), meşru menfaat (m.5/2-f; m.6/1-f) ve gerektiğinde açık rıza
-            (m.5/1; m.6/1-a).
+            Sözleşmenin kurulması ve ifası (KVKK m.5/2-c; GDPR m.6/1-b), hukuki yükümlülük (m.5/2-ç;
+            m.6/1-c), meşru menfaat (m.5/2-f; m.6/1-f) ve gerektiğinde açık rıza (m.5/1; m.6/1-a).
           </p>
         </Section>
 
         <Section title="4. Aktarım yapılan alıcı kategorileri">
           <ul className="list-disc space-y-1 pl-5">
             <li>Barındırma, veritabanı ve analitik hizmet sağlayıcıları (alt işleyenler).</li>
-            <li>Kayıtlı satıcı (Merchant of Record) Paddle.com — satış, abonelik yönetimi, ödeme, vergi uyumu ve faturalandırma amacıyla.</li>
+            <li>
+              Kayıtlı satıcı (Merchant of Record) Paddle.com — satış, abonelik yönetimi, ödeme,
+              vergi uyumu ve faturalandırma amacıyla.
+            </li>
             <li>Hukuk ve mali müşavirlik gibi profesyonel danışmanlar.</li>
             <li>Mevzuatın zorunlu kıldığı hâllerde yetkili kamu kurumları.</li>
           </ul>
@@ -85,25 +102,25 @@ function Privacy() {
         <Section title="5. Yurt dışına aktarım">
           <p>
             Hizmet sağlayıcılarımızın bir kısmı AB/AEA ve ABD’de bulunur. Aktarımlar; yeterlilik
-            kararı, Standart Sözleşme Hükümleri (SCC) veya KVKK m.9 kapsamındaki uygun
-            güvenceler temelinde yapılır.
+            kararı, Standart Sözleşme Hükümleri (SCC) veya KVKK m.9 kapsamındaki uygun güvenceler
+            temelinde yapılır.
           </p>
         </Section>
 
         <Section title="6. Saklama süreleri">
           <p>
             Hesap ve abonelik verileri ilişki sürdüğü müddetçe, ticari defter ve fatura kayıtları
-            mevzuattaki azami süre (Türkiye’de 10 yıl) boyunca saklanır. Amaç ortadan
-            kalktığında veriler silinir veya anonim hâle getirilir.
+            mevzuattaki azami süre (Türkiye’de 10 yıl) boyunca saklanır. Amaç ortadan kalktığında
+            veriler silinir veya anonim hâle getirilir.
           </p>
         </Section>
 
         <Section title="7. Haklarınız">
           <p>
-            Erişim, düzeltme, silme, işlemenin kısıtlanması, veri taşınabilirliği, itiraz ve
-            rızayı geri çekme haklarına sahipsiniz. Talepler en geç 30 gün içinde yanıtlanır.
-            Ayrıca Kişisel Verileri Koruma Kurumu’na (veya AB/AEA’da ilgili denetim otoritesine)
-            şikâyet hakkınız saklıdır.
+            Erişim, düzeltme, silme, işlemenin kısıtlanması, veri taşınabilirliği, itiraz ve rızayı
+            geri çekme haklarına sahipsiniz. Talepler en geç 30 gün içinde yanıtlanır. Ayrıca
+            Kişisel Verileri Koruma Kurumu’na (veya AB/AEA’da ilgili denetim otoritesine) şikâyet
+            hakkınız saklıdır.
           </p>
         </Section>
 
@@ -131,7 +148,6 @@ function Privacy() {
             adresine yazabilirsiniz.
           </p>
         </Section>
-
       </section>
     </SitePage>
   );

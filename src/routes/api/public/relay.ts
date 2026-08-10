@@ -105,7 +105,6 @@ export const Route = createFileRoute("/api/public/relay")({
           });
         }
 
-
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         if (parsed.action === "publish") {
@@ -140,7 +139,10 @@ export const Route = createFileRoute("/api/public/relay")({
             .eq("person_id", person)
             .limit(20);
 
-          const map = new Map<string, { node_id: string; sign_public: string; box_public: string }>();
+          const map = new Map<
+            string,
+            { node_id: string; sign_public: string; box_public: string }
+          >();
           for (const row of [...(fanout ?? []), ...(self ? [self] : [])]) {
             map.set(row.node_id, {
               node_id: row.node_id,

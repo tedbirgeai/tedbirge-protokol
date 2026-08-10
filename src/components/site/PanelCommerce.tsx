@@ -40,7 +40,9 @@ export function PanelCommerce({
   return (
     <div className="space-y-6">
       <div className="rounded-sm border border-border bg-card/50 p-6">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Ticarileştirme</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Ticarileştirme
+        </p>
         <h2 className="mt-2 text-xl font-semibold tracking-tight">Abonelik ve lisans yönetimi</h2>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -76,8 +78,8 @@ export function PanelCommerce({
             ) : (
               <div className="mt-3">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Şu anda <strong className="text-foreground">Community</strong> planındasınız: 5 düğüme
-                  kadar ücretsiz, topluluk desteği ve tam mesh yeteneği.
+                  Şu anda <strong className="text-foreground">Community</strong> planındasınız: 5
+                  düğüme kadar ücretsiz, topluluk desteği ve tam mesh yeteneği.
                 </p>
                 <Link
                   to="/fiyatlandirma"
@@ -116,7 +118,6 @@ export function PanelCommerce({
               ]}
             />
           </div>
-
         </div>
       </div>
 
@@ -136,7 +137,9 @@ export function PanelCommerce({
               return (
                 <li key={l.id} className="rounded-sm border border-border bg-background/60 p-5">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">{l.plan}</span>
+                    <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">
+                      {l.plan}
+                    </span>
                     <span className="font-mono text-[11px] text-muted-foreground">{l.status}</span>
                   </div>
                   <KeyField value={l.license_key} />
@@ -181,7 +184,9 @@ function KeyField({ value }: { value: string }) {
   return (
     <div className="mt-3">
       <p className="break-all font-mono text-[12px] text-foreground">
-        {shown ? value : `${value.slice(0, 6)}${"•".repeat(Math.max(0, value.length - 10))}${value.slice(-4)}`}
+        {shown
+          ? value
+          : `${value.slice(0, 6)}${"•".repeat(Math.max(0, value.length - 10))}${value.slice(-4)}`}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         <button
@@ -213,7 +218,9 @@ function PlanCard({ name, current, points }: { name: string; current: boolean; p
       <div className="flex items-center justify-between">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-foreground">{name}</p>
         {current && (
-          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary">mevcut plan</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary">
+            mevcut plan
+          </span>
         )}
       </div>
       <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">

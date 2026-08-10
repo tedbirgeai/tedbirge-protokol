@@ -35,23 +35,98 @@ export type TransportDef = {
 
 /** 10 taşıyıcı katmanı — sıralama, tercih önceliğini yansıtır. */
 export const TRANSPORTS: TransportDef[] = [
-  { id: "openwrt-gateway", label: "Yerel geçit (OpenWrt)", hint: "Şebeke beslemeli, 7/24 açık ev/bina geçidi", latencyMs: 10, kbps: 50000, penalty: 0 },
-  { id: "cloud-webrtc", label: "Bulut WebRTC", hint: "İnternet varken doğrudan eş bağlantısı", latencyMs: 60, kbps: 20000, penalty: 0 },
-  { id: "lan-ws", label: "Yerel LAN", hint: "Aynı Wi-Fi ağındaki saha geçidi", latencyMs: 15, kbps: 40000, penalty: 0 },
-  { id: "broadcast-channel", label: "Cihaz içi kanal", hint: "Aynı cihazdaki sekmeler ve uygulama", latencyMs: 2, kbps: 100000, penalty: 0 },
-  { id: "wifi-direct", label: "Wi-Fi Direct / Hotspot", hint: "Cihazdan cihaza erişim noktası", latencyMs: 25, kbps: 25000, penalty: 0.1 },
-  { id: "mdns-udp", label: "mDNS / UDP yayın", hint: "Yerel ağda komşu keşfi", latencyMs: 30, kbps: 8000, penalty: 0.1 },
-  { id: "ble", label: "Bluetooth (BLE)", hint: "Kısa mesafe, düşük enerji", latencyMs: 120, kbps: 100, penalty: 0.3 },
-  { id: "lora-serial", label: "LoRa / Seri modem", hint: "Kilometrelerce menzil, düşük hız", latencyMs: 900, kbps: 5, penalty: 0.6 },
-  { id: "store-forward", label: "Sakla-ilet deposu", hint: "Bağlantı yokken cihazda bekletme", latencyMs: 60000, kbps: 1, penalty: 0.8 },
-  { id: "push-relay", label: "Geçit / bildirim rölesi", hint: "Uygulama kapalıyken teslim", latencyMs: 3000, kbps: 50, penalty: 0.5 },
+  {
+    id: "openwrt-gateway",
+    label: "Yerel geçit (OpenWrt)",
+    hint: "Şebeke beslemeli, 7/24 açık ev/bina geçidi",
+    latencyMs: 10,
+    kbps: 50000,
+    penalty: 0,
+  },
+  {
+    id: "cloud-webrtc",
+    label: "Bulut WebRTC",
+    hint: "İnternet varken doğrudan eş bağlantısı",
+    latencyMs: 60,
+    kbps: 20000,
+    penalty: 0,
+  },
+  {
+    id: "lan-ws",
+    label: "Yerel LAN",
+    hint: "Aynı Wi-Fi ağındaki saha geçidi",
+    latencyMs: 15,
+    kbps: 40000,
+    penalty: 0,
+  },
+  {
+    id: "broadcast-channel",
+    label: "Cihaz içi kanal",
+    hint: "Aynı cihazdaki sekmeler ve uygulama",
+    latencyMs: 2,
+    kbps: 100000,
+    penalty: 0,
+  },
+  {
+    id: "wifi-direct",
+    label: "Wi-Fi Direct / Hotspot",
+    hint: "Cihazdan cihaza erişim noktası",
+    latencyMs: 25,
+    kbps: 25000,
+    penalty: 0.1,
+  },
+  {
+    id: "mdns-udp",
+    label: "mDNS / UDP yayın",
+    hint: "Yerel ağda komşu keşfi",
+    latencyMs: 30,
+    kbps: 8000,
+    penalty: 0.1,
+  },
+  {
+    id: "ble",
+    label: "Bluetooth (BLE)",
+    hint: "Kısa mesafe, düşük enerji",
+    latencyMs: 120,
+    kbps: 100,
+    penalty: 0.3,
+  },
+  {
+    id: "lora-serial",
+    label: "LoRa / Seri modem",
+    hint: "Kilometrelerce menzil, düşük hız",
+    latencyMs: 900,
+    kbps: 5,
+    penalty: 0.6,
+  },
+  {
+    id: "store-forward",
+    label: "Sakla-ilet deposu",
+    hint: "Bağlantı yokken cihazda bekletme",
+    latencyMs: 60000,
+    kbps: 1,
+    penalty: 0.8,
+  },
+  {
+    id: "push-relay",
+    label: "Geçit / bildirim rölesi",
+    hint: "Uygulama kapalıyken teslim",
+    latencyMs: 3000,
+    kbps: 50,
+    penalty: 0.5,
+  },
 ];
 
 export function transportById(id: TransportId): TransportDef {
   return TRANSPORTS.find((t) => t.id === id) ?? TRANSPORTS[0]!;
 }
 
-export type Edge = { from: string; to: string; transport: TransportId; /** 0–1, 1 = mükemmel */ quality: number };
+export type Edge = {
+  from: string;
+  to: string;
+  transport: TransportId;
+  /** 0–1, 1 = mükemmel */ quality: number;
+};
 export type Graph = { nodes: string[]; edges: Edge[] };
 
 /** Kenar maliyeti: gecikme + verim + enerji cezası + sinyal kalitesi. */
@@ -110,7 +185,8 @@ export function shortestPath(graph: Graph, from: string, to: string): RouteResul
   }
 
   const cost = dist.get(to) ?? Number.POSITIVE_INFINITY;
-  if (!Number.isFinite(cost)) return { path: [], hops: [], cost: Number.POSITIVE_INFINITY, reachable: false };
+  if (!Number.isFinite(cost))
+    return { path: [], hops: [], cost: Number.POSITIVE_INFINITY, reachable: false };
 
   const hops: Edge[] = [];
   let cursor = to;
@@ -149,9 +225,9 @@ export function failoverPath(graph: Graph, from: string, to: string): RouteResul
 
 /** Sade Türkçe rota özeti (arayüzde gösterilir). */
 export function describeRoute(route: RouteResult): string {
-  if (!route.reachable) return "Bu cihaza şu an ulaşılabilir bir yol yok — mesaj cihazda bekletilecek.";
+  if (!route.reachable)
+    return "Bu cihaza şu an ulaşılabilir bir yol yok — mesaj cihazda bekletilecek.";
   if (!route.hops.length) return "Doğrudan bağlantı.";
   const labels = route.hops.map((h) => transportById(h.transport).label);
   return `${route.hops.length} atlama · ${labels.join(" → ")}`;
 }
-

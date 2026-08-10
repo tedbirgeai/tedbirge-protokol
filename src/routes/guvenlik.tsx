@@ -82,7 +82,10 @@ const claims = [
   ["Ne demek", "Geçit, taşıdığı içeriği hiçbir noktada saklamaz ve düz metne erişmez."],
   ["Nasıl ölçülür", "Ölçüm kaydı yalnızca SHA-256 özeti, bayt sayımı ve zaman damgasından oluşur."],
   ["Ne demek değil", "Metadata gizliliği, anonimlik veya trafik analizine direnç iddia edilmez."],
-  ["Doğrulanabilirlik", "Kaynak kod incelemeye açıktır; bağımsız kriptografik denetim henüz yapılmamıştır ve tamamlandığında raporu bu sayfada yayımlanacaktır."],
+  [
+    "Doğrulanabilirlik",
+    "Kaynak kod incelemeye açıktır; bağımsız kriptografik denetim henüz yapılmamıştır ve tamamlandığında raporu bu sayfada yayımlanacaktır.",
+  ],
 ];
 
 function Security() {
@@ -96,9 +99,9 @@ function Security() {
             Tehdit modeli: neyi koruyoruz, neyi korumuyoruz
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Güvenlik iddiası, sınırları yazılı olmadıkça iddia değildir. Aşağıda Tedbirge
-            Tedbirge ProtokolGateway&apos;inapos;ün kriptografik temelleri, kapsadığı saldırgan sınıfları ve açıkça
-            kapsam dışı bıraktığı alanlar yer alır.
+            Güvenlik iddiası, sınırları yazılı olmadıkça iddia değildir. Aşağıda Tedbirge Tedbirge
+            ProtokolGateway&apos;inapos;ün kriptografik temelleri, kapsadığı saldırgan sınıfları ve
+            açıkça kapsam dışı bıraktığı alanlar yer alır.
           </p>
         </div>
       </section>
@@ -135,17 +138,19 @@ function Security() {
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             {EGRESS_POLICY.title}
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{EGRESS_POLICY.summary}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            {EGRESS_POLICY.summary}
+          </p>
           <ul className="mt-3 space-y-1.5 font-mono text-[11px] text-muted-foreground">
             {EGRESS_POLICY.rules.map((r) => (
               <li key={r}>· {r}</li>
             ))}
           </ul>
         </div>
-        <p className="mt-4 font-mono text-[11px] text-muted-foreground">{MERE_CONDUIT.disclaimer}</p>
+        <p className="mt-4 font-mono text-[11px] text-muted-foreground">
+          {MERE_CONDUIT.disclaimer}
+        </p>
       </section>
-
-
 
       <section className="border-y border-border/60 bg-card/30">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-2">
@@ -186,7 +191,9 @@ function Security() {
         <dl className="mt-10 divide-y divide-border/60 overflow-hidden rounded-sm border border-border">
           {claims.map(([k, v]) => (
             <div key={k} className="grid gap-2 bg-card/40 px-6 py-5 md:grid-cols-[220px_1fr]">
-              <dt className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">{k}</dt>
+              <dt className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
+                {k}
+              </dt>
               <dd className="text-sm leading-relaxed text-foreground">{v}</dd>
             </div>
           ))}
@@ -201,12 +208,23 @@ function Security() {
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {[
-              ["Bildirim", "tedbirge34@gmail.com adresine teknik ayrıntı ve yeniden üretim adımlarıyla yazın."],
-              ["Yanıt süresi", "72 saat içinde teyit, 90 gün içinde düzeltme veya gerekçeli yol haritası."],
-              ["Taahhüt", "İyi niyetli araştırmaya hukuki işlem başlatılmaz; katkı sürüm notlarında anılır."],
+              [
+                "Bildirim",
+                "tedbirge34@gmail.com adresine teknik ayrıntı ve yeniden üretim adımlarıyla yazın.",
+              ],
+              [
+                "Yanıt süresi",
+                "72 saat içinde teyit, 90 gün içinde düzeltme veya gerekçeli yol haritası.",
+              ],
+              [
+                "Taahhüt",
+                "İyi niyetli araştırmaya hukuki işlem başlatılmaz; katkı sürüm notlarında anılır.",
+              ],
             ].map(([k, v]) => (
               <div key={k} className="rounded-sm border border-border bg-background/60 p-6">
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">{k}</p>
+                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
+                  {k}
+                </p>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{v}</p>
               </div>
             ))}

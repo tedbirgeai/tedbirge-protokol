@@ -111,7 +111,8 @@ export const pilotChecklist: PilotCheckItem[] = [
     id: "C3",
     group: "3 · Yapılandırma",
     title: "Görev döngüsü bütçesi zorlanıyor",
-    requirement: "Duty cycle sayaçları çalışma zamanında uygulanıyor ve aşımda iletim durduruluyor.",
+    requirement:
+      "Duty cycle sayaçları çalışma zamanında uygulanıyor ve aşımda iletim durduruluyor.",
     evidence: "Log örneği",
     authority: "BTK KEGY",
   },

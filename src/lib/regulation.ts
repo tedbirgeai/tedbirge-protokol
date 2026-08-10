@@ -197,7 +197,13 @@ export type Pillar = {
   t: string;
   b: string;
   refs: string;
-  to: "/uyumluluk" | "/sertifikasyon" | "/turkiye-mevzuat" | "/izinler" | "/ihracat-uyum" | "/guvenlik";
+  to:
+    | "/uyumluluk"
+    | "/sertifikasyon"
+    | "/turkiye-mevzuat"
+    | "/izinler"
+    | "/ihracat-uyum"
+    | "/guvenlik";
   cta: string;
 };
 
@@ -264,8 +270,14 @@ export const DECLARATION_ROWS: Array<[string, string]> = [
   ["Kapalı taşıyıcılar (TR)", "Wi-Fi HaLow (900 MHz) · TVWS (470–790 MHz)"],
   ["Veri işleme", "Tünel içeriği saklanmaz; yalnızca SHA-256 özeti, bayt sayacı ve zaman damgası"],
   ["KVKK", "6698 s. Kanun · aydınlatma ve açık rıza akışı yayımlanmıştır"],
-  ["Log yükümlülüğü", "5651 kapsamında erişim sağlayıcı sıfatı müşteridedir; opsiyonel log modülü sağlanır"],
-  ["Sorumluluk sınırı", "Lisans, tip onayı ve saha izinleri operatöre aittir; bu belge hukuki görüş değildir"],
+  [
+    "Log yükümlülüğü",
+    "5651 kapsamında erişim sağlayıcı sıfatı müşteridedir; opsiyonel log modülü sağlanır",
+  ],
+  [
+    "Sorumluluk sınırı",
+    "Lisans, tip onayı ve saha izinleri operatöre aittir; bu belge hukuki görüş değildir",
+  ],
 ];
 
 /* ------------------------------------------------------------------ *
@@ -276,8 +288,8 @@ export const DECLARATION_ROWS: Array<[string, string]> = [
 export const LIABILITY_5651 = {
   title: "5651 sayılı Kanun — Toplu Kullanım Sağlayıcı Sorumluluk Sınırlandırması",
   clauses: [
-    "Tedbirge Protokol üzerinden kurulan mesh ağı, kapalı devre ve izole bir haberleşme ortamıdır; genel internet erişimi (web, sosyal medya, e-posta) dağıtmaz. Bu nedenle düğüm işleten taraf, 5651 sayılı Kanun'un 2/1-(e) maddesi anlamında \"erişim sağlayıcı\" sıfatını kendiliğinden kazanmaz.",
-    "Düğüm sahibi, ağı bir işyeri, kamu kurumu, kamp alanı veya benzeri bir mekânda üçüncü kişilerin kullanımına açar ve bu ağ üzerinden genel internete çıkış (exit node) etkinleştirilirse, 5651 sayılı Kanun'un 7. maddesi uyarınca \"toplu kullanım sağlayıcı\" sıfatı doğar. Bu durumda iç IP dağıtım loglarının elektronik ortamda kendi sistemine kaydedilmesi yükümlülüğü münhasıran düğüm sahibine aittir.",
+    'Tedbirge Protokol üzerinden kurulan mesh ağı, kapalı devre ve izole bir haberleşme ortamıdır; genel internet erişimi (web, sosyal medya, e-posta) dağıtmaz. Bu nedenle düğüm işleten taraf, 5651 sayılı Kanun\'un 2/1-(e) maddesi anlamında "erişim sağlayıcı" sıfatını kendiliğinden kazanmaz.',
+    'Düğüm sahibi, ağı bir işyeri, kamu kurumu, kamp alanı veya benzeri bir mekânda üçüncü kişilerin kullanımına açar ve bu ağ üzerinden genel internete çıkış (exit node) etkinleştirilirse, 5651 sayılı Kanun\'un 7. maddesi uyarınca "toplu kullanım sağlayıcı" sıfatı doğar. Bu durumda iç IP dağıtım loglarının elektronik ortamda kendi sistemine kaydedilmesi yükümlülüğü münhasıran düğüm sahibine aittir.',
     "Tedbirge, opsiyonel bir log modülü sağlar; ancak logların tutulması, saklanması, doğruluğu, gizliliği ve talep hâlinde yetkili makamlara sunulması yükümlülüğü işleten tarafa aittir. Tedbirge bu verilere erişemez, kopyasını tutmaz ve yerine geçemez.",
     "Tedbirge, taşınan içeriği çözemez (uçtan uca şifreleme) ve içeriği kontrol etme, izleme veya hukuka aykırı içeriği araştırma yükümlülüğü altında değildir (5651 md. 6/2 kıyasen). Tedbirge'nin sorumluluğu, yazılımın belgelenen teknik işlevi ile sınırlıdır.",
     "Exit node etkinleştiren veya ağı ticari olarak üçüncü kişilere sunan işletenlerin, yer/erişim/toplu kullanım sağlayıcı sıfatına ilişkin BTK bildirim ve belge yükümlülüklerini bağımsız hukuki danışmanlıkla değerlendirmesi gerekir.",
@@ -306,8 +318,7 @@ export const MERE_CONDUIT = {
 /** Harici donanıma özel firmware yüklenmesi hâlinde spektrum sorumluluğu. */
 export const FIRMWARE_SPECTRUM_WARNING = {
   title: "Uyarı — Harici Donanım ve Özel Firmware Spektrum Sorumluluğu",
-  body:
-    "Tedbirge yazılımı, bölge profilinde (TEDBIRGE_REGION) tanımlı frekans, iletim gücü ve görev döngüsü tavanlarını yazılımsal olarak zorlar. Kullanıcının, bağlı harici radyo donanımına (LoRa/HaLow/TVWS modülleri dâhil) üretici dışı, değiştirilmiş veya özel (custom) firmware yüklemesi, bölge kilidini donanım tarafında devre dışı bırakabilir. Böyle bir durumda ortaya çıkan frekans, güç veya görev döngüsü ihlallerinden doğan tüm idari, hukuki ve cezai sorumluluk — 5809 sayılı Elektronik Haberleşme Kanunu ve BTK Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği kapsamındaki yaptırımlar dâhil — münhasıran kullanıcıya/işletene aittir. Tedbirge, değiştirilmiş firmware ile çalışan donanımlar için hiçbir uygunluk beyanı vermez ve garanti kapsamı bu hâlde sona erer.",
+  body: "Tedbirge yazılımı, bölge profilinde (TEDBIRGE_REGION) tanımlı frekans, iletim gücü ve görev döngüsü tavanlarını yazılımsal olarak zorlar. Kullanıcının, bağlı harici radyo donanımına (LoRa/HaLow/TVWS modülleri dâhil) üretici dışı, değiştirilmiş veya özel (custom) firmware yüklemesi, bölge kilidini donanım tarafında devre dışı bırakabilir. Böyle bir durumda ortaya çıkan frekans, güç veya görev döngüsü ihlallerinden doğan tüm idari, hukuki ve cezai sorumluluk — 5809 sayılı Elektronik Haberleşme Kanunu ve BTK Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği kapsamındaki yaptırımlar dâhil — münhasıran kullanıcıya/işletene aittir. Tedbirge, değiştirilmiş firmware ile çalışan donanımlar için hiçbir uygunluk beyanı vermez ve garanti kapsamı bu hâlde sona erer.",
 };
 
 /** KVKK / GDPR aydınlatma metni taslağı. */
@@ -348,8 +359,7 @@ export const PRIVACY_NOTICE = {
       p: "Uygulama; oturum, düğüm kimliği, şifreleme anahtarı ve çevrimdışı mesaj kuyruğu için tarayıcı yerel depolamasını kullanır. Bu veriler cihazınızda kalır, sunucuya gönderilmez. Üçüncü taraf reklam veya izleme çerezi kullanılmaz.",
     },
   ],
-  note:
-    "Bu metin taslaktır ve hukuki görüş yerine geçmez. Kurumsal konuşlanmadan önce kendi veri envanteriniz ve VERBİS yükümlülüğünüz doğrultusunda hukuk müşavirinizle nihai hâline getirilmelidir.",
+  note: "Bu metin taslaktır ve hukuki görüş yerine geçmez. Kurumsal konuşlanmadan önce kendi veri envanteriniz ve VERBİS yükümlülüğünüz doğrultusunda hukuk müşavirinizle nihai hâline getirilmelidir.",
 };
 
 /* ------------------------------------------------------------------ *
@@ -516,7 +526,6 @@ export type OfficialDraft = {
   summary: string;
   body: string;
 };
-
 
 export const OFFICIAL_DRAFTS: OfficialDraft[] = [
   {
@@ -742,4 +751,3 @@ Tedbirge Protokol
 İmza: ...............................`,
   },
 ];
-

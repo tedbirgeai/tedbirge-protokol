@@ -123,7 +123,13 @@ export function mwToDbm(mw: number) {
  * LoRa Time-on-Air (Semtech AN1200.13).
  * Varsayılan: SF9, BW 125 kHz, CR 4/5, açık başlık, CRC açık.
  */
-export function timeOnAirMs(payloadBytes: number, sf = 9, bwHz = 125_000, cr = 1, preamble = 8): number {
+export function timeOnAirMs(
+  payloadBytes: number,
+  sf = 9,
+  bwHz = 125_000,
+  cr = 1,
+  preamble = 8,
+): number {
   const tSym = (2 ** sf / bwHz) * 1000;
   const de = sf >= 11 && bwHz === 125_000 ? 1 : 0;
   const numerator = 8 * payloadBytes - 4 * sf + 28 + 16;
@@ -166,7 +172,11 @@ export class Reassembler {
     const [, id, iStr, nStr, chunk] = m;
     const i = Number(iStr);
     const n = Number(nStr);
-    const entry = this.pending.get(id) ?? { parts: new Map<number, string>(), total: n, startedAt: Date.now() };
+    const entry = this.pending.get(id) ?? {
+      parts: new Map<number, string>(),
+      total: n,
+      startedAt: Date.now(),
+    };
     entry.parts.set(i, chunk);
     this.pending.set(id, entry);
     if (entry.parts.size < entry.total) return null;
@@ -194,10 +204,13 @@ function sortQueue() {
 
 function schedulePump(delayMs: number) {
   if (pump) clearTimeout(pump);
-  pump = setTimeout(() => {
-    pump = null;
-    void drain();
-  }, Math.max(50, delayMs));
+  pump = setTimeout(
+    () => {
+      pump = null;
+      void drain();
+    },
+    Math.max(50, delayMs),
+  );
 }
 
 async function drain() {

@@ -25,7 +25,10 @@ export const Route = createFileRoute("/ihracat-uyum")({
 const classification = [
   ["Ürün", "Tedbirge Protokol / Loop / Off-Grid — yalnızca yazılım (tek statik binary + SDK)"],
   ["Kriptografi", "AES-256-GCM (veri), Ed25519 (kimlik/imza), SHA-256 (özet)"],
-  ["Wassenaar kategorisi", "Kategori 5 Bölüm 2 — Bilgi Güvenliği (kitlesel pazar istisnası değerlendirilir)"],
+  [
+    "Wassenaar kategorisi",
+    "Kategori 5 Bölüm 2 — Bilgi Güvenliği (kitlesel pazar istisnası değerlendirilir)",
+  ],
   ["AB Çift Kullanım", "Reg. (EU) 2021/821 kapsamı — 5A002/5D002 ile ilişkilendirilebilir"],
   ["ABD analoji", "ECCN 5D002 benzeri; yeniden ihracat halinde EAR sorumluluğu alıcıdadır"],
   ["Donanım", "Yok — hiçbir radyo, verici veya şifreleme donanımı sevk edilmez"],
@@ -70,8 +73,8 @@ function ExportCompliance() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Tedbirge Protokol güçlü şifreleme içeren bir yazılımdır ve bu nedenle çift kullanımlı
-            teknoloji rejimlerinin kapsamına girebilir. Dünya genelinde hizmet veriyoruz —
-            yalnızca yasal sınırlar dahilinde.
+            teknoloji rejimlerinin kapsamına girebilir. Dünya genelinde hizmet veriyoruz — yalnızca
+            yasal sınırlar dahilinde.
           </p>
         </div>
       </section>

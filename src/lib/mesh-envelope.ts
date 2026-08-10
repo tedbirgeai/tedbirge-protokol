@@ -61,7 +61,6 @@ export type EnvelopeKind =
   /** Faz D: düğümden düğüme .tbapp paket teklifi. */
   | "app";
 
-
 export type MeshHeader = {
   v: 2;
   pktId: string;

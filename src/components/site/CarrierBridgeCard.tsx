@@ -82,7 +82,6 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
     }
   };
 
-
   const run = async (id: CarrierId, fn: () => Promise<void>) => {
     setBusy(id);
     setMsg(null);
@@ -99,7 +98,6 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
   const liveCount = Object.keys(links).length;
   const spectrum = useCarrierScheduler();
   const dutyPct = Math.min(100, Math.round(spectrum.ratio * 100));
-
 
   return (
     <div className={box}>
@@ -242,9 +240,9 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
               yazılır ve saklanır.
             </li>
             <li>
-              <span className="text-foreground">Bulunamazsa modemin adresini yazın.</span>{" "}
-              Windows: <span className="text-foreground">Başlat → cmd → ipconfig</span> yazın,
-              “Varsayılan Ağ Geçidi” satırındaki IP'yi alın. macOS:{" "}
+              <span className="text-foreground">Bulunamazsa modemin adresini yazın.</span> Windows:{" "}
+              <span className="text-foreground">Başlat → cmd → ipconfig</span> yazın, “Varsayılan Ağ
+              Geçidi” satırındaki IP'yi alın. macOS:{" "}
               <span className="text-foreground">Sistem Ayarları → Ağ → Ayrıntılar → TCP/IP</span>.
               Android: <span className="text-foreground">Wi-Fi → bağlı ağ → Gelişmiş</span>. iPhone:{" "}
               <span className="text-foreground">Ayarlar → Wi-Fi → (i) → Yönlendirici</span>.
@@ -258,9 +256,9 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
             </li>
           </ol>
           <p className="mt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
-            Adres yalnızca bu tarayıcıda saklanır (yerel depolama). Modem henüz kurulmadıysa
-            sistem <span className="text-foreground">Sanal Geçit Modu</span> ile çalışmaya devam
-            eder; hiçbir işlem yarıda kalmaz.{" "}
+            Adres yalnızca bu tarayıcıda saklanır (yerel depolama). Modem henüz kurulmadıysa sistem{" "}
+            <span className="text-foreground">Sanal Geçit Modu</span> ile çalışmaya devam eder;
+            hiçbir işlem yarıda kalmaz.{" "}
             {(() => {
               try {
                 normalizeGatewayUrl(gwDraft);
@@ -272,8 +270,6 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
           </p>
         </details>
       </div>
-
-
 
       {/* Spektrum bütçesi — BTK/ETSI görev döngüsü yazılımsal tavanı */}
       <div className="mt-5 rounded-sm border border-border bg-background/60 p-4">
@@ -312,7 +308,11 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                 <span className="font-mono text-[12px]">{c.name}</span>
                 <span
                   className={`font-mono text-[10px] uppercase ${
-                    link?.simulated ? "text-amber-500" : live ? "text-primary" : "text-muted-foreground"
+                    link?.simulated
+                      ? "text-amber-500"
+                      : live
+                        ? "text-primary"
+                        : "text-muted-foreground"
                   }`}
                 >
                   {link?.simulated ? "sanal mod" : live ? "bağlı" : "bağlı değil"}
@@ -335,8 +335,8 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                     onChange={(e) => setCarrierSubscription(c.id, e.target.checked)}
                   />
                   <span className="text-muted-foreground">
-                    Bu taşıyıcı için geçerli bir <strong>operatör hattı/aboneliğim</strong> olduğunu ve
-                    kullanımın ilgili operatör sözleşmesine uygun olduğunu beyan ederim. Beyan
+                    Bu taşıyıcı için geçerli bir <strong>operatör hattı/aboneliğim</strong> olduğunu
+                    ve kullanımın ilgili operatör sözleşmesine uygun olduğunu beyan ederim. Beyan
                     işaretlenmeden veri düzlemi açılmaz.
                     {c.costPerMb > 0 && ` Yaklaşık taşıma maliyeti: ${c.costPerMb} ₺/MB.`}
                   </span>
@@ -383,17 +383,16 @@ export function CarrierBridgeCard({ licenseKey }: { licenseKey?: string }) {
                     Geçide bağlan
                   </button>
                 )}
-                {!live &&
-                  c.transport.includes("serial") && (
-                    <button
-                      type="button"
-                      disabled={busy === c.id || !supported.serial}
-                      onClick={() => run(c.id, () => connectSerialCarrier(c.id))}
-                      className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary disabled:opacity-40"
-                    >
-                      USB ile bağla
-                    </button>
-                  )}
+                {!live && c.transport.includes("serial") && (
+                  <button
+                    type="button"
+                    disabled={busy === c.id || !supported.serial}
+                    onClick={() => run(c.id, () => connectSerialCarrier(c.id))}
+                    className="rounded-sm border border-primary/60 px-3 py-1.5 font-mono text-[11px] text-primary disabled:opacity-40"
+                  >
+                    USB ile bağla
+                  </button>
+                )}
                 {!live && c.transport.includes("bluetooth") && (
                   <button
                     type="button"

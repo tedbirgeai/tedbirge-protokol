@@ -14,7 +14,8 @@ export const Route = createFileRoute("/dashboard")({
       { property: "og:title", content: "P2P Kontrol Paneli — Tedbirge Protocol" },
       {
         property: "og:description",
-        content: "Canlı mesh topolojisi, ağ metrikleri ve düğüm terminali içeren Tedbirge Protocol paneli.",
+        content:
+          "Canlı mesh topolojisi, ağ metrikleri ve düğüm terminali içeren Tedbirge Protocol paneli.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

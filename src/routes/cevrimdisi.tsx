@@ -57,7 +57,9 @@ function OfflinePage() {
         <ul className="mt-3 space-y-2 text-muted-foreground">
           <li>• Uygulama arayüzü, rehberler ve daha önce açtığınız sayfalar açılır.</li>
           <li>• Kurulum sihirbazı adımları ve kapsama hesapları cihaz üzerinde çalışır.</li>
-          <li>• Düğümler arası mesh trafiği, sunucudan bağımsız olarak röle zinciri üzerinden sürer.</li>
+          <li>
+            • Düğümler arası mesh trafiği, sunucudan bağımsız olarak röle zinciri üzerinden sürer.
+          </li>
           <li>• Sunucu tarafı canlı veriler (telemetri, kuyruk, kesinti kayıtları) duraklar.</li>
         </ul>
       </div>

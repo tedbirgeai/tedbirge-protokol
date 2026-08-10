@@ -68,7 +68,9 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        setInfo("Hesabınız oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
+        setInfo(
+          "Hesabınız oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.",
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Beklenmeyen bir hata oluştu.");
@@ -104,8 +106,8 @@ function AuthPage() {
             Lisans, abonelik ve pilotlarınız tek yerde
           </h1>
           <p className="mt-5 text-muted-foreground">
-            Community sürümünü ücretsiz kullanmaya başlayın veya Enterprise aboneliğinizi
-            panelden yönetin. Düğüm lisans anahtarınız hesabınıza bağlı olarak üretilir.
+            Community sürümünü ücretsiz kullanmaya başlayın veya Enterprise aboneliğinizi panelden
+            yönetin. Düğüm lisans anahtarınız hesabınıza bağlı olarak üretilir.
           </p>
         </div>
 
@@ -133,7 +135,13 @@ function AuthPage() {
               </>
             )}
             <Field label="E-posta" type="email" value={email} onChange={setEmail} required />
-            <Field label="Parola" type="password" value={password} onChange={setPassword} required />
+            <Field
+              label="Parola"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              required
+            />
 
             {error && <p className="text-sm text-destructive">{error}</p>}
             {info && <p className="text-sm text-primary">{info}</p>}
@@ -148,7 +156,8 @@ function AuthPage() {
           </form>
 
           <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> veya <span className="h-px flex-1 bg-border" />
+            <span className="h-px flex-1 bg-border" /> veya{" "}
+            <span className="h-px flex-1 bg-border" />
           </div>
 
           <button

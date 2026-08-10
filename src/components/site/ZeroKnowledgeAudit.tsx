@@ -57,7 +57,7 @@ function buildReportHtml(report: AuditReport, digest: string) {
     Test sonuçları sunucuya gönderilmez; kişisel veri işlenmez. Şifreleme: Ed25519 imza, X25519 anahtar
     anlaşması, AES-256-GCM gövde şifrelemesi.
   </footer>
-  <script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script>
+  <script>window.onload=function(){setTimeout(function(){window.print()},250)}<\u002Fscript>
   </body></html>`;
 }
 
@@ -106,7 +106,11 @@ export function ZeroKnowledgeAudit() {
             disabled={running}
             className="inline-flex items-center gap-2 rounded-sm bg-primary px-5 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
-            {running ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Play className="size-4" aria-hidden />}
+            {running ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Play className="size-4" aria-hidden />
+            )}
             {running ? "Çalışıyor" : "Denetimi başlat"}
           </button>
           <button

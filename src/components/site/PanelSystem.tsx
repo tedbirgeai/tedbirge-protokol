@@ -84,7 +84,9 @@ export function HealthCards({ refreshKey }: { refreshKey: number }) {
         />
         <div className="flex items-center gap-2">
           {health && (
-            <span className={`rounded-sm border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${tone}`}>
+            <span
+              className={`rounded-sm border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${tone}`}
+            >
               {health.status}
             </span>
           )}
@@ -99,7 +101,10 @@ export function HealthCards({ refreshKey }: { refreshKey: number }) {
       {health ? (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
           {cards.map((c) => (
-            <div key={c.k} className="rounded-sm border border-border bg-background p-4 text-center">
+            <div
+              key={c.k}
+              className="rounded-sm border border-border bg-background p-4 text-center"
+            >
               <p className="text-2xl font-semibold">{c.v}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">{c.k}</p>
             </div>
@@ -111,8 +116,8 @@ export function HealthCards({ refreshKey }: { refreshKey: number }) {
 
       {health && (
         <p className="mt-4 font-mono text-[10px] text-muted-foreground">
-          Üretim zamanı: {new Date(health.generatedAt).toLocaleTimeString("tr-TR")} · Uç nokta:
-          GET /api/public/health (X-Tedbirge-License)
+          Üretim zamanı: {new Date(health.generatedAt).toLocaleTimeString("tr-TR")} · Uç nokta: GET
+          /api/public/health (X-Tedbirge-License)
         </p>
       )}
     </div>
@@ -130,7 +135,10 @@ export function LiveFeed() {
   const push = useCallback((kind: string, text: string) => {
     counter.current += 1;
     setItems((prev) =>
-      [{ id: `${Date.now()}-${counter.current}`, at: new Date().toISOString(), kind, text }, ...prev].slice(0, 60),
+      [
+        { id: `${Date.now()}-${counter.current}`, at: new Date().toISOString(), kind, text },
+        ...prev,
+      ].slice(0, 60),
     );
   }, []);
 
@@ -141,17 +149,27 @@ export function LiveFeed() {
         const row = (p.new ?? p.eventType) as Record<string, unknown>;
         push("düğüm", `${row?.node_id ?? "düğüm"} · ${row?.status ?? p.eventType}`);
       })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "telemetry_samples" }, (p) => {
-        const row = p.new as Record<string, unknown>;
-        push("telemetri", `rtt ${row?.rtt_ms ?? "—"} ms · kayıp ${row?.packet_loss_pct ?? "—"}%`);
-      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "telemetry_samples" },
+        (p) => {
+          const row = p.new as Record<string, unknown>;
+          push("telemetri", `rtt ${row?.rtt_ms ?? "—"} ms · kayıp ${row?.packet_loss_pct ?? "—"}%`);
+        },
+      )
       .on("postgres_changes", { event: "*", schema: "public", table: "mesh_messages" }, (p) => {
         const row = p.new as Record<string, unknown>;
-        push("kuyruk", `${row?.origin_node ?? "—"} → ${row?.target_node ?? "yayın"} · ${row?.status ?? ""}`);
+        push(
+          "kuyruk",
+          `${row?.origin_node ?? "—"} → ${row?.target_node ?? "yayın"} · ${row?.status ?? ""}`,
+        );
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "outage_events" }, (p) => {
         const row = p.new as Record<string, unknown>;
-        push("kesinti", `${row?.node_id ?? "—"} · ${row?.layer ?? ""} · ${row?.resolved ? "kapandı" : "açık"}`);
+        push(
+          "kesinti",
+          `${row?.node_id ?? "—"} · ${row?.layer ?? ""} · ${row?.resolved ? "kapandı" : "açık"}`,
+        );
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "link_alerts" }, (p) => {
         const row = p.new as Record<string, unknown>;
@@ -177,20 +195,28 @@ export function LiveFeed() {
             connected ? "border-primary text-primary" : "border-border text-muted-foreground"
           }`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${connected ? "animate-pulse bg-primary" : "bg-muted-foreground"}`} />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${connected ? "animate-pulse bg-primary" : "bg-muted-foreground"}`}
+          />
           {connected ? "bağlı" : "bağlanıyor"}
         </span>
       </div>
 
       {items.length === 0 ? (
         <p className="mt-5 text-sm text-muted-foreground">
-          Akış açık. Bir düğüm telemetri gönderdiğinde veya kuyrukta hareket olduğunda olaylar burada belirir.
+          Akış açık. Bir düğüm telemetri gönderdiğinde veya kuyrukta hareket olduğunda olaylar
+          burada belirir.
         </p>
       ) : (
         <ul className="mt-5 max-h-80 space-y-1.5 overflow-y-auto pr-1">
           {items.map((i) => (
-            <li key={i.id} className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-2 text-xs">
-              <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary">{i.kind}</span>
+            <li
+              key={i.id}
+              className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-2 text-xs"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary">
+                {i.kind}
+              </span>
               <span className="flex-1 truncate text-muted-foreground">{i.text}</span>
               <span className="font-mono text-[10px] text-muted-foreground">
                 {new Date(i.at).toLocaleTimeString("tr-TR")}
@@ -282,7 +308,9 @@ export function KeyRotation({
         {licenses.map((l) => (
           <li key={l.id} className="rounded-sm border border-border bg-background/50 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">{l.plan}</span>
+              <span className="font-mono text-xs uppercase tracking-[0.15em] text-primary">
+                {l.plan}
+              </span>
               <span className="break-all font-mono text-[11px] text-muted-foreground">
                 {l.license_key.slice(0, 8)}…{l.license_key.slice(-6)}
               </span>
@@ -290,7 +318,11 @@ export function KeyRotation({
             <div className="mt-3 flex flex-wrap gap-2">
               {confirmId === l.id ? (
                 <>
-                  <button onClick={() => rotateLicense(l.id)} disabled={busy === l.id} className={btn}>
+                  <button
+                    onClick={() => rotateLicense(l.id)}
+                    disabled={busy === l.id}
+                    className={btn}
+                  >
                     {busy === l.id ? "Yenileniyor…" : "Evet, yenile"}
                   </button>
                   <button onClick={() => setConfirmId(null)} className={btn}>
@@ -302,7 +334,11 @@ export function KeyRotation({
                   Lisans anahtarını yenile
                 </button>
               )}
-              <button onClick={() => rotateKeys(l.id)} disabled={!canManage || busy === l.id} className={btn}>
+              <button
+                onClick={() => rotateKeys(l.id)}
+                disabled={!canManage || busy === l.id}
+                className={btn}
+              >
                 Düğüm anahtarlarını iptal et
               </button>
             </div>
@@ -317,7 +353,10 @@ export function KeyRotation({
       {history.length > 0 && (
         <ul className="mt-5 space-y-2">
           {history.map((h) => (
-            <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-border px-3 py-2 text-xs">
+            <li
+              key={h.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-border px-3 py-2 text-xs"
+            >
               <span className="font-mono text-[11px]">{h.event}</span>
               <span className="flex-1 truncate text-muted-foreground">{h.detail}</span>
               <span className="font-mono text-[10px] text-muted-foreground">
@@ -464,11 +503,16 @@ export function CalibrationReports({ refreshKey }: { refreshKey: number }) {
       ) : (
         <ul className="mt-5 space-y-2">
           {rows.slice(0, 10).map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-border px-3 py-2 text-xs">
+            <li
+              key={r.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-border px-3 py-2 text-xs"
+            >
               <span className="font-mono">
                 {r.carrier} · {r.terrain} · {r.antenna_height}
               </span>
-              <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString("tr-TR")}</span>
+              <span className="text-muted-foreground">
+                {new Date(r.created_at).toLocaleString("tr-TR")}
+              </span>
               <span className={r.verdict === "gecti" ? "text-primary" : "text-muted-foreground"}>
                 {r.accuracy_pct ?? 0}% · {r.verdict}
               </span>

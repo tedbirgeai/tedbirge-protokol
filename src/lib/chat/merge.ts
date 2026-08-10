@@ -102,7 +102,6 @@ export async function pruneGhostContacts(): Promise<number> {
   return removed;
 }
 
-
 /**
  * Aynı kişiye ait düğümleri gruplar: birincil düğüm en son görülendir,
  * diğerleri "bağlı cihaz" olarak saklanır. Arayüz tek kart gösterir.
@@ -179,14 +178,14 @@ export async function mergePersonDuplicates(): Promise<number> {
     (bucket) => bucket.find((n) => n.phoneHash)?.phoneHash,
   );
 
-
-
   let merged = 0;
   for (const [key, bucket] of buckets) {
     // Kişi kimliği: kayıtlardan biri taşıyorsa o, yoksa en eski düğüm.
-    const personId = bucket.find((n) => n.personId)?.personId ?? (key.startsWith("p:") ? key.slice(2) : "");
+    const personId =
+      bucket.find((n) => n.personId)?.personId ?? (key.startsWith("p:") ? key.slice(2) : "");
     const phoneHash =
-      bucket.find((n) => n.phoneHash)?.phoneHash ?? (key.startsWith("h:") ? key.slice(2) : undefined);
+      bucket.find((n) => n.phoneHash)?.phoneHash ??
+      (key.startsWith("h:") ? key.slice(2) : undefined);
 
     const sorted = [...bucket].sort((a, b) => (b.pairedAt ?? 0) - (a.pairedAt ?? 0));
     const primary = sorted[0];
@@ -201,7 +200,6 @@ export async function mergePersonDuplicates(): Promise<number> {
       if (phoneHash) writePhoneHash(node.nodeId, phoneHash);
     }
     if (name) writeNickname(anchor, name);
-
 
     if (bucket.length > 1) {
       for (const node of sorted.slice(1)) {
@@ -232,12 +230,10 @@ export async function mergePersonDuplicates(): Promise<number> {
  */
 export async function pruneGhostConversations(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  const { listConversations, deleteConversation, listAllMessages } = await import(
-    "@/lib/store/idb"
-  );
-  const { resolveDisplayName, isSelfPerson, nameKeyOf, resolvePhoneHash } = await import(
-    "@/lib/chat/name-resolver"
-  );
+  const { listConversations, deleteConversation, listAllMessages } =
+    await import("@/lib/store/idb");
+  const { resolveDisplayName, isSelfPerson, nameKeyOf, resolvePhoneHash } =
+    await import("@/lib/chat/name-resolver");
   const [convs, messages] = await Promise.all([
     listConversations().catch(() => []),
     listAllMessages().catch(() => []),
@@ -301,9 +297,7 @@ export async function sweepGhosts(force = false): Promise<number> {
   sweepInFlight = (async () => {
     try {
       const { pruneCallLog } = await import("@/lib/chat/call-log");
-      const { purgePlaceholderNames, repairCrossLinks } = await import(
-        "@/lib/chat/name-resolver"
-      );
+      const { purgePlaceholderNames, repairCrossLinks } = await import("@/lib/chat/name-resolver");
       // Önce nötr yer tutucu adlar silinir; budama doğru kararı verebilsin.
       purgePlaceholderNames();
       // Farklı numaralara çıpalı kimlikler arasındaki yanlış bağlantılar

@@ -57,7 +57,6 @@ export const PLANS: Record<PlanKey, PlanDefinition> = {
   },
 };
 
-
 /** Paddle product external_id -> plan tanımı */
 export function planByProductId(productId: string): PlanDefinition | undefined {
   return Object.values(PLANS).find((p) => p.productId === productId);
@@ -65,9 +64,7 @@ export function planByProductId(productId: string): PlanDefinition | undefined {
 
 /** Paddle price external_id -> plan tanımı */
 export function planByPriceId(priceId: string): PlanDefinition | undefined {
-  return Object.values(PLANS).find(
-    (p) => p.prices.month === priceId || p.prices.year === priceId,
-  );
+  return Object.values(PLANS).find((p) => p.prices.month === priceId || p.prices.year === priceId);
 }
 
 /** Bilinmeyen ürün/fiyat kimliklerini erken yakalamak için */
@@ -93,4 +90,3 @@ export function planForNodeCount(nodes: number): PlanDefinition | null {
       .find((p) => nodes <= p.maxNodes) ?? PLANS.enterprise
   );
 }
-

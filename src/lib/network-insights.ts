@@ -66,9 +66,7 @@ export function buildInsights(devices: InsightDevice[], samples: InsightSample[]
     });
   }
 
-  const gateway = online.some(
-    (d) => d.role === "gateway" || /^(ev|gw|home)/i.test(d.node_id),
-  );
+  const gateway = online.some((d) => d.role === "gateway" || /^(ev|gw|home)/i.test(d.node_id));
   if (!gateway && online.length > 0) {
     out.push({
       id: "no-gateway",
@@ -92,7 +90,8 @@ export function buildInsights(devices: InsightDevice[], samples: InsightSample[]
           severity: loss >= 20 ? "critical" : "warning",
           title: `${d.node_id}: paket kaybı %${loss.toFixed(1)}`,
           detail: `${d.region} bölgesindeki bu düğümde bağlantı kalitesi düşüyor (taşıyıcı: ${d.carrier ?? "bilinmiyor"}).`,
-          action: "Anten yüksekliğini artırın, yönelimi düzeltin veya aradaki mesafeye bir röle ekleyin.",
+          action:
+            "Anten yüksekliğini artırın, yönelimi düzeltin veya aradaki mesafeye bir röle ekleyin.",
           ask: `${d.node_id} düğümünde paket kaybını nasıl düşürürüm?`,
         });
       }
@@ -101,7 +100,8 @@ export function buildInsights(devices: InsightDevice[], samples: InsightSample[]
           id: `rtt-${d.id}`,
           severity: "warning",
           title: `${d.node_id}: gecikme ${Math.round(rtt)} ms`,
-          detail: "Yüksek gecikme, çok atlamalı yönlendirme veya doygun bir taşıyıcıya işaret eder.",
+          detail:
+            "Yüksek gecikme, çok atlamalı yönlendirme veya doygun bir taşıyıcıya işaret eder.",
           action: "Daha kısa atlama zinciri kurun veya bu düğüme yedek taşıyıcı tanımlayın.",
           ask: `${d.node_id} düğümünde gecikmeyi nasıl azaltırım?`,
         });
@@ -111,7 +111,8 @@ export function buildInsights(devices: InsightDevice[], samples: InsightSample[]
           id: `thr-${d.id}`,
           severity: "info",
           title: `${d.node_id}: düşük verim (${kbps.toFixed(0)} kbps)`,
-          detail: "Dar bantlı taşıyıcıda beklenen bir değer olabilir; veri hacmi artacaksa planlayın.",
+          detail:
+            "Dar bantlı taşıyıcıda beklenen bir değer olabilir; veri hacmi artacaksa planlayın.",
           action: "Yoğun trafik için HaLow/WiGig gibi geniş bantlı bir taşıyıcı köprüsü ekleyin.",
           ask: "Hangi taşıyıcıya yükseltmeliyim?",
         });
@@ -124,7 +125,8 @@ export function buildInsights(devices: InsightDevice[], samples: InsightSample[]
         severity: "warning",
         title: `${d.node_id}: hata kodu ${d.last_error_code}`,
         detail: "Düğüm son çalışmasında hata bildirdi.",
-        action: "Ajan günlüklerini kontrol edin; anahtar veya taşıyıcı yapılandırması hatalı olabilir.",
+        action:
+          "Ajan günlüklerini kontrol edin; anahtar veya taşıyıcı yapılandırması hatalı olabilir.",
         ask: `${d.last_error_code} hata kodu ne anlama geliyor?`,
       });
     }
@@ -137,7 +139,8 @@ export function buildInsights(devices: InsightDevice[], samples: InsightSample[]
       severity: "info",
       title: `${noCarrier.length} düğümde taşıyıcı tanımı yok`,
       detail: "Taşıyıcı bilgisi olmayan düğümler failover planına dahil edilemez.",
-      action: "Düğümler sekmesinden taşıyıcı köprüsünü bağlayın veya ajan ortam değişkenini ayarlayın.",
+      action:
+        "Düğümler sekmesinden taşıyıcı köprüsünü bağlayın veya ajan ortam değişkenini ayarlayın.",
       ask: "Düğüme taşıyıcı tanımını nasıl eklerim?",
     });
   }

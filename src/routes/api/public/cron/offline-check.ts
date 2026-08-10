@@ -38,7 +38,8 @@ export const Route = createFileRoute("/api/public/cron/offline-check")({
           .lt("last_seen_at", threshold)
           .limit(500);
 
-        if (!devices?.length) return Response.json({ ok: true, offline: 0, notified: 0, failover: 0 });
+        if (!devices?.length)
+          return Response.json({ ok: true, offline: 0, notified: 0, failover: 0 });
 
         let notified = 0;
         let failovers = 0;

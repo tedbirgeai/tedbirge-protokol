@@ -3,8 +3,9 @@ import { Link2, PlayCircle } from "lucide-react";
 
 /** YouTube bağlantısını gömme adresine çevirir; değilse null döner. */
 function youtubeEmbed(url: string): string | null {
-  const m =
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/.exec(url);
+  const m = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/.exec(
+    url,
+  );
   return m?.[1] ? `https://www.youtube-nocookie.com/embed/${m[1]}` : null;
 }
 
@@ -84,10 +85,7 @@ export function MediaApp() {
           <video src={src.value} controls className="h-full max-h-full w-full bg-black" />
         )}
         {!src && (
-          <p
-            className="px-4 py-10 text-center text-[13px]"
-            style={{ color: "var(--wa-muted)" }}
-          >
+          <p className="px-4 py-10 text-center text-[13px]" style={{ color: "var(--wa-muted)" }}>
             Bağlantı yapıştırın veya cihazınızdan bir video seçin.
           </p>
         )}

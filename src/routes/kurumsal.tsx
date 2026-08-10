@@ -102,8 +102,7 @@ function KurumsalPage() {
           </div>
 
           <h1 className="mt-7 max-w-3xl text-4xl leading-[1.08] font-semibold tracking-tight text-foreground md:text-6xl">
-            İnternet kesilse de{" "}
-            <span className="text-primary">çalışmaya devam eden ağ</span>
+            İnternet kesilse de <span className="text-primary">çalışmaya devam eden ağ</span>
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
@@ -216,8 +215,16 @@ function KurumsalPage() {
             </p>
             <ol className="mt-7 space-y-4 text-sm">
               {[
-                ["1", "Ağı başlatın", "Tarayıcıda tek düğmeye basın; cihaz saniyeler içinde ağın parçası olur."],
-                ["2", "Cihaz ekleyin", "Bağlantıyı paylaşın veya karekodu okutun; karşı taraf tek dokunuşla katılır."],
+                [
+                  "1",
+                  "Ağı başlatın",
+                  "Tarayıcıda tek düğmeye basın; cihaz saniyeler içinde ağın parçası olur.",
+                ],
+                [
+                  "2",
+                  "Cihaz ekleyin",
+                  "Bağlantıyı paylaşın veya karekodu okutun; karşı taraf tek dokunuşla katılır.",
+                ],
                 ["3", "İzleyin", "Panelde bağlı cihazlar, gecikme ve uyarılar canlı görünür."],
               ].map(([n, t, b]) => (
                 <li key={n} className="flex gap-4">

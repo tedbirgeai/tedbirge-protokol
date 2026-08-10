@@ -8,7 +8,12 @@
 
 import { entropyToMnemonic, mnemonicToEntropy, validateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
-import { ensureIdentity, restoreIdentityFromEntropy, revealSeed, type Identity } from "@/lib/crypto/identity";
+import {
+  ensureIdentity,
+  restoreIdentityFromEntropy,
+  revealSeed,
+  type Identity,
+} from "@/lib/crypto/identity";
 
 export const RECOVERY_WORD_COUNT = 12;
 

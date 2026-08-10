@@ -31,13 +31,7 @@ export type PackageTrust =
 
 /** İmza kapsamındaki alanlar — sıra sabittir, aksi halde imza tutmaz. */
 function signingBytes(m: SignedTbApp): Uint8Array {
-  const canonical = JSON.stringify([
-    m.id,
-    m.name,
-    m.version,
-    [...m.capabilities].sort(),
-    m.module,
-  ]);
+  const canonical = JSON.stringify([m.id, m.name, m.version, [...m.capabilities].sort(), m.module]);
   return new TextEncoder().encode(canonical);
 }
 
@@ -81,7 +75,11 @@ export const TRUST_LABELS: Record<PackageTrust["level"], { title: string; detail
 };
 
 /** Kendi kimliğinizle paket imzalar (geliştirici akışı). */
-export async function signPackage(nodeId: string, m: TbAppManifest, spkB64: string): Promise<SignedTbApp> {
+export async function signPackage(
+  nodeId: string,
+  m: TbAppManifest,
+  spkB64: string,
+): Promise<SignedTbApp> {
   const sig = await signBytes(nodeId, signingBytes(m as SignedTbApp));
   return { ...m, spk: spkB64, sig };
 }
@@ -113,4 +111,3 @@ export function canInstall(trust: PackageTrust, devMode = isDeveloperMode()): bo
   if (trust.level === "broken") return false;
   return devMode;
 }
-

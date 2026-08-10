@@ -36,8 +36,7 @@ const permits: Permit[] = [
     name: "İşletmeci yetkilendirmesi (bildirim / kullanım hakkı)",
     body: "BTK",
     needed: "Koşullu",
-    when:
-      "Yalnızca üçüncü kişilere bedelli/kamuya açık elektronik haberleşme hizmeti sunulursa gerekir. Kapalı devre kurum içi kullanımda gerekmez.",
+    when: "Yalnızca üçüncü kişilere bedelli/kamuya açık elektronik haberleşme hizmeti sunulursa gerekir. Kapalı devre kurum içi kullanımda gerekmez.",
     how: "BTK e-Devlet başvurusu · 5809 s. Kanun m.8 kapsamında bildirim veya kullanım hakkı",
     time: "Bildirim: ~1 ay · Kullanım hakkı: 2–6 ay",
   },
@@ -45,8 +44,7 @@ const permits: Permit[] = [
     name: "Telsiz kurma ve kullanma izni / ruhsatnamesi",
     body: "BTK",
     needed: "Koşullu",
-    when:
-      "KEGY kapsamındaki lisanssız bantlarda (868 MHz SRD, 2.4/5 GHz, 60 GHz) izin gerekmez. Tahsisli bant, yüksek güç veya harici anten ile yönlü link kurulursa ruhsat gerekir.",
+    when: "KEGY kapsamındaki lisanssız bantlarda (868 MHz SRD, 2.4/5 GHz, 60 GHz) izin gerekmez. Tahsisli bant, yüksek güç veya harici anten ile yönlü link kurulursa ruhsat gerekir.",
     how: "BTK Telsiz İşlemleri · kurulum dosyası, cihaz uygunluk beyanı, koordinat ve anten bilgisi",
     time: "1–3 ay",
   },
@@ -54,8 +52,7 @@ const permits: Permit[] = [
     name: "Frekans tahsisi",
     body: "BTK Spektrum Yönetimi",
     needed: "Gerekmez",
-    when:
-      "Varsayılan TR profili yalnızca lisanssız bantları ve müşterinin mevcut hücresel/uydu aboneliklerini kullanır. Tahsisli bant talebi olursa müşteri adına başvurulur.",
+    when: "Varsayılan TR profili yalnızca lisanssız bantları ve müşterinin mevcut hücresel/uydu aboneliklerini kullanır. Tahsisli bant talebi olursa müşteri adına başvurulur.",
     how: "Frekans tahsis talep formu · teknik gerekçe raporu",
     time: "3–6 ay (talep halinde)",
   },
@@ -63,8 +60,7 @@ const permits: Permit[] = [
     name: "Cihaz piyasaya arz uygunluğu (TDDY/RED + EMC + LVD, CE)",
     body: "Sanayi ve Teknoloji Bakanlığı · BTK",
     needed: "Koşullu",
-    when:
-      "Salt yazılım satışında yükümlülük yoktur; yük donanım üreticisi/ithalatçısındadır. Referans donanım paketi satılırsa Tedbirge'ye geçer.",
+    when: "Salt yazılım satışında yükümlülük yoktur; yük donanım üreticisi/ithalatçısındadır. Referans donanım paketi satılırsa Tedbirge'ye geçer.",
     how: "Onaylanmış kuruluş + akredite laboratuvar testleri · AB Uygunluk Beyanı · teknik dosya (10 yıl)",
     time: "2–4 ay",
   },
@@ -72,8 +68,7 @@ const permits: Permit[] = [
     name: "Yer/erişim sağlayıcı faaliyet belgesi (5651)",
     body: "BTK · Erişim Sağlayıcıları Birliği",
     needed: "Koşullu",
-    when:
-      "Türkiye'de kamuya internet erişimi sağlanırsa alınır. Kurum içi kapalı mesh ve exit node kullanımında gerekmez.",
+    when: "Türkiye'de kamuya internet erişimi sağlanırsa alınır. Kurum içi kapalı mesh ve exit node kullanımında gerekmez.",
     how: "BTK faaliyet belgesi başvurusu · trafik bilgisi saklama altyapısı taahhüdü",
     time: "1–2 ay",
   },
@@ -81,8 +76,7 @@ const permits: Permit[] = [
     name: "VERBİS kaydı",
     body: "KVKK Kurumu",
     needed: "Koşullu",
-    when:
-      "Yıllık çalışan sayısı 50'den az ve mali bilanço 25 milyon TL altındaki, ana faaliyeti özel nitelikli veri işleme olmayan veri sorumluları kayıttan muaftır. Eşik aşılırsa kayıt zorunludur.",
+    when: "Yıllık çalışan sayısı 50'den az ve mali bilanço 25 milyon TL altındaki, ana faaliyeti özel nitelikli veri işleme olmayan veri sorumluları kayıttan muaftır. Eşik aşılırsa kayıt zorunludur.",
     how: "verbis.kvkk.gov.tr · veri envanteri, saklama-imha politikası, irtibat kişisi",
     time: "1–2 hafta",
   },
@@ -90,8 +84,7 @@ const permits: Permit[] = [
     name: "ETBİS kaydı (e-ticaret bilgi sistemi)",
     body: "Ticaret Bakanlığı",
     needed: "Gerekli",
-    when:
-      "Kendi alan adı üzerinden çevrim içi lisans/abonelik satışı yapılacağı için e-ticaret hizmet sağlayıcı olarak kayıt zorunludur.",
+    when: "Kendi alan adı üzerinden çevrim içi lisans/abonelik satışı yapılacağı için e-ticaret hizmet sağlayıcı olarak kayıt zorunludur.",
     how: "e-Devlet · ETBİS kayıt formu · alan adı doğrulama",
     time: "1–2 hafta",
   },
@@ -107,8 +100,7 @@ const permits: Permit[] = [
     name: "Çift kullanım / kripto ihracat beyanı",
     body: "Ticaret Bakanlığı · Dışişleri Bakanlığı",
     needed: "Gerekli",
-    when:
-      "Wassenaar Kat. 5 Böl. 2 kapsamındaki şifreleme yazılımının yurt dışına lisanslanmasında son kullanıcı beyanı ve yaptırım listesi taraması zorunludur.",
+    when: "Wassenaar Kat. 5 Böl. 2 kapsamındaki şifreleme yazılımının yurt dışına lisanslanmasında son kullanıcı beyanı ve yaptırım listesi taraması zorunludur.",
     how: "Son kullanıcı beyanı · liste taraması · 5 yıl kayıt saklama",
     time: "İşlem başına 1–5 gün",
   },
@@ -132,8 +124,7 @@ const permits: Permit[] = [
     name: "AFAD pilot protokolü",
     body: "AFAD · İl AFAD müdürlükleri",
     needed: "Koşullu",
-    when:
-      "Afet tatbikatı veya kamu sahasında pilot yapılacaksa yazılı protokol ve olağanüstü hal frekans talimatına uyum gerekir.",
+    when: "Afet tatbikatı veya kamu sahasında pilot yapılacaksa yazılı protokol ve olağanüstü hal frekans talimatına uyum gerekir.",
     how: "Pilot protokol taslağı · kapsam ve taşıyıcı listesi ekli",
     time: "1–2 ay",
   },
@@ -169,9 +160,9 @@ function Permits() {
             Sistemi çalıştırmak için devletten hangi izni almalıyız?
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Kısa cevap: yazılımı geliştirmek, satmak ve lisanssız bantlarda kurum içi
-            çalıştırmak için ön izin gerekmez. İzin eşiği; kamuya hizmet sunma, tahsisli
-            frekans ve donanım arzı senaryolarında doğar. Aşağıda kurum kurum tablo.
+            Kısa cevap: yazılımı geliştirmek, satmak ve lisanssız bantlarda kurum içi çalıştırmak
+            için ön izin gerekmez. İzin eşiği; kamuya hizmet sunma, tahsisli frekans ve donanım arzı
+            senaryolarında doğar. Aşağıda kurum kurum tablo.
           </p>
         </div>
       </section>
@@ -223,10 +214,9 @@ function Permits() {
           </div>
           <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
             Kaynaklar: 5809 s. Elektronik Haberleşme Kanunu, BTK Kısa Mesafe Erişimli Telsiz
-            Cihazları Yönetmeliği, BTK Telsiz Ekipmanları Yönetmeliği (2014/53/AB), 5651 s.
-            Kanun, 6698 s. KVKK ve VERBİS tebliğleri, 6563 s. Kanun ve ETBİS Yönetmeliği,
-            Wassenaar Düzenlemesi Kategori 5 Bölüm 2. Bilgilendirme amaçlıdır; hukuki görüş
-            yerine geçmez.
+            Cihazları Yönetmeliği, BTK Telsiz Ekipmanları Yönetmeliği (2014/53/AB), 5651 s. Kanun,
+            6698 s. KVKK ve VERBİS tebliğleri, 6563 s. Kanun ve ETBİS Yönetmeliği, Wassenaar
+            Düzenlemesi Kategori 5 Bölüm 2. Bilgilendirme amaçlıdır; hukuki görüş yerine geçmez.
           </p>
         </div>
       </section>

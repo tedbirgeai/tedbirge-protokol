@@ -69,7 +69,9 @@ function NodeEnrollPage() {
       setState("done");
     } catch {
       setState("error");
-      setMessage("Kayıt sırasında bağlantı hatası oluştu. İnternetinizi kontrol edip tekrar deneyin.");
+      setMessage(
+        "Kayıt sırasında bağlantı hatası oluştu. İnternetinizi kontrol edip tekrar deneyin.",
+      );
     }
   }
 
@@ -125,7 +127,7 @@ function NodeEnrollPage() {
                 Düğüm ajanı yapılandırması
               </p>
               <pre className="mt-4 overflow-x-auto rounded-sm border border-border bg-background p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
-{`export TEDBIRGE_LICENSE_KEY=${claim.license_key}
+                {`export TEDBIRGE_LICENSE_KEY=${claim.license_key}
 export TEDBIRGE_NODE_ID=${claim.node_id}
 export TEDBIRGE_TELEMETRY_URL=${claim.endpoints.telemetry}
 export TEDBIRGE_QUEUE_URL=${claim.endpoints.queue}

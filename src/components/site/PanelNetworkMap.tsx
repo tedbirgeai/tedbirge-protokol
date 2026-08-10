@@ -6,7 +6,6 @@ import { useDiagnostics } from "@/lib/diagnostics";
 import { useCarrierBridge } from "@/lib/carrier-bridge";
 import { GlobalMeshMap } from "@/components/site/GlobalMeshMap";
 
-
 type MapDevice = {
   id: string;
   node_id: string;
@@ -36,7 +35,13 @@ function ringOf(d: MapDevice) {
 }
 
 /** Canlı mesh topolojisi + gerçek telemetri akış grafiği. Veri yalnızca kayıtlı düğümlerden gelir. */
-export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[]; refreshKey: number }) {
+export function PanelNetworkMap({
+  devices,
+  refreshKey,
+}: {
+  devices: MapDevice[];
+  refreshKey: number;
+}) {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
@@ -55,8 +60,10 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
   useEffect(() => {
     const channel = supabase
       .channel("panel-telemetry")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "telemetry_samples" }, () =>
-        setTick((t) => t + 1),
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "telemetry_samples" },
+        () => setTick((t) => t + 1),
       )
       .subscribe();
     return () => {
@@ -100,7 +107,9 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
   const peak = Math.max(1, ...buckets);
   const online = devices.filter((d) => isDeviceOnline(d));
   const rttValues = samples.map((s) => s.rtt_ms).filter((v): v is number => typeof v === "number");
-  const dbAvgRtt = rttValues.length ? Math.round(rttValues.reduce((a, b) => a + b, 0) / rttValues.length) : null;
+  const dbAvgRtt = rttValues.length
+    ? Math.round(rttValues.reduce((a, b) => a + b, 0) / rttValues.length)
+    : null;
   /** Canlı RTT: tarayıcı düğümünün ping/pong ölçümü öncelikli, yoksa telemetri ortalaması. */
   const liveRtt = diag.rttAvg ?? dbAvgRtt;
   const rttWindow = diag.rttSamples.slice(-40);
@@ -109,7 +118,6 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
   const liveFrames = links.reduce((a, l) => a + l.frames + (l.rxPackets ?? 0), 0);
   const totalBytes = samples.reduce((a, s) => a + (s.bytes ?? 0), 0);
   const meshLive = runtime.peers.length > 0 || online.length > 0;
-
 
   const placed = useMemo(() => {
     const groups: MapDevice[][] = [[], [], []];
@@ -129,7 +137,9 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
     <div className="rounded-sm border border-border bg-card/50 p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Ağ haritası</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Ağ haritası
+          </p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight">Canlı mesh topolojisi</h2>
         </div>
         <div className="flex flex-wrap gap-2 font-mono text-[11px] uppercase tracking-[0.15em]">
@@ -154,7 +164,12 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
               Henüz düğüm yok. Bir düğüm telemetri gönderdiğinde harita canlanır.
             </p>
           ) : (
-            <svg viewBox="0 0 400 340" className="h-[340px] w-full" role="img" aria-label="Canlı mesh ağ haritası">
+            <svg
+              viewBox="0 0 400 340"
+              className="h-[340px] w-full"
+              role="img"
+              aria-label="Canlı mesh ağ haritası"
+            >
               {[92, 158].map((r) => (
                 <circle
                   key={r}
@@ -199,8 +214,18 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
                   <g key={p.d.id}>
                     {live && (
                       <circle cx={p.x} cy={p.y} r="14" className="fill-primary/20">
-                        <animate attributeName="r" values="10;20;10" dur="3s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite" />
+                        <animate
+                          attributeName="r"
+                          values="10;20;10"
+                          dur="3s"
+                          repeatCount="indefinite"
+                        />
+                        <animate
+                          attributeName="opacity"
+                          values="0.5;0;0.5"
+                          dur="3s"
+                          repeatCount="indefinite"
+                        />
                       </circle>
                     )}
                     <circle
@@ -245,7 +270,9 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
             </p>
             <div className="mt-3 flex h-12 items-end gap-[2px]" aria-label="Canlı RTT penceresi">
               {rttWindow.length === 0 ? (
-                <span className="font-mono text-[10px] text-muted-foreground">ping ölçümü bekleniyor…</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  ping ölçümü bekleniyor…
+                </span>
               ) : (
                 rttWindow.map((v, i) => (
                   <div
@@ -302,7 +329,9 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
               className="flex items-center justify-between gap-3 rounded-sm border border-border bg-background/60 px-3 py-2"
             >
               <span className="min-w-0">
-                <span className="block truncate font-mono text-[12px] text-foreground">{d.node_id}</span>
+                <span className="block truncate font-mono text-[12px] text-foreground">
+                  {d.node_id}
+                </span>
                 <span className="block truncate font-mono text-[10px] text-muted-foreground">
                   {d.region} · {d.carrier ?? "taşıyıcı yok"}
                 </span>
@@ -312,7 +341,11 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
                   isDeviceOnline(d) ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                {isDeviceOnline(d) ? "canlı" : d.last_seen_at ? sinceLabel(d.last_seen_at) : "beklemede"}
+                {isDeviceOnline(d)
+                  ? "canlı"
+                  : d.last_seen_at
+                    ? sinceLabel(d.last_seen_at)
+                    : "beklemede"}
               </span>
             </li>
           ))}
@@ -329,7 +362,9 @@ export function PanelNetworkMap({ devices, refreshKey }: { devices: MapDevice[];
 function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-sm border border-border bg-background/70 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 font-mono text-lg text-foreground">{value}</p>
       {hint && <p className="mt-1 font-mono text-[10px] text-muted-foreground">{hint}</p>}
     </div>

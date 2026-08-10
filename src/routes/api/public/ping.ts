@@ -16,7 +16,8 @@ export const Route = createFileRoute("/api/public/ping")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      HEAD: async () => new Response(null, { status: 200, headers: { "Cache-Control": "no-store", ...CORS } }),
+      HEAD: async () =>
+        new Response(null, { status: 200, headers: { "Cache-Control": "no-store", ...CORS } }),
       GET: async () =>
         new Response(JSON.stringify({ ok: true, service: "tedbirge", ts: Date.now() }), {
           status: 200,

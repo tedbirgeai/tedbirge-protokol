@@ -15,7 +15,9 @@ export type CallLink = {
 function rand(): string {
   const bytes = new Uint8Array(9);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 12);
+  return Array.from(bytes, (b) => b.toString(36).padStart(2, "0"))
+    .join("")
+    .slice(0, 12);
 }
 
 export function createCallLink(video: boolean, approval: boolean): CallLink {
@@ -30,6 +32,7 @@ export function createCallLink(video: boolean, approval: boolean): CallLink {
 }
 
 export function urlOfCallLink(link: CallLink): string {
-  const origin = typeof window === "undefined" ? "https://tedbirge-gateway.lovable.app" : window.location.origin;
+  const origin =
+    typeof window === "undefined" ? "https://tedbirge-gateway.lovable.app" : window.location.origin;
   return `${origin}/chat?call=${link.id}&v=${link.video ? "1" : "0"}${link.approval ? "&ok=1" : ""}`;
 }

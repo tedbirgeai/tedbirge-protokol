@@ -74,9 +74,7 @@ export async function checkApiRateLimit(
       };
     }
 
-    const dayStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
+    const dayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     if (!(await bump(`api:${hash}:day`, dayStart, perDay))) {
       return {
         ok: false,
@@ -84,7 +82,6 @@ export async function checkApiRateLimit(
         message: "rate_limited: günlük istek kotası doldu.",
       };
     }
-
 
     return { ok: true };
   } catch (error) {

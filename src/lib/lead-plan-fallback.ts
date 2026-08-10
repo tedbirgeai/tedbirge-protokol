@@ -70,15 +70,17 @@ export function buildFallbackPlan(input: PlanInput): LeadPlan {
     {
       hafta: "3-4. hafta",
       baslik: "Taşıyıcı köprüleri ve failover",
-      aciklama: [
-        c.wifi && "LAN/P2P birincil yol",
-        c.lora && "LoRa 868 MHz yedek yol",
-        c.halow && "Wi-Fi HaLow orta menzil",
-        c.cellular && "hücresel yedek",
-        c.satellite && "uydu son çare",
-      ]
-        .filter(Boolean)
-        .join(", ") + " sırasıyla skor tabanlı failover motoru yapılandırılır ve kesinti tatbikatı yapılır.",
+      aciklama:
+        [
+          c.wifi && "LAN/P2P birincil yol",
+          c.lora && "LoRa 868 MHz yedek yol",
+          c.halow && "Wi-Fi HaLow orta menzil",
+          c.cellular && "hücresel yedek",
+          c.satellite && "uydu son çare",
+        ]
+          .filter(Boolean)
+          .join(", ") +
+        " sırasıyla skor tabanlı failover motoru yapılandırılır ve kesinti tatbikatı yapılır.",
       sorumlu: "Ağ mühendisi",
     },
     {
@@ -100,29 +102,93 @@ export function buildFallbackPlan(input: PlanInput): LeadPlan {
 
   const belgeler: PlanDoc[] = tr
     ? [
-        { belge: "Lisanssız bant kullanım beyanı (duty-cycle kaydı)", kurum: "BTK", zorunlu: c.lora, not: "868 MHz %1 duty-cycle bütçesi ekiyle sunulur." },
-        { belge: "Telsiz ekipmanı uygunluk beyanı (CE/RED)", kurum: "Üretici / BTK", zorunlu: true, not: "Kullanılan modem ve anten setleri için." },
-        { belge: "KVKK aydınlatma metni ve VERBİS kaydı", kurum: "KVKK", zorunlu: true, not: "Veri sorumlusu kurumdur; Tedbirge veri işleyen konumundadır." },
-        { belge: "5651 sayılı Kanun kapsamında log politikası", kurum: "BTK / kurum içi", zorunlu: true, not: "Yalnız erişim kaydı; mesaj içeriği tutulmaz." },
-        { belge: "Saha kurulum / montaj izni", kurum: "Valilik veya saha sahibi kurum", zorunlu: false, not: "Kamu alanı kullanımı varsa gereklidir." },
-        { belge: "AFAD koordinasyon yazısı", kurum: "AFAD", zorunlu: /afet|acil|arama|kurtarma/i.test(senaryo), not: "Afet senaryolarında pilot kapsamında teyit edilecek." },
-        { belge: "İş sağlığı ve güvenliği çalışma izni", kurum: "Kurum İSG birimi", zorunlu: false, not: "Direk/çatı montajı yapılacaksa." },
+        {
+          belge: "Lisanssız bant kullanım beyanı (duty-cycle kaydı)",
+          kurum: "BTK",
+          zorunlu: c.lora,
+          not: "868 MHz %1 duty-cycle bütçesi ekiyle sunulur.",
+        },
+        {
+          belge: "Telsiz ekipmanı uygunluk beyanı (CE/RED)",
+          kurum: "Üretici / BTK",
+          zorunlu: true,
+          not: "Kullanılan modem ve anten setleri için.",
+        },
+        {
+          belge: "KVKK aydınlatma metni ve VERBİS kaydı",
+          kurum: "KVKK",
+          zorunlu: true,
+          not: "Veri sorumlusu kurumdur; Tedbirge veri işleyen konumundadır.",
+        },
+        {
+          belge: "5651 sayılı Kanun kapsamında log politikası",
+          kurum: "BTK / kurum içi",
+          zorunlu: true,
+          not: "Yalnız erişim kaydı; mesaj içeriği tutulmaz.",
+        },
+        {
+          belge: "Saha kurulum / montaj izni",
+          kurum: "Valilik veya saha sahibi kurum",
+          zorunlu: false,
+          not: "Kamu alanı kullanımı varsa gereklidir.",
+        },
+        {
+          belge: "AFAD koordinasyon yazısı",
+          kurum: "AFAD",
+          zorunlu: /afet|acil|arama|kurtarma/i.test(senaryo),
+          not: "Afet senaryolarında pilot kapsamında teyit edilecek.",
+        },
+        {
+          belge: "İş sağlığı ve güvenliği çalışma izni",
+          kurum: "Kurum İSG birimi",
+          zorunlu: false,
+          not: "Direk/çatı montajı yapılacaksa.",
+        },
         ...(c.cellular || c.satellite
-          ? [{ belge: "Operatör abonelik ve sorumluluk beyanı", kurum: "Hücresel/uydu operatörü", zorunlu: true, not: "Beyan olmadan taşıyıcı kapısı açılmaz." }]
+          ? [
+              {
+                belge: "Operatör abonelik ve sorumluluk beyanı",
+                kurum: "Hücresel/uydu operatörü",
+                zorunlu: true,
+                not: "Beyan olmadan taşıyıcı kapısı açılmaz.",
+              },
+            ]
           : []),
       ]
     : [
-        { belge: "Spektrum uygunluk beyanı (ETSI/FCC)", kurum: "Ülke düzenleyicisi", zorunlu: true, not: "Bant planı pilot kapsamında teyit edilecek." },
-        { belge: "Ekipman uygunluk sertifikası", kurum: "Üretici", zorunlu: true, not: "CE/FCC ID kayıtları." },
-        { belge: "Veri koruma aydınlatma metni (GDPR vb.)", kurum: "Yerel otorite", zorunlu: true, not: "Uçtan uca şifreleme kapsamı belirtilir." },
-        { belge: "Saha erişim ve montaj izni", kurum: "Saha sahibi", zorunlu: false, not: "Kamu alanı kullanımına göre." },
+        {
+          belge: "Spektrum uygunluk beyanı (ETSI/FCC)",
+          kurum: "Ülke düzenleyicisi",
+          zorunlu: true,
+          not: "Bant planı pilot kapsamında teyit edilecek.",
+        },
+        {
+          belge: "Ekipman uygunluk sertifikası",
+          kurum: "Üretici",
+          zorunlu: true,
+          not: "CE/FCC ID kayıtları.",
+        },
+        {
+          belge: "Veri koruma aydınlatma metni (GDPR vb.)",
+          kurum: "Yerel otorite",
+          zorunlu: true,
+          not: "Uçtan uca şifreleme kapsamı belirtilir.",
+        },
+        {
+          belge: "Saha erişim ve montaj izni",
+          kurum: "Saha sahibi",
+          zorunlu: false,
+          not: "Kamu alanı kullanımına göre.",
+        },
       ];
 
   const riskler = [
     c.lora
       ? "Yoğun trafikte %1 duty-cycle bütçesi dolabilir; zamanlayıcı önceliklendirmesi ve yedek taşıyıcı şart."
       : "Taşıyıcı çeşitliliği sınırlıysa tek nokta arıza riski oluşur.",
-    tr ? "BTK beyan ve saha izin süreleri pilot takvimini 2-3 hafta uzatabilir." : "Yerel düzenleyici onay süresi takvimi uzatabilir.",
+    tr
+      ? "BTK beyan ve saha izin süreleri pilot takvimini 2-3 hafta uzatabilir."
+      : "Yerel düzenleyici onay süresi takvimi uzatabilir.",
     "Saha erişimi (arazi, enerji, montaj) hava koşullarına bağlı olarak gecikebilir.",
     "Kurtarma anahtarı kaybı geri dönülemez veri erişim kaybına yol açar; teslim tutanağı ile kayıt altına alınmalı.",
   ];

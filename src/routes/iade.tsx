@@ -35,9 +35,9 @@ function Refund() {
 
         <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
           <p>
-            <strong className="text-foreground">30 gün para iade garantisi.</strong> Satın
-            aldığınız Tedbirge aboneliğinden memnun kalmazsanız, sipariş tarihinden itibaren 30
-            gün içinde tam iade talep edebilirsiniz. Gerekçe belirtmek zorunda değilsiniz.
+            <strong className="text-foreground">30 gün para iade garantisi.</strong> Satın aldığınız
+            Tedbirge aboneliğinden memnun kalmazsanız, sipariş tarihinden itibaren 30 gün içinde tam
+            iade talep edebilirsiniz. Gerekçe belirtmek zorunda değilsiniz.
           </p>
           <p>
             İadeler, kayıtlı satıcımız (Merchant of Record) Paddle tarafından işlenir. Talebinizi{" "}
@@ -49,8 +49,8 @@ function Refund() {
             >
               paddle.net
             </a>{" "}
-            üzerinden ya da iletişim formumuz aracılığıyla iletebilirsiniz. Onaylanan iadeler,
-            ödeme yaptığınız yönteme genellikle 5–10 iş günü içinde yansır.
+            üzerinden ya da iletişim formumuz aracılığıyla iletebilirsiniz. Onaylanan iadeler, ödeme
+            yaptığınız yönteme genellikle 5–10 iş günü içinde yansır.
           </p>
           <p>
             Yenilenen abonelik dönemleri için de aynı 30 günlük süre geçerlidir. Aboneliğinizi
@@ -58,13 +58,11 @@ function Refund() {
             sonrasında erişiminiz ödenmiş dönemin sonuna kadar devam eder.
           </p>
           <p>
-            Ücretsiz Community sürümü için ödeme alınmadığından iade söz konusu değildir.
-            Operator paketlerinde özel sözleşme hükümleri geçerli olabilir; bu durumda iade
-            koşulları sözleşmenizde açıkça belirtilir.
+            Ücretsiz Community sürümü için ödeme alınmadığından iade söz konusu değildir. Operator
+            paketlerinde özel sözleşme hükümleri geçerli olabilir; bu durumda iade koşulları
+            sözleşmenizde açıkça belirtilir.
           </p>
-          <p>
-            Tüketici mevzuatından doğan cayma hakkınız bu politikadan bağımsız olarak saklıdır.
-          </p>
+          <p>Tüketici mevzuatından doğan cayma hakkınız bu politikadan bağımsız olarak saklıdır.</p>
         </div>
       </section>
     </SitePage>

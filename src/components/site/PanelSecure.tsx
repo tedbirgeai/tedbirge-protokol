@@ -2,10 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { CARRIERS, TERRAIN, HEIGHTS } from "@/lib/mesh-plan";
-import { createNodeEnrollment, revokeNodeEnrollment, setDeviceE2ee } from "@/lib/enrollment.functions";
+import {
+  createNodeEnrollment,
+  revokeNodeEnrollment,
+  setDeviceE2ee,
+} from "@/lib/enrollment.functions";
 import { runCalibrationTest } from "@/lib/calibration.functions";
 import { friendlyError, normalizeNodeId } from "@/lib/friendly-error";
-
 
 type LicenseLite = { id: string; plan: string; node_limit: number };
 
@@ -40,9 +43,12 @@ export function QrNodeEnroll({
   const [carrier, setCarrier] = useState("lora");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [qr, setQr] = useState<{ url: string; image: string; nodeId: string; expiresAt: string } | null>(
-    null,
-  );
+  const [qr, setQr] = useState<{
+    url: string;
+    image: string;
+    nodeId: string;
+    expiresAt: string;
+  } | null>(null);
   const [pending, setPending] = useState<
     { id: string; node_id: string; status: string; expires_at: string; created_at: string }[]
   >([]);
@@ -204,7 +210,11 @@ export function QrNodeEnroll({
         <div className="rounded-sm border border-primary/40 bg-background p-5 text-center">
           {qr ? (
             <>
-              <img src={qr.image} alt={`${qr.nodeId} düğüm kaydı QR kodu`} className="mx-auto h-52 w-52" />
+              <img
+                src={qr.image}
+                alt={`${qr.nodeId} düğüm kaydı QR kodu`}
+                className="mx-auto h-52 w-52"
+              />
               <p className="mt-3 font-mono text-xs text-primary">{qr.nodeId}</p>
               <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">{qr.url}</p>
               <p className="mt-2 text-[11px] text-muted-foreground">
@@ -255,7 +265,13 @@ export function QrNodeEnroll({
 /** 2 — Uçtan uca şifreleme anahtar panosu. */
 export function E2eeKeyBoard({ refreshKey }: { refreshKey: number }) {
   const [rows, setRows] = useState<
-    { id: string; node_id: string; e2ee: boolean; key_fingerprint: string | null; key_updated_at: string | null }[]
+    {
+      id: string;
+      node_id: string;
+      e2ee: boolean;
+      key_fingerprint: string | null;
+      key_updated_at: string | null;
+    }[]
   >([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -349,7 +365,9 @@ export function OutageLog({ refreshKey }: { refreshKey: number }) {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("outage_events")
-      .select("id, node_id, layer, started_at, ended_at, duration_seconds, failover_to, cause, resolved")
+      .select(
+        "id, node_id, layer, started_at, ended_at, duration_seconds, failover_to, cause, resolved",
+      )
       .order("started_at", { ascending: false })
       .limit(100);
     setRows(data ?? []);
@@ -362,7 +380,11 @@ export function OutageLog({ refreshKey }: { refreshKey: number }) {
   useEffect(() => {
     const channel = supabase
       .channel("outage-events")
-      .on("postgres_changes", { event: "*", schema: "public", table: "outage_events" }, () => void load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "outage_events" },
+        () => void load(),
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -370,15 +392,21 @@ export function OutageLog({ refreshKey }: { refreshKey: number }) {
   }, [load]);
 
   const open = rows.filter((r) => !r.resolved).length;
-  const totalMinutes = Math.round(
-    rows.reduce((sum, r) => sum + (r.duration_seconds ?? 0), 0) / 60,
-  );
+  const totalMinutes = Math.round(rows.reduce((sum, r) => sum + (r.duration_seconds ?? 0), 0) / 60);
 
   function exportCsv() {
     const header = "node_id,layer,started_at,ended_at,duration_seconds,failover_to,cause\n";
     const body = rows
       .map((r) =>
-        [r.node_id, r.layer, r.started_at, r.ended_at ?? "", r.duration_seconds ?? "", r.failover_to ?? "", r.cause ?? ""]
+        [
+          r.node_id,
+          r.layer,
+          r.started_at,
+          r.ended_at ?? "",
+          r.duration_seconds ?? "",
+          r.failover_to ?? "",
+          r.cause ?? "",
+        ]
           .map((v) => `"${String(v).replace(/"/g, '""')}"`)
           .join(","),
       )
@@ -436,7 +464,9 @@ export function OutageLog({ refreshKey }: { refreshKey: number }) {
               </span>
               <span className="text-muted-foreground">
                 {new Date(r.started_at).toLocaleString("tr-TR")}
-                {r.ended_at ? ` → ${new Date(r.ended_at).toLocaleTimeString("tr-TR")}` : " → sürüyor"}
+                {r.ended_at
+                  ? ` → ${new Date(r.ended_at).toLocaleTimeString("tr-TR")}`
+                  : " → sürüyor"}
               </span>
               <span className={r.resolved ? "text-primary" : "text-destructive"}>
                 {r.duration_seconds != null ? `${Math.round(r.duration_seconds / 60)} dk` : "açık"}
@@ -459,7 +489,14 @@ export function CalibrationTest({ refreshKey }: { refreshKey: number }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Awaited<ReturnType<typeof runCalibrationTest>> | null>(null);
   const [history, setHistory] = useState<
-    { id: string; carrier: string; terrain: string; accuracy_pct: number | null; verdict: string; created_at: string }[]
+    {
+      id: string;
+      carrier: string;
+      terrain: string;
+      accuracy_pct: number | null;
+      verdict: string;
+      created_at: string;
+    }[]
   >([]);
 
   const load = useCallback(async () => {
@@ -490,7 +527,11 @@ export function CalibrationTest({ refreshKey }: { refreshKey: number }) {
     setError(null);
     try {
       const res = await runCalibrationTest({
-        data: { carrier: carrier as never, terrain: terrain as never, antennaHeight: height as never },
+        data: {
+          carrier: carrier as never,
+          terrain: terrain as never,
+          antennaHeight: height as never,
+        },
       });
       setResult(res);
       void load();
@@ -601,7 +642,9 @@ export function CalibrationTest({ refreshKey }: { refreshKey: number }) {
               <span className="font-mono">
                 {h.carrier} · {h.terrain}
               </span>
-              <span className="text-muted-foreground">{new Date(h.created_at).toLocaleString("tr-TR")}</span>
+              <span className="text-muted-foreground">
+                {new Date(h.created_at).toLocaleString("tr-TR")}
+              </span>
               <span className={h.verdict === "gecti" ? "text-primary" : "text-muted-foreground"}>
                 {h.accuracy_pct ?? 0}% · {h.verdict}
               </span>

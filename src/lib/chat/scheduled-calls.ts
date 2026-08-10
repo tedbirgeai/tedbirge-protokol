@@ -67,9 +67,15 @@ export function removeScheduled(id: string): void {
 
 /** Takvim uygulamalarına aktarım için .ics içeriği üretir. */
 export function icsOf(row: ScheduledCall, url: string): string {
-  const stamp = (iso: string) => `${iso.replace(/[-:]/g, "").replace(/\.\d{3}/, "").slice(0, 15)}00Z`;
+  const stamp = (iso: string) =>
+    `${iso
+      .replace(/[-:]/g, "")
+      .replace(/\.\d{3}/, "")
+      .slice(0, 15)}00Z`;
   const start = new Date(row.startsAt).toISOString();
-  const end = new Date(row.endsAt ?? new Date(new Date(row.startsAt).getTime() + 30 * 60000).toISOString()).toISOString();
+  const end = new Date(
+    row.endsAt ?? new Date(new Date(row.startsAt).getTime() + 30 * 60000).toISOString(),
+  ).toISOString();
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",

@@ -87,4 +87,3 @@ export async function verifyWebhook(req: Request, env: PaddleEnv) {
     >;
   }
 }
-

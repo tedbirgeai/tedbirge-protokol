@@ -209,9 +209,9 @@ function TurkeyRegulation() {
             Pilot ülkemiz Türkiye — mevzuat madde madde karşılanmıştır
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Protokol'in ilk konuşlanma alanı Türkiye'dir. Aşağıda BTK, Sanayi ve
-            Teknoloji Bakanlığı, KVKK Kurumu, Ticaret Bakanlığı ve AFAD çerçevesindeki
-            yükümlülükler; her biri için ürünün konumu ve alınan aksiyon listelenmiştir.
+            Tedbirge Protokol'in ilk konuşlanma alanı Türkiye'dir. Aşağıda BTK, Sanayi ve Teknoloji
+            Bakanlığı, KVKK Kurumu, Ticaret Bakanlığı ve AFAD çerçevesindeki yükümlülükler; her biri
+            için ürünün konumu ve alınan aksiyon listelenmiştir.
           </p>
         </div>
       </section>
@@ -290,10 +290,10 @@ TEDBIRGE_REGION_LOCK=signed # operatör tarafından değiştirilemez`}</code>
         </ul>
         <p className="mt-8 text-xs leading-relaxed text-muted-foreground">
           Kaynaklar: 5809 s. Elektronik Haberleşme Kanunu, BTK Telsiz Ekipmanları Yönetmeliği
-          (2014/53/AB), BTK Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği, BTK EM Alan
-          Şiddeti Limit Değerleri Yönetmeliği, 6698 s. KVKK, 5651 s. Kanun, 6563 s. Kanun ve
-          Mesafeli Sözleşmeler Yönetmeliği, Cumhurbaşkanlığı 2019/12 Genelgesi. Bu sayfa
-          bilgilendirme amaçlıdır, hukuki görüş yerine geçmez; yürürlükteki metin esastır.
+          (2014/53/AB), BTK Kısa Mesafe Erişimli Telsiz Cihazları Yönetmeliği, BTK EM Alan Şiddeti
+          Limit Değerleri Yönetmeliği, 6698 s. KVKK, 5651 s. Kanun, 6563 s. Kanun ve Mesafeli
+          Sözleşmeler Yönetmeliği, Cumhurbaşkanlığı 2019/12 Genelgesi. Bu sayfa bilgilendirme
+          amaçlıdır, hukuki görüş yerine geçmez; yürürlükteki metin esastır.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
@@ -309,7 +309,6 @@ TEDBIRGE_REGION_LOCK=signed # operatör tarafından değiştirilemez`}</code>
             Pilot uyum panosu
           </Link>
           <Link
-
             to="/uyumluluk"
             className="rounded-sm border border-border px-6 py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] hover:bg-secondary"
           >

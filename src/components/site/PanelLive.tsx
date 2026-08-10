@@ -67,11 +67,12 @@ export function CarrierLiveBoard({ devices }: { devices: LiveDevice[] }) {
       CARRIERS.map((c) => {
         const owned = devices.filter((d) => d.carrier === c.id);
         const online = owned.filter(isDeviceOnline);
-        const lastSeen = owned
-          .map((d) => d.last_seen_at)
-          .filter((v): v is string => !!v)
-          .sort()
-          .at(-1) ?? null;
+        const lastSeen =
+          owned
+            .map((d) => d.last_seen_at)
+            .filter((v): v is string => !!v)
+            .sort()
+            .at(-1) ?? null;
         return { ...c, total: owned.length, online: online.length, lastSeen };
       }),
     [devices],
@@ -174,8 +175,10 @@ export function IrCameraBoard({
   useEffect(() => {
     const channel = supabase
       .channel("ir-frames-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ir_frames" }, () =>
-        void load(),
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "ir_frames" },
+        () => void load(),
       )
       .subscribe();
     return () => {
@@ -227,7 +230,9 @@ export function IrCameraBoard({
               <div
                 key={c.id}
                 className={`rounded-sm border p-4 ${
-                  f?.alarm ? "border-destructive/70 bg-destructive/5" : "border-border bg-background/40"
+                  f?.alarm
+                    ? "border-destructive/70 bg-destructive/5"
+                    : "border-border bg-background/40"
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -241,7 +246,8 @@ export function IrCameraBoard({
                   </span>
                 </div>
                 <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-                  {c.label ?? "—"} · {c.region} · son kare {sinceLabel(f?.created_at ?? c.last_seen_at)}
+                  {c.label ?? "—"} · {c.region} · son kare{" "}
+                  {sinceLabel(f?.created_at ?? c.last_seen_at)}
                 </p>
                 <div className="mt-3 grid grid-cols-3 gap-2 font-mono text-[11px]">
                   <Metric k="maks" v={f?.temp_max_c != null ? `${f.temp_max_c}°C` : "—"} />
@@ -295,7 +301,9 @@ export function IrCameraBoard({
 function Metric({ k, v }: { k: string; v: string }) {
   return (
     <div className="rounded-sm border border-border bg-background/60 px-2 py-1.5">
-      <span className="block text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{k}</span>
+      <span className="block text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
+        {k}
+      </span>
       <span>{v}</span>
     </div>
   );

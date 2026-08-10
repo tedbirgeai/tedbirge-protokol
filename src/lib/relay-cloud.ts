@@ -66,10 +66,7 @@ async function call<T>(body: unknown): Promise<T | null> {
   }
 }
 
-
-export async function publishRelayKeys(
-  keys: RelayKeys & { personId?: string },
-): Promise<boolean> {
+export async function publishRelayKeys(keys: RelayKeys & { personId?: string }): Promise<boolean> {
   const res = await call<{ ok: boolean }>({ action: "publish", ...keys });
   return Boolean(res?.ok);
 }

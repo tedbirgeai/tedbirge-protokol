@@ -52,7 +52,9 @@ function recompute(patch: Partial<DiagnosticsSnapshot>) {
   const next = { ...snap, ...patch };
   const s = [...next.rttSamples].sort((a, b) => a - b);
   next.rttAvg = s.length ? Math.round(s.reduce((a, b) => a + b, 0) / s.length) : null;
-  next.rttP95 = s.length ? Math.round(s[Math.min(s.length - 1, Math.floor(s.length * 0.95))]) : null;
+  next.rttP95 = s.length
+    ? Math.round(s[Math.min(s.length - 1, Math.floor(s.length * 0.95))])
+    : null;
   next.deliveryRatio = next.txAttempts ? next.txDelivered / next.txAttempts : 0;
   snap = next;
   listeners.forEach((l) => l());
@@ -65,7 +67,10 @@ export function recordRtt(ms: number) {
 }
 
 export function recordTx(delivered: boolean) {
-  recompute({ txAttempts: snap.txAttempts + 1, txDelivered: snap.txDelivered + (delivered ? 1 : 0) });
+  recompute({
+    txAttempts: snap.txAttempts + 1,
+    txDelivered: snap.txDelivered + (delivered ? 1 : 0),
+  });
 }
 
 export function recordRx(hops: number) {

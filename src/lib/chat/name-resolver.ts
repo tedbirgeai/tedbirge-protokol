@@ -57,7 +57,6 @@ export function cleanPersonLabel(value: string | undefined | null): string {
   return stripped.trim() || raw;
 }
 
-
 export function readMap(key: string): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
@@ -187,7 +186,6 @@ export function repairCrossLinks(): number {
   return fixed;
 }
 
-
 /**
  * KANONİK KİŞİ ANAHTARI — tek kaynak.
  * Rehber (contacts), otonom onarım (merge) ve sohbet listesi (ChatApp)
@@ -295,9 +293,6 @@ export function isSelfPerson(p: {
   if (!hash && myName && isNameVariant(myName, p.name ?? "")) return true;
   return false;
 }
-
-
-
 
 function firstOf(mapKey: string, ids: string[]): string {
   const map = readMap(mapKey);

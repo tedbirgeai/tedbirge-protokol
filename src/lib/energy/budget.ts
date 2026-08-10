@@ -87,17 +87,28 @@ export function computeBudget(d: SiteDesign): BudgetResult {
 
   const requiredPanelWp = d.sunHours > 0 ? (dailyLoadWh * 1.25) / (d.sunHours * eff) : Infinity;
   const requiredBatteryAh =
-    d.batteryV > 0 ? (dailyLoadWh * 3) / (d.batteryV * (clamp(d.dodPct, 10, 100) / 100) * eff) : Infinity;
+    d.batteryV > 0
+      ? (dailyLoadWh * 3) / (d.batteryV * (clamp(d.dodPct, 10, 100) / 100) * eff)
+      : Infinity;
 
   const notes: string[] = [];
-  if (netWh < 0) notes.push("Günlük üretim tüketimi karşılamıyor; panel gücünü artırın veya yükü kısın.");
-  if (autonomyDays < 3) notes.push("Güneşsiz gün otonomisi 3 günün altında; akü kapasitesi yetersiz.");
-  if (d.dodPct > 85) notes.push("Deşarj derinliği %85 üzerinde; akü ömrü kısalır (LiFePO4 için %80 önerilir).");
-  if (d.sunHours > 5.5) notes.push("Güneşlenme değeri iyimser; kış ayı ortalamasıyla yeniden hesaplayın.");
-  if (notes.length === 0) notes.push("Tasarım hedefleri karşılıyor; kış ayı değerleriyle de doğrulayın.");
+  if (netWh < 0)
+    notes.push("Günlük üretim tüketimi karşılamıyor; panel gücünü artırın veya yükü kısın.");
+  if (autonomyDays < 3)
+    notes.push("Güneşsiz gün otonomisi 3 günün altında; akü kapasitesi yetersiz.");
+  if (d.dodPct > 85)
+    notes.push("Deşarj derinliği %85 üzerinde; akü ömrü kısalır (LiFePO4 için %80 önerilir).");
+  if (d.sunHours > 5.5)
+    notes.push("Güneşlenme değeri iyimser; kış ayı ortalamasıyla yeniden hesaplayın.");
+  if (notes.length === 0)
+    notes.push("Tasarım hedefleri karşılıyor; kış ayı değerleriyle de doğrulayın.");
 
   const verdict: BudgetResult["verdict"] =
-    netWh >= 0 && autonomyDays >= 3 ? "yeterli" : netWh >= 0 || criticalAutonomyDays >= 3 ? "sinirda" : "yetersiz";
+    netWh >= 0 && autonomyDays >= 3
+      ? "yeterli"
+      : netWh >= 0 || criticalAutonomyDays >= 3
+        ? "sinirda"
+        : "yetersiz";
 
   return {
     dailyLoadWh: round(dailyLoadWh, 1),
@@ -142,24 +153,49 @@ export function energyAlarms(reading: EnergyReading, d: SiteDesign): EnergyAlarm
   if (reading.alarm) out.push({ level: "kritik", text: reading.alarm });
 
   if (reading.soc !== undefined) {
-    if (reading.soc < 20) out.push({ level: "kritik", text: `Akü %${reading.soc} — bakım ekibi yönlendirilmeli.` });
-    else if (reading.soc < 40) out.push({ level: "uyari", text: `Akü %${reading.soc} — yük kısıtlama kipi önerilir.` });
+    if (reading.soc < 20)
+      out.push({ level: "kritik", text: `Akü %${reading.soc} — bakım ekibi yönlendirilmeli.` });
+    else if (reading.soc < 40)
+      out.push({ level: "uyari", text: `Akü %${reading.soc} — yük kısıtlama kipi önerilir.` });
   }
 
   if (reading.batteryV !== undefined && d.batteryV > 0) {
     const perCell = reading.batteryV / (d.batteryV / 3.2);
-    if (perCell < 2.9) out.push({ level: "kritik", text: "Hücre gerilimi alt sınırın altında; derin deşarj riski." });
-    else if (perCell > 3.65) out.push({ level: "uyari", text: "Hücre gerilimi üst sınırda; şarj kontrolcüsünü denetleyin." });
+    if (perCell < 2.9)
+      out.push({
+        level: "kritik",
+        text: "Hücre gerilimi alt sınırın altında; derin deşarj riski.",
+      });
+    else if (perCell > 3.65)
+      out.push({
+        level: "uyari",
+        text: "Hücre gerilimi üst sınırda; şarj kontrolcüsünü denetleyin.",
+      });
   }
 
   if (reading.tempC !== undefined) {
     if (reading.tempC < -20 || reading.tempC > 55)
-      out.push({ level: "kritik", text: `Sıcaklık ${reading.tempC} °C — çalışma aralığı dışında, şarj kesilmeli.` });
-    else if (reading.tempC > 45) out.push({ level: "uyari", text: `Sıcaklık ${reading.tempC} °C — havalandırmayı denetleyin.` });
+      out.push({
+        level: "kritik",
+        text: `Sıcaklık ${reading.tempC} °C — çalışma aralığı dışında, şarj kesilmeli.`,
+      });
+    else if (reading.tempC > 45)
+      out.push({
+        level: "uyari",
+        text: `Sıcaklık ${reading.tempC} °C — havalandırmayı denetleyin.`,
+      });
   }
 
-  if (reading.pvW !== undefined && reading.pvW === 0 && reading.soc !== undefined && reading.soc < 60)
-    out.push({ level: "bilgi", text: "Panel üretimi yok; gölgelenme veya kablo kopukluğu kontrol edilmeli." });
+  if (
+    reading.pvW !== undefined &&
+    reading.pvW === 0 &&
+    reading.soc !== undefined &&
+    reading.soc < 60
+  )
+    out.push({
+      level: "bilgi",
+      text: "Panel üretimi yok; gölgelenme veya kablo kopukluğu kontrol edilmeli.",
+    });
 
   return out;
 }
@@ -171,7 +207,8 @@ export function suggestedNodeRole(soc: number | undefined): {
 } {
   if (soc === undefined) return { role: "role", reason: "Ölçüm yok; varsayılan röle rolü." };
   if (soc < 15) return { role: "uyku", reason: "Pil %15 altında; yalnızca acil trafik taşınır." };
-  if (soc < 35) return { role: "uc", reason: "Pil düşük; yönlendirme yükü dolu düğümlere kaydırılır." };
+  if (soc < 35)
+    return { role: "uc", reason: "Pil düşük; yönlendirme yükü dolu düğümlere kaydırılır." };
   return { role: "role", reason: "Pil yeterli; tam röle görevi sürer." };
 }
 

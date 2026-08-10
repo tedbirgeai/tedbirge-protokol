@@ -10,7 +10,10 @@
 
 type SpeechAlternative = { transcript: string };
 type SpeechResult = { isFinal: boolean; 0: SpeechAlternative; length: number };
-type SpeechEvent = { resultIndex: number; results: { length: number } & Record<number, SpeechResult> };
+type SpeechEvent = {
+  resultIndex: number;
+  results: { length: number } & Record<number, SpeechResult>;
+};
 
 type Recognition = {
   lang: string;

@@ -9,7 +9,7 @@
 
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { sendMesh, startNode } from "@/lib/node-runtime";
-import { shortestPath } from "@/lib/mesh-routing";
+import { routeAsync } from "@/lib/mesh-routing-bridge";
 import type { Graph } from "@/lib/mesh-routing";
 import type { PeerInfo } from "@/lib/browser-node";
 
@@ -98,7 +98,7 @@ export async function measureRoute(
       quality,
     })),
   };
-  const route = shortestPath(graph, selfId, target.nodeId);
+  const route = await routeAsync(graph, selfId, target.nodeId);
   if (!route.reachable) return null;
   return { hops: Math.max(0, route.path.length - 1), cost: Math.round(route.cost) };
 }

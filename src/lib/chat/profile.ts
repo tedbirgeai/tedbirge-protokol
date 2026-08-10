@@ -80,7 +80,6 @@ export function isOnboarded(): boolean {
   }
 }
 
-
 /* -------------------------------------------------------------------
  * Görünür profil alanları (yalnızca bu cihazda saklanır):
  * "Hakkımda" durumu ve isteğe bağlı kullanıcı adı.

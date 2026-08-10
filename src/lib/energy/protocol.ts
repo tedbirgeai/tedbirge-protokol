@@ -94,12 +94,21 @@ export function parseVeDirectBlock(block: string): EnergyReading | null {
     pvV: pvmV !== undefined ? round(pvmV / 1000, 2) : undefined,
     pvW: num("PPV"),
     tempC: num("T"),
-    alarm: alarmOn ? (fields["AR"] ? `VE.Direct alarm kodu ${fields["AR"]}` : "VE.Direct alarmı") : null,
+    alarm: alarmOn
+      ? fields["AR"]
+        ? `VE.Direct alarm kodu ${fields["AR"]}`
+        : "VE.Direct alarmı"
+      : null,
     model: fields["PID"] ? `Victron ${fields["PID"]}` : undefined,
   };
 
   // Yük gücü doğrudan gelmiyorsa akü akımı ile PV gücünden türetilir.
-  if (reading.loadW === undefined && reading.pvW !== undefined && reading.batteryV && reading.batteryA !== undefined) {
+  if (
+    reading.loadW === undefined &&
+    reading.pvW !== undefined &&
+    reading.batteryV &&
+    reading.batteryA !== undefined
+  ) {
     const battW = reading.batteryV * reading.batteryA;
     const derived = reading.pvW - battW;
     if (Number.isFinite(derived) && derived >= 0) reading.loadW = round(derived, 1);
@@ -162,9 +171,9 @@ export function buildModbusRead(
 }
 
 /** Yanıt çerçevesini doğrular ve 16-bit kayıt dizisine çevirir. */
-export function parseModbusResponse(frame: Uint8Array):
-  | { ok: true; slave: number; registers: number[] }
-  | { ok: false; error: string } {
+export function parseModbusResponse(
+  frame: Uint8Array,
+): { ok: true; slave: number; registers: number[] } | { ok: false; error: string } {
   if (frame.length < 5) return { ok: false, error: "Çerçeve çok kısa" };
   const crc = modbusCrc16(frame.subarray(0, frame.length - 2));
   const given = frame[frame.length - 2] | (frame[frame.length - 1] << 8);

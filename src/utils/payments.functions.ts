@@ -14,7 +14,9 @@ export const resolvePaddlePrice = createServerFn({ method: "GET" })
   });
 
 export const createPortalSession = createServerFn({ method: "POST" })
-  .inputValidator((data: { customerId: string; subscriptionId: string; environment: PaddleEnv }) => data)
+  .inputValidator(
+    (data: { customerId: string; subscriptionId: string; environment: PaddleEnv }) => data,
+  )
   .handler(async ({ data }) => {
     const paddle = getPaddleClient(data.environment);
     const session = await paddle.customerPortalSessions.create(data.customerId, [

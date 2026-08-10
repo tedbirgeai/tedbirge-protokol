@@ -11,8 +11,14 @@ const RULES: { test: RegExp; message: string }[] = [
     message: "Düğüm adı sadece harf, rakam, nokta ve tire içerebilir (örn. ev-01).",
   },
   { test: /invalid_type|Required|received undefined/i, message: "Lütfen tüm alanları doldurun." },
-  { test: /invalid input/i, message: "Girdiğiniz bilgiler eksik veya hatalı — lütfen kontrol edin." },
-  { test: /Failed to fetch|NetworkError/i, message: "Bağlantı kurulamadı. İnternetinizi kontrol edip tekrar deneyin." },
+  {
+    test: /invalid input/i,
+    message: "Girdiğiniz bilgiler eksik veya hatalı — lütfen kontrol edin.",
+  },
+  {
+    test: /Failed to fetch|NetworkError/i,
+    message: "Bağlantı kurulamadı. İnternetinizi kontrol edip tekrar deneyin.",
+  },
   { test: /401|Unauthorized/i, message: "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın." },
 ];
 
