@@ -571,18 +571,24 @@ export default function Messenger() {
               Sistem
             </div>
             <nav className="space-y-1">
-              <Link
-                to="/dashboard"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              <button
+                type="button"
+                onClick={() => setCenter("video")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "video" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
                 <LayoutDashboard className="h-3.5 w-3.5 text-cyan-400" /> Kontrol Paneli
-              </Link>
-              <Link
-                to="/kapsama"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              </button>
+              <button
+                type="button"
+                onClick={() => setCenter("network")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "network" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
-                <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ
-              </Link>
+                <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ / Kapsama
+              </button>
               <Link
                 to="/system"
                 className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
