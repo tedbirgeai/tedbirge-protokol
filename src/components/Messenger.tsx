@@ -36,6 +36,9 @@ import {
 } from "lucide-react";
 
 import { useNodeRuntime } from "@/lib/node-runtime";
+import { NodeSettingsPanel } from "@/components/shell/NodeSettingsPanel";
+import { SecurityPanel } from "@/components/shell/SecurityPanel";
+
 import {
   broadcastText,
   ensureLiveNode,
