@@ -351,7 +351,7 @@ function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
 /** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
 export default function Messenger() {
   const node = useNodeRuntime();
-  const media = useLocalMedia();
+  const { mode: media, request: requestMedia, stop: stopMedia } = useLocalMedia();
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
