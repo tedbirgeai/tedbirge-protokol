@@ -448,7 +448,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 overflow-y-auto xl:col-span-3">
+            <div className="flex min-w-0 flex-col gap-2 xl:overflow-y-auto xl:col-span-3">
               <Card title="AĞ METRİKLERİ" icon={<ChartLine className="h-3.5 w-3.5 text-cyan-400" />}>
                 <div className="space-y-2 font-mono text-xs text-slate-400">
                   <Row k="İLETİLEN PAKETLER:" v="1.24M" />
