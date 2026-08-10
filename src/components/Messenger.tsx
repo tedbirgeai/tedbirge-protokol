@@ -11,11 +11,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Box,
-  CircleCheck,
   CircleUser,
   Clock,
-  FileCode2,
-  FileImage,
   Folder,
   FolderOpen,
   FolderTree,
@@ -28,7 +25,6 @@ import {
   Network,
   Paperclip,
   PhoneOff,
-  Play,
   Search,
   Settings,
   Share2,
@@ -39,50 +35,59 @@ import {
   Video,
 } from "lucide-react";
 
-import { startNode, useNodeRuntime } from "@/lib/node-runtime";
+import { useNodeRuntime } from "@/lib/node-runtime";
+import {
+  broadcastText,
+  ensureLiveNode,
+  measureRoute,
+  nodeLabel,
+  toLivePeers,
+  onLiveMessage,
+  type LiveMessage,
+  type LivePeer,
+} from "@/services/signaling";
 
-const AVATAR = (id: string) =>
-  `https://images.unsplash.com/${id}?w=160&auto=format&fit=crop&q=80`;
+type Participant = { id: string; name: string; handle: string; active?: boolean; self?: boolean };
 
-type Participant = { name: string; handle: string; photo: string; active?: boolean; self?: boolean };
+/**
+ * Yerel medya: izin verilmezse arayüz çökmez, cihaz "Sadece Veri Düğümü"
+ * olarak ağda kalmaya devam eder.
+ */
+function useLocalMedia() {
+  const [mode, setMode] = useState<"pending" | "av" | "audio" | "data">("pending");
 
-const PARTICIPANTS: Participant[] = [
-  { name: "Sarah Chen", handle: "@sarahc", photo: AVATAR("photo-1534528741775-53994a69daeb"), active: true },
-  { name: "Alex Rivera", handle: "@alexr", photo: AVATAR("photo-1500648767791-00dcc994a43e") },
-  { name: "Maya Patel", handle: "@mayap", photo: AVATAR("photo-1544005313-94ddf0286df2") },
-  { name: "Jordan Okafor", handle: "@jordan0", photo: AVATAR("photo-1506794778202-cad84cf45f1d") },
-  { name: "Elena Petrova", handle: "@elenap", photo: AVATAR("photo-1517841905240-472988babdf9") },
-  { name: "Arjun Mehta", handle: "@arjunm", photo: AVATAR("photo-1519085360753-af0119f7cbe7") },
-  { name: "Leo Zimmer", handle: "@leoz", photo: AVATAR("photo-1502685104226-ee32379fefbe") },
-  { name: "Siz", handle: "node_admin", photo: "", self: true },
-];
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+    const stop = () => stream?.getTracks().forEach((t) => t.stop());
 
-type ChatMessage = {
-  from: string;
-  at: string;
-  text?: string;
-  file?: { name: string; size: string; kind: "wasm" | "svg" };
-  voice?: { duration: string; bars: number[] };
-};
+    const run = async () => {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        if (!cancelled) setMode("data");
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        if (!cancelled) setMode("av");
+      } catch {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (!cancelled) setMode("audio");
+        } catch {
+          if (!cancelled) setMode("data");
+        }
+      }
+      stop();
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, []);
 
-const MESSAGES: ChatMessage[] = [
-  {
-    from: "Maya Patel",
-    at: "14:28",
-    text: "Yeni zk-proof doğrulayıcısını depoya gönderdim.",
-    file: { name: "zk-doğrulayıcı-v2.wasm", size: "1.42 MB", kind: "wasm" },
-  },
-  { from: "Alex Rivera", at: "14:31", text: "Harika! Doğrulama çalışıyor..." },
-  { from: "Jordan Okafor", at: "14:32", voice: { duration: "00:18", bars: [12, 8, 12, 4, 8, 12] } },
-  {
-    from: "Sarah Chen",
-    at: "14:33",
-    text: "İşte mimari diyagram.",
-    file: { name: "mimari-v2.svg", size: "2.18 MB", kind: "svg" },
-  },
-  { from: "Elena Petrova", at: "14:34", voice: { duration: "00:24", bars: [8, 12, 4] } },
-  { from: "Arjun Mehta", at: "14:35", text: "LG! Gönderim tamamlandı! 🚀" },
-];
+  return mode;
+}
 
 /** Mini mesh topolojisi — yeniden boyutlandırmaya duyarlı canvas döngüsü. */
 function MiniMeshCanvas() {
@@ -186,7 +191,15 @@ function Panel({ children, className }: { children: React.ReactNode; className?:
   );
 }
 
-function PanelTitle({ icon, children, right }: { icon: React.ReactNode; children: React.ReactNode; right?: React.ReactNode }) {
+function PanelTitle({
+  icon,
+  children,
+  right,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  right?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 text-xs font-bold text-slate-300">
       <span className="flex min-w-0 items-center gap-2 truncate">
@@ -242,20 +255,15 @@ function VideoTile({ p }: { p: Participant }) {
       ) : null}
 
       <div className="my-2 flex flex-1 items-center justify-center">
-        {p.self ? (
-          <span className="grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-400/60 bg-emerald-950/50">
-            <Box className="h-6 w-6 text-emerald-400" />
-          </span>
-        ) : (
-          <img
-            src={p.photo}
-            alt={p.name}
-            loading="lazy"
-            className={`h-16 w-16 rounded-full border-2 object-cover ${
-              p.active ? "border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]" : "border-slate-700"
-            }`}
-          />
-        )}
+        <span
+          className={`grid h-16 w-16 place-items-center rounded-full border-2 font-osmono text-sm font-bold ${
+            p.self
+              ? "border-emerald-400/60 bg-emerald-950/50 text-emerald-400"
+              : "border-cyan-500/40 bg-slate-950 text-cyan-300"
+          }`}
+        >
+          {p.self ? <Box className="h-6 w-6 text-emerald-400" /> : <Network className="h-6 w-6" />}
+        </span>
       </div>
 
       <div className="flex items-center justify-between gap-2 font-osmono text-[11px]">
@@ -263,7 +271,11 @@ function VideoTile({ p }: { p: Participant }) {
           <div className="truncate font-bold text-slate-200">{p.name}</div>
           <div className="truncate text-[9px] text-slate-500">{p.handle}</div>
         </div>
-        {p.active || p.self ? <WaveBars delayed={p.self} /> : <Mic className="h-3.5 w-3.5 shrink-0 text-cyan-400" />}
+        {p.active || p.self ? (
+          <WaveBars delayed={p.self} />
+        ) : (
+          <Mic className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+        )}
       </div>
     </div>
   );
@@ -272,27 +284,64 @@ function VideoTile({ p }: { p: Participant }) {
 /** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
 export default function Messenger() {
   const node = useNodeRuntime();
+  const media = useLocalMedia();
   const [draft, setDraft] = useState("");
-  const [sent, setSent] = useState<ChatMessage[]>([]);
+  const [feed, setFeed] = useState<LiveMessage[]>([]);
+  const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
 
   // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
-    void startNode();
+    void ensureLiveNode();
+    return onLiveMessage((msg) => setFeed((prev) => [...prev.slice(-80), msg]));
   }, []);
 
-  const feed = useMemo(() => [...MESSAGES, ...sent], [sent]);
+  // Dijkstra rotası gerçek eş listesi ve ölçülen gecikmeye göre tazelenir.
+  useEffect(() => {
+    let alive = true;
+    void measureRoute(node.nodeId, node.peers, node.rttMs).then((r) => {
+      if (alive) setRoute(r);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [node.nodeId, node.peers, node.rttMs]);
 
-  const send = () => {
+  const selfLabel = nodeLabel(node.nodeId);
+  const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
+
+  const participants: Participant[] = useMemo(
+    () => [
+      {
+        id: node.nodeId || "self",
+        name: selfLabel,
+        handle:
+          media === "data" ? "sadece veri düğümü" : media === "audio" ? "yalnız ses" : "bu cihaz",
+        self: true,
+      },
+      ...livePeers.map((p) => ({
+        id: p.id,
+        name: p.label,
+        handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
+        active: p.direct,
+      })),
+    ],
+    [livePeers, media, node.nodeId, selfLabel],
+  );
+
+  const send = async () => {
     const text = draft.trim();
     if (!text) return;
-    setSent((prev) => [
-      ...prev,
-      { from: "Siz", at: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }), text },
-    ]);
     setDraft("");
+    const at = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    setFeed((prev) => [
+      ...prev,
+      { id: `self-${Date.now()}`, from: selfLabel, at, text, self: true },
+    ]);
+    await broadcastText(text);
   };
 
   const peers = node.peers.length;
+  const directPeers = node.peers.filter((p) => p.direct).length;
 
   return (
     <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[#06090e] font-osui text-slate-400">
@@ -303,17 +352,21 @@ export default function Messenger() {
         <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
           <Box className="h-4 w-4 shrink-0 text-cyan-400" />
           <span>Web-OS</span>
-          <span className="hidden truncate font-normal text-slate-500 sm:inline">tedbirge-protokol/src</span>
+          <span className="hidden truncate font-normal text-slate-500 sm:inline">
+            tedbirge-protokol/src
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/80 px-2.5 py-1">
             <span className="hidden text-slate-400 sm:inline">SİSTEM DURUMU:</span>
             <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts ÇEVRİMİÇİ
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts
+              ÇEVRİMİÇİ
             </span>
             <span className="ml-1 hidden items-center gap-1.5 font-medium text-emerald-400 md:inline-flex">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts ÇEVRİMİÇİ
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts
+              ÇEVRİMİÇİ
             </span>
           </div>
           <div className="flex items-center gap-1.5 rounded border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 font-osmono text-emerald-400">
@@ -341,7 +394,9 @@ export default function Messenger() {
         {/* SOL MENÜ */}
         <aside className="hidden w-52 shrink-0 flex-col justify-between rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 text-xs lg:flex">
           <div>
-            <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">Gezinme</div>
+            <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Gezinme
+            </div>
             <nav className="space-y-1 font-osmono">
               <span className="flex items-center gap-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-2 font-medium text-emerald-400">
                 <FolderOpen className="h-3.5 w-3.5" /> routes/
@@ -356,24 +411,44 @@ export default function Messenger() {
               ))}
             </nav>
 
-            <div className="mb-2 mt-5 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">Sistem</div>
+            <div className="mb-2 mt-5 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Sistem
+            </div>
             <nav className="space-y-1">
-              <Link to="/dashboard" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <LayoutDashboard className="h-3.5 w-3.5 text-cyan-400" /> Kontrol Paneli
               </Link>
-              <Link to="/kapsama" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/kapsama"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ
               </Link>
-              <Link to="/system" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/system"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <TerminalSquare className="h-3.5 w-3.5 text-cyan-400" /> Terminal
               </Link>
-              <Link to="/app" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/app"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <FolderTree className="h-3.5 w-3.5 text-cyan-400" /> Dosyalar
               </Link>
-              <Link to="/guvenlik" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/guvenlik"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" /> Güvenlik
               </Link>
-              <Link to="/izinler" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/izinler"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
               </Link>
             </nav>
@@ -403,7 +478,9 @@ export default function Messenger() {
           {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
           <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:overflow-y-auto">
             <Panel className="space-y-2">
-              <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>AĞ ÖZETİ</PanelTitle>
+              <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
+                AĞ ÖZETİ
+              </PanelTitle>
               <div className="flex items-baseline justify-between pt-1">
                 <span className="font-osmono text-3xl font-extrabold text-emerald-400">823</span>
                 <span className="text-xs font-medium text-slate-400">AKTİF DÜĞÜM</span>
@@ -417,7 +494,9 @@ export default function Messenger() {
             </Panel>
 
             <Panel className="flex min-h-[280px] flex-1 flex-col">
-              <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>P2P TOPOLOJİSİ</PanelTitle>
+              <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>
+                P2P TOPOLOJİSİ
+              </PanelTitle>
               <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[#070b13]">
                 <MiniMeshCanvas />
               </div>
@@ -439,20 +518,31 @@ export default function Messenger() {
               <span className="flex items-center gap-2">
                 P2P VİDEO VE SES
                 <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
-                  <Users className="h-3 w-3 text-cyan-400" /> 8 KATILIMCI
+                  <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
                 </span>
               </span>
             </PanelTitle>
 
             <div className="my-2 grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
-              {PARTICIPANTS.map((p) => (
-                <VideoTile key={p.name} p={p} />
+              {participants.map((p) => (
+                <VideoTile key={p.id} p={p} />
               ))}
+              {peers === 0 ? (
+                <div className="col-span-full grid min-h-[140px] place-items-center rounded-lg border border-dashed border-emerald-500/20 bg-slate-950/60 p-4 text-center font-osmono text-[11px] text-slate-500">
+                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
-                DOĞRUDAN P2P WEBRTC AKIŞI | AES-256-GCM | 12ms GECİKME
+                {media === "data"
+                  ? "SADECE VERİ DÜĞÜMÜ — KAMERA/MİKROFON KAPALI"
+                  : media === "audio"
+                    ? "SES DÜĞÜMÜ — KAMERA KAPALI"
+                    : "DOĞRUDAN P2P WEBRTC AKIŞI"}{" "}
+                | AES-256-GCM |{" "}
+                {node.rttMs != null ? `${node.rttMs}ms GECİKME` : "GECİKME ÖLÇÜLÜYOR"}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {[
@@ -497,59 +587,34 @@ export default function Messenger() {
 
             <div className="flex items-center justify-between gap-2 py-2 text-xs">
               <span className="flex min-w-0 items-center gap-2 truncate">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-400" />
-                <strong className="truncate text-slate-200">Project Odyssey</strong>
-                <span className="shrink-0 text-[10px] text-slate-500">8 üye</span>
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${directPeers > 0 ? "bg-emerald-400" : "bg-slate-600"}`}
+                />
+                <strong className="truncate text-slate-200">Mesh Yayını</strong>
+                <span className="shrink-0 text-[10px] text-slate-500">
+                  {peers} eş{route ? ` · ${route.hops} sıçrama` : ""}
+                </span>
               </span>
               <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" />
             </div>
 
             <div className="my-1 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 font-osmono text-xs">
-              {feed.map((m, i) => (
-                <div key={`${m.from}-${m.at}-${i}`} className="space-y-1">
+              {feed.length === 0 ? (
+                <p className="pt-6 text-center text-[11px] text-slate-500">
+                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
+                </p>
+              ) : null}
+              {feed.map((m) => (
+                <div key={m.id} className="space-y-1">
                   <div className="flex justify-between gap-2 text-[10px] text-slate-400">
-                    <span className="truncate font-bold text-slate-300">{m.from}</span>
+                    <span className="truncate font-bold text-slate-300">
+                      {m.self ? "Siz" : m.from}
+                    </span>
                     <span className="flex shrink-0 items-center gap-1">
                       {m.at} <Lock className="h-2.5 w-2.5 text-emerald-400" />
                     </span>
                   </div>
-
-                  {m.text ? <p className="text-[11px] text-slate-300">{m.text}</p> : null}
-
-                  {m.file ? (
-                    <div className="flex items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900/90 p-2 text-[10px]">
-                      <span className="flex min-w-0 items-center gap-2">
-                        {m.file.kind === "wasm" ? (
-                          <FileCode2 className="h-4 w-4 shrink-0 text-cyan-400" />
-                        ) : (
-                          <FileImage className="h-4 w-4 shrink-0 text-emerald-400" />
-                        )}
-                        <span className="min-w-0">
-                          <span className="block truncate font-bold text-slate-200">{m.file.name}</span>
-                          <span className="block text-slate-500">{m.file.size}</span>
-                        </span>
-                      </span>
-                      <CircleCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                    </div>
-                  ) : null}
-
-                  {m.voice ? (
-                    <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/90 p-2">
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-cyan-500/20 text-cyan-400">
-                        <Play className="h-3 w-3" />
-                      </span>
-                      <span className="flex h-3 flex-1 items-center gap-0.5">
-                        {m.voice.bars.map((h, bi) => (
-                          <span
-                            key={bi}
-                            className="w-1 rounded bg-cyan-400/60"
-                            style={{ height: `${h}px` }}
-                          />
-                        ))}
-                      </span>
-                      <span className="shrink-0 text-[10px] text-slate-400">{m.voice.duration}</span>
-                    </div>
-                  ) : null}
+                  <p className="text-[11px] text-slate-300">{m.text}</p>
                 </div>
               ))}
             </div>
@@ -567,10 +632,18 @@ export default function Messenger() {
                 placeholder="Şifreli mesajınızı yazın..."
                 className="min-w-0 flex-1 bg-transparent font-osmono text-xs text-slate-200 outline-none placeholder:text-slate-500"
               />
-              <button type="button" aria-label="Dosya ekle" className="grid h-8 w-8 place-items-center text-slate-400 hover:text-slate-200">
+              <button
+                type="button"
+                aria-label="Dosya ekle"
+                className="grid h-8 w-8 place-items-center text-slate-400 hover:text-slate-200"
+              >
                 <Paperclip className="h-4 w-4" />
               </button>
-              <button type="submit" aria-label="Sesli mesaj / gönder" className="grid h-8 w-8 place-items-center text-emerald-400 hover:text-emerald-300">
+              <button
+                type="submit"
+                aria-label="Sesli mesaj / gönder"
+                className="grid h-8 w-8 place-items-center text-emerald-400 hover:text-emerald-300"
+              >
                 <Mic className="h-4 w-4" />
               </button>
             </form>
@@ -592,13 +665,15 @@ export default function Messenger() {
           </span>
           <span className="hidden text-slate-400 md:inline">
             SİSTEM YÜKÜ: <strong className="text-emerald-400">NORMAL</strong> · CPU:{" "}
-            <strong className="text-slate-200">23%</strong> · RAM: <strong className="text-slate-200">41%</strong> · GPU:{" "}
+            <strong className="text-slate-200">23%</strong> · RAM:{" "}
+            <strong className="text-slate-200">41%</strong> · GPU:{" "}
             <strong className="text-slate-200">18%</strong>
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="hidden text-slate-400 lg:inline">
-            DİSK G/Ç: <strong className="text-slate-200">48%</strong> · OKUMA: 248 MB/s · YAZMA: 182 MB/s
+            DİSK G/Ç: <strong className="text-slate-200">48%</strong> · OKUMA: 248 MB/s · YAZMA: 182
+            MB/s
           </span>
           <span className="text-slate-400">
             EŞ AKTİVİTESİ: <span className="text-emerald-400">+{peers} CANLI</span> ·{" "}
