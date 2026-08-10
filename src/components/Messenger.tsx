@@ -433,7 +433,13 @@ export default function Messenger() {
       });
     }
     return list;
-  }, [livePeers, media, node.nodeId, selfLabel, sim]);
+  }, [livePeers, media, node.nodeId, selfLabel, sim, signalPeers]);
+
+  /** 8'li sabit matris: boş kalan slotlar pasif düğüm kartıyla korunur. */
+  const slots = useMemo(
+    () => Array.from({ length: 8 }, (_, i) => participants[i] ?? null),
+    [participants],
+  );
 
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
