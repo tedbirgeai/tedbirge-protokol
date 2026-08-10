@@ -43,6 +43,7 @@ import { Route as EnerjiRouteImport } from './routes/enerji'
 import { Route as EnRouteImport } from './routes/en'
 import { Route as DokumanlarRouteImport } from './routes/dokumanlar'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CevrimdisiRouteImport } from './routes/cevrimdisi'
 import { Route as AppRouteImport } from './routes/app'
@@ -239,6 +240,11 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -373,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -433,6 +440,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -495,6 +503,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/cevrimdisi': typeof CevrimdisiRoute
   '/chat': typeof ChatRoute
+  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/dokumanlar': typeof DokumanlarRoute
   '/en': typeof EnRoute
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/cevrimdisi'
     | '/chat'
+    | '/dashboard'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -617,6 +627,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/cevrimdisi'
     | '/chat'
+    | '/dashboard'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -678,6 +689,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/cevrimdisi'
     | '/chat'
+    | '/dashboard'
     | '/demo'
     | '/dokumanlar'
     | '/en'
@@ -740,6 +752,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   CevrimdisiRoute: typeof CevrimdisiRoute
   ChatRoute: typeof ChatRoute
+  DashboardRoute: typeof DashboardRoute
   DemoRoute: typeof DemoRoute
   DokumanlarRoute: typeof DokumanlarRoute
   EnRoute: typeof EnRoute
@@ -1030,6 +1043,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat': {
       id: '/chat'
       path: '/chat'
@@ -1233,6 +1253,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   CevrimdisiRoute: CevrimdisiRoute,
   ChatRoute: ChatRoute,
+  DashboardRoute: DashboardRoute,
   DemoRoute: DemoRoute,
   DokumanlarRoute: DokumanlarRoute,
   EnRoute: EnRoute,
@@ -1285,13 +1306,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
