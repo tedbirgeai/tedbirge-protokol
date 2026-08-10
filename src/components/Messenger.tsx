@@ -375,7 +375,7 @@ export default function Messenger() {
   // Canlı test: ağda eş yokken sanal bir P2P düğümü bağlar.
   const [sim, setSim] = useState(false);
   // Orta panel görünümü: video ızgarası veya gömülü ağ/kapsama paneli.
-  const [center, setCenter] = useState<"video" | "network">("video");
+  const [center, setCenter] = useState<"video" | "network" | "security" | "settings">("video");
   // Sinyal kanalından gelen canlı eş kimlikleri (BroadcastChannel + bulut).
   const [signalPeers, setSignalPeers] = useState<string[]>([]);
   // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
