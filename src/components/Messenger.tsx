@@ -412,6 +412,16 @@ export default function Messenger() {
         handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
         active: p.direct,
       })),
+      // Sinyal kanalından keşfedilen cihazlar (aynı adresi açan telefonlar).
+      ...signalPeers
+        .filter((id) => !livePeers.some((p) => p.id === id))
+        .map((id) => ({
+          id,
+          name: id,
+          alias: peerAlias(id),
+          handle: "sinyal kanalı · çevrimiçi",
+          active: true,
+        })),
     ];
     if (sim && livePeers.length === 0) {
       list.push({
