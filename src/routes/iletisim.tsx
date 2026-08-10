@@ -15,7 +15,8 @@ export const Route = createFileRoute("/iletisim")({
       { property: "og:title", content: "Tedbirge — Pilot Başvurusu" },
       {
         property: "og:description",
-        content: "Üç düğümlük mesh pilotu ve kullanım bazlı faturalama entegrasyonu için iletişime geçin.",
+        content:
+          "Üç düğümlük mesh pilotu ve kullanım bazlı faturalama entegrasyonu için iletişime geçin.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/iletisim" },
@@ -91,13 +92,17 @@ function Contact() {
             Sahanızda 30 gün, üç düğüm
           </h1>
           <p className="mt-5 text-lg text-muted-foreground">
-            Kullanım senaryonuzu anlatın; taşıyıcı seçimi, topoloji ve faturalama entegrasyonu
-            için bir mimari taslağıyla dönelim.
+            Kullanım senaryonuzu anlatın; taşıyıcı seçimi, topoloji ve faturalama entegrasyonu için
+            bir mimari taslağıyla dönelim.
           </p>
 
           <div className="mt-10 space-y-4">
             {[
-              ["01", "Keşif görüşmesi", "Saha koşulları, mesafe, mevcut taşıyıcılar ve trafik profili."],
+              [
+                "01",
+                "Keşif görüşmesi",
+                "Saha koşulları, mesafe, mevcut taşıyıcılar ve trafik profili.",
+              ],
               ["02", "Pilot kurulumu", "Üç düğümlük mesh, panel erişimi ve doğrulama testleri."],
               ["03", "Ticarileşme", "Kullanım sayacının faturalama sisteminize bağlanması."],
             ].map(([n, t, d]) => (
@@ -128,8 +133,19 @@ function Contact() {
               <h2 className="font-mono text-sm uppercase tracking-[0.2em]">Bilgileriniz</h2>
 
               <Field label="Ad soyad" value={form.full_name} onChange={set("full_name")} required />
-              <Field label="Kurum" value={form.organization} onChange={set("organization")} required />
-              <Field label="E-posta" type="email" value={form.email} onChange={set("email")} required />
+              <Field
+                label="Kurum"
+                value={form.organization}
+                onChange={set("organization")}
+                required
+              />
+              <Field
+                label="E-posta"
+                type="email"
+                value={form.email}
+                onChange={set("email")}
+                required
+              />
               <Field label="Telefon" value={form.phone} onChange={set("phone")} />
               <Field
                 label="Tahmini düğüm sayısı"

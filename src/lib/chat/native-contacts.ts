@@ -21,9 +21,7 @@ export function isNativeApp(): boolean {
 
 type ContactsApi = {
   requestPermissions: () => Promise<{ contacts: string }>;
-  getContacts: (opts: {
-    projection: { name?: boolean; phones?: boolean };
-  }) => Promise<{
+  getContacts: (opts: { projection: { name?: boolean; phones?: boolean } }) => Promise<{
     contacts: {
       name?: { display?: string | null } | null;
       phones?: { number?: string | null }[] | null;

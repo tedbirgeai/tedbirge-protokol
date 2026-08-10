@@ -90,7 +90,6 @@ export function RelayChainWizard({
     };
   }, []);
 
-
   const plan = useMemo(
     () => buildMeshPlan({ carrierId, terrainId, heightId, distanceKm, measurements }),
     [carrierId, terrainId, heightId, distanceKm, measurements],
@@ -139,7 +138,8 @@ export function RelayChainWizard({
             >
               {licenses.map((l) => (
                 <option key={l.id} value={l.id}>
-                  {l.plan} · limit {l.node_limit} · kayıtlı {devices.filter((d) => d.license_id === l.id).length}
+                  {l.plan} · limit {l.node_limit} · kayıtlı{" "}
+                  {devices.filter((d) => d.license_id === l.id).length}
                 </option>
               ))}
             </select>
@@ -217,7 +217,9 @@ export function RelayChainWizard({
         </div>
 
         <div className="rounded-sm border border-primary/40 bg-background p-5">
-          <p className="font-mono text-xs uppercase tracking-widest text-primary">Önerilen zincir</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-primary">
+            Önerilen zincir
+          </p>
           <div className="mt-4 grid grid-cols-3 gap-3 text-center">
             <div>
               <p className="text-2xl font-semibold">{plan.hopKm.toFixed(1)}</p>
@@ -240,7 +242,10 @@ export function RelayChainWizard({
 
           <ol className="mt-4 space-y-2 text-sm">
             {plan.chain.map((n) => (
-              <li key={n.nodeId} className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-2">
+              <li
+                key={n.nodeId}
+                className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-2"
+              >
                 <span className="font-mono text-xs">
                   {prefix}-{n.nodeId}
                 </span>
@@ -253,7 +258,8 @@ export function RelayChainWizard({
 
           {!capacityOk && (
             <p className="mt-3 rounded-sm border border-destructive/50 p-2 text-[11px] text-destructive">
-              Bu plan lisans limitini aşıyor ({license?.node_limit} düğüm). Röleleri daha yüksek noktaya taşıyın veya planı yükseltin.
+              Bu plan lisans limitini aşıyor ({license?.node_limit} düğüm). Röleleri daha yüksek
+              noktaya taşıyın veya planı yükseltin.
             </p>
           )}
 
@@ -273,16 +279,33 @@ export function RelayChainWizard({
       </div>
 
       <pre className="mt-6 overflow-x-auto rounded-sm border border-border bg-background p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
-{agentSnippet(plan, license?.license_key ?? "<LISANS_ANAHTARINIZ>").replace(/--node-id (\S+)/g, `--node-id ${prefix}-$1`)}
+        {agentSnippet(plan, license?.license_key ?? "<LISANS_ANAHTARINIZ>").replace(
+          /--node-id (\S+)/g,
+          `--node-id ${prefix}-$1`,
+        )}
       </pre>
     </Card>
   );
 }
 
 /** 2 — Store-and-forward kuyruk panosu. */
-export function QueueBoard({ licenses, refreshKey }: { licenses: LicenseLite[]; refreshKey: number }) {
+export function QueueBoard({
+  licenses,
+  refreshKey,
+}: {
+  licenses: LicenseLite[];
+  refreshKey: number;
+}) {
   const [rows, setRows] = useState<
-    { id: string; origin_node: string; target_node: string | null; status: string; priority: number; queued_at: string; delivered_at: string | null }[]
+    {
+      id: string;
+      origin_node: string;
+      target_node: string | null;
+      status: string;
+      priority: number;
+      queued_at: string;
+      delivered_at: string | null;
+    }[]
   >([]);
 
   const load = useCallback(async () => {
@@ -301,7 +324,11 @@ export function QueueBoard({ licenses, refreshKey }: { licenses: LicenseLite[]; 
   useEffect(() => {
     const channel = supabase
       .channel("mesh-queue")
-      .on("postgres_changes", { event: "*", schema: "public", table: "mesh_messages" }, () => void load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "mesh_messages" },
+        () => void load(),
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -337,7 +364,10 @@ export function QueueBoard({ licenses, refreshKey }: { licenses: LicenseLite[]; 
       {rows.length > 0 && (
         <ul className="mt-5 space-y-2">
           {rows.slice(0, 10).map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-border px-3 py-2 text-xs">
+            <li
+              key={r.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-border px-3 py-2 text-xs"
+            >
               <span className="font-mono">
                 {r.origin_node} → {r.target_node ?? "yayın"}
               </span>
@@ -365,7 +395,7 @@ export function QueueBoard({ licenses, refreshKey }: { licenses: LicenseLite[]; 
           Düğüm ajanı kuyruk komutları
         </summary>
         <pre className="mt-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-muted-foreground">
-{`# Bağlantı gelince biriken mesajları yükle
+          {`# Bağlantı gelince biriken mesajları yükle
 curl -s https://tedbirge-gateway.lovable.app/api/public/queue \\
   -H "X-Tedbirge-License: ${licenseKey}" -H "Content-Type: application/json" \\
   -d '{"action":"enqueue","node_id":"saha-01","messages":[{"target_node":"ev-01","priority":3,"payload":{"text":"konum"}}]}'
@@ -403,7 +433,9 @@ export function LinkAlertBoard({ refreshKey }: { refreshKey: number }) {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("link_alerts")
-      .select("id, node_id, layer, state, detail, failover_to, acknowledged, detected_at, resolved_at")
+      .select(
+        "id, node_id, layer, state, detail, failover_to, acknowledged, detected_at, resolved_at",
+      )
       .order("detected_at", { ascending: false })
       .limit(40);
     setAlerts(data ?? []);
@@ -416,7 +448,11 @@ export function LinkAlertBoard({ refreshKey }: { refreshKey: number }) {
   useEffect(() => {
     const channel = supabase
       .channel("link-alerts")
-      .on("postgres_changes", { event: "*", schema: "public", table: "link_alerts" }, () => void load())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "link_alerts" },
+        () => void load(),
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -510,7 +546,12 @@ export function FailoverSettings({
 
   async function update(
     deviceId: string,
-    patch: { role?: "gateway" | "relay" | "edge"; failoverGroup?: string | null; failoverPriority?: number; isBackup?: boolean },
+    patch: {
+      role?: "gateway" | "relay" | "edge";
+      failoverGroup?: string | null;
+      failoverPriority?: number;
+      isBackup?: boolean;
+    },
   ) {
     setBusy(deviceId);
     setError(null);
@@ -549,7 +590,9 @@ export function FailoverSettings({
               </div>
               <select
                 value={d.role ?? "edge"}
-                onChange={(e) => update(d.id, { role: e.target.value as "gateway" | "relay" | "edge" })}
+                onChange={(e) =>
+                  update(d.id, { role: e.target.value as "gateway" | "relay" | "edge" })
+                }
                 disabled={busy === d.id}
                 className="rounded-sm border border-border bg-card px-2 py-1.5 text-xs"
               >
@@ -573,7 +616,8 @@ export function FailoverSettings({
                 defaultValue={d.failover_priority ?? 100}
                 onBlur={(e) => {
                   const v = Number(e.target.value);
-                  if (v && v !== (d.failover_priority ?? 100)) update(d.id, { failoverPriority: v });
+                  if (v && v !== (d.failover_priority ?? 100))
+                    update(d.id, { failoverPriority: v });
                 }}
                 className="rounded-sm border border-border bg-card px-2 py-1.5 font-mono text-xs"
               />

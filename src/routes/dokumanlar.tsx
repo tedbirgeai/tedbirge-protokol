@@ -223,7 +223,7 @@ TEDBIRGE_EXIT_NODE=true`,
         rows: [
           ["TEDBIRGE_TLS_CERT / _KEY", "Sunucu sertifikası ve anahtarı"],
           ["TEDBIRGE_TLS_RELOAD_SEC", "Sertifika sıcak yenileme aralığı"],
-          ["TEDBIRGE_TLS_CLIENT_AUTH", "\"\" | optional | require"],
+          ["TEDBIRGE_TLS_CLIENT_AUTH", '"" | optional | require'],
           ["TEDBIRGE_TLS_CLIENT_CA", "İstemci sertifikalarını doğrulayan CA"],
         ],
       },
@@ -264,7 +264,10 @@ TEDBIRGE_EXIT_NODE=true`,
           ["tedbirge-cli mesh-demo", "3 düğümlü kayıpsız çok-sıçramalı teslim"],
           ["tedbirge-cli p2p-demo", "0-WAN mesaj ve dosya takası"],
           ["tedbirge-cli exit-demo", "Exit node üzerinden WAN köprüsü"],
-          ["tedbirge-cli route -links \"A-B:10:ethernet,B-C:20:lora\" -from A -to C", "Dijkstra yol hesabını gösterir"],
+          [
+            'tedbirge-cli route -links "A-B:10:ethernet,B-C:20:lora" -from A -to C',
+            "Dijkstra yol hesabını gösterir",
+          ],
         ],
       },
     ],
@@ -385,9 +388,7 @@ function Docs() {
         d.title,
         d.summary,
         d.group,
-        ...d.entries.map((e) =>
-          e.type === "table" ? e.rows.flat().join(" ") : e.body,
-        ),
+        ...d.entries.map((e) => (e.type === "table" ? e.rows.flat().join(" ") : e.body)),
       ]
         .join(" ")
         .toLocaleLowerCase("tr");
@@ -436,8 +437,8 @@ function Docs() {
             Bütünsel Nihai Fizibilite ve Strateji Raporu
           </h2>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-            Finansal fizibilite, GTM, operasyon, teknik ölçeklenebilirlik, risk, sertifikasyon ve
-            12 aylık yol haritasını kapsayan 11 başlıklı rapor. Sürüm 1.0.
+            Finansal fizibilite, GTM, operasyon, teknik ölçeklenebilirlik, risk, sertifikasyon ve 12
+            aylık yol haritasını kapsayan 11 başlıklı rapor. Sürüm 1.0.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {REPORT_FILES.map((f) => (
@@ -460,7 +461,6 @@ function Docs() {
           </div>
         </div>
       </section>
-
 
       <div className="mx-auto grid max-w-6xl gap-12 px-6 py-14 lg:grid-cols-[220px_1fr]">
         <aside className="hidden lg:block">
@@ -517,7 +517,9 @@ function Docs() {
                               key={k}
                               className={`grid gap-1 px-5 py-4 md:grid-cols-2 ${j % 2 ? "bg-card/30" : "bg-card/60"}`}
                             >
-                              <code className="font-mono text-[13px] break-words text-primary">{k}</code>
+                              <code className="font-mono text-[13px] break-words text-primary">
+                                {k}
+                              </code>
                               <span className="text-sm text-muted-foreground">{v}</span>
                             </div>
                           ))}

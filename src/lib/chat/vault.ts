@@ -105,8 +105,7 @@ export async function keyFor(phone: string, version: 1 | 2 = 2): Promise<CryptoK
   const base = await crypto.subtle.importKey("raw", enc.encode(phone), "PBKDF2", false, [
     "deriveKey",
   ]);
-  const salt: BufferSource =
-    version === 1 ? enc.encode("tedbirge/vault/v1") : await saltFor(phone);
+  const salt: BufferSource = version === 1 ? enc.encode("tedbirge/vault/v1") : await saltFor(phone);
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -165,7 +164,11 @@ export async function backupContacts(phone?: string): Promise<boolean> {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const key = await keyFor(anchor);
     const cipher = new Uint8Array(
-      await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(JSON.stringify(payload))),
+      await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        enc.encode(JSON.stringify(payload)),
+      ),
     );
     const blob = `${b64(iv)}.${b64(cipher)}`;
 

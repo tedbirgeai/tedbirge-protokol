@@ -53,8 +53,9 @@ function ApiDocs() {
             Telemetri API dokümantasyonu
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Gerçek Tedbirge Protokol düğümleri saha ölçümlerini bu uç noktaya bildirir. İçerik, hedef adres
-            veya kullanıcı verisi kabul edilmez — yalnızca RTT, hız, paket kaybı ve bayt sayacı.
+            Gerçek Tedbirge Protokol düğümleri saha ölçümlerini bu uç noktaya bildirir. İçerik,
+            hedef adres veya kullanıcı verisi kabul edilmez — yalnızca RTT, hız, paket kaybı ve bayt
+            sayacı.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
@@ -187,8 +188,8 @@ Content-Type: application/json`}</Code>
           <h2 className="text-lg font-semibold tracking-tight">Uyum notu</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             API yalnızca ölçüm metriği kabul eder; trafik içeriği, konum koordinatı veya kişisel
-            veri alanı yoktur (KVKK 6698 veri minimizasyonu). Taşıyıcı ve bölge alanları,
-            düğümün hangi spektrum profiliyle çalıştığını kanıtlamak için kaydedilir —{" "}
+            veri alanı yoktur (KVKK 6698 veri minimizasyonu). Taşıyıcı ve bölge alanları, düğümün
+            hangi spektrum profiliyle çalıştığını kanıtlamak için kaydedilir —{" "}
             <Link to="/mevzuat" className="text-primary hover:underline">
               regülasyon merkezi
             </Link>

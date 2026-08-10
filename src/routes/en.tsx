@@ -70,19 +70,40 @@ const carriers = [
 ];
 
 const facts = [
-  ["Deployment", "One static binary. No Node.js, no CDN, no external database, no runtime downloads."],
+  [
+    "Deployment",
+    "One static binary. No Node.js, no CDN, no external database, no runtime downloads.",
+  ],
   ["Platforms", "Linux (amd64/arm64), Windows, macOS. CGO-free cross-compilation."],
-  ["Cryptography", "AES-256-GCM, Ed25519 node identity, SHA-256 digests, replay-protection window."],
+  [
+    "Cryptography",
+    "AES-256-GCM, Ed25519 node identity, SHA-256 digests, replay-protection window.",
+  ],
   ["Privacy", "Payload is never stored. Metering keeps only a SHA-256 digest and byte count."],
-  ["Licensing", "Community (free, single node) · Enterprise (per-node subscription) · Operator (custom scope)"],
-  ["Availability", "Worldwide, within legal limits. Export-control and spectrum policies published."],
+  [
+    "Licensing",
+    "Community (free, single node) · Enterprise (per-node subscription) · Operator (custom scope)",
+  ],
+  [
+    "Availability",
+    "Worldwide, within legal limits. Export-control and spectrum policies published.",
+  ],
 ];
 
 const useCases = [
   ["Disaster response", "Field teams keep routing traffic when towers and backhaul are gone."],
-  ["Critical infrastructure", "Energy, mining and pipeline sites bridge isolated segments without new hardware."],
-  ["Field logistics", "Convoys and remote depots stay reachable across whichever transport is alive."],
-  ["ISPs & integrators", "Embed the SDK to add resilient multi-carrier failover to existing networks."],
+  [
+    "Critical infrastructure",
+    "Energy, mining and pipeline sites bridge isolated segments without new hardware.",
+  ],
+  [
+    "Field logistics",
+    "Convoys and remote depots stay reachable across whichever transport is alive.",
+  ],
+  [
+    "ISPs & integrators",
+    "Embed the SDK to add resilient multi-carrier failover to existing networks.",
+  ],
 ];
 
 function EnglishOverview() {
@@ -96,8 +117,8 @@ function EnglishOverview() {
             Network infrastructure that keeps working when the internet does not
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Protocol is a carrier-agnostic, zero-knowledge tunnel gateway and mesh SDK.
-            It runs as a single static binary on hardware you already own, across nine physical
+            Tedbirge Protocol is a carrier-agnostic, zero-knowledge tunnel gateway and mesh SDK. It
+            runs as a single static binary on hardware you already own, across nine physical
             transports, with no cloud dependency.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
@@ -129,7 +150,9 @@ function EnglishOverview() {
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <SectionLabel>Product family</SectionLabel>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">Three modules, one binary</h2>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+          Three modules, one binary
+        </h2>
         <div className="mt-12 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-3">
           {modules.map((m) => (
             <article key={m.name} className="bg-card/50 p-7">
@@ -175,7 +198,9 @@ function EnglishOverview() {
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <SectionLabel>Where it is used</SectionLabel>
-        <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">Deployment scenarios</h2>
+        <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+          Deployment scenarios
+        </h2>
         <div className="mt-12 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2">
           {useCases.map(([t, b]) => (
             <article key={t} className="bg-card/50 p-7">
@@ -194,8 +219,13 @@ function EnglishOverview() {
           </h2>
           <dl className="mt-10 divide-y divide-border/60 overflow-hidden rounded-sm border border-border">
             {facts.map(([k, v]) => (
-              <div key={k} className="grid gap-2 bg-background/60 px-6 py-5 md:grid-cols-[200px_1fr]">
-                <dt className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">{k}</dt>
+              <div
+                key={k}
+                className="grid gap-2 bg-background/60 px-6 py-5 md:grid-cols-[200px_1fr]"
+              >
+                <dt className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
+                  {k}
+                </dt>
                 <dd className="text-sm leading-relaxed text-muted-foreground">{v}</dd>
               </div>
             ))}
@@ -224,9 +254,9 @@ tedbirge-cli exit-demo   # WAN bridge`}</code>
           A claim without stated limits is not a claim
         </h2>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Payload confidentiality, node authentication and replay protection are in scope.
-          Metadata resistance, anonymity and endpoint compromise are explicitly out of scope —
-          all of it is written down.
+          Payload confidentiality, node authentication and replay protection are in scope. Metadata
+          resistance, anonymity and endpoint compromise are explicitly out of scope — all of it is
+          written down.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           <Link

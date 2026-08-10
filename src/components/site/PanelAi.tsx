@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { buildInsights, type Insight, type InsightDevice, type InsightSample } from "@/lib/network-insights";
+import {
+  buildInsights,
+  type Insight,
+  type InsightDevice,
+  type InsightSample,
+} from "@/lib/network-insights";
 
 const TONE: Record<Insight["severity"], { chip: string; border: string; label: string }> = {
   critical: { chip: "text-destructive", border: "border-destructive/50", label: "kritik" },
@@ -48,8 +53,9 @@ export function PanelAi({ devices, refreshKey }: { devices: InsightDevice[]; ref
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Yapay zeka</p>
             <h2 className="mt-2 text-xl font-semibold tracking-tight">Proaktif ağ danışmanı</h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Danışman, kayıtlı düğümlerinizin telemetrisini (gecikme, paket kaybı, verim, hata kodları)
-              sürekli değerlendirir; sorun büyümeden önce sebebini ve çözüm adımını gösterir.
+              Danışman, kayıtlı düğümlerinizin telemetrisini (gecikme, paket kaybı, verim, hata
+              kodları) sürekli değerlendirir; sorun büyümeden önce sebebini ve çözüm adımını
+              gösterir.
             </p>
           </div>
           <button
@@ -61,9 +67,21 @@ export function PanelAi({ devices, refreshKey }: { devices: InsightDevice[]; ref
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <Stat label="Kritik bulgu" value={String(critical)} tone={critical ? "text-destructive" : "text-primary"} />
-          <Stat label="Uyarı" value={String(warnings)} tone={warnings ? "text-amber-400" : "text-primary"} />
-          <Stat label="Değerlendirilen ölçüm" value={loading ? "…" : String(samples.length)} tone="text-foreground" />
+          <Stat
+            label="Kritik bulgu"
+            value={String(critical)}
+            tone={critical ? "text-destructive" : "text-primary"}
+          />
+          <Stat
+            label="Uyarı"
+            value={String(warnings)}
+            tone={warnings ? "text-amber-400" : "text-primary"}
+          />
+          <Stat
+            label="Değerlendirilen ölçüm"
+            value={loading ? "…" : String(samples.length)}
+            tone="text-foreground"
+          />
         </div>
       </div>
 
@@ -110,7 +128,9 @@ export function PanelAi({ devices, refreshKey }: { devices: InsightDevice[]; ref
 function Stat({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
     <div className="rounded-sm border border-border bg-background/60 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+        {label}
+      </p>
       <p className={`mt-1 font-mono text-2xl ${tone}`}>{value}</p>
     </div>
   );

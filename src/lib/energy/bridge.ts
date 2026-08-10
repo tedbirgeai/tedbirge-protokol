@@ -140,7 +140,8 @@ type SerialPortLike = {
 
 async function requestPort(baudRate: number): Promise<SerialPortLike> {
   const nav = navigator as unknown as { serial?: { requestPort: () => Promise<SerialPortLike> } };
-  if (!nav.serial) throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
+  if (!nav.serial)
+    throw new Error("Bu tarayıcı Web Serial desteklemiyor. Chrome/Edge masaüstü kullanın.");
   const port = await nav.serial.requestPort();
   await port.open({ baudRate });
   return port;
@@ -173,7 +174,9 @@ export async function connectVeDirect() {
 
   let stopped = false;
   const decoder = new TextDecoderStream();
-  port.readable.pipeTo(decoder.writable as unknown as WritableStream<Uint8Array>).catch(() => undefined);
+  port.readable
+    .pipeTo(decoder.writable as unknown as WritableStream<Uint8Array>)
+    .catch(() => undefined);
   const reader = decoder.readable.getReader();
   const framer = new VeDirectFramer();
 
@@ -292,7 +295,9 @@ export async function connectGnss(baud = 9600) {
 
   let stopped = false;
   const decoder = new TextDecoderStream();
-  port.readable.pipeTo(decoder.writable as unknown as WritableStream<Uint8Array>).catch(() => undefined);
+  port.readable
+    .pipeTo(decoder.writable as unknown as WritableStream<Uint8Array>)
+    .catch(() => undefined);
   const reader = decoder.readable.getReader();
 
   (async () => {

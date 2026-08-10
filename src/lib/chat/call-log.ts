@@ -125,9 +125,8 @@ export async function pruneCallLog(): Promise<number> {
   if (typeof window === "undefined") return 0;
   const rows = read();
   if (rows.length === 0) return 0;
-  const { resolveDisplayName, isSelfPerson, nameKeyOf, resolvePhoneHash } = await import(
-    "@/lib/chat/name-resolver"
-  );
+  const { resolveDisplayName, isSelfPerson, nameKeyOf, resolvePhoneHash } =
+    await import("@/lib/chat/name-resolver");
   const { isTechnicalLabel } = await import("@/lib/chat/display-name");
   const kept = rows.filter((rec) => {
     const peer = rec.peerId ?? "";

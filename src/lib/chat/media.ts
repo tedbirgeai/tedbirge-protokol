@@ -24,7 +24,9 @@ export type MediaChunk = {
 
 export function isMediaChunk(v: unknown): v is MediaChunk {
   const c = v as MediaChunk | null;
-  return Boolean(c && c.t === "media-chunk" && typeof c.mid === "string" && typeof c.data === "string");
+  return Boolean(
+    c && c.t === "media-chunk" && typeof c.mid === "string" && typeof c.data === "string",
+  );
 }
 
 export function fileToDataUrl(file: Blob): Promise<string> {
@@ -66,7 +68,15 @@ const pending = new Map<string, Pending>();
 
 /** Parçayı biriktirir; tamamlandıysa birleşmiş medyayı döndürür. */
 export function collectChunk(chunk: MediaChunk):
-  | { done: true; name: string; mime: string; size: number; dataUrl: string; mid: string; convId: string }
+  | {
+      done: true;
+      name: string;
+      mime: string;
+      size: number;
+      dataUrl: string;
+      mid: string;
+      convId: string;
+    }
   | { done: false; received: number; total: number } {
   let entry = pending.get(chunk.mid);
   if (!entry) {
@@ -77,7 +87,9 @@ export function collectChunk(chunk: MediaChunk):
   if (entry.chunks.size < entry.total) {
     return { done: false, received: entry.chunks.size, total: entry.total };
   }
-  const dataUrl = Array.from({ length: entry.total }, (_, i) => entry!.chunks.get(i) ?? "").join("");
+  const dataUrl = Array.from({ length: entry.total }, (_, i) => entry!.chunks.get(i) ?? "").join(
+    "",
+  );
   pending.delete(chunk.mid);
   return {
     done: true,

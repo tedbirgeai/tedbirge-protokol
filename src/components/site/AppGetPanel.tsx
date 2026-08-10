@@ -33,14 +33,17 @@ export function AppGetPanel() {
     setNote(result === "accepted" ? "Uygulama ana ekranınıza eklendi." : "Kurulum iptal edildi.");
   }, []);
 
-
   const openQr = useCallback(async () => {
     setQrOpen(true);
     if (qrData) return;
     try {
       const url = `${window.location.origin}/chat`;
       setQrData(
-        await QRCode.toDataURL(url, { width: 512, margin: 1, color: { dark: "#0b1020", light: "#ffffff" } }),
+        await QRCode.toDataURL(url, {
+          width: 512,
+          margin: 1,
+          color: { dark: "#0b1020", light: "#ffffff" },
+        }),
       );
     } catch {
       setQrData(null);
@@ -58,8 +61,8 @@ export function AppGetPanel() {
             Uygulamayı edinin — indirme yok, hesap yok
           </h2>
           <p className="mt-4 max-w-xl text-muted-foreground">
-            Tarayıcıdan hemen kullanın ya da tek dokunuşla ana ekranınıza ekleyin. Telefon, tablet ve
-            bilgisayarda aynı uygulama; internet kesildiğinde de çalışmaya devam eder.
+            Tarayıcıdan hemen kullanın ya da tek dokunuşla ana ekranınıza ekleyin. Telefon, tablet
+            ve bilgisayarda aynı uygulama; internet kesildiğinde de çalışmaya devam eder.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -99,15 +102,16 @@ export function AppGetPanel() {
           </div>
           <ol className="mt-6 space-y-4 text-sm text-muted-foreground">
             <li>
-              <span className="text-foreground">1.</span> Bu adresi telefonun tarayıcısında açın veya QR’ı
-              okutun.
+              <span className="text-foreground">1.</span> Bu adresi telefonun tarayıcısında açın
+              veya QR’ı okutun.
             </li>
             <li>
-              <span className="text-foreground">2.</span> “Ana ekrana ekle” deyin; uygulama simgesi oluşur.
+              <span className="text-foreground">2.</span> “Ana ekrana ekle” deyin; uygulama simgesi
+              oluşur.
             </li>
             <li>
-              <span className="text-foreground">3.</span> Adınızı yazın, sohbet ve arama hazır — kayıt
-              gerekmez.
+              <span className="text-foreground">3.</span> Adınızı yazın, sohbet ve arama hazır —
+              kayıt gerekmez.
             </li>
           </ol>
         </div>
@@ -135,7 +139,11 @@ export function AppGetPanel() {
               </button>
             </div>
             {qrData ? (
-              <img src={qrData} alt="Tedbirge uygulama bağlantısı QR kodu" className="mx-auto mt-5 w-56" />
+              <img
+                src={qrData}
+                alt="Tedbirge uygulama bağlantısı QR kodu"
+                className="mx-auto mt-5 w-56"
+              />
             ) : (
               <p className="mt-6 text-sm text-muted-foreground">QR oluşturulamadı.</p>
             )}

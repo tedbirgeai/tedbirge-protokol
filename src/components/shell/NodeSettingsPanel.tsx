@@ -32,7 +32,12 @@ type Prefs = { sound: boolean; vibrate: boolean; focus: boolean };
 function readPrefs(): Prefs {
   if (typeof window === "undefined") return { sound: true, vibrate: true, focus: false };
   try {
-    return { sound: true, vibrate: true, focus: false, ...JSON.parse(window.localStorage.getItem(PREF_KEY) ?? "{}") };
+    return {
+      sound: true,
+      vibrate: true,
+      focus: false,
+      ...JSON.parse(window.localStorage.getItem(PREF_KEY) ?? "{}"),
+    };
   } catch {
     return { sound: true, vibrate: true, focus: false };
   }
@@ -101,15 +106,7 @@ function Action({
   );
 }
 
-function Toggle({
-  label,
-  on,
-  onToggle,
-}: {
-  label: string;
-  on: boolean;
-  onToggle: () => void;
-}) {
+function Toggle({ label, on, onToggle }: { label: string; on: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"
@@ -155,7 +152,6 @@ export function NodeSettingsPanel() {
       off();
     };
   }, []);
-
 
   const refresh = useCallback(() => {
     void storageInfo().then(setStorage);
@@ -222,14 +218,24 @@ export function NodeSettingsPanel() {
         <Row k="MESH KANALI:" v="tedbirge-signal" />
         <Row
           k="KEŞİF:"
-          v={node.discovery === "local" ? "yerel ağ" : node.discovery === "none" ? "kapalı" : node.discovery}
+          v={
+            node.discovery === "local"
+              ? "yerel ağ"
+              : node.discovery === "none"
+                ? "kapalı"
+                : node.discovery
+          }
           tone="text-cyan-400"
         />
         <Row k="ANAHTAR PARMAK İZİ:" v={node.fingerprint || "üretiliyor"} />
         <Row k="ŞİFRELEME:" v="AES-256-GCM · X25519 anahtar değişimi" tone="text-emerald-400" />
         <Row k="DOĞRUDAN EŞ:" v={String(node.peers.filter((p) => p.direct).length)} />
         <div className="pt-2">
-          <Action label="Eşleri yeniden tara" icon={<RefreshCw className="h-3.5 w-3.5" />} onClick={() => pingNodePeers()} />
+          <Action
+            label="Eşleri yeniden tara"
+            icon={<RefreshCw className="h-3.5 w-3.5" />}
+            onClick={() => pingNodePeers()}
+          />
         </div>
       </Section>
 
@@ -245,7 +251,11 @@ export function NodeSettingsPanel() {
           tone={health.health === "healthy" ? "text-emerald-400" : "text-amber-400"}
         />
         <Row k="GÖNDERİLEN:" v={String(metrics.sent)} />
-        <Row k="BAŞARISIZ:" v={String(metrics.failed)} tone={metrics.failed ? "text-rose-400" : undefined} />
+        <Row
+          k="BAŞARISIZ:"
+          v={String(metrics.failed)}
+          tone={metrics.failed ? "text-rose-400" : undefined}
+        />
         <Row k="ORT. GÖNDERİM:" v={`${metrics.avgSendMs} ms`} />
         <Row k="SON HATA:" v={metrics.lastError ?? "yok"} />
       </Section>
@@ -253,14 +263,21 @@ export function NodeSettingsPanel() {
       <Section icon={<HardDrive className="h-3.5 w-3.5" />} title="Yerel veri ve depolama">
         <Row k="VERİTABANI:" v={`${DB_NAME} · v${DB_VERSION}`} />
         <Row k="KUYRUKTAKİ PAKET:" v={String(queued)} />
-        <Row k="KULLANIM:" v={storage ? `${bytes(storage.usage)} / ${bytes(storage.quota)}` : "ölçülüyor"} />
+        <Row
+          k="KULLANIM:"
+          v={storage ? `${bytes(storage.usage)} / ${bytes(storage.quota)}` : "ölçülüyor"}
+        />
         <Row
           k="KALICI DEPOLAMA:"
           v={storage?.persisted ? "açık" : "kapalı"}
           tone={storage?.persisted ? "text-emerald-400" : "text-amber-400"}
         />
         <div className="flex flex-wrap gap-2 pt-2">
-          <Action label="Yedek al" icon={<HardDrive className="h-3.5 w-3.5" />} onClick={() => void backup()} />
+          <Action
+            label="Yedek al"
+            icon={<HardDrive className="h-3.5 w-3.5" />}
+            onClick={() => void backup()}
+          />
           <Action
             label="Kalıcı depolama iste"
             icon={<RefreshCw className="h-3.5 w-3.5" />}
@@ -271,12 +288,21 @@ export function NodeSettingsPanel() {
               })
             }
           />
-          <Action label="Yerel veriyi temizle" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={wipe} danger />
+          <Action
+            label="Yerel veriyi temizle"
+            icon={<Trash2 className="h-3.5 w-3.5" />}
+            onClick={wipe}
+            danger
+          />
         </div>
       </Section>
 
       <Section icon={<Bell className="h-3.5 w-3.5" />} title="Arayüz ve bildirim tercihleri">
-        <Row k="BİLDİRİM İZNİ:" v={perm} tone={perm === "granted" ? "text-emerald-400" : "text-amber-400"} />
+        <Row
+          k="BİLDİRİM İZNİ:"
+          v={perm}
+          tone={perm === "granted" ? "text-emerald-400" : "text-amber-400"}
+        />
         {perm !== "granted" ? (
           <div className="pb-1 pt-1">
             <Action
@@ -286,9 +312,21 @@ export function NodeSettingsPanel() {
             />
           </div>
         ) : null}
-        <Toggle label="Arama ve mesaj sesi" on={prefs.sound} onToggle={() => savePrefs({ ...prefs, sound: !prefs.sound })} />
-        <Toggle label="Titreşim" on={prefs.vibrate} onToggle={() => savePrefs({ ...prefs, vibrate: !prefs.vibrate })} />
-        <Toggle label="Yoğun mod (sessiz)" on={prefs.focus} onToggle={() => savePrefs({ ...prefs, focus: !prefs.focus })} />
+        <Toggle
+          label="Arama ve mesaj sesi"
+          on={prefs.sound}
+          onToggle={() => savePrefs({ ...prefs, sound: !prefs.sound })}
+        />
+        <Toggle
+          label="Titreşim"
+          on={prefs.vibrate}
+          onToggle={() => savePrefs({ ...prefs, vibrate: !prefs.vibrate })}
+        />
+        <Toggle
+          label="Yoğun mod (sessiz)"
+          on={prefs.focus}
+          onToggle={() => savePrefs({ ...prefs, focus: !prefs.focus })}
+        />
       </Section>
     </div>
   );

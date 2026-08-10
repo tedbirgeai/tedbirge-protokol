@@ -1,12 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
-import {
-  CONTRACT_ANNEXES,
-  REG_VERSION,
-  REG_REVIEWED,
-  REG_VENDOR,
-} from "@/lib/regulation";
+import { CONTRACT_ANNEXES, REG_VERSION, REG_REVIEWED, REG_VENDOR } from "@/lib/regulation";
 
 const TITLE = "Sözleşme Ekleri — Örnek Şablonlar | Tedbirge Protokol";
 const DESC =
@@ -73,9 +68,9 @@ function LegalPack() {
             Sözleşme ekleri — örnek şablonlar
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Ek-A spektrum ve donanım taahhüdü, Ek-B 5651 sorumluluk devri ve Ek-C ihracat
-            kontrolü son kullanıcı beyanı. Bu metinler müşteri sözleşmelerine eklenmek üzere
-            hazırlanmış örnek şablonlardır; kopyalanabilir ve PDF olarak indirilebilir.
+            Ek-A spektrum ve donanım taahhüdü, Ek-B 5651 sorumluluk devri ve Ek-C ihracat kontrolü
+            son kullanıcı beyanı. Bu metinler müşteri sözleşmelerine eklenmek üzere hazırlanmış
+            örnek şablonlardır; kopyalanabilir ve PDF olarak indirilebilir.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
@@ -155,9 +150,9 @@ function LegalPack() {
           </Link>
         </div>
         <p className="mt-6 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-          Bu metinler taslaktır, hukuki görüş yerine geçmez ve imzalanmadan önce hukuk
-          müşavirinizce nihai hâline getirilmelidir. Sorumluluk sınırlandırmaları, ilgili yargı
-          bölgesinin emredici hükümleri saklı kalmak kaydıyla geçerlidir.
+          Bu metinler taslaktır, hukuki görüş yerine geçmez ve imzalanmadan önce hukuk müşavirinizce
+          nihai hâline getirilmelidir. Sorumluluk sınırlandırmaları, ilgili yargı bölgesinin
+          emredici hükümleri saklı kalmak kaydıyla geçerlidir.
         </p>
       </section>
     </SitePage>

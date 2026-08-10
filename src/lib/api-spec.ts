@@ -111,7 +111,9 @@ export const OPENAPI_SPEC = {
         operationId: "postTelemetry",
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/TelemetryRequest" } } },
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/TelemetryRequest" } },
+          },
         },
         responses: {
           "200": {
@@ -120,8 +122,14 @@ export const OPENAPI_SPEC = {
               "application/json": { schema: { $ref: "#/components/schemas/TelemetryResponse" } },
             },
           },
-          "400": { description: "Geçersiz gövde", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
-          "401": { description: "Lisans yok/geçersiz", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "400": {
+            description: "Geçersiz gövde",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+          "401": {
+            description: "Lisans yok/geçersiz",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
           "403": {
             description:
               "Lisans pasif/süresi dolmuş, cihaz iptal edilmiş veya düğüm limiti aşılmış (license_inactive | license_expired | device_revoked | node_limit_reached)",
@@ -139,12 +147,20 @@ export const OPENAPI_SPEC = {
         operationId: "postQueue",
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/QueueRequest" } } },
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/QueueRequest" } },
+          },
         },
         responses: {
           "200": { description: "İşlendi" },
-          "400": { description: "Geçersiz gövde", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
-          "401": { description: "Lisans yok/geçersiz", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          "400": {
+            description: "Geçersiz gövde",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+          "401": {
+            description: "Lisans yok/geçersiz",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
           "429": { description: "Hız sınırı" },
         },
       },

@@ -57,7 +57,6 @@ import {
 } from "@/lib/chat/name-exchange";
 import { nameKeyOf, normalizedPersonName, resolveDisplayName } from "@/lib/chat/name-resolver";
 
-
 export type ChatState = {
   conversations: Conversation[];
   messages: Record<string, ChatMessage[]>;
@@ -249,7 +248,6 @@ export async function refreshAll(): Promise<void> {
   }
 }
 
-
 /**
  * Gelen bir eş için doğru konuşmayı bulur: kimlik yeni olsa bile aynı takma
  * ada ya da ortak cihaz kimliğine sahip mevcut konuşma varsa ona bağlanır
@@ -379,7 +377,8 @@ export async function createGroup(title: string, members: string[]): Promise<Con
       convId: conv.id,
       title: conv.title,
       members: conv.members,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
     });
   }
   return conv;
@@ -430,7 +429,8 @@ export async function markRead(convId: string) {
   const silent = getPrivacy().hideReadReceipts;
   for (const m of targets) {
     await putMessage({ ...m, status: "read" });
-    if (!silent) void sendMesh("receipt", m.from, { t: "receipt", id: m.id, status: "read", convId });
+    if (!silent)
+      void sendMesh("receipt", m.from, { t: "receipt", id: m.id, status: "read", convId });
   }
   await refreshConversations();
   await refreshMessages(convId);
@@ -486,7 +486,6 @@ export async function addSystemMessage(
 }
 
 export async function sendText(
-
   convId: string,
   text: string,
   replyTo?: { id: string; text: string; author: string },
@@ -523,7 +522,8 @@ export async function sendText(
         members: conv.group ? conv.members : undefined,
         text: msg.text,
         ts: msg.ts,
-        alias: getAlias(), personId: getStoredPersonId(),
+        alias: getAlias(),
+        personId: getStoredPersonId(),
         replyTo,
         ttlMs: ttlOf(convId) || undefined,
       });
@@ -560,11 +560,7 @@ export async function sendVoiceFile(
   await sendMedia(convId, file, transcript);
 }
 
-export async function sendMedia(
-  convId: string,
-  file: File,
-  transcript?: string,
-): Promise<void> {
+export async function sendMedia(convId: string, file: File, transcript?: string): Promise<void> {
   const conv = await getConversation(convId);
   if (!conv) return;
   if (file.size > MAX_MEDIA_BYTES) throw new Error("Dosya 8 MB sınırını aşıyor.");
@@ -606,7 +602,8 @@ export async function sendMedia(
       for (let i = 0; i < chunks.length; i += 1) {
         const sent = await sendMesh("media", peer, {
           ...chunks[i]!,
-          alias: getAlias(), personId: getStoredPersonId(),
+          alias: getAlias(),
+          personId: getStoredPersonId(),
           group: conv.group,
           transcript,
         });
@@ -625,7 +622,6 @@ export async function sendMedia(
   }
   await setStatus(mid, ok ? "sent" : "pending");
 }
-
 
 /* -------------------- konum ve acil durum yayını -------------------- */
 
@@ -671,7 +667,8 @@ export async function sendLocation(convId: string, point: GeoPoint, note?: strin
         group: conv.group,
         text: msg.text,
         ts: msg.ts,
-        alias: getAlias(), personId: getStoredPersonId(),
+        alias: getAlias(),
+        personId: getStoredPersonId(),
         geo: { ...geo, frame: undefined },
         ttlMs: ttlOf(convId) || undefined,
       },
@@ -756,7 +753,12 @@ export async function broadcastSos(note?: string): Promise<SosResult> {
 
   // Sohbeti olmayan menzildeki düğümlere de yayın (herkese açık uyarı).
   const peers = knownPeerIds();
-  void sendMesh("alert", "*", { t: "sos", text, alias, geo: geo ? { ...geo, frame: undefined } : undefined }, 0);
+  void sendMesh(
+    "alert",
+    "*",
+    { t: "sos", text, alias, geo: geo ? { ...geo, frame: undefined } : undefined },
+    0,
+  );
 
   return { conversations: convs.length, peers: peers.length, hasLocation: Boolean(info.point) };
 }
@@ -805,7 +807,8 @@ export async function editMessage(messageId: string, text: string): Promise<void
       id: messageId,
       convId: msg.convId,
       text: clean,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
     });
   }
 }
@@ -822,7 +825,8 @@ export async function pinMessage(convId: string, messageId: string | null): Prom
       t: "pin",
       id: next ?? "",
       convId,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
     });
   }
 }
@@ -884,7 +888,8 @@ async function sendForwardedText(conv: Conversation, text: string, author: strin
       members: conv.group ? conv.members : undefined,
       text,
       ts: msg.ts,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
       forwarded: true,
       forwardedFrom: author,
       ttlMs: ttlOf(conv.id) || undefined,
@@ -971,7 +976,8 @@ export async function retryMessage(messageId: string): Promise<boolean> {
         for (let i = 0; i < chunks.length; i += 1) {
           const sent = await sendMesh("media", peer, {
             ...chunks[i]!,
-            alias: getAlias(), personId: getStoredPersonId(),
+            alias: getAlias(),
+            personId: getStoredPersonId(),
             group: conv.group,
           }).catch(() => false);
           delivered = delivered || sent;
@@ -990,7 +996,8 @@ export async function retryMessage(messageId: string): Promise<boolean> {
             group: conv.group,
             text: msg.text,
             ts: msg.ts,
-            alias: getAlias(), personId: getStoredPersonId(),
+            alias: getAlias(),
+            personId: getStoredPersonId(),
             geo: { ...msg.geo, frame: undefined },
           },
           1,
@@ -1008,7 +1015,8 @@ export async function retryMessage(messageId: string): Promise<boolean> {
           members: conv.group ? conv.members : undefined,
           text: msg.text ?? "",
           ts: msg.ts,
-          alias: getAlias(), personId: getStoredPersonId(),
+          alias: getAlias(),
+          personId: getStoredPersonId(),
         }).catch(() => false);
         delivered = delivered || ok;
       }
@@ -1021,7 +1029,6 @@ export async function retryMessage(messageId: string): Promise<boolean> {
     retryInFlight.delete(messageId);
   }
 }
-
 
 /* ------------------ üstel geri çekilmeli otomatik yeniden gönderim ------------------ */
 
@@ -1085,8 +1092,6 @@ export async function pumpRetryQueue(): Promise<number> {
   return tried;
 }
 
-
-
 function clearTyping(convId: string) {
   if (state.typing[convId] === undefined) return;
   const { [convId]: _drop, ...rest } = state.typing;
@@ -1107,7 +1112,8 @@ export async function sendTyping(convId: string, active = true) {
       t: active ? "typing" : "stop-typing",
       convId,
       group: conv.group,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
     });
   }
 }
@@ -1131,7 +1137,8 @@ export async function reactToMessage(messageId: string, emoji: string) {
       id: messageId,
       emoji: next,
       convId: msg.convId,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
     });
   }
 }
@@ -1154,7 +1161,8 @@ export async function deleteMessage(messageId: string, forEveryone = true) {
       t: "delete",
       id: messageId,
       convId: msg.convId,
-      alias: getAlias(), personId: getStoredPersonId(),
+      alias: getAlias(),
+      personId: getStoredPersonId(),
     });
   }
 }
@@ -1220,8 +1228,6 @@ async function onChat(from: string, raw: unknown) {
   }
   // Her mesajla gelen kimlik bilgisi de tek ad kanalına işlenir.
   if (p.personId || p.alias) applyRemoteName(from, p.alias, p.personId);
-
-
 
   if (p.t === "typing" || p.t === "stop-typing") {
     const conv =
@@ -1289,7 +1295,13 @@ async function onChat(from: string, raw: unknown) {
       ? {
           ...p.geo,
           frame: offlineMapFrame(
-            { lat: p.geo.lat, lon: p.geo.lon, acc: p.geo.acc, alt: p.geo.alt, ts: p.ts ?? Date.now() },
+            {
+              lat: p.geo.lat,
+              lon: p.geo.lon,
+              acc: p.geo.acc,
+              alt: p.geo.alt,
+              ts: p.ts ?? Date.now(),
+            },
             p.t === "sos" ? `ACİL — ${p.alias ?? from}` : (p.alias ?? "Konum"),
           ),
         }
@@ -1315,8 +1327,6 @@ async function onChat(from: string, raw: unknown) {
     );
     return;
   }
-
-
 
   if (p.t === "group-invite" && p.convId) {
     const exists = await getConversation(p.convId);
@@ -1544,7 +1554,6 @@ export async function requestMissingNames(): Promise<number> {
   return peers.size;
 }
 
-
 /** Yeni eş göründüğünde Merkle kök özetlerini yollar (arka planda). */
 export async function announceDigests(peerId?: string) {
   const all = await listAllMessages();
@@ -1661,16 +1670,12 @@ export async function bootChat() {
     .catch((error: unknown) => console.error("[chat] sağlık denetimi başarısız", error));
 
   // Sürüm kilidi: yeni sürümde eski önbellek kalıntıları bir kez temizlenir.
-  void import("@/lib/chat/version-lock")
-    .then((m) => m.applyVersionLock())
-    .catch(() => undefined);
+  void import("@/lib/chat/version-lock").then((m) => m.applyVersionLock()).catch(() => undefined);
 
   // SÜREKLİ BUDAMA: hayalet kayıtlar yalnızca açılışta değil, sekme öne
   // alındığında ve ağ geri geldiğinde de temizlenir.
   const sweep = () =>
-    void import("@/lib/chat/merge")
-      .then((m) => m.sweepGhosts())
-      .catch(() => undefined);
+    void import("@/lib/chat/merge").then((m) => m.sweepGhosts()).catch(() => undefined);
   window.addEventListener("online", sweep);
   window.addEventListener("focus", sweep);
   document.addEventListener("visibilitychange", () => {
@@ -1678,7 +1683,6 @@ export async function bootChat() {
   });
   setInterval(sweep, 60_000);
 }
-
 
 /** Süresi dolan (kaybolan) mesajları siler ve arayüzü tazeler. */
 export async function sweepEphemeral(): Promise<number> {

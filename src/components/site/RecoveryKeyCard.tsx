@@ -28,7 +28,9 @@ export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
   useEffect(() => {
     if (!nodeId) return;
     void getRecoveryPhrase(nodeId).then(setPhrase);
-    void storageInfo().then((s) => setQuota({ usagePct: Math.round(s.ratio * 100), persisted: s.persisted }));
+    void storageInfo().then((s) =>
+      setQuota({ usagePct: Math.round(s.ratio * 100), persisted: s.persisted }),
+    );
   }, [nodeId]);
 
   function startVerify() {
@@ -84,10 +86,9 @@ export function RecoveryKeyCard({ nodeId }: { nodeId: string }) {
       </p>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         Cihaz kimliğiniz bu cihazda şifreli saklanır ve dışa aktarılamaz. Cihaz değişimi veya
-        tarayıcı verisi silinmesi durumunda aynı düğümü yalnızca bu 12 kelimelik ifade geri
-        getirir. Ekran görüntüsü almayın; kâğıda yazın.
+        tarayıcı verisi silinmesi durumunda aynı düğümü yalnızca bu 12 kelimelik ifade geri getirir.
+        Ekran görüntüsü almayın; kâğıda yazın.
       </p>
-
 
       {phrase ? (
         <>

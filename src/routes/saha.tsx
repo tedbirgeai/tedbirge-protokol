@@ -127,7 +127,6 @@ function FieldAccess() {
             pilot uyum panosu anında açılır. Kayıt, ödeme veya abonelik yok.
           </p>
 
-
           <div className="mt-10 grid gap-8 rounded-sm border border-border bg-card/40 p-7 md:grid-cols-[1fr_auto] md:items-center">
             <div className="min-w-0">
               <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
@@ -175,7 +174,6 @@ function FieldAccess() {
           </div>
         </div>
       </section>
-
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <SectionLabel>Cihaza ekleme</SectionLabel>
@@ -242,9 +240,9 @@ function FieldAccess() {
             ))}
           </div>
           <p className="mt-10 text-xs leading-relaxed text-muted-foreground">
-            Saha arayüzü ücretsizdir ve değerlendirme amaçlıdır. Gerçek düğüm kurulumu için
-            lisanslı sürüm ve pilot protokolü gerekir; sahada radyo çalıştırırken izin ve
-            spektrum kurallarına uyulmalıdır.
+            Saha arayüzü ücretsizdir ve değerlendirme amaçlıdır. Gerçek düğüm kurulumu için lisanslı
+            sürüm ve pilot protokolü gerekir; sahada radyo çalıştırırken izin ve spektrum
+            kurallarına uyulmalıdır.
           </p>
         </div>
       </section>

@@ -119,6 +119,11 @@ export const RAAS_TIERS = [
     price: "Özel",
     note: "trafik bazlı veya gelir paylaşımı",
     for: "ISP, entegratör ve kamu operatörleri",
-    points: ["Beyaz etiket panel", "Taşınan hacim başına ücret", "Özel taşıyıcı entegrasyonu", "7×24 saha mühendisliği"],
+    points: [
+      "Beyaz etiket panel",
+      "Taşınan hacim başına ücret",
+      "Özel taşıyıcı entegrasyonu",
+      "7×24 saha mühendisliği",
+    ],
   },
 ] as const;

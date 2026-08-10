@@ -109,16 +109,22 @@ function About() {
           <article className="bg-card/50 p-8">
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">Misyon</p>
             <p className="mt-4 text-lg leading-relaxed">
-              Kurumların elindeki her fiziksel katmanı, içeriği görmeyen tek bir geçitte
-              birleştiren bağımsız bir haberleşme altyapısı üretmek.
+              Kurumların elindeki her fiziksel katmanı, içeriği görmeyen tek bir geçitte birleştiren
+              bağımsız bir haberleşme altyapısı üretmek.
             </p>
           </article>
         </div>
         <div className="mt-px grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-3">
           {[
             ["Doğruluk", "Ölçemediğimiz hiçbir iddiayı pazarlamıyoruz; sınırlarımız yazılıdır."],
-            ["Bağımsızlık", "Ne buluta, ne tek bir operatöre, ne de tek bir donanım üreticisine bağımlıyız."],
-            ["Yasallık", "Global hizmet veriyoruz — yalnızca spektrum ve ihracat kuralları içinde."],
+            [
+              "Bağımsızlık",
+              "Ne buluta, ne tek bir operatöre, ne de tek bir donanım üreticisine bağımlıyız.",
+            ],
+            [
+              "Yasallık",
+              "Global hizmet veriyoruz — yalnızca spektrum ve ihracat kuralları içinde.",
+            ],
           ].map(([k, v]) => (
             <article key={k} className="bg-background/60 p-7">
               <h3 className="text-base font-semibold">{k}</h3>
@@ -134,10 +140,19 @@ function About() {
           </h2>
           <ul className="mt-8 grid gap-px overflow-hidden rounded-sm border border-border bg-border md:grid-cols-2">
             {[
-              ["Kısa vade", "Üç referans pilot (afet, kritik altyapı, saha lojistiği) ve İngilizce dokümantasyonun tamamlanması."],
+              [
+                "Kısa vade",
+                "Üç referans pilot (afet, kritik altyapı, saha lojistiği) ve İngilizce dokümantasyonun tamamlanması.",
+              ],
               ["Orta vade", "Bağımsız kriptografik denetim ve yayımlanmış denetim raporu."],
-              ["Orta vade", "Ülke bazlı spektrum profillerinin on beş yargı bölgesine genişletilmesi."],
-              ["Uzun vade", "Entegratör ortaklıkları ve kurumsal alıcılar için kaynak kod emaneti (escrow) taahhüdü."],
+              [
+                "Orta vade",
+                "Ülke bazlı spektrum profillerinin on beş yargı bölgesine genişletilmesi.",
+              ],
+              [
+                "Uzun vade",
+                "Entegratör ortaklıkları ve kurumsal alıcılar için kaynak kod emaneti (escrow) taahhüdü.",
+              ],
             ].map(([k, v], i) => (
               <li key={i} className="bg-card/50 p-7">
                 <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">{k}</p>
@@ -170,7 +185,6 @@ function About() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20 pt-0">
-
         <SectionLabel>Mühendislik ilkeleri</SectionLabel>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
           Dört tavizsiz kural

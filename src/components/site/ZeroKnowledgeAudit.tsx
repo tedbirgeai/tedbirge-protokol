@@ -106,7 +106,11 @@ export function ZeroKnowledgeAudit() {
             disabled={running}
             className="inline-flex items-center gap-2 rounded-sm bg-primary px-5 py-3 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
-            {running ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Play className="size-4" aria-hidden />}
+            {running ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Play className="size-4" aria-hidden />
+            )}
             {running ? "Çalışıyor" : "Denetimi başlat"}
           </button>
           <button

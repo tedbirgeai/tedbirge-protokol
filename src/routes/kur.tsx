@@ -85,7 +85,11 @@ function Setup() {
           inceleyin.
         </p>
       </section>
-      <NextStep to="/panel" title="Ağınızı yönetmeye geçin" description="Düğüm durumu, telemetri ve lisans olaylarını müşteri panelinden izleyin." />
+      <NextStep
+        to="/panel"
+        title="Ağınızı yönetmeye geçin"
+        description="Düğüm durumu, telemetri ve lisans olaylarını müşteri panelinden izleyin."
+      />
     </SitePage>
   );
 }

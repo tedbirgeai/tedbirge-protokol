@@ -9,9 +9,9 @@ export function AdminBusinessPlan() {
           Salt-okunur kurumsal doküman · {BUSINESS_PLAN_VERSION}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Bu sekme yalnızca referans amaçlıdır; hiçbir kayıt oluşturmaz veya değiştirmez.
-          İş planı; 7 katmanlı Tedbirge Protocol mimarisi ve Resilience-as-a-Service modeli
-          esas alınarak hazırlanmıştır.
+          Bu sekme yalnızca referans amaçlıdır; hiçbir kayıt oluşturmaz veya değiştirmez. İş planı;
+          7 katmanlı Tedbirge Protocol mimarisi ve Resilience-as-a-Service modeli esas alınarak
+          hazırlanmıştır.
         </p>
       </div>
 
@@ -31,8 +31,8 @@ export function AdminBusinessPlan() {
       ))}
 
       <p className="text-xs text-muted-foreground">
-        Not: Tasarruf, süreklilik ve SLA oranları saha ölçümü yapılmadan pazarlama
-        materyalinde iddia edilmez.
+        Not: Tasarruf, süreklilik ve SLA oranları saha ölçümü yapılmadan pazarlama materyalinde
+        iddia edilmez.
       </p>
     </div>
   );

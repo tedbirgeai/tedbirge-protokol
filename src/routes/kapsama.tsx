@@ -2,7 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { SitePage, SectionLabel } from "@/components/site/SiteChrome";
 
-import { CARRIERS, TERRAIN, HEIGHTS, buildMeshPlan, agentSnippet, type Measurement } from "@/lib/mesh-plan";
+import {
+  CARRIERS,
+  TERRAIN,
+  HEIGHTS,
+  buildMeshPlan,
+  agentSnippet,
+  type Measurement,
+} from "@/lib/mesh-plan";
 import { saveFieldMeasurement, listFieldMeasurements } from "@/lib/mesh.functions";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -53,7 +60,6 @@ function CoveragePlanner() {
     }
   }
 
-
   useEffect(() => {
     void loadMeasurements();
   }, []);
@@ -98,17 +104,19 @@ function CoveragePlanner() {
             Evdeki tek düğüm ne işe yarar, evden uzaklaşınca ne olur?
           </h1>
           <p className="mt-5 max-w-3xl text-muted-foreground">
-            Dürüst cevap: <strong className="text-foreground">tek bir düğüm ağ değildir.</strong> Evdeki düğüm
-            internet çıkışını (uplink) ve mesaj kuyruğunu tutan köprüdür. Siz evden uzaklaştığınızda bağlantının
-            kopmaması, o köprü ile cebinizdeki uç düğüm arasında <strong className="text-foreground">radyo menzili
-            kadar</strong> mesafe kalmasına ya da aradaki boşluğu dolduran röle düğümlerine bağlıdır. Aşağıdaki
-            planlayıcı, sizin taşıyıcı/arazi koşulunuzda kaç röleye ihtiyacınız olduğunu gerçekçi rakamlarla söyler.
+            Dürüst cevap: <strong className="text-foreground">tek bir düğüm ağ değildir.</strong>{" "}
+            Evdeki düğüm internet çıkışını (uplink) ve mesaj kuyruğunu tutan köprüdür. Siz evden
+            uzaklaştığınızda bağlantının kopmaması, o köprü ile cebinizdeki uç düğüm arasında{" "}
+            <strong className="text-foreground">radyo menzili kadar</strong> mesafe kalmasına ya da
+            aradaki boşluğu dolduran röle düğümlerine bağlıdır. Aşağıdaki planlayıcı, sizin
+            taşıyıcı/arazi koşulunuzda kaç röleye ihtiyacınız olduğunu gerçekçi rakamlarla söyler.
           </p>
           <div className="mt-6 rounded-lg border border-destructive/40 bg-destructive/10 p-5 text-sm leading-relaxed text-muted-foreground">
-            <strong className="text-foreground">Kritik saha gerçeği:</strong> iPhone tek başına LoRa/HaLow/TVWS
-            düğümü değildir. Wi‑Fi menzilinden çıkınca telefonun bulut bağlantısı kesilir; PWA yalnızca
-            önbellekten açılır. 6 km / 15 km senaryosu için ev köprüsü dışında sahaya yerleştirilmiş fiziksel
-            röleler ve telefonun yanında/araçta çalışan saha radyo düğümü gerekir.
+            <strong className="text-foreground">Kritik saha gerçeği:</strong> iPhone tek başına
+            LoRa/HaLow/TVWS düğümü değildir. Wi‑Fi menzilinden çıkınca telefonun bulut bağlantısı
+            kesilir; PWA yalnızca önbellekten açılır. 6 km / 15 km senaryosu için ev köprüsü dışında
+            sahaya yerleştirilmiş fiziksel röleler ve telefonun yanında/araçta çalışan saha radyo
+            düğümü gerekir.
           </div>
         </div>
       </section>
@@ -147,7 +155,9 @@ function CoveragePlanner() {
             <button
               onClick={() => setTestMode((v) => !v)}
               className={`rounded-md border px-4 py-2 font-mono text-xs uppercase tracking-[0.15em] ${
-                testMode ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-secondary"
+                testMode
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border hover:bg-secondary"
               }`}
             >
               {testMode ? "Test modu açık" : "Test modu"}
@@ -169,7 +179,9 @@ function CoveragePlanner() {
                     </option>
                   ))}
                 </select>
-                <span className="mt-1 block text-xs text-muted-foreground">{plan.carrier.note}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {plan.carrier.note}
+                </span>
               </label>
 
               <label className="block text-sm">
@@ -204,7 +216,8 @@ function CoveragePlanner() {
 
               <label className="block text-sm">
                 <span className="text-muted-foreground">
-                  Evden uzaklaşacağınız mesafe: <strong className="text-foreground">{distanceKm} km</strong>
+                  Evden uzaklaşacağınız mesafe:{" "}
+                  <strong className="text-foreground">{distanceKm} km</strong>
                 </span>
                 <input
                   type="range"
@@ -221,12 +234,15 @@ function CoveragePlanner() {
             <div className="rounded-lg border border-primary/40 bg-background p-6">
               {plan.infrastructure ? (
                 <>
-                  <p className="font-mono text-xs uppercase tracking-widest text-primary">Altyapı taşıyıcısı</p>
+                  <p className="font-mono text-xs uppercase tracking-widest text-primary">
+                    Altyapı taşıyıcısı
+                  </p>
                   <p className="mt-4 text-sm text-muted-foreground">
-                    Bu taşıyıcıda menzil sizin donanımınıza değil, operatör/uydu kapsamasına bağlıdır. Röle düğüme
-                    gerek yoktur; ancak kapsama düştüğü anda devreye girecek bir <strong className="text-foreground">
-                    yedek radyo taşıyıcısı</strong> (LoRa veya HaLow) tanımlamanız önerilir. Yönlendirici, birincil yol
-                    kaybolduğunda oturumu yedek taşıyıcıya taşır.
+                    Bu taşıyıcıda menzil sizin donanımınıza değil, operatör/uydu kapsamasına
+                    bağlıdır. Röle düğüme gerek yoktur; ancak kapsama düştüğü anda devreye girecek
+                    bir <strong className="text-foreground">yedek radyo taşıyıcısı</strong> (LoRa
+                    veya HaLow) tanımlamanız önerilir. Yönlendirici, birincil yol kaybolduğunda
+                    oturumu yedek taşıyıcıya taşır.
                   </p>
                 </>
               ) : (
@@ -252,20 +268,23 @@ function CoveragePlanner() {
                       : "Henüz bu koşul için saha ölçümü yok; katalog değerleri kullanılıyor."}
                   </p>
                   <p className="mt-5 text-sm text-muted-foreground">
-                    {distanceKm} km mesafede kesintisiz bağlantı için ev köprüsü + <strong className="text-foreground">
-                    {plan.relays} röle</strong> + telefonun bağlı olduğu saha radyo düğümü gerekir (toplam {plan.totalNodes} düğüm).
+                    {distanceKm} km mesafede kesintisiz bağlantı için ev köprüsü +{" "}
+                    <strong className="text-foreground">{plan.relays} röle</strong> + telefonun
+                    bağlı olduğu saha radyo düğümü gerekir (toplam {plan.totalNodes} düğüm).
                     {plan.totalNodes > 5
                       ? " Bu, 5 düğümlük pilot limitini aşar; Enterprise plana geçmeniz ya da röleleri daha yüksek noktalara taşımanız gerekir."
                       : " Bu, 5 düğümlük pilot lisansı ile karşılanabilir."}
                   </p>
                   <p className="mt-3 rounded border border-border bg-card p-3 text-xs text-muted-foreground">
-                    Bu sonuç yazılım lisansı veya telefon PWA'sı ile otomatik oluşmaz; her satır için sahada
-                    çalışan fiziksel düğüm, uygun radyo modülü, anten, güç ve görüş hattı gerekir.
+                    Bu sonuç yazılım lisansı veya telefon PWA'sı ile otomatik oluşmaz; her satır
+                    için sahada çalışan fiziksel düğüm, uygun radyo modülü, anten, güç ve görüş
+                    hattı gerekir.
                   </p>
                   {!plan.carrier.mobile && (
                     <p className="mt-3 rounded border border-border bg-card p-3 text-xs text-muted-foreground">
-                      Uyarı: bu taşıyıcı hareket halinde çalışmaz (sabit, hizalanmış nokta-nokta). Cepteki uç düğüm
-                      için LoRa veya HaLow seçin; bu taşıyıcıyı yalnızca röleler arası omurga olarak kullanın.
+                      Uyarı: bu taşıyıcı hareket halinde çalışmaz (sabit, hizalanmış nokta-nokta).
+                      Cepteki uç düğüm için LoRa veya HaLow seçin; bu taşıyıcıyı yalnızca röleler
+                      arası omurga olarak kullanın.
                     </p>
                   )}
                 </>
@@ -276,10 +295,12 @@ function CoveragePlanner() {
           {testMode && (
             <div className="mt-8 grid gap-6 md:grid-cols-2">
               <div className="rounded-lg border border-border bg-background p-6">
-                <p className="font-mono text-xs uppercase tracking-widest text-primary">Gerçek saha ölçümü</p>
+                <p className="font-mono text-xs uppercase tracking-widest text-primary">
+                  Gerçek saha ölçümü
+                </p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Sahada iki düğüm arasında ölçtüğünüz mesafeyi ve bağlantının kurulup kurulmadığını girin.
-                  Her ölçüm yukarıdaki hesabı otomatik kalibre eder.
+                  Sahada iki düğüm arasında ölçtüğünüz mesafeyi ve bağlantının kurulup kurulmadığını
+                  girin. Her ölçüm yukarıdaki hesabı otomatik kalibre eder.
                 </p>
 
                 <div className="mt-4 space-y-3 text-sm">
@@ -303,7 +324,9 @@ function CoveragePlanner() {
                         key={o.l}
                         onClick={() => setMLinkOk(o.v)}
                         className={`flex-1 rounded-md border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.15em] ${
-                          mLinkOk === o.v ? "border-primary bg-primary text-primary-foreground" : "border-border"
+                          mLinkOk === o.v
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border"
                         }`}
                       >
                         {o.l}
@@ -361,9 +384,12 @@ function CoveragePlanner() {
               </div>
 
               <div className="rounded-lg border border-border bg-background p-6">
-                <p className="font-mono text-xs uppercase tracking-widest text-primary">Atlama simülasyonu</p>
+                <p className="font-mono text-xs uppercase tracking-widest text-primary">
+                  Atlama simülasyonu
+                </p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {distanceKm} km hedef için {plan.hopKm.toFixed(2)} km'lik atlamalarla oluşan zincir:
+                  {distanceKm} km hedef için {plan.hopKm.toFixed(2)} km'lik atlamalarla oluşan
+                  zincir:
                 </p>
                 <ol className="mt-4 space-y-2 text-sm">
                   {plan.chain.map((n, i) => (
@@ -401,28 +427,37 @@ function CoveragePlanner() {
         <SectionLabel>Kurulum</SectionLabel>
         <h2 className="mt-3 text-2xl font-semibold">Kopya-yapıştır düğüm yapılandırması</h2>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Lisans anahtarınızı <Link to="/panel" className="text-primary underline">panelden</Link> alın; her düğümü
-          kaydettiğinizde telemetri geldiği anda panelde <strong className="text-foreground">çevrimiçi</strong> görünür.
+          Lisans anahtarınızı{" "}
+          <Link to="/panel" className="text-primary underline">
+            panelden
+          </Link>{" "}
+          alın; her düğümü kaydettiğinizde telemetri geldiği anda panelde{" "}
+          <strong className="text-foreground">çevrimiçi</strong> görünür.
         </p>
         <pre className="mt-6 overflow-x-auto rounded-lg border border-border bg-card p-5 font-mono text-xs leading-relaxed text-muted-foreground">
-{agentSnippet(plan)}
+          {agentSnippet(plan)}
         </pre>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-border bg-card p-5">
             <h3 className="font-semibold">Kopma anında ne olur?</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Uç düğüm menzil dışına çıktığında mesajlar yerelde imzalanıp kuyruğa alınır (store-and-forward). Menzile
-              döndüğünüzde ya da bir röle görüş alanına girdiğinizde kuyruk sırayla boşalır; hiçbir mesaj kaybolmaz,
-              yalnızca gecikir. Kuyruğun durumu panelde canlı görünür.
+              Uç düğüm menzil dışına çıktığında mesajlar yerelde imzalanıp kuyruğa alınır
+              (store-and-forward). Menzile döndüğünüzde ya da bir röle görüş alanına girdiğinizde
+              kuyruk sırayla boşalır; hiçbir mesaj kaybolmaz, yalnızca gecikir. Kuyruğun durumu
+              panelde canlı görünür.
             </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5">
             <h3 className="font-semibold">Gerçekçi beklenti</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Radyo fiziği pazarlama ile aşılamaz: şehir içinde LoRa pratikte 0.5–2 km, tepe hattında 10 km+ verir.
-              Bu planlayıcı ölçülmüş saha değerleriyle kalibre olur; kesin sonuç için{" "}
-              <Link to="/saha-raporu" className="text-primary underline">saha test raporunu</Link> doldurun.
+              Radyo fiziği pazarlama ile aşılamaz: şehir içinde LoRa pratikte 0.5–2 km, tepe
+              hattında 10 km+ verir. Bu planlayıcı ölçülmüş saha değerleriyle kalibre olur; kesin
+              sonuç için{" "}
+              <Link to="/saha-raporu" className="text-primary underline">
+                saha test raporunu
+              </Link>{" "}
+              doldurun.
             </p>
           </div>
         </div>

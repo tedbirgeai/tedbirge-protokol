@@ -48,9 +48,8 @@ function RegulationHub() {
             Uyumun tamamı tek çerçevede, tek doğruluk kaynağından
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Spektrum, sertifikasyon, ulusal mevzuat, ihracat kontrolü ve operasyonel izinler
-            aynı veri kümesinden türetilir. Alt sayfalar bu sayfayla çelişemez — hepsi aynı
-            kaynağı okur.
+            Spektrum, sertifikasyon, ulusal mevzuat, ihracat kontrolü ve operasyonel izinler aynı
+            veri kümesinden türetilir. Alt sayfalar bu sayfayla çelişemez — hepsi aynı kaynağı okur.
           </p>
           <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
             Sürüm {REG_VERSION} · Son gözden geçirme {REG_REVIEWED} · {REG_VENDOR}
@@ -81,7 +80,6 @@ function RegulationHub() {
             >
               Uyum paketi PDF
             </a>
-
           </div>
         </div>
       </section>
@@ -176,10 +174,7 @@ function RegulationHub() {
           ))}
         </ol>
 
-        <div
-          role="note"
-          className="mt-8 rounded-sm border border-amber-400/40 bg-amber-400/5 p-7"
-        >
+        <div role="note" className="mt-8 rounded-sm border border-amber-400/40 bg-amber-400/5 p-7">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-amber-400">
             {FIRMWARE_SPECTRUM_WARNING.title}
           </p>
@@ -210,7 +205,6 @@ function RegulationHub() {
         </div>
       </section>
 
-
       <section id="uyum-beyani" className="mx-auto max-w-6xl px-6 py-20">
         <div className="print:hidden">
           <SectionLabel>Uyum beyanı</SectionLabel>
@@ -218,8 +212,8 @@ function RegulationHub() {
             Tedarikçi uygunluk beyanı (indirilebilir)
           </h2>
           <p className="mt-4 max-w-2xl text-muted-foreground">
-            Kurumsal satın alma ve pilot dosyalarına eklenmek üzere hazırlanmış özet beyan.
-            Yazdırma penceresinde hedef olarak &ldquo;PDF olarak kaydet&rdquo; seçin.
+            Kurumsal satın alma ve pilot dosyalarına eklenmek üzere hazırlanmış özet beyan. Yazdırma
+            penceresinde hedef olarak &ldquo;PDF olarak kaydet&rdquo; seçin.
           </p>
         </div>
 
@@ -234,7 +228,10 @@ function RegulationHub() {
           </div>
           <dl className="divide-y divide-border/60">
             {DECLARATION_ROWS.map(([k, v]) => (
-              <div key={k} className="grid gap-2 bg-card/30 px-6 py-4 md:grid-cols-[240px_1fr] print:bg-transparent">
+              <div
+                key={k}
+                className="grid gap-2 bg-card/30 px-6 py-4 md:grid-cols-[240px_1fr] print:bg-transparent"
+              >
                 <dt className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
                   {k}
                 </dt>

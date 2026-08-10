@@ -40,7 +40,6 @@ export type Participant = {
   reconnecting?: boolean;
 };
 
-
 export type CallState = {
   phase: CallPhase;
   peerId: string | null;
@@ -124,8 +123,6 @@ async function tuneSenders(pc: RTCPeerConnection) {
     }
   }
 }
-
-
 
 const IDLE_QUALITY: CallQuality = {
   bars: 0,
@@ -215,7 +212,6 @@ function adoptRoom(incoming?: string) {
   }
 }
 
-
 /* --------------------------- arama geçmişi kaydı --------------------------- */
 
 type CallMeta = {
@@ -231,7 +227,9 @@ function finalizeCallLog() {
   callMeta = null;
   if (!meta) return;
   const answered = Boolean(state.startedAt);
-  const seconds = answered ? Math.max(0, Math.round((Date.now() - (state.startedAt ?? 0)) / 1000)) : 0;
+  const seconds = answered
+    ? Math.max(0, Math.round((Date.now() - (state.startedAt ?? 0)) / 1000))
+    : 0;
   const direction: "incoming" | "outgoing" | "missed" = answered
     ? meta.direction
     : meta.direction === "incoming"
@@ -275,7 +273,6 @@ function publish(patch: Partial<CallState>) {
   listeners.forEach((l) => l());
 }
 
-
 function syncParticipants() {
   publish({
     participants: Array.from(legs.entries()).map(([peerId, leg]) => ({
@@ -284,7 +281,6 @@ function syncParticipants() {
       connected: leg.pc.connectionState === "connected",
       reconnecting: (peerReconnects.get(peerId) ?? 0) > 0 && leg.pc.connectionState !== "connected",
     })),
-
   });
 }
 
@@ -357,9 +353,6 @@ async function ensureMedia(video: boolean): Promise<MediaStream | null> {
   return null;
 }
 
-
-
-
 function createLeg(peerId: string, alias: string) {
   const existing = legs.get(peerId);
   if (existing) return existing;
@@ -429,7 +422,6 @@ function createLeg(peerId: string, alias: string) {
       if (state.reconnects < MAX_RECONNECTS) void restartIce(peerId);
       else endCall("Bağlantı yeniden kurulamadı.");
     }
-
   };
   legs.set(peerId, leg);
   syncParticipants();
@@ -499,7 +491,6 @@ async function restartIce(peerId: string) {
         }
       }, 8_000),
     );
-
   } catch {
     publish({ error: "Bağlantı kurulamadı. Mesaj olarak göndermeyi deneyin." });
   } finally {
@@ -651,7 +642,6 @@ async function dial(
   attachLocal(leg.pc, stream, video);
   await tuneSenders(leg.pc);
 
-
   const offer = await leg.pc.createOffer();
   await leg.pc.setLocalDescription(offer);
   return sendInvite(peerId, offer.sdp ?? "", video, currentCallId ?? peerId, conferencePeers);
@@ -738,9 +728,7 @@ export async function startCall(peerId: string, video: boolean, alias?: string) 
     publish({ error: "Mikrofona erişilemedi — yalnız dinleme kipinde deneniyor." });
     armTimers();
   }
-
 }
-
 
 /** Grup / konferans araması — tam bağlı mesh, SFU yok (3-6 kişi). */
 export async function startConference(
@@ -752,9 +740,7 @@ export async function startConference(
   if (state.phase !== "idle" && state.phase !== "ended") return;
   const list = Array.from(
     new Map(
-      peers
-        .filter((p) => p.peerId && p.peerId !== nodeSelf())
-        .map((p) => [p.peerId, p] as const),
+      peers.filter((p) => p.peerId && p.peerId !== nodeSelf()).map((p) => [p.peerId, p] as const),
     ).values(),
   ).slice(0, 5); // kendinizle birlikte en fazla 6 kişi
   if (!list.length) return;
@@ -847,8 +833,6 @@ export async function addParticipant(peerId: string, alias?: string): Promise<bo
   }
 }
 
-
-
 export async function acceptCall() {
   const entries = Array.from(pendingOffers.entries());
   if (!entries.length) return;
@@ -863,23 +847,23 @@ export async function acceptCall() {
     }
     for (const [peerId, offer] of entries) {
       try {
-      const leg = createLeg(peerId, offer.alias || peerId);
-      // Önce uzak teklif uygulanır: böylece yerel izler karşı tarafın
-      // m-hatlarına oturur ve cevap "sendrecv" olur (görüntü çift yönlü).
-      await leg.pc.setRemoteDescription(offer.desc);
-      attachLocal(leg.pc, stream, state.video || offer.video);
-      await tuneSenders(leg.pc);
+        const leg = createLeg(peerId, offer.alias || peerId);
+        // Önce uzak teklif uygulanır: böylece yerel izler karşı tarafın
+        // m-hatlarına oturur ve cevap "sendrecv" olur (görüntü çift yönlü).
+        await leg.pc.setRemoteDescription(offer.desc);
+        attachLocal(leg.pc, stream, state.video || offer.video);
+        await tuneSenders(leg.pc);
 
-      await applyPendingIce(peerId, leg.pc);
-      const answer = await leg.pc.createAnswer();
-      await leg.pc.setLocalDescription(answer);
-      const answered = await sendMesh("call", peerId, {
-        t: "answer",
-        sdp: answer.sdp,
-        alias: getAlias(),
-        at: Date.now(),
-      });
-      if (!answered) throw new Error("answer-unavailable");
+        await applyPendingIce(peerId, leg.pc);
+        const answer = await leg.pc.createAnswer();
+        await leg.pc.setLocalDescription(answer);
+        const answered = await sendMesh("call", peerId, {
+          t: "answer",
+          sdp: answer.sdp,
+          alias: getAlias(),
+          at: Date.now(),
+        });
+        if (!answered) throw new Error("answer-unavailable");
         pendingOffers.delete(peerId);
         accepted += 1;
       } catch {
@@ -905,7 +889,12 @@ export async function acceptCall() {
     );
     await Promise.all(
       extraPeers.map((peer) =>
-        dial(peer.peerId, peer.alias ?? peer.peerId, state.video, Array.from(conferenceRoster.values())),
+        dial(
+          peer.peerId,
+          peer.alias ?? peer.peerId,
+          state.video,
+          Array.from(conferenceRoster.values()),
+        ),
       ),
     );
     startStats();
@@ -916,7 +905,8 @@ export async function acceptCall() {
 
 export function endCall(reason?: string) {
   const peers = new Set([...legs.keys(), ...pendingOffers.keys()]);
-  for (const peerId of peers) void sendMesh("call", peerId, { t: "bye", callId: currentCallId ?? undefined, at: Date.now() });
+  for (const peerId of peers)
+    void sendMesh("call", peerId, { t: "bye", callId: currentCallId ?? undefined, at: Date.now() });
   currentCallId = null;
   cleanup();
   publish({ phase: reason ? "ended" : "idle", error: reason ?? null, remoteRinging: false });
@@ -1159,7 +1149,6 @@ type CallSignal = {
   roomId?: string;
   conferencePeers?: ConferencePeer[];
   at?: number;
-
 };
 
 /** Bayat teklif penceresi: bundan eski sinyaller çalmaz (kuyruk tekrarı). */
@@ -1201,7 +1190,6 @@ async function onCallSignal(from: string, raw: unknown) {
     handledCallIds.add(p.callId);
     if (handledCallIds.size > 200) handledCallIds.clear();
   }
-
 
   // Görüşme sürerken gelen katılımcı listesi: yeni kişilere kendiliğinden
   // bağlanılır, böylece konferansa sonradan eklenen herkes herkesi görür.

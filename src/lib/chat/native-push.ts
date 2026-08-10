@@ -26,7 +26,12 @@ async function reportToken(token: string): Promise<void> {
   try {
     const { getBrowserNodeId } = await import("@/lib/browser-node");
     const cap = (globalThis as { Capacitor?: { getPlatform?: () => string } }).Capacitor;
-    const platform = cap?.getPlatform?.() === "ios" ? "ios" : cap?.getPlatform?.() === "android" ? "android" : "unknown";
+    const platform =
+      cap?.getPlatform?.() === "ios"
+        ? "ios"
+        : cap?.getPlatform?.() === "android"
+          ? "android"
+          : "unknown";
     await fetch("/api/public/push", {
       method: "POST",
       headers: { "content-type": "application/json" },

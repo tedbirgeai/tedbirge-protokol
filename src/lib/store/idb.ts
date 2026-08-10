@@ -152,7 +152,6 @@ export function openDb(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-
 /** IndexedDB kilit uyarısı — arayüz bu olayı dinleyip kullanıcıyı uyarır. */
 export const IDB_BLOCKED_EVENT = "tedbirge:idb-blocked";
 
@@ -167,7 +166,6 @@ function notifyBlocked() {
     /* pencere yok (SSR) */
   }
 }
-
 
 function runTx<T>(
   db: IDBDatabase,
@@ -212,9 +210,7 @@ async function tx<T>(
     }
   }
   throw lastError instanceof Error ? lastError : new Error("IndexedDB işlemi başarısız");
-
 }
-
 
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try {
@@ -230,7 +226,6 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
     return fallback;
   }
 }
-
 
 /* ----------------------------- outbox ----------------------------- */
 

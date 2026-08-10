@@ -18,7 +18,8 @@ export const Route = createFileRoute("/fiyatlandirma")({
       { property: "og:title", content: "Tedbirge Protocol — RaaS Fiyatlandırma" },
       {
         property: "og:description",
-        content: "Freemium, Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı abonelik.",
+        content:
+          "Freemium, Community, Enterprise ve Operator paketleri; düğüm başına ve kullanım bazlı abonelik.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://tedbirge-gateway.lovable.app/fiyatlandirma" },
@@ -56,7 +57,6 @@ const faqs = [
   ],
 ];
 
-
 function Pricing() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -74,7 +74,6 @@ function Pricing() {
     setPlanKey(key);
     setNodes((n) => Math.min(PLANS[key].maxNodes, Math.max(PLANS[key].minNodes, n)));
   }
-
 
   async function startCheckout() {
     if (!user) {
@@ -137,7 +136,6 @@ function Pricing() {
               Ücretsiz başla
             </Link>
           </div>
-
 
           {/* Pro / Enterprise */}
           <div className="flex flex-col rounded-sm border border-primary/60 bg-card p-8 shadow-[0_0_60px_-20px_var(--color-primary)]">
@@ -226,7 +224,6 @@ function Pricing() {
               ))}
             </ul>
 
-
             <button
               onClick={startCheckout}
               disabled={loading}
@@ -286,7 +283,11 @@ function Pricing() {
           </div>
         </div>
       </section>
-      <NextStep to="/kur" title="Ağınızı 3 adımda kurun" description="Terminal ya da anahtar yönetimi olmadan ilk düğümünüzü başlatın." />
+      <NextStep
+        to="/kur"
+        title="Ağınızı 3 adımda kurun"
+        description="Terminal ya da anahtar yönetimi olmadan ilk düğümünüzü başlatın."
+      />
     </SitePage>
   );
 }

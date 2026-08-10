@@ -106,9 +106,9 @@ function PublicSafety() {
             Şebeke çöktüğünde haberleşme durmasın
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tedbirge Protokol; baz istasyonu, fiber ve elektrik olmadan çalışan yerel bir veri
-            ağı kurar. Mevcut sayısal telsiz yatırımlarının yerini almaz, üzerine dosya ve
-            telemetri taşıyan şifreli bir katman ekler.
+            Tedbirge Protokol; baz istasyonu, fiber ve elektrik olmadan çalışan yerel bir veri ağı
+            kurar. Mevcut sayısal telsiz yatırımlarının yerini almaz, üzerine dosya ve telemetri
+            taşıyan şifreli bir katman ekler.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
@@ -205,8 +205,8 @@ function PublicSafety() {
           </ul>
           <p className="mt-6 text-sm text-muted-foreground">
             Taşıma katmanı anonimliği, uygulama katmanındaki KVKK yükümlülüklerini ortadan
-            kaldırmaz. Kurum kurulumlarında veri envanteri ve saklama süreleri kurum
-            politikasına göre yapılandırılır.
+            kaldırmaz. Kurum kurulumlarında veri envanteri ve saklama süreleri kurum politikasına
+            göre yapılandırılır.
           </p>
         </div>
       </section>

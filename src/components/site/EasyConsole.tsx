@@ -4,7 +4,6 @@ import QRCode from "qrcode";
 import { describeNode, startNode, stopNode, useNodeRuntime } from "@/lib/node-runtime";
 import { NetworkModal, type NetworkTab } from "@/components/site/NetworkModal";
 
-
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 const FREE_NODE_QUOTA = 5;
 const SEEN_KEY = "tedbirge.easy.seen-nodes";
@@ -40,13 +39,28 @@ function useNodeQuota(selfId: string, peerIds: string[]) {
   return { used: seen.length, limit: FREE_NODE_QUOTA };
 }
 
-function Light({ ok, warn, label, value }: { ok: boolean; warn?: boolean; label: string; value: string }) {
+function Light({
+  ok,
+  warn,
+  label,
+  value,
+}: {
+  ok: boolean;
+  warn?: boolean;
+  label: string;
+  value: string;
+}) {
   const tone = ok ? "bg-primary" : warn ? "bg-amber-400" : "bg-destructive";
   return (
     <div className="flex items-center gap-3 rounded-sm border border-border bg-card/50 px-4 py-3">
-      <span className={`h-3 w-3 shrink-0 rounded-full ${tone} ${ok ? "animate-pulse" : ""}`} aria-hidden />
+      <span
+        className={`h-3 w-3 shrink-0 rounded-full ${tone} ${ok ? "animate-pulse" : ""}`}
+        aria-hidden
+      />
       <div className="min-w-0">
-        <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          {label}
+        </p>
         <p className="truncate text-sm font-medium text-foreground">{value}</p>
       </div>
     </div>
@@ -73,13 +87,16 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
     setModalOpen(true);
   }
 
-
   useEffect(() => setOrigin(window.location.origin), []);
 
   const joinLink = `${origin}/katil`;
 
   useEffect(() => {
-    QRCode.toDataURL(joinLink, { width: 420, margin: 1, color: { dark: "#e8ecff", light: "#00000000" } })
+    QRCode.toDataURL(joinLink, {
+      width: 420,
+      margin: 1,
+      color: { dark: "#e8ecff", light: "#00000000" },
+    })
       .then(setQr)
       .catch(() => setQr(""));
   }, [joinLink]);
@@ -113,7 +130,9 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
     <div className="rounded-sm border border-border bg-card/60 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">Kurulum sihirbazı</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+            Kurulum sihirbazı
+          </p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight">Ağınızı 3 adımda kurun</h2>
         </div>
         <span className="rounded-sm border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
@@ -126,7 +145,9 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
           ok={state.running && state.online}
           warn={state.running && !state.online}
           label="Ağ durumu"
-          value={state.running ? (state.online ? "Güvenli ve aktif" : "Çevrimdışı · kuyrukta") : "Kapalı"}
+          value={
+            state.running ? (state.online ? "Güvenli ve aktif" : "Çevrimdışı · kuyrukta") : "Kapalı"
+          }
         />
         <Light
           ok={quota.used > 1}
@@ -222,7 +243,6 @@ export function EasyConsole({ compact = false }: { compact?: boolean }) {
 
       <NetworkModal open={modalOpen} onOpenChange={setModalOpen} tab={modalTab} />
 
-
       {!compact && (
         <div className="mt-6 grid gap-6 border-t border-border/60 pt-6 md:grid-cols-[auto_1fr]">
           <div className="rounded-sm border border-border bg-background/60 p-4">
@@ -273,7 +293,9 @@ function WizardStep({
         <div className="flex gap-3">
           <span
             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-xs ${
-              done ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+              done
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground"
             }`}
           >
             {done ? "✓" : n}

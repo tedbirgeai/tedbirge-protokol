@@ -10,9 +10,6 @@ const StatusInput = z.object({
 
 const PlanInput = z.object({ leadId: z.string().uuid() });
 
-
-
-
 export const updateAiLeadStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => StatusInput.parse(input))
@@ -92,7 +89,6 @@ export const rebuildLeadPlan = createServerFn({ method: "POST" })
       dugum: lead.node_count,
       aciliyet: lead.urgency,
     });
-    
 
     await supabaseAdmin
       .from("ai_leads")

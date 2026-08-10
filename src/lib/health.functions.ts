@@ -7,5 +7,8 @@ export const getSystemHealth = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { computeHealth } = await import("@/lib/health.server");
     const { data: licenses } = await context.supabase.from("licenses").select("id");
-    return computeHealth(context.supabase as never, (licenses ?? []).map((l) => l.id));
+    return computeHealth(
+      context.supabase as never,
+      (licenses ?? []).map((l) => l.id),
+    );
   });

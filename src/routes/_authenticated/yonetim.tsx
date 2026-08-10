@@ -10,15 +10,14 @@ import { INTEROP_TARGETS } from "@/lib/interop";
 import { AdminBusinessPlan } from "@/components/site/AdminBusinessPlan";
 import { AdminInterop } from "@/components/site/AdminInterop";
 
-
-
 export const Route = createFileRoute("/_authenticated/yonetim")({
   head: () => ({
     meta: [
       { title: "Yönetim — Pilot Başvuruları | Tedbirge" },
       {
         name: "description",
-        content: "Tedbirge yönetim ekranı: pilot başvurularını inceleyin, durum güncelleyin ve lisansları takip edin.",
+        content:
+          "Tedbirge yönetim ekranı: pilot başvurularını inceleyin, durum güncelleyin ve lisansları takip edin.",
       },
       { property: "og:title", content: "Tedbirge Yönetim Ekranı" },
       { property: "og:description", content: "Pilot başvuruları ve lisans yönetimi." },
@@ -81,7 +80,6 @@ function Admin() {
   const updateStatusFn = useServerFn(updateAiLeadStatus);
   const rebuildPlanFn = useServerFn(rebuildLeadPlan);
 
-
   useEffect(() => {
     if (!isAdmin) return;
     supabase
@@ -125,8 +123,6 @@ function Admin() {
     }
   }
 
-
-
   async function updateStatus(id: string, status: string) {
     setRows((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
     await supabase.from("pilot_requests").update({ status }).eq("id", id);
@@ -135,7 +131,9 @@ function Admin() {
   if (roleLoading) {
     return (
       <SitePage>
-        <div className="mx-auto max-w-6xl px-6 py-20 text-sm text-muted-foreground">Yükleniyor…</div>
+        <div className="mx-auto max-w-6xl px-6 py-20 text-sm text-muted-foreground">
+          Yükleniyor…
+        </div>
       </SitePage>
     );
   }
@@ -170,15 +168,15 @@ function Admin() {
                 : tab === "interop"
                   ? "El sıkışma haritası"
                   : "İdari belgeler & dilekçeler"}
-
         </h1>
-
 
         <div className="mt-6 flex gap-2 border-b border-border/60 pb-4">
           <button
             onClick={() => setTab("pilot")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "pilot" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+              tab === "pilot"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground"
             }`}
           >
             Pilot formu ({rows.length})
@@ -186,7 +184,9 @@ function Admin() {
           <button
             onClick={() => setTab("ai")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "ai" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+              tab === "ai"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground"
             }`}
           >
             AI talepleri ({leads.length})
@@ -194,7 +194,9 @@ function Admin() {
           <button
             onClick={() => setTab("docs")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "docs" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+              tab === "docs"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground"
             }`}
           >
             İdari dilekçeler ({OFFICIAL_DRAFTS.length})
@@ -202,7 +204,9 @@ function Admin() {
           <button
             onClick={() => setTab("interop")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "interop" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+              tab === "interop"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground"
             }`}
           >
             El sıkışma ({INTEROP_TARGETS.length})
@@ -210,7 +214,9 @@ function Admin() {
           <button
             onClick={() => setTab("plan")}
             className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-              tab === "plan" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+              tab === "plan"
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground"
             }`}
           >
             İş planı
@@ -223,7 +229,6 @@ function Admin() {
           <AdminInterop />
         ) : tab === "docs" ? (
           <AdminOfficialDrafts />
-
         ) : tab === "ai" ? (
           leads.length === 0 ? (
             <p className="mt-8 text-sm text-muted-foreground">
@@ -306,67 +311,68 @@ function Admin() {
             </div>
           )
         ) : (
-        <>
-        <div className="mt-6 flex flex-wrap gap-2">
+          <>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {["all", ...statuses].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
+                    filter === s
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border text-muted-foreground"
+                  }`}
+                >
+                  {s === "all" ? `Tümü (${rows.length})` : statusLabels[s]}
+                </button>
+              ))}
+            </div>
 
-          {["all", ...statuses].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.15em] ${
-                filter === s
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border text-muted-foreground"
-              }`}
-            >
-              {s === "all" ? `Tümü (${rows.length})` : statusLabels[s]}
-            </button>
-          ))}
-        </div>
-
-        {loading ? (
-          <p className="mt-8 text-sm text-muted-foreground">Yükleniyor…</p>
-        ) : visible.length === 0 ? (
-          <p className="mt-8 text-sm text-muted-foreground">Kayıt yok.</p>
-        ) : (
-          <div className="mt-8 space-y-4">
-            {visible.map((r) => (
-              <div key={r.id} className="rounded-sm border border-border bg-card/50 p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <p className="font-medium">{r.full_name} · {r.organization}</p>
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">
-                      {r.email}
-                      {r.phone ? ` · ${r.phone}` : ""}
-                      {r.node_count ? ` · ${r.node_count} düğüm` : ""}
-                      {r.carrier ? ` · ${r.carrier}` : ""}
+            {loading ? (
+              <p className="mt-8 text-sm text-muted-foreground">Yükleniyor…</p>
+            ) : visible.length === 0 ? (
+              <p className="mt-8 text-sm text-muted-foreground">Kayıt yok.</p>
+            ) : (
+              <div className="mt-8 space-y-4">
+                {visible.map((r) => (
+                  <div key={r.id} className="rounded-sm border border-border bg-card/50 p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="font-medium">
+                          {r.full_name} · {r.organization}
+                        </p>
+                        <p className="mt-1 font-mono text-xs text-muted-foreground">
+                          {r.email}
+                          {r.phone ? ` · ${r.phone}` : ""}
+                          {r.node_count ? ` · ${r.node_count} düğüm` : ""}
+                          {r.carrier ? ` · ${r.carrier}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          {new Date(r.created_at).toLocaleString("tr-TR")}
+                        </span>
+                        <select
+                          value={r.status}
+                          onChange={(e) => updateStatus(r.id, e.target.value)}
+                          className="rounded-sm border border-border bg-background px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em]"
+                        >
+                          {statuses.map((s) => (
+                            <option key={s} value={s}>
+                              {statusLabels[s]}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                      {r.use_case}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      {new Date(r.created_at).toLocaleString("tr-TR")}
-                    </span>
-                    <select
-                      value={r.status}
-                      onChange={(e) => updateStatus(r.id, e.target.value)}
-                      className="rounded-sm border border-border bg-background px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em]"
-                    >
-                      {statuses.map((s) => (
-                        <option key={s} value={s}>
-                          {statusLabels[s]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                  {r.use_case}
-                </p>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-        </>
+            )}
+          </>
         )}
       </section>
     </SitePage>
@@ -388,8 +394,7 @@ function downloadDraft(id: string, title: string, body: string) {
 function printDraft(title: string, body: string) {
   const w = window.open("", "_blank", "width=820,height=900");
   if (!w) return;
-  const esc = (s: string) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   w.document.write(
     `<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>${esc(title)}</title>` +
       `<style>body{font-family:Georgia,serif;line-height:1.6;padding:40px;max-width:800px;margin:auto;}` +
@@ -402,11 +407,9 @@ function printDraft(title: string, body: string) {
 }
 
 function AdminOfficialDrafts() {
-
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="mt-8">
-
       <SectionLabel>Yalnızca yönetici</SectionLabel>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight">
         İdari Belgeler &amp; Dilekçe Taslakları
@@ -470,4 +473,3 @@ function AdminOfficialDrafts() {
     </div>
   );
 }
-

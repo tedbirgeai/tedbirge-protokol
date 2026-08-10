@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  createDevice,
-  createFieldReport,
-  updateFieldReport,
-} from "@/lib/devices.functions";
+import { createDevice, createFieldReport, updateFieldReport } from "@/lib/devices.functions";
 import { friendlyError, normalizeNodeId } from "@/lib/friendly-error";
-
 
 const REGIONS = ["TR", "EU", "US", "UK", "GCC", "APAC", "JP", "OTHER"] as const;
 const CARRIERS = [
@@ -92,7 +87,6 @@ export function NodeCreator({
     }
   }
 
-
   if (licenses.length === 0) return null;
 
   return (
@@ -111,7 +105,6 @@ export function NodeCreator({
         dolduğunda ya da o düğümü kalıcı olarak kullanmayacaksanız gerekir. Aynı adı tekrar
         kullanmak isterseniz önce eskisini silin.
       </p>
-
 
       <form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-2">
         {licenses.length > 1 && (
@@ -348,7 +341,9 @@ export function FieldReports({
     load();
     const channel = supabase
       .channel("field-reports-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "field_reports" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "field_reports" }, () =>
+        load(),
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

@@ -47,16 +47,12 @@ import {
   resolveClaimedName,
   resolveNickname,
   resolvePhoneHash,
-
   personGroupKey,
   mergeGroupsByName,
   isSelfPerson,
   writeNickname,
   writePhoneHash,
-
 } from "@/lib/chat/name-resolver";
-
-
 
 /** Karıştırılabilir harf/rakam (I, L, O, U) çıkarılmış Crockford Base32. */
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -102,7 +98,6 @@ export function setNickname(peerId: string, name: string) {
   writeNickname(peerId, name);
   void refreshContacts();
 }
-
 
 /* ------------------------------- model ------------------------------- */
 
@@ -181,8 +176,6 @@ function buildContact(
   };
 }
 
-
-
 /**
  * Aynı kişiye ait cihazları tek karta indirir: en son görülen cihaz
  * birincil olur, diğerleri linkedNodes listesinde saklanır.
@@ -212,8 +205,6 @@ function collapsePersons(rows: Contact[]): Contact[] {
     (bucket) => bucket.find((c) => c.phoneHash)?.phoneHash,
   );
 
-
-
   const out: Contact[] = [];
   for (const bucket of groups.values()) {
     const sorted = [...bucket].sort((a, b) => b.lastSeen - a.lastSeen);
@@ -224,7 +215,8 @@ function collapsePersons(rows: Contact[]): Contact[] {
       primary.linkedNodes = linked.map((c) => c.peerId);
       // Ad yalnızca bir cihazda kayıtlıysa tüm karta yansısın.
       if (!primary.nickname) primary.nickname = linked.find((c) => c.nickname)?.nickname;
-      if (!primary.claimedName) primary.claimedName = linked.find((c) => c.claimedName)?.claimedName;
+      if (!primary.claimedName)
+        primary.claimedName = linked.find((c) => c.claimedName)?.claimedName;
       primary.displayName = primary.nickname || primary.claimedName || "";
       // Doğrulama rozeti kartın en güçlü halkasını gösterir; bir cihaz elle
       // onaylanmışsa kişi "Manuel onaylı" görünür.
@@ -248,7 +240,6 @@ function collapsePersons(rows: Contact[]): Contact[] {
         // aynı kişi hiçbir koşulda iki karta bölünmez.
         if (hash) writePhoneHash(contact.peerId, hash);
       }
-
     }
 
     out.push(primary);
@@ -266,7 +257,6 @@ function collapsePersons(rows: Contact[]): Contact[] {
       }),
   );
 }
-
 
 /** Rehberi IndexedDB + yerel adlardan yeniden kurar. */
 export async function refreshContacts(): Promise<Contact[]> {
@@ -354,7 +344,6 @@ export function contactForPerson(id: string): Contact | undefined {
     (c) => c.peerId === id || c.personId === id || c.linkedNodes?.includes(id),
   );
 }
-
 
 export function useContacts(): ContactsState {
   return useSyncExternalStore(

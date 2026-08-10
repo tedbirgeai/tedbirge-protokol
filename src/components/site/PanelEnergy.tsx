@@ -79,12 +79,14 @@ export function PanelEnergy({ licenseKey }: { licenseKey?: string }) {
         <p className={label}>Katman 12 · Enerji ve saha donanımı</p>
         <h2 className="mt-2 text-xl font-semibold tracking-tight">Saha enerji köprüsü</h2>
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          Sahadaki güneş şarj kontrolcüsü, hibrit invertör/akü paketi ve konum alıcısı USB
-          üzerinden doğrudan tarayıcıya bağlanır. Köprü <strong className="text-foreground">yalnızca
-          okur</strong>; hiçbir cihaza komut yazılmaz. Donanım yoksa hiçbir değer üretilmez.
+          Sahadaki güneş şarj kontrolcüsü, hibrit invertör/akü paketi ve konum alıcısı USB üzerinden
+          doğrudan tarayıcıya bağlanır. Köprü{" "}
+          <strong className="text-foreground">yalnızca okur</strong>; hiçbir cihaza komut yazılmaz.
+          Donanım yoksa hiçbir değer üretilmez.
         </p>
         <p className="mt-2 font-mono text-[11px] text-muted-foreground">
-          Web Serial: {supported.serial ? "destekleniyor" : "bu tarayıcıda yok (Chrome/Edge masaüstü)"} ·{" "}
+          Web Serial:{" "}
+          {supported.serial ? "destekleniyor" : "bu tarayıcıda yok (Chrome/Edge masaüstü)"} ·{" "}
           {list.length} kaynak bağlı
         </p>
 
@@ -146,7 +148,10 @@ export function PanelEnergy({ licenseKey }: { licenseKey?: string }) {
               <div className="mt-3 space-y-1 font-mono text-[11px] text-muted-foreground">
                 <Row k="Kare" v={String(s.frames)} />
                 <Row k="Panele yazım" v={String(s.uploaded)} />
-                <Row k="Son veri" v={s.lastFrameAt ? new Date(s.lastFrameAt).toLocaleTimeString("tr-TR") : "—"} />
+                <Row
+                  k="Son veri"
+                  v={s.lastFrameAt ? new Date(s.lastFrameAt).toLocaleTimeString("tr-TR") : "—"}
+                />
                 {s.lastLine && <Row k="Son satır" v={s.lastLine} />}
               </div>
               {s.error && <p className="mt-2 text-xs text-destructive">{s.error}</p>}
@@ -160,12 +165,18 @@ export function PanelEnergy({ licenseKey }: { licenseKey?: string }) {
           <p className={label}>Canlı ölçüm</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Metric k="Akü doluluk" v={reading.soc !== undefined ? `%${reading.soc}` : "—"} />
-            <Metric k="Akü gerilimi" v={reading.batteryV !== undefined ? `${reading.batteryV} V` : "—"} />
+            <Metric
+              k="Akü gerilimi"
+              v={reading.batteryV !== undefined ? `${reading.batteryV} V` : "—"}
+            />
             <Metric k="Panel gücü" v={reading.pvW !== undefined ? `${reading.pvW} W` : "—"} />
             <Metric k="Yük" v={reading.loadW !== undefined ? `${reading.loadW} W` : "—"} />
             <Metric k="Akım" v={reading.batteryA !== undefined ? `${reading.batteryA} A` : "—"} />
             <Metric k="Sıcaklık" v={reading.tempC !== undefined ? `${reading.tempC} °C` : "—"} />
-            <Metric k="Kalan çalışma" v={runtimeH !== null ? `${runtimeH} sa` : "şarjda / hesaplanamıyor"} />
+            <Metric
+              k="Kalan çalışma"
+              v={runtimeH !== null ? `${runtimeH} sa` : "şarjda / hesaplanamıyor"}
+            />
             <Metric k="Önerilen rol" v={`${ROLE_TEXT[role.role]}`} />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">{role.reason}</p>
@@ -183,7 +194,8 @@ export function PanelEnergy({ licenseKey }: { licenseKey?: string }) {
                         : "border-border text-muted-foreground"
                   }`}
                 >
-                  <span className="font-mono uppercase tracking-[0.15em]">{a.level}</span> · {a.text}
+                  <span className="font-mono uppercase tracking-[0.15em]">{a.level}</span> ·{" "}
+                  {a.text}
                 </li>
               ))}
             </ul>
@@ -214,7 +226,12 @@ export function PanelEnergy({ licenseKey }: { licenseKey?: string }) {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Field k="Panel gücü (Wp)" v={design.panelWp} on={setNum("panelWp")} />
-          <Field k="Günlük güneşlenme (sa)" v={design.sunHours} on={setNum("sunHours")} step="0.1" />
+          <Field
+            k="Günlük güneşlenme (sa)"
+            v={design.sunHours}
+            on={setNum("sunHours")}
+            step="0.1"
+          />
           <Field k="Akü gerilimi (V)" v={design.batteryV} on={setNum("batteryV")} step="0.1" />
           <Field k="Akü kapasitesi (Ah)" v={design.batteryAh} on={setNum("batteryAh")} />
           <Field k="Deşarj derinliği (%)" v={design.dodPct} on={setNum("dodPct")} />
@@ -333,7 +350,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{k}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {k}
+      </span>
       <input
         className={`${input} mt-1`}
         type="number"

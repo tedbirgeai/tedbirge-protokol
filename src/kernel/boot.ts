@@ -80,6 +80,5 @@ export async function bootKernel(
   return booting;
 }
 
-
 // Kabuk bu modülü içe aktardığında çekirdek kendiliğinden açılır.
 void bootKernel();

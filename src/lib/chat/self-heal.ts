@@ -94,9 +94,8 @@ export async function runSelfHeal(): Promise<HealthReport> {
   // 4) Rehber otonom onarımı — mükerrer kişi kartları ve adsız hayalet
   // kayıtlar kullanıcı hiçbir şey yapmadan sessizce birleştirilir/temizlenir.
   try {
-    const { mergePersonDuplicates, pruneGhostContacts, pruneGhostConversations } = await import(
-      "@/lib/chat/merge"
-    );
+    const { mergePersonDuplicates, pruneGhostContacts, pruneGhostConversations } =
+      await import("@/lib/chat/merge");
     const { pruneCallLog } = await import("@/lib/chat/call-log");
     const merged = await mergePersonDuplicates();
     const pruned = await pruneGhostContacts();
@@ -122,14 +121,14 @@ export async function runSelfHeal(): Promise<HealthReport> {
     if (typeof Notification !== "undefined" && Notification.permission === "denied") {
       issues.push({
         title: "Bildirimler kapalı",
-        advice: "Tarayıcı ayarlarından bildirimlere izin verin; aksi halde gelen aramayı duymazsınız.",
+        advice:
+          "Tarayıcı ayarlarından bildirimlere izin verin; aksi halde gelen aramayı duymazsınız.",
         repaired: false,
       });
     }
   } catch {
     /* bildirim API'si yok — sorun değil */
   }
-
 
   // Kendiliğinden onarılan maddeler "sorun" sayılmaz; kullanıcıya yalnızca
   // bilgi olarak görünür.

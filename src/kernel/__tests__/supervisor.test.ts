@@ -61,9 +61,12 @@ describe("kernel supervisor", () => {
 
   it("rota hesabı çökerse boş yol döner", () => {
     const k = supervise(
-      makeKernel(async () => true, () => {
-        throw new Error("çöktü");
-      }),
+      makeKernel(
+        async () => true,
+        () => {
+          throw new Error("çöktü");
+        },
+      ),
       { delayMs: 0 },
     );
     expect(k.route("a")).toEqual([]);

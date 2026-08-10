@@ -44,23 +44,21 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     return;
   }
 
-  await getSupabase()
-    .from("subscriptions")
-    .upsert(
-      {
-        user_id: userId,
-        paddle_subscription_id: id,
-        paddle_customer_id: customerId,
-        product_id: productId,
-        price_id: priceId,
-        status,
-        current_period_start: currentBillingPeriod?.startsAt,
-        current_period_end: currentBillingPeriod?.endsAt,
-        environment: env,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "paddle_subscription_id" },
-    );
+  await getSupabase().from("subscriptions").upsert(
+    {
+      user_id: userId,
+      paddle_subscription_id: id,
+      paddle_customer_id: customerId,
+      product_id: productId,
+      price_id: priceId,
+      status,
+      current_period_start: currentBillingPeriod?.startsAt,
+      current_period_end: currentBillingPeriod?.endsAt,
+      environment: env,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "paddle_subscription_id" },
+  );
 
   const { data: existing } = await getSupabase()
     .from("licenses")
@@ -123,7 +121,6 @@ async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
       .eq("provider_subscription_id", id);
   }
 }
-
 
 async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
   await getSupabase()

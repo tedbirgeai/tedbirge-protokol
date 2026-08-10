@@ -48,7 +48,10 @@ export function GlobalMeshMap({ devices }: { devices: MapDevice[] }) {
   const [selected, setSelected] = useState<string | null>(null);
 
   const clusters = useMemo(() => {
-    const map = new Map<string, { code: string; total: number; online: number; carriers: Set<string> }>();
+    const map = new Map<
+      string,
+      { code: string; total: number; online: number; carriers: Set<string> }
+    >();
     for (const d of devices) {
       const code = REGION_CENTERS[d.region] ? d.region : "OTHER";
       const c = map.get(code) ?? { code, total: 0, online: 0, carriers: new Set<string>() };
@@ -70,7 +73,9 @@ export function GlobalMeshMap({ devices }: { devices: MapDevice[] }) {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Küresel mesh haritası
           </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">Bölge kümeleri · anonim ızgara</h2>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight">
+            Bölge kümeleri · anonim ızgara
+          </h2>
         </div>
         <span className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
           KVKK · konum yalnızca bölge seviyesinde
@@ -86,10 +91,26 @@ export function GlobalMeshMap({ devices }: { devices: MapDevice[] }) {
         >
           {/* Enlem/boylam ızgarası — kaba konum çözünürlüğünü görselleştirir */}
           {Array.from({ length: 13 }, (_, i) => (i * W) / 12).map((x) => (
-            <line key={`v${x}`} x1={x} y1={0} x2={x} y2={H} className="stroke-border/40" strokeWidth="0.5" />
+            <line
+              key={`v${x}`}
+              x1={x}
+              y1={0}
+              x2={x}
+              y2={H}
+              className="stroke-border/40"
+              strokeWidth="0.5"
+            />
           ))}
           {Array.from({ length: 7 }, (_, i) => (i * H) / 6).map((y) => (
-            <line key={`h${y}`} x1={0} y1={y} x2={W} y2={y} className="stroke-border/40" strokeWidth="0.5" />
+            <line
+              key={`h${y}`}
+              x1={0}
+              y1={y}
+              x2={W}
+              y2={y}
+              className="stroke-border/40"
+              strokeWidth="0.5"
+            />
           ))}
 
           {clusters.map((c) => {
@@ -104,11 +125,27 @@ export function GlobalMeshMap({ devices }: { devices: MapDevice[] }) {
                 onClick={() => setSelected(selected === c.code ? null : c.code)}
               >
                 {/* Yaklaşık yarıçap sapması — tam konum değil, belirsizlik alanı */}
-                <circle cx={x} cy={y} r={r + 16} className="fill-primary/5 stroke-primary/20" strokeDasharray="3 5" />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={r + 16}
+                  className="fill-primary/5 stroke-primary/20"
+                  strokeDasharray="3 5"
+                />
                 {live && (
                   <circle cx={x} cy={y} r={r} className="fill-primary/20">
-                    <animate attributeName="r" values={`${r};${r + 12};${r}`} dur="3s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" repeatCount="indefinite" />
+                    <animate
+                      attributeName="r"
+                      values={`${r};${r + 12};${r}`}
+                      dur="3s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.6;0;0.6"
+                      dur="3s"
+                      repeatCount="indefinite"
+                    />
                   </circle>
                 )}
                 <circle
@@ -118,7 +155,12 @@ export function GlobalMeshMap({ devices }: { devices: MapDevice[] }) {
                   className={live ? "fill-primary" : "fill-muted stroke-border"}
                   strokeWidth="1"
                 />
-                <text x={x} y={y + 4} textAnchor="middle" className="fill-background font-mono text-[11px] font-bold">
+                <text
+                  x={x}
+                  y={y + 4}
+                  textAnchor="middle"
+                  className="fill-background font-mono text-[11px] font-bold"
+                >
                   {c.total}
                 </text>
                 <text
@@ -145,17 +187,20 @@ export function GlobalMeshMap({ devices }: { devices: MapDevice[] }) {
         {active ? (
           <p>
             <span className="font-medium text-foreground">
-              Bu bölgede ({REGION_CENTERS[active.code].name}) {active.online} aktif Tedbirge düğümü mevcut
+              Bu bölgede ({REGION_CENTERS[active.code].name}) {active.online} aktif Tedbirge düğümü
+              mevcut
             </span>{" "}
             <span className="text-muted-foreground">
               — toplam {active.total} kayıtlı düğüm · şifreli overlay aktif ·{" "}
-              {active.carriers.size ? `${active.carriers.size} taşıyıcı türü` : "taşıyıcı beyanı yok"}
+              {active.carriers.size
+                ? `${active.carriers.size} taşıyıcı türü`
+                : "taşıyıcı beyanı yok"}
             </span>
           </p>
         ) : (
           <p className="text-muted-foreground">
-            Bir bölge kümesine tıklayın. Tam GPS koordinatı, IP veya adres hiçbir zaman saklanmaz ve gösterilmez;
-            gösterim yalnızca kaba bölge kodu üzerinden yapılır.
+            Bir bölge kümesine tıklayın. Tam GPS koordinatı, IP veya adres hiçbir zaman saklanmaz ve
+            gösterilmez; gösterim yalnızca kaba bölge kodu üzerinden yapılır.
           </p>
         )}
       </div>

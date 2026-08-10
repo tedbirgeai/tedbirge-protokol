@@ -178,9 +178,9 @@ function PilotBoard() {
             Kontrol listesi, kanıt zinciri ve PDF raporu tek ekranda
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tüm veriler yalnızca bu cihazın tarayıcısında saklanır; sunucuya hiçbir dosya
-            yüklenmez. Kanıt dosyaları yüklenmez, SHA-256 karmaları hesaplanıp zincire işlenir —
-            dosyanın kendisi sizde kalır, bütünlüğü kanıtlanabilir.
+            Tüm veriler yalnızca bu cihazın tarayıcısında saklanır; sunucuya hiçbir dosya yüklenmez.
+            Kanıt dosyaları yüklenmez, SHA-256 karmaları hesaplanıp zincire işlenir — dosyanın
+            kendisi sizde kalır, bütünlüğü kanıtlanabilir.
           </p>
         </div>
       </section>
@@ -296,7 +296,9 @@ function PilotBoard() {
           const items = pilotChecklist.filter((i) => i.group === group);
           return (
             <div key={group} className="mt-12 first:mt-0">
-              <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-primary">{group}</h2>
+              <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-primary">
+                {group}
+              </h2>
               <div className="mt-4 space-y-px overflow-hidden rounded-sm border border-border bg-border">
                 {items.map((item) => (
                   <Row
@@ -373,7 +375,9 @@ function Row({
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <span className={`font-mono text-[11px] uppercase tracking-[0.15em] ${statusClass[e.status]}`}>
+          <span
+            className={`font-mono text-[11px] uppercase tracking-[0.15em] ${statusClass[e.status]}`}
+          >
             {statusLabels[e.status]}
           </span>
           <select

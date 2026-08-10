@@ -70,7 +70,8 @@ const tests: Row[] = [
     carrier: "FSO lazer optik",
     radio: "Spektrum testi yok — optik bant",
     emc: "EN 55032/55035 (elektronik kısım)",
-    safety: "IEC/EN 60825-1 lazer sınıflandırması (Class 1/1M hedef) · FDA/CDRH 21 CFR 1040.10 bildirimi (ABD)",
+    safety:
+      "IEC/EN 60825-1 lazer sınıflandırması (Class 1/1M hedef) · FDA/CDRH 21 CFR 1040.10 bildirimi (ABD)",
     extra: "Görüş hattı link bütçesi, sis/yağmur zayıflama doğrulaması, otomatik güç kapatma (APR)",
   },
   {
@@ -85,7 +86,8 @@ const tests: Row[] = [
     radio: "EN 301 598 (beyaz alan cihazı) · FCC Part 15 Subpart H",
     emc: "EN 301 489-1",
     safety: "EN 62368-1",
-    extra: "Geolokasyon veri tabanı bağlantısı zorunlu · komşu kanal koruma oranı testi · ulusal koordinasyon (TR'de çerçeve yok)",
+    extra:
+      "Geolokasyon veri tabanı bağlantısı zorunlu · komşu kanal koruma oranı testi · ulusal koordinasyon (TR'de çerçeve yok)",
   },
   {
     carrier: "LoRa 868 / 915 MHz",
@@ -105,20 +107,70 @@ const tests: Row[] = [
 ];
 
 const approvals = [
-  { r: "Türkiye", body: "BTK / TSE", mark: "CE + BTK piyasa gözetimi", note: "RED 2014/53/EU uyumlaştırılmış; sub-GHz 868 MHz SRD, 915 MHz kapalı" },
-  { r: "Avrupa Birliği", body: "Notified Body / öz beyan", mark: "CE (RED)", note: "Uyumlaştırılmış standart kullanılmazsa NB dosyası zorunlu" },
-  { r: "Birleşik Krallık", body: "Approved Body", mark: "UKCA", note: "Ofcom IR 2030 arayüz gereksinimleri" },
-  { r: "ABD", body: "TCB + FCC ID", mark: "FCC Part 15", note: "Kasıtlı yayıcı için sertifikasyon, kablolu için SDoC" },
+  {
+    r: "Türkiye",
+    body: "BTK / TSE",
+    mark: "CE + BTK piyasa gözetimi",
+    note: "RED 2014/53/EU uyumlaştırılmış; sub-GHz 868 MHz SRD, 915 MHz kapalı",
+  },
+  {
+    r: "Avrupa Birliği",
+    body: "Notified Body / öz beyan",
+    mark: "CE (RED)",
+    note: "Uyumlaştırılmış standart kullanılmazsa NB dosyası zorunlu",
+  },
+  {
+    r: "Birleşik Krallık",
+    body: "Approved Body",
+    mark: "UKCA",
+    note: "Ofcom IR 2030 arayüz gereksinimleri",
+  },
+  {
+    r: "ABD",
+    body: "TCB + FCC ID",
+    mark: "FCC Part 15",
+    note: "Kasıtlı yayıcı için sertifikasyon, kablolu için SDoC",
+  },
   { r: "Kanada", body: "CB / ISED", mark: "IC ID", note: "RSS-247, RSS-Gen, ICES-003" },
-  { r: "Japonya", body: "MIC kayıtlı sertifikasyon kurumu", mark: "Giteki (技適)", note: "920 MHz LBT zorunlu; onaysız RF kullanımı suç" },
+  {
+    r: "Japonya",
+    body: "MIC kayıtlı sertifikasyon kurumu",
+    mark: "Giteki (技適)",
+    note: "920 MHz LBT zorunlu; onaysız RF kullanımı suç",
+  },
   { r: "Güney Kore", body: "RRA", mark: "KC", note: "917–923.5 MHz ISM" },
-  { r: "Çin", body: "SRRC + CCC", mark: "SRRC / CMIIT ID", note: "470–510 MHz ve 779–787 MHz; 868 MHz yasak" },
-  { r: "Hindistan", body: "TEC / WPC", mark: "MTCTE + ETA", note: "865–867 MHz lisanssız; şifreleme kısıtları takip edilmeli" },
+  {
+    r: "Çin",
+    body: "SRRC + CCC",
+    mark: "SRRC / CMIIT ID",
+    note: "470–510 MHz ve 779–787 MHz; 868 MHz yasak",
+  },
+  {
+    r: "Hindistan",
+    body: "TEC / WPC",
+    mark: "MTCTE + ETA",
+    note: "865–867 MHz lisanssız; şifreleme kısıtları takip edilmeli",
+  },
   { r: "Brezilya", body: "ANATEL", mark: "Homologação", note: "902–907.5 / 915–928 MHz" },
   { r: "Avustralya / YZ", body: "ACMA / RSM", mark: "RCM", note: "915–928 MHz LIPD class licence" },
-  { r: "Körfez", body: "TDRA (BAE) · CST (S.A.)", mark: "Yerel tip onayı", note: "CE dosyası kabul edilir, yerel kayıt şart" },
-  { r: "Güney Afrika", body: "ICASA", mark: "ICASA TA", note: "868 MHz SRD; TVWS pilot çerçevesi mevcut" },
-  { r: "Rusya / EAEU", body: "GKRCh", mark: "EAC", note: "868.7–869.2 MHz; kripto için FSB bildirimi" },
+  {
+    r: "Körfez",
+    body: "TDRA (BAE) · CST (S.A.)",
+    mark: "Yerel tip onayı",
+    note: "CE dosyası kabul edilir, yerel kayıt şart",
+  },
+  {
+    r: "Güney Afrika",
+    body: "ICASA",
+    mark: "ICASA TA",
+    note: "868 MHz SRD; TVWS pilot çerçevesi mevcut",
+  },
+  {
+    r: "Rusya / EAEU",
+    body: "GKRCh",
+    mark: "EAC",
+    note: "868.7–869.2 MHz; kripto için FSB bildirimi",
+  },
 ];
 
 const gaps = [
@@ -170,9 +222,9 @@ function Certification() {
             Her taşıyıcının geçmesi gereken testler ve dünya genelindeki onay rejimleri
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-            Lisanssız olmak "test gerekmez" demek değildir. Aşağıda her taşıyıcı için radyo,
-            EMC, güvenlik ve kripto test setleri; ardından ülke bazlı onay makamları ve
-            henüz kapsamadığımız taşıyıcı boşlukları listelenir.
+            Lisanssız olmak "test gerekmez" demek değildir. Aşağıda her taşıyıcı için radyo, EMC,
+            güvenlik ve kripto test setleri; ardından ülke bazlı onay makamları ve henüz
+            kapsamadığımız taşıyıcı boşlukları listelenir.
           </p>
         </div>
       </section>
@@ -205,9 +257,9 @@ function Certification() {
           </table>
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Tüm RF taşıyıcılar için ortak taban: RED 2014/53/EU Md. 3.1(a) güvenlik, 3.1(b) EMC,
-          3.2 spektrum verimliliği ve 2022/30 sayılı delege tüzük ile zorunlu hâle gelen
-          3.3(d/e/f) siber güvenlik gereklilikleri (EN 18031-1/-2/-3).
+          Tüm RF taşıyıcılar için ortak taban: RED 2014/53/EU Md. 3.1(a) güvenlik, 3.1(b) EMC, 3.2
+          spektrum verimliliği ve 2022/30 sayılı delege tüzük ile zorunlu hâle gelen 3.3(d/e/f)
+          siber güvenlik gereklilikleri (EN 18031-1/-2/-3).
         </p>
       </section>
 
@@ -273,8 +325,8 @@ function Certification() {
           </ul>
           <p className="mt-8 text-xs text-muted-foreground">
             Bu sayfa bilgilendirme amaçlıdır ve hukuki görüş değildir. Konuşlanmadan önce ilgili
-            ulusal düzenleyicinin yürürlükteki metni ve akredite test laboratuvarının kapsam
-            belgesi esas alınmalıdır.
+            ulusal düzenleyicinin yürürlükteki metni ve akredite test laboratuvarının kapsam belgesi
+            esas alınmalıdır.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <Link

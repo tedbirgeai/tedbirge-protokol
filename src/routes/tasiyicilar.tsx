@@ -163,7 +163,6 @@ const carriers: Carrier[] = [
   },
 ];
 
-
 const statusLabel: Record<Carrier["status"], string> = {
   ACTIVE: "Üretimde aktif",
   INTERFACE: "Sürücü arayüzü hazır",
@@ -196,9 +195,10 @@ function Carriers() {
             On taşıyıcı, tek yönlendirici
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
-            Tedbirge Protokol her bağlantıyı <span className="text-foreground">RTT × taşıyıcı ağırlığı</span>{" "}
-            maliyetiyle puanlar ve en ucuz yolu Dijkstra ile seçer. Bir taşıyıcı düşerse trafik
-            kesintisiz olarak bir sonrakine devreder.
+            Tedbirge Protokol her bağlantıyı{" "}
+            <span className="text-foreground">RTT × taşıyıcı ağırlığı</span> maliyetiyle puanlar ve
+            en ucuz yolu Dijkstra ile seçer. Bir taşıyıcı düşerse trafik kesintisiz olarak bir
+            sonrakine devreder.
           </p>
           <input
             value={q}
@@ -260,9 +260,9 @@ function Carriers() {
             Kendi modemini bağla — direk dikmeden
           </h2>
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Hibrit model gereği donanım üretmiyoruz. Elinizde hâlihazırda bulunan LoRa, HaLow,
-            TVWS, WiGig, FSO veya uydu modemini USB (Web Serial) ya da Bluetooth ile bağlayın;
-            gerçek RSSI/SNR ölçümü okunur ve o taşıyıcı panoda aktif olur.
+            Hibrit model gereği donanım üretmiyoruz. Elinizde hâlihazırda bulunan LoRa, HaLow, TVWS,
+            WiGig, FSO veya uydu modemini USB (Web Serial) ya da Bluetooth ile bağlayın; gerçek
+            RSSI/SNR ölçümü okunur ve o taşıyıcı panoda aktif olur.
           </p>
           <div className="mt-8">
             <CarrierBridgeCard />
@@ -277,10 +277,10 @@ function Carriers() {
             Zero-KVKK efemer RF çerçeveleme
           </h2>
           <p className="mt-4 text-muted-foreground">
-            RF ve seri taşıyıcılarda IP/MAC hiç kullanılmaz. Çerçeve; 1 bayt sihirli bayrak,
-            60 saniyede bir dönen 8 baytlık hedef özeti, 12 baytlık AES nonce ve AES-256-GCM
-            yükünden oluşur. Röle düğümleri hedefi ilişkilendiremez; taşıma katmanında kişisel
-            veri açığa çıkmaz.
+            RF ve seri taşıyıcılarda IP/MAC hiç kullanılmaz. Çerçeve; 1 bayt sihirli bayrak, 60
+            saniyede bir dönen 8 baytlık hedef özeti, 12 baytlık AES nonce ve AES-256-GCM yükünden
+            oluşur. Röle düğümleri hedefi ilişkilendiremez; taşıma katmanında kişisel veri açığa
+            çıkmaz.
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
             Uyarı: taşıma katmanı anonimliği, uygulama katmanındaki KVKK/GDPR yükümlülüklerini

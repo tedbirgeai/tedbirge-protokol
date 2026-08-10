@@ -23,7 +23,12 @@ export function usePanelRole(userId?: string) {
     setLoading(true);
     (async () => {
       const [{ data: platform }, { data: memberships }] = await Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle(),
         supabase.from("organization_members").select("role").eq("user_id", userId),
       ]);
       if (!active) return;

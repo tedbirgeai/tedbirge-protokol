@@ -78,13 +78,7 @@ const LAN_ANNOUNCE_MS = 3_000;
  * store-and-forward hattına ASLA yazılmaz. Aksi halde eski ping/call/presence
  * paketleri her kuyruk turunda yeniden üretilerek röleyi kilitler.
  */
-const TRANSIENT_KINDS = new Set<EnvelopeKind>([
-  "ping",
-  "pong",
-  "signal",
-  "presence",
-  "session",
-]);
+const TRANSIENT_KINDS = new Set<EnvelopeKind>(["ping", "pong", "signal", "presence", "session"]);
 
 /**
  * Arama sinyali kalıcı sohbet verisi değildir; ancak doğrudan kanal kısa süreli
@@ -131,7 +125,6 @@ function lanSignalUrls(): string[] {
   return Array.from(urls);
 }
 
-
 /** Teslim hattındaki her sessiz hata Türkçe tek cümleyle günlüğe düşer. */
 async function logRelayIssue(message: string) {
   try {
@@ -153,7 +146,18 @@ export function setMeshAppHandler(fn: MeshAppHandler | null) {
 }
 
 /** Uygulama katmanına iletilecek paket türleri. */
-const APP_KINDS: EnvelopeKind[] = ["chat", "receipt", "call", "media", "sync", "presence", "session", "text", "alert", "app"];
+const APP_KINDS: EnvelopeKind[] = [
+  "chat",
+  "receipt",
+  "call",
+  "media",
+  "sync",
+  "presence",
+  "session",
+  "text",
+  "alert",
+  "app",
+];
 
 export type PeerInfo = {
   nodeId: string;
@@ -299,7 +303,8 @@ export function detectCarrier(): "wifi" | "cellular" | "ethernet" {
   if (type === "cellular") return "cellular";
   if (type === "ethernet") return "ethernet";
   if (type === "wifi") return "wifi";
-  if (conn?.effectiveType && ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) return "cellular";
+  if (conn?.effectiveType && ["slow-2g", "2g", "3g"].includes(conn.effectiveType))
+    return "cellular";
   return "wifi";
 }
 
@@ -342,7 +347,6 @@ export class BrowserNode {
     { devices: { nodeId: string; boxPublic: string }[]; until: number }
   >();
 
-
   private identity: Identity | null = null;
   /** PHY veri düzlemi köprüsü — IP yokken zarfları LoRa/HaLow'a yazar. */
   private carrierSend: ((raw: string, priority: Priority) => boolean) | null = null;
@@ -380,7 +384,10 @@ export class BrowserNode {
 
   private async refreshQueueCount() {
     const rows = await getPackets();
-    const oldest = rows.reduce<number | null>((min, r) => (min === null || r.ts < min ? r.ts : min), null);
+    const oldest = rows.reduce<number | null>(
+      (min, r) => (min === null || r.ts < min ? r.ts : min),
+      null,
+    );
     recordQueue(rows.length, oldest);
     this.emit({ queued: rows.length });
   }
@@ -444,7 +451,6 @@ export class BrowserNode {
     this.channel = supabase.channel(CHANNEL, {
       config: { broadcast: { self: false }, presence: { key: this.nodeId } },
     });
-
 
     this.channel
       .on("presence", { event: "sync" }, () => void this.dialNewPeers())
@@ -572,9 +578,7 @@ export class BrowserNode {
 
     const devices = await this.resolveDevices(to);
     if (!devices.length) {
-      void logRelayIssue(
-        "Karşı tarafın cihazı ağda hiç görünmedi; mesaj kuyrukta bekletiliyor.",
-      );
+      void logRelayIssue("Karşı tarafın cihazı ağda hiç görünmedi; mesaj kuyrukta bekletiliyor.");
       return false;
     }
 
@@ -626,9 +630,7 @@ export class BrowserNode {
    * Sonuç cihazda önbelleğe alınır: aynı hedef için saniyede onlarca dizin
    * sorgusu atılmaz, böylece bulut kotası boşa harcanmaz.
    */
-  private async resolveDevices(
-    to: string,
-  ): Promise<{ nodeId: string; boxPublic: string }[]> {
+  private async resolveDevices(to: string): Promise<{ nodeId: string; boxPublic: string }[]> {
     const now = Date.now();
     const cached = this.deviceCache.get(to);
     if (cached && cached.until > now) return cached.devices;
@@ -661,7 +663,6 @@ export class BrowserNode {
     }
     return devices;
   }
-
 
   /**
    * Çevrimiçi iki cihaz arasında, veri kanalı henüz kurulmamış olsa bile
@@ -738,7 +739,12 @@ export class BrowserNode {
   }
 
   private async onLocalMessage(raw: unknown) {
-    const msg = raw as { kind?: string; from?: string; to?: string; data?: Record<string, unknown> };
+    const msg = raw as {
+      kind?: string;
+      from?: string;
+      to?: string;
+      data?: Record<string, unknown>;
+    };
     if (!msg?.from || msg.from === this.nodeId) return;
 
     if (msg.kind === "announce") {
@@ -779,7 +785,11 @@ export class BrowserNode {
           continue;
         }
         ws.onopen = () => {
-          if (this.lanSocket && this.lanSocket !== ws && this.lanSocket.readyState === WebSocket.OPEN) {
+          if (
+            this.lanSocket &&
+            this.lanSocket !== ws &&
+            this.lanSocket.readyState === WebSocket.OPEN
+          ) {
             try {
               ws.close();
             } catch {
@@ -808,13 +818,15 @@ export class BrowserNode {
       }
     };
     tryConnect();
-    this.lanTimer = setInterval(() => {
-      tryConnect();
-      // Bağlıyken düzenli varlık duyurusu: yeni katılan cihaz 3 sn içinde bulunur.
-      if (this.lanSocket?.readyState === WebSocket.OPEN) announce(this.lanSocket);
-    }, Math.min(LAN_RETRY_MS, LAN_ANNOUNCE_MS));
+    this.lanTimer = setInterval(
+      () => {
+        tryConnect();
+        // Bağlıyken düzenli varlık duyurusu: yeni katılan cihaz 3 sn içinde bulunur.
+        if (this.lanSocket?.readyState === WebSocket.OPEN) announce(this.lanSocket);
+      },
+      Math.min(LAN_RETRY_MS, LAN_ANNOUNCE_MS),
+    );
   }
-
 
   private async onLanMessage(raw: string) {
     let msg: { kind?: string; from?: string; to?: string; data?: Record<string, unknown> };
@@ -839,7 +851,7 @@ export class BrowserNode {
   }
 
   stop() {
-    this.timer && clearInterval(this.timer);
+    if (this.timer) clearInterval(this.timer);
     this.timer = null;
     if (this.retryTimer) clearInterval(this.retryTimer);
     this.retryTimer = null;
@@ -1032,7 +1044,10 @@ export class BrowserNode {
       } else if (data.type === "ice" && data.candidate) {
         const entry = this.peers.get(remote);
         if (!entry?.pc.remoteDescription) {
-          this.pendingPeerIce.set(remote, [...(this.pendingPeerIce.get(remote) ?? []), data.candidate]);
+          this.pendingPeerIce.set(remote, [
+            ...(this.pendingPeerIce.get(remote) ?? []),
+            data.candidate,
+          ]);
         } else {
           await entry.pc.addIceCandidate(data.candidate);
         }
@@ -1138,7 +1153,11 @@ export class BrowserNode {
         this.emit({ rttMs: rtt });
       }
     } else if (env.h.kind === "signal") {
-      await this.onSignal({ from: env.h.from, to: this.nodeId, data: body as Record<string, unknown> });
+      await this.onSignal({
+        from: env.h.from,
+        to: this.nodeId,
+        data: body as Record<string, unknown>,
+      });
     } else if (APP_KINDS.includes(env.h.kind)) {
       appHandler?.(env.h.kind, env.h.from, body);
       if (env.h.kind === "telemetry") return;
@@ -1248,16 +1267,16 @@ export class BrowserNode {
       recordTx(false);
       // Kontrol paketleri gerçek zamanlıdır. Saklanmaları gecikme üretir,
       // eski çağrıları yeniden çaldırır ve ping/pong çoğalma döngüsü kurar.
-       if (TRANSIENT_KINDS.has(kind)) return false;
+      if (TRANSIENT_KINDS.has(kind)) return false;
       // Bulut yedek röle: alıcı kapalı olsa bile mesaj teslim edilmek üzere saklanır.
       if (await this.relayViaCloud(kind, to, payload, prio)) {
         recordTx(true);
         this.emit({});
         return true;
       }
-       // Arama sinyali çevrimdışı mesaj gibi yerel kalıcı kuyruğa yazılmaz;
-       // yalnız kısa ömürlü gerçek zamanlı/yedek röle yollarında denenir.
-       if (NEVER_ENQUEUE_KINDS.has(kind)) return false;
+      // Arama sinyali çevrimdışı mesaj gibi yerel kalıcı kuyruğa yazılmaz;
+      // yalnız kısa ömürlü gerçek zamanlı/yedek röle yollarında denenir.
+      if (NEVER_ENQUEUE_KINDS.has(kind)) return false;
       // flushQueue mevcut bir niyeti yeniden denerken ikinci bir kuyruk kaydı
       // üretmemelidir. Aksi halde her başarısız tur kuyruğu katlayarak büyütür.
       if (!allowEnqueue) return false;
@@ -1265,7 +1284,6 @@ export class BrowserNode {
       this.emit({ notice: TTL_EXHAUSTED_NOTICE });
       return false;
     }
-
 
     for (const target of targets) {
       const keys = this.peerKeys.get(target)!;
@@ -1295,7 +1313,9 @@ export class BrowserNode {
 
   private async enqueue(item: QueuedItem) {
     const pktId =
-      item.t === "fwd" ? item.env.h.pktId : `intent-${randomId("q").slice(2)}-${Date.now().toString(36)}`;
+      item.t === "fwd"
+        ? item.env.h.pktId
+        : `intent-${randomId("q").slice(2)}-${Date.now().toString(36)}`;
     const priority = item.t === "fwd" ? item.env.h.priority : item.priority;
     await putPacket({ pktId, priority, ts: Date.now(), attempts: 0, env: item });
     await pruneOutbox();
@@ -1422,7 +1442,6 @@ export class BrowserNode {
     }
   }
 
-
   private async postTelemetry(body: Record<string, unknown>) {
     if (this.demoMode) return false;
     try {
@@ -1460,7 +1479,9 @@ export class BrowserNode {
     if (!this.state.online) {
       // Bulut yok: eşler üzerinden röle dene, olmazsa kalıcı kuyruğa yaz.
       const relayed = await this.send("telemetry", "*", body, 3);
-      this.emit({ lastHeartbeatAt: relayed ? new Date().toISOString() : this.state.lastHeartbeatAt });
+      this.emit({
+        lastHeartbeatAt: relayed ? new Date().toISOString() : this.state.lastHeartbeatAt,
+      });
       return;
     }
 

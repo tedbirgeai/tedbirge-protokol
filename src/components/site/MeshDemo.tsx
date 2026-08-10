@@ -69,7 +69,6 @@ export function MeshDemo() {
     setMounted(true);
   }, []);
 
-
   const path: NodeId[] | null = useMemo(() => {
     if (relayUp) return ["A", "B", "C"];
     if (directLink) return ["A", "C"];
@@ -114,10 +113,10 @@ export function MeshDemo() {
     const t = setInterval(() => {
       setDropped((d) => d + 1);
       setLog((l) =>
-        [`[${new Date().toLocaleTimeString("tr-TR")}] yol yok · paket kuyruğa alındı (WAL)`, ...l].slice(
-          0,
-          8,
-        ),
+        [
+          `[${new Date().toLocaleTimeString("tr-TR")}] yol yok · paket kuyruğa alındı (WAL)`,
+          ...l,
+        ].slice(0, 8),
       );
     }, 1600);
     return () => clearInterval(t);
@@ -265,7 +264,11 @@ export function MeshDemo() {
           </div>
         </div>
       </section>
-      <NextStep to="/fiyatlandirma" title="Hangi plan size uygun?" description="Community, Pro ve Enterprise düğüm limitlerini ve fiyatları karşılaştırın." />
+      <NextStep
+        to="/fiyatlandirma"
+        title="Hangi plan size uygun?"
+        description="Community, Pro ve Enterprise düğüm limitlerini ve fiyatları karşılaştırın."
+      />
     </SitePage>
   );
 }

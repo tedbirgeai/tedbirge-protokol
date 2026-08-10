@@ -30,7 +30,9 @@ function EnergyPage() {
       <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted-foreground">
         Katman 12 · Enerji ve saha donanımı
       </p>
-      <h1 className="mt-3 text-3xl font-semibold text-foreground md:text-4xl">Saha enerji katmanı</h1>
+      <h1 className="mt-3 text-3xl font-semibold text-foreground md:text-4xl">
+        Saha enerji katmanı
+      </h1>
       <p className="mt-4 max-w-3xl text-muted-foreground">
         Bir mesh düğümünün ömrünü radyo değil <strong className="text-foreground">enerji</strong>{" "}
         belirler. Bu katman, sahadaki güneş şarj kontrolcüsünü, hibrit invertörü/akü paketini ve

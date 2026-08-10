@@ -1,11 +1,7 @@
 import { useCallback, useState } from "react";
 import { Download, Share, X } from "lucide-react";
 
-import {
-  isPublishedOrigin,
-  promptInstall,
-  useInstallState,
-} from "@/lib/pwa-install";
+import { isPublishedOrigin, promptInstall, useInstallState } from "@/lib/pwa-install";
 
 /**
  * Pazarlama sayfalarındaki "Uygulamayı Yükle" düğmesi.
@@ -42,7 +38,11 @@ export function InstallAppCta({
 
   return (
     <>
-      <button type="button" onClick={() => void onClick()} className={`${base} ${styles} ${className}`}>
+      <button
+        type="button"
+        onClick={() => void onClick()}
+        className={`${base} ${styles} ${className}`}
+      >
         <Download className="h-4 w-4" aria-hidden />
         {label}
       </button>

@@ -11,7 +11,11 @@ import {
   useNodeRuntime,
 } from "@/lib/node-runtime";
 import { RecoveryKeyCard } from "@/components/site/RecoveryKeyCard";
-import { PeerVerifyDialog, TrustBadge, type PeerVerifyTarget } from "@/components/site/PeerVerifyDialog";
+import {
+  PeerVerifyDialog,
+  TrustBadge,
+  type PeerVerifyTarget,
+} from "@/components/site/PeerVerifyDialog";
 
 const FALLBACK_ORIGIN = "https://tedbirge-gateway.lovable.app";
 
@@ -39,7 +43,11 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
   }, [licenseKey]);
 
   useEffect(() => {
-    QRCode.toDataURL(link, { width: 400, margin: 1, color: { dark: "#e8ecff", light: "#00000000" } })
+    QRCode.toDataURL(link, {
+      width: 400,
+      margin: 1,
+      color: { dark: "#e8ecff", light: "#00000000" },
+    })
       .then(setQr)
       .catch(() => setQr(""));
   }, [link]);
@@ -74,7 +82,9 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
         Tarayıcı düğümü · donanımsız · kayıt gerekmez
       </p>
-      <h2 className="mt-2 text-xl font-semibold tracking-tight">Bu cihazı 2 adımda düğüme dönüştür</h2>
+      <h2 className="mt-2 text-xl font-semibold tracking-tight">
+        Bu cihazı 2 adımda düğüme dönüştür
+      </h2>
 
       {/* 1) Tek büyük buton + canlı durum */}
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -93,7 +103,9 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
             1 · Düğümü başlat
           </button>
         )}
-        <span className={`rounded-sm border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] ${statusTone}`}>
+        <span
+          className={`rounded-sm border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] ${statusTone}`}
+        >
           ● {status.text}
         </span>
         <span className="rounded-sm border border-border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
@@ -117,8 +129,9 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
             2 · Telefonu (veya ikinci cihazı) bağla
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Telefonda <strong className="text-foreground">yeni bir e-posta ya da kayıt gerekmez</strong>.
-            QR'ı okutun veya aşağıdaki linki telefonun tarayıcısına yapıştırın, açılan sayfada yine
+            Telefonda{" "}
+            <strong className="text-foreground">yeni bir e-posta ya da kayıt gerekmez</strong>. QR'ı
+            okutun veya aşağıdaki linki telefonun tarayıcısına yapıştırın, açılan sayfada yine
             “Düğümü başlat” deyin. İki cihaz birbirini “doğrudan eş” olarak görür.
           </p>
           <p className="mt-3 break-all font-mono text-sm text-foreground">{link}</p>
@@ -174,8 +187,12 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
       {details && (
         <div className="mt-4 space-y-5">
           <div className="rounded-sm border border-border bg-background/60 p-5">
-            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Düğüm kimliği</p>
-            <p className="mt-1 break-all font-mono text-sm text-foreground">{state.nodeId || "…"}</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+              Düğüm kimliği
+            </p>
+            <p className="mt-1 break-all font-mono text-sm text-foreground">
+              {state.nodeId || "…"}
+            </p>
             <dl className="mt-4 grid gap-1 font-mono text-[11px] sm:grid-cols-2">
               <Line k="Durum" v={running ? "çalışıyor" : "kapalı"} ok={running} />
               <Line
@@ -187,11 +204,23 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
               <Line k="Kuyruk" v={String(queued)} ok={queued === 0} />
               <Line
                 k="Son heartbeat"
-                v={state.lastHeartbeatAt ? new Date(state.lastHeartbeatAt).toLocaleTimeString("tr-TR") : "—"}
+                v={
+                  state.lastHeartbeatAt
+                    ? new Date(state.lastHeartbeatAt).toLocaleTimeString("tr-TR")
+                    : "—"
+                }
                 ok={Boolean(state.lastHeartbeatAt)}
               />
-              <Line k="Eş RTT" v={state.rttMs != null ? `${state.rttMs} ms` : "ölçülüyor…"} ok={state.rttMs != null} />
-              <Line k="Kimlik parmak izi" v={state.fingerprint || "…"} ok={Boolean(state.fingerprint)} />
+              <Line
+                k="Eş RTT"
+                v={state.rttMs != null ? `${state.rttMs} ms` : "ölçülüyor…"}
+                ok={state.rttMs != null}
+              />
+              <Line
+                k="Kimlik parmak izi"
+                v={state.fingerprint || "…"}
+                ok={Boolean(state.fingerprint)}
+              />
               <Line
                 k="İmzasız düşen paket"
                 v={String(state.droppedUnsigned)}
@@ -207,7 +236,8 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
             </button>
             {!licenseKey && (
               <p className="mt-3 text-[11px] text-muted-foreground">
-                Demo modu: eşleşme, P2P röle ve çevrimdışı kuyruk çalışır; panelde kalıcı kayıt için lisans gerekir.
+                Demo modu: eşleşme, P2P röle ve çevrimdışı kuyruk çalışır; panelde kalıcı kayıt için
+                lisans gerekir.
               </p>
             )}
             {state.error && <p className="mt-3 text-[11px] text-destructive">{state.error}</p>}
@@ -231,7 +261,9 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
               },
             ].map((c) => (
               <div key={c.t} className="bg-background/60 p-4">
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">{c.t}</p>
+                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
+                  {c.t}
+                </p>
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{c.b}</p>
               </div>
             ))}
@@ -240,16 +272,23 @@ export function BrowserNodeCard({ licenseKey }: { licenseKey?: string }) {
           {running && state.peers.length > 0 && (
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {state.peers.map((p) => (
-                <div key={p.nodeId} className="rounded-sm border border-border bg-background/60 p-3">
+                <div
+                  key={p.nodeId}
+                  className="rounded-sm border border-border bg-background/60 p-3"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-mono text-[11px] text-foreground">{p.nodeId}</p>
                     <TrustBadge trust={p.trust} />
                   </div>
-                  <p className={`mt-1 font-mono text-[11px] ${p.direct ? "text-primary" : "text-muted-foreground"}`}>
+                  <p
+                    className={`mt-1 font-mono text-[11px] ${p.direct ? "text-primary" : "text-muted-foreground"}`}
+                  >
                     ● {p.direct ? "doğrudan P2P" : p.state}
                   </p>
                   {p.fingerprint && (
-                    <p className="mt-1 font-mono text-[10px] text-muted-foreground">{p.fingerprint}</p>
+                    <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                      {p.fingerprint}
+                    </p>
                   )}
                   <button
                     type="button"

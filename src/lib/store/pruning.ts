@@ -10,7 +10,13 @@
  *   3 — telemetri        → önce budanır
  */
 
-import { countPackets, deletePacket, getPackets, storageInfo, type Priority } from "@/lib/store/idb";
+import {
+  countPackets,
+  deletePacket,
+  getPackets,
+  storageInfo,
+  type Priority,
+} from "@/lib/store/idb";
 
 /** Kota bu oranı aşınca budama başlar. */
 export const PRUNE_RATIO = 0.85;

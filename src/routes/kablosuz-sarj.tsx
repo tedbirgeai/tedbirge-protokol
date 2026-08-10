@@ -133,11 +133,12 @@ function WirelessChargingPage() {
           Afet anı: ek donanım almadan hibrit şarj
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Dürüst sınır: <strong className="text-foreground">Wi-Fi sinyaliyle telefon şarj
-          edilemez.</strong> Bir Wi-Fi anteninden metrelerce ötede hasat edilen güç mikrowatt
-          seviyesindedir; telefonun ihtiyacı ise watt seviyesidir — arada yaklaşık bir milyon kat
-          fark vardır. Buna karşılık, sahadaki ekiplerin <em>cebindeki cihazlarla</em>, hiçbir yeni
-          donanım satın almadan kurabileceği gerçek bir hibrit enerji zinciri vardır:
+          Dürüst sınır:{" "}
+          <strong className="text-foreground">Wi-Fi sinyaliyle telefon şarj edilemez.</strong> Bir
+          Wi-Fi anteninden metrelerce ötede hasat edilen güç mikrowatt seviyesindedir; telefonun
+          ihtiyacı ise watt seviyesidir — arada yaklaşık bir milyon kat fark vardır. Buna karşılık,
+          sahadaki ekiplerin <em>cebindeki cihazlarla</em>, hiçbir yeni donanım satın almadan
+          kurabileceği gerçek bir hibrit enerji zinciri vardır:
         </p>
         <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>
@@ -178,7 +179,6 @@ function WirelessChargingPage() {
       </section>
 
       <section className="mt-12 rounded-sm border border-border bg-card p-6">
-
         <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <ShieldCheck className="h-5 w-5 text-primary" aria-hidden /> Önerilen kurulum
         </h2>

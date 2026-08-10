@@ -29,7 +29,9 @@ export function setSoundMuted(next: boolean) {
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (!ctx) {
-    const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     ctx = new Ctor();
   }
@@ -40,7 +42,7 @@ function audio(): AudioContext | null {
 /** İlk kullanıcı etkileşiminde çağrılır; sonraki sesler engellenmez. */
 export function unlockAudio() {
   try {
-    window.localStorage.getItem(MUTE_KEY) === "1" && (muted = true);
+    if (window.localStorage.getItem(MUTE_KEY) === "1") muted = true;
   } catch {
     /* yoksay */
   }

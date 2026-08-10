@@ -134,7 +134,6 @@ export async function runDirectorySync(force = false): Promise<boolean> {
   }
 }
 
-
 function schedule(delay: number) {
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {

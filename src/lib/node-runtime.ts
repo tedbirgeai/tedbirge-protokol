@@ -66,7 +66,9 @@ export async function startNode() {
   // PHY veri düzlemi: IP koptuğunda zarflar bağlı LoRa/HaLow modemine yazılır.
   // Skor tabanlı failover motoru: kalite/gecikme/maliyete göre en uygun
   // taşıyıcı seçilir, başarısız olursa sıradakine otomatik düşülür.
-  node.setCarrierTransport((raw: string, priority: Priority) => sendOverBestCarrier(raw, priority).ok);
+  node.setCarrierTransport(
+    (raw: string, priority: Priority) => sendOverBestCarrier(raw, priority).ok,
+  );
   setCarrierEnvelopeSink((raw, carrier) => node?.ingestCarrierEnvelope(raw, carrier));
 
   await node.start();
@@ -184,7 +186,8 @@ export function describeNode(s: BrowserNodeState): NodeStatus {
   const directPeers = s.peers.filter((p) => p.direct).length;
   const queued = s.queued;
   if (!s.running) return { tone: "off", text: "Düğüm kapalı", directPeers, queued };
-  if (directPeers > 0) return { tone: "linked", text: `Bağlı · ${directPeers} eş`, directPeers, queued };
+  if (directPeers > 0)
+    return { tone: "linked", text: `Bağlı · ${directPeers} eş`, directPeers, queued };
   if (s.discovery === "local" && !s.online)
     return { tone: "offline", text: `Yerel keşif · kuyruk ${queued}`, directPeers, queued };
   if (s.online) return { tone: "online", text: "Çalışıyor · eş aranıyor", directPeers, queued };
@@ -199,7 +202,10 @@ export function describeNode(s: BrowserNodeState): NodeStatus {
 export async function testFieldRoute(origin: string): Promise<{ ok: boolean; message: string }> {
   const url = `${origin}/saha`;
   if (!/^https?:\/\//.test(origin)) {
-    return { ok: false, message: "Adres geçersiz. Linki https:// ile başlayacak şekilde paylaşın." };
+    return {
+      ok: false,
+      message: "Adres geçersiz. Linki https:// ile başlayacak şekilde paylaşın.",
+    };
   }
   try {
     const res = await fetch(url, { method: "GET", cache: "no-store" });

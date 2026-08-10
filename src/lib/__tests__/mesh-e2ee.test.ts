@@ -81,7 +81,10 @@ describe("MeshEnvelope v2 — uçtan uca şifreleme ve röle izolasyonu", () => 
     const { env } = await envelopeAliceToBob();
     expect(verifyEnvelope(env)).toBe(true);
 
-    const tampered = { h: { ...env.h }, b: { ...env.b, ct: `${env.b.ct[0] === "A" ? "B" : "A"}${env.b.ct.slice(1)}` } };
+    const tampered = {
+      h: { ...env.h },
+      b: { ...env.b, ct: `${env.b.ct[0] === "A" ? "B" : "A"}${env.b.ct.slice(1)}` },
+    };
     expect(verifyEnvelope(tampered)).toBe(false);
   });
 

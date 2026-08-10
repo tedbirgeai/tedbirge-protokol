@@ -39,7 +39,6 @@ export const rotateLicenseKey = createServerFn({ method: "POST" })
     });
 
     return { ok: true, licenseKey: newKey };
-
   });
 
 /**
@@ -50,9 +49,7 @@ export const rotateLicenseKey = createServerFn({ method: "POST" })
 export const rotateDeviceKeys = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z
-      .object({ licenseId: z.string().uuid(), deviceId: z.string().uuid().optional() })
-      .parse(input),
+    z.object({ licenseId: z.string().uuid(), deviceId: z.string().uuid().optional() }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { data: license } = await context.supabase

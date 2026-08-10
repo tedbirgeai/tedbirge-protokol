@@ -135,7 +135,14 @@ export async function beginPairing(nodeId: string, alias?: string): Promise<Pair
 /** B tarafı: gelen isteği kabul eder, PIN giriş ekranını açar. */
 export function acceptPairing(nodeId: string, alias?: string) {
   publish({
-    session: { nodeId, alias, role: "guest", createdAt: Date.now(), attempts: 0, status: "waiting" },
+    session: {
+      nodeId,
+      alias,
+      role: "guest",
+      createdAt: Date.now(),
+      attempts: 0,
+      status: "waiting",
+    },
     incoming: state.incoming.filter((i) => i.nodeId !== nodeId),
   });
 }
@@ -159,7 +166,12 @@ export async function submitPin(input: string): Promise<void> {
     return;
   }
   publish({ session: { ...s, error: undefined } });
-  await sendMesh("chat", target, { t: "pair-pin", pin, alias: getAlias(), method: parsed ? "qr" : "pin" });
+  await sendMesh("chat", target, {
+    t: "pair-pin",
+    pin,
+    alias: getAlias(),
+    method: parsed ? "qr" : "pin",
+  });
 }
 
 /* --------------------------- mesh el sıkışma --------------------------- */
@@ -194,7 +206,9 @@ async function onPair(from: string, raw: unknown) {
     if (p.pin !== s.pin) {
       const attempts = s.attempts + 1;
       if (attempts >= MAX_ATTEMPTS) {
-        publish({ session: { ...s, attempts, status: "rejected", error: "Çok fazla hatalı deneme." } });
+        publish({
+          session: { ...s, attempts, status: "rejected", error: "Çok fazla hatalı deneme." },
+        });
         void sendMesh("chat", from, { t: "pair-fail", reason: "attempts" });
         return;
       }

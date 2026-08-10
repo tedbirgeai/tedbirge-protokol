@@ -18,11 +18,7 @@
 import { sendMesh } from "@/lib/node-runtime";
 import { getAlias } from "@/lib/chat/profile";
 import { getStoredPersonId } from "@/lib/chat/anchor";
-import {
-  linkNodeToPerson,
-  resolveDisplayName,
-  writeClaimedName,
-} from "@/lib/chat/name-resolver";
+import { linkNodeToPerson, resolveDisplayName, writeClaimedName } from "@/lib/chat/name-resolver";
 import { logSync } from "@/lib/chat/sync-log";
 
 export type NameExchange = {
@@ -91,11 +87,7 @@ export async function announceName(): Promise<void> {
  * Karşı taraftan gelen adı tek ad kanalına yazar.
  * @returns Arayüzün tazelenmesi gerekiyorsa true.
  */
-export function applyRemoteName(
-  nodeId: string,
-  alias?: string,
-  personId?: string,
-): boolean {
+export function applyRemoteName(nodeId: string, alias?: string, personId?: string): boolean {
   if (!nodeId) return false;
   let changed = false;
   if (personId && personId !== nodeId) {

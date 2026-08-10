@@ -13,10 +13,30 @@ import {
   ApiUsagePanel,
   SetupWizard,
 } from "@/components/site/PanelOps";
-import { CarrierLiveBoard, IrCameraBoard, isDeviceOnline, sinceLabel } from "@/components/site/PanelLive";
-import { RelayChainWizard, QueueBoard, LinkAlertBoard, FailoverSettings } from "@/components/site/PanelMesh";
-import { QrNodeEnroll, E2eeKeyBoard, OutageLog, CalibrationTest } from "@/components/site/PanelSecure";
-import { HealthCards, LiveFeed, KeyRotation, CalibrationReports } from "@/components/site/PanelSystem";
+import {
+  CarrierLiveBoard,
+  IrCameraBoard,
+  isDeviceOnline,
+  sinceLabel,
+} from "@/components/site/PanelLive";
+import {
+  RelayChainWizard,
+  QueueBoard,
+  LinkAlertBoard,
+  FailoverSettings,
+} from "@/components/site/PanelMesh";
+import {
+  QrNodeEnroll,
+  E2eeKeyBoard,
+  OutageLog,
+  CalibrationTest,
+} from "@/components/site/PanelSecure";
+import {
+  HealthCards,
+  LiveFeed,
+  KeyRotation,
+  CalibrationReports,
+} from "@/components/site/PanelSystem";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePanelRole, ROLE_LABEL } from "@/hooks/usePanelRole";
 import { buildMeshPlan } from "@/lib/mesh-plan";
@@ -29,17 +49,20 @@ import { PanelCommerce } from "@/components/site/PanelCommerce";
 import { DiagnosticsPanel } from "@/components/site/DiagnosticsPanel";
 import { PanelEnergy } from "@/components/site/PanelEnergy";
 
-
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
     meta: [
       { title: "Müşteri Paneli — Tedbirge Protokol" },
       {
         name: "description",
-        content: "Tedbirge lisans anahtarlarınızı, düğümlerinizi ve sistem sağlığınızı tek ekrandan yönetin.",
+        content:
+          "Tedbirge lisans anahtarlarınızı, düğümlerinizi ve sistem sağlığınızı tek ekrandan yönetin.",
       },
       { property: "og:title", content: "Tedbirge Müşteri Paneli" },
-      { property: "og:description", content: "Lisans, düğüm, canlı akış ve sistem sağlığı yönetimi." },
+      {
+        property: "og:description",
+        content: "Lisans, düğüm, canlı akış ve sistem sağlığı yönetimi.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -117,7 +140,6 @@ const TABS: { id: TabId; label: string; needs?: "operate" | "manage" }[] = [
   { id: "ayarlar", label: "Ayarlar" },
 ];
 
-
 /** Cep telefonunun paneldeki rolünü netleştiren bilgi kartı.
  *  Telefon bir düğüm değil, yönetim/izleme istasyonudur. */
 function MobileStationCard() {
@@ -129,10 +151,15 @@ function MobileStationCard() {
     <div className="rounded-sm border border-primary/30 bg-primary/5 p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Cep telefonu / tablet</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
+            Cep telefonu / tablet
+          </p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight">Uygulamayı telefona ekleyin</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Telefon ve tablet, yukarıdaki <strong className="text-foreground">tarayıcı düğümü</strong> ile donanımsız çalışan gerçek bir düğüme dönüşür; ayrıca yönetim/izleme istasyonudur. Uzun menzil (LoRa/HaLow/TVWS) istiyorsanız o taşıyıcıya ait radyo modülünü ayrıca eklersiniz.
+            Telefon ve tablet, yukarıdaki{" "}
+            <strong className="text-foreground">tarayıcı düğümü</strong> ile donanımsız çalışan
+            gerçek bir düğüme dönüşür; ayrıca yönetim/izleme istasyonudur. Uzun menzil
+            (LoRa/HaLow/TVWS) istiyorsanız o taşıyıcıya ait radyo modülünü ayrıca eklersiniz.
           </p>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
             <li>Bilgisayardaki düğümü başlatın (lisans anahtarı + node-id ile).</li>
@@ -141,7 +168,9 @@ function MobileStationCard() {
           </ol>
         </div>
         <div className="min-w-[16rem] rounded-sm border border-border bg-card/50 p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Mobil erişim linki</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+            Mobil erişim linki
+          </p>
           <p className="mt-2 break-all font-mono text-sm text-foreground">{sahaLink}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <a
@@ -160,7 +189,8 @@ function MobileStationCard() {
             </button>
           </div>
           <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-            iPhone kullanıyorsanız Safari ile açıp paylaş menüsünden “Ana Ekrana Ekle” seçin. Android’de Chrome menüden “Uygulamayı yükle” yeterlidir.
+            iPhone kullanıyorsanız Safari ile açıp paylaş menüsünden “Ana Ekrana Ekle” seçin.
+            Android’de Chrome menüden “Uygulamayı yükle” yeterlidir.
           </p>
         </div>
       </div>
@@ -172,7 +202,9 @@ const RADIO_CARRIERS = new Set(["lora", "halow", "tvws", "wifi", "wigig", "fso"]
 
 function likelyGateway(d: Device) {
   const id = d.node_id.toLowerCase();
-  return d.role === "gateway" || id.startsWith("ev") || id.startsWith("home") || id.startsWith("gw");
+  return (
+    d.role === "gateway" || id.startsWith("ev") || id.startsWith("home") || id.startsWith("gw")
+  );
 }
 
 function FieldRealityCard({ devices }: { devices: Device[] }) {
@@ -190,16 +222,30 @@ function FieldRealityCard({ devices }: { devices: Device[] }) {
   }, []);
 
   const online = devices.filter((d) => isDeviceOnline(d));
-  const radioOnline = online.filter((d) => typeof d.carrier === "string" && RADIO_CARRIERS.has(d.carrier));
+  const radioOnline = online.filter(
+    (d) => typeof d.carrier === "string" && RADIO_CARRIERS.has(d.carrier),
+  );
   const gatewayOnline = online.some(likelyGateway);
   const relayOnline = online.filter((d) => d.role === "relay").length;
   const edgeOnline = online.some((d) => d.role === "edge");
-  const sixKm = buildMeshPlan({ carrierId: "lora", terrainId: "suburb", heightId: "roof", distanceKm: 6 });
-  const fifteenKm = buildMeshPlan({ carrierId: "lora", terrainId: "suburb", heightId: "roof", distanceKm: 15 });
+  const sixKm = buildMeshPlan({
+    carrierId: "lora",
+    terrainId: "suburb",
+    heightId: "roof",
+    distanceKm: 6,
+  });
+  const fifteenKm = buildMeshPlan({
+    carrierId: "lora",
+    terrainId: "suburb",
+    heightId: "roof",
+    distanceKm: 15,
+  });
 
   const oneReady = browserOnline && gatewayOnline && edgeOnline && radioOnline.length >= 2;
-  const sixReady = oneReady && relayOnline >= sixKm.relays && radioOnline.length >= sixKm.totalNodes;
-  const fifteenReady = oneReady && relayOnline >= fifteenKm.relays && radioOnline.length >= fifteenKm.totalNodes;
+  const sixReady =
+    oneReady && relayOnline >= sixKm.relays && radioOnline.length >= sixKm.totalNodes;
+  const fifteenReady =
+    oneReady && relayOnline >= fifteenKm.relays && radioOnline.length >= fifteenKm.totalNodes;
 
   const blocker = !browserOnline
     ? "Telefon şu anda buluta bağlı değil; gördüğünüz kırmızı şerit PWA önbelleğini gösterir, mesh taşıma başladığını göstermez."
@@ -213,11 +259,16 @@ function FieldRealityCard({ devices }: { devices: Device[] }) {
 
   return (
     <div className="rounded-sm border border-destructive/40 bg-destructive/5 p-6">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-destructive">Saha bağlantısı teşhisi</p>
-      <h2 className="mt-2 text-xl font-semibold tracking-tight">Taşıyıcılar neden devreye girmedi?</h2>
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-destructive">
+        Saha bağlantısı teşhisi
+      </p>
+      <h2 className="mt-2 text-xl font-semibold tracking-tight">
+        Taşıyıcılar neden devreye girmedi?
+      </h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         Taşıyıcı seçmek yazılım kaydıdır; gerçek taşıma için her taşıyıcıda fiziksel radyo donanımı,
-        anten, güç ve çevrimiçi telemetri gerekir. iPhone PWA, LoRa/HaLow/TVWS radyosu gibi çalışamaz.
+        anten, güç ve çevrimiçi telemetri gerekir. iPhone PWA, LoRa/HaLow/TVWS radyosu gibi
+        çalışamaz.
       </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -228,7 +279,11 @@ function FieldRealityCard({ devices }: { devices: Device[] }) {
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
-        <Readiness label="1 km saha" ready={oneReady} detail="Gateway + saha radyo düğümü gerekir." />
+        <Readiness
+          label="1 km saha"
+          ready={oneReady}
+          detail="Gateway + saha radyo düğümü gerekir."
+        />
         <Readiness
           label="6 km LoRa"
           ready={sixReady}
@@ -262,7 +317,9 @@ function Readiness({ label, ready, detail }: { label: string; ready: boolean; de
     <div className="rounded-sm border border-border bg-background/60 p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[11px] uppercase tracking-[0.15em]">{label}</span>
-        <span className={`font-mono text-[10px] uppercase ${ready ? "text-primary" : "text-destructive"}`}>
+        <span
+          className={`font-mono text-[10px] uppercase ${ready ? "text-primary" : "text-destructive"}`}
+        >
           {ready ? "hazır" : "hazır değil"}
         </span>
       </div>
@@ -326,9 +383,15 @@ function Panel() {
     if (!user) return;
     const channel = supabase
       .channel("panel-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, () => void reloadDevices())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "telemetry_samples" }, () =>
-        setRefreshKey((k) => k + 1),
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "devices" },
+        () => void reloadDevices(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "telemetry_samples" },
+        () => setRefreshKey((k) => k + 1),
       )
       .subscribe();
     return () => {
@@ -368,9 +431,11 @@ function Panel() {
   const nodeLimit = licenses[0]?.node_limit ?? 5;
   const quotaPct = Math.min(100, Math.round((activeDeviceCount / Math.max(1, nodeLimit)) * 100));
 
-
   const visibleTabs = useMemo(
-    () => TABS.filter((t) => (t.needs === "manage" ? canManage : t.needs === "operate" ? canOperate : true)),
+    () =>
+      TABS.filter((t) =>
+        t.needs === "manage" ? canManage : t.needs === "operate" ? canOperate : true,
+      ),
     [canManage, canOperate],
   );
 
@@ -414,7 +479,9 @@ function Panel() {
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
             <SectionLabel>Müşteri paneli</SectionLabel>
-            <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight sm:text-3xl">{user?.email}</h1>
+            <h1 className="mt-2 truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+              {user?.email}
+            </h1>
             <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
               {ROLE_LABEL[role]} · {onlineCount}/{devices.length} düğüm çevrimiçi
             </p>
@@ -432,7 +499,6 @@ function Panel() {
               </Link>
             )}
           </div>
-
         </header>
 
         {/* Sekmeli gezinme: uzun kaydırma yerine tek tıkla bölüm değişimi. */}
@@ -499,7 +565,13 @@ function Panel() {
                     <Row k="Lisans" v={licenses[0]?.plan ?? "community"} />
                     <Row
                       k="Abonelik"
-                      v={loading ? "yükleniyor…" : active ? "aktif" : subscription?.status ?? "community"}
+                      v={
+                        loading
+                          ? "yükleniyor…"
+                          : active
+                            ? "aktif"
+                            : (subscription?.status ?? "community")
+                      }
                     />
                     <Row k="Rol" v={ROLE_LABEL[role]} />
                   </div>
@@ -526,13 +598,20 @@ function Panel() {
 
           {tab === "yapayzeka" && <PanelAi devices={devices} refreshKey={refreshKey} />}
 
-
           {tab === "dugumler" && (
             <>
               {canOperate && (
                 <>
-                  <NodeCreator licenses={liteLicenses} usedByLicense={usedByLicense} onCreated={reloadDevices} />
-                  <QrNodeEnroll licenses={liteLicenses} onChanged={reloadDevices} refreshKey={refreshKey} />
+                  <NodeCreator
+                    licenses={liteLicenses}
+                    usedByLicense={usedByLicense}
+                    onCreated={reloadDevices}
+                  />
+                  <QrNodeEnroll
+                    licenses={liteLicenses}
+                    onChanged={reloadDevices}
+                    refreshKey={refreshKey}
+                  />
                 </>
               )}
 
@@ -552,7 +631,9 @@ function Panel() {
                     <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
                       Cihazlar (düğümler)
                     </p>
-                    <h2 className="mt-2 text-xl font-semibold tracking-tight">Lisansa bağlı saha düğümleri</h2>
+                    <h2 className="mt-2 text-xl font-semibold tracking-tight">
+                      Lisansa bağlı saha düğümleri
+                    </h2>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link
@@ -574,8 +655,8 @@ function Panel() {
                   <p className="mt-4 text-sm text-muted-foreground">Yükleniyor…</p>
                 ) : devices.length === 0 ? (
                   <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                    Henüz düğüm kaydı yok. Bir düğüm lisans anahtarınızla telemetri uç noktasına ilk isteği
-                    gönderdiğinde otomatik olarak burada listelenir.
+                    Henüz düğüm kaydı yok. Bir düğüm lisans anahtarınızla telemetri uç noktasına ilk
+                    isteği gönderdiğinde otomatik olarak burada listelenir.
                   </p>
                 ) : (
                   <div className="mt-5 overflow-x-auto rounded-sm border border-border">
@@ -595,12 +676,16 @@ function Panel() {
                             <td className="px-4 py-3 font-mono text-[12px]">
                               {d.node_id}
                               {d.label && (
-                                <span className="block text-[11px] text-muted-foreground">{d.label}</span>
+                                <span className="block text-[11px] text-muted-foreground">
+                                  {d.label}
+                                </span>
                               )}
                             </td>
                             <td className="px-4 py-3 font-mono text-[12px] text-muted-foreground">
                               {d.region} · {d.carrier ?? "—"}
-                              {d.firmware && <span className="block text-[11px]">v{d.firmware}</span>}
+                              {d.firmware && (
+                                <span className="block text-[11px]">v{d.firmware}</span>
+                              )}
                             </td>
                             <td className="px-4 py-3 font-mono text-[11px] uppercase">
                               {d.status !== "active" ? (
@@ -624,7 +709,10 @@ function Panel() {
                                 <div className="flex flex-wrap gap-2">
                                   <button
                                     onClick={() =>
-                                      setDeviceStatus(d.id, d.status === "active" ? "revoked" : "active")
+                                      setDeviceStatus(
+                                        d.id,
+                                        d.status === "active" ? "revoked" : "active",
+                                      )
                                     }
                                     disabled={busyId === d.id}
                                     className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
@@ -657,7 +745,11 @@ function Panel() {
               <LinkAlertBoard refreshKey={refreshKey} />
               <QueueBoard licenses={keyedLicenses} refreshKey={refreshKey} />
               <OutageLog refreshKey={refreshKey} />
-              <IrCameraBoard devices={devices} licenseKey={licenses[0]?.license_key} refreshKey={refreshKey} />
+              <IrCameraBoard
+                devices={devices}
+                licenseKey={licenses[0]?.license_key}
+                refreshKey={refreshKey}
+              />
             </>
           )}
 
@@ -668,7 +760,11 @@ function Panel() {
                 nodeLimit={licenses[0]?.node_limit ?? 5}
                 registered={devices.length}
               />
-              <RelayChainWizard licenses={keyedLicenses} devices={devices} onProvisioned={reloadDevices} />
+              <RelayChainWizard
+                licenses={keyedLicenses}
+                devices={devices}
+                onProvisioned={reloadDevices}
+              />
               <FailoverSettings devices={devices} onUpdated={reloadDevices} />
             </>
           )}
@@ -696,9 +792,16 @@ function Panel() {
 
           {tab === "guvenlik" && (
             <>
-              <KeyRotation licenses={keyedLicenses} canManage={canManage} onRotated={reloadDevices} />
+              <KeyRotation
+                licenses={keyedLicenses}
+                canManage={canManage}
+                onRotated={reloadDevices}
+              />
               <E2eeKeyBoard refreshKey={refreshKey} />
-              <FieldReports devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))} isAdmin={isAdmin} />
+              <FieldReports
+                devices={devices.map((d) => ({ id: d.id, node_id: d.node_id }))}
+                isAdmin={isAdmin}
+              />
             </>
           )}
 
@@ -711,7 +814,10 @@ function Panel() {
                 onOpenPortal={openPortal}
                 portalBusy={portalBusy}
               />
-              <ApiUsagePanel licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))} refreshKey={refreshKey} />
+              <ApiUsagePanel
+                licenses={licenses.map((l) => ({ id: l.id, plan: l.plan }))}
+                refreshKey={refreshKey}
+              />
               <WebhookSettings userId={user?.id} />
               <OrganizationManager
                 userId={user?.id}
@@ -803,13 +909,12 @@ function Panel() {
                 </dl>
 
                 <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                  Bu değerler protokol sabitleridir; günlük kullanımda müdahale gerektirmez ve arka planda
-                  otonom uygulanır.
+                  Bu değerler protokol sabitleridir; günlük kullanımda müdahale gerektirmez ve arka
+                  planda otonom uygulanır.
                 </p>
               </div>
             </>
           )}
-
         </div>
       </section>
     </SitePage>

@@ -73,7 +73,11 @@ export function fingerprintOfKey(publicKey: Uint8Array | string): string {
 }
 
 function deriveSecrets(seed: Uint8Array): Secrets {
-  return { seed, signSecret: label("tedbirge/sign/v1", seed), boxSecret: label("tedbirge/box/v1", seed) };
+  return {
+    seed,
+    signSecret: label("tedbirge/sign/v1", seed),
+    boxSecret: label("tedbirge/box/v1", seed),
+  };
 }
 
 function publicOf(secrets: Secrets) {
@@ -88,7 +92,10 @@ function publicOf(secrets: Secrets) {
 async function getKek(): Promise<CryptoKey> {
   const rec = await getKeyRecord(KEK_ID);
   if (rec?.kek) return rec.kek;
-  const kek = await subtle().generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  const kek = await subtle().generateKey({ name: "AES-GCM", length: 256 }, false, [
+    "encrypt",
+    "decrypt",
+  ]);
   await putKeyRecord({ nodeId: KEK_ID, kek, alg: "AES-256-GCM", createdAt: Date.now() });
   return kek;
 }
@@ -180,7 +187,10 @@ export async function getIdentity(nodeId: string): Promise<Identity | null> {
 }
 
 /** Kurtarma ifadesinden gelen 16 baytlık entropiyle kimliği (yeniden) kurar. */
-export async function restoreIdentityFromEntropy(nodeId: string, entropy: Uint8Array): Promise<Identity> {
+export async function restoreIdentityFromEntropy(
+  nodeId: string,
+  entropy: Uint8Array,
+): Promise<Identity> {
   const secrets = deriveSecrets(entropy);
   secretCache.set(nodeId, secrets);
   await persist(nodeId, secrets);
@@ -216,7 +226,11 @@ export async function signBytes(nodeId: string, message: Uint8Array): Promise<st
   return toB64(ed25519.sign(message, s.signSecret));
 }
 
-export function verifyBytes(signPublicB64: string, signatureB64: string, message: Uint8Array): boolean {
+export function verifyBytes(
+  signPublicB64: string,
+  signatureB64: string,
+  message: Uint8Array,
+): boolean {
   try {
     return ed25519.verify(fromB64(signatureB64), message, fromB64(signPublicB64));
   } catch {

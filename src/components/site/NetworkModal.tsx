@@ -8,7 +8,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { describeNode, pingNodePeers, startNode, stopNode, useNodeRuntime } from "@/lib/node-runtime";
+import {
+  describeNode,
+  pingNodePeers,
+  startNode,
+  stopNode,
+  useNodeRuntime,
+} from "@/lib/node-runtime";
 
 const PROFILE_KEY = "tedbirge.network.profile";
 
@@ -55,12 +61,22 @@ function useStatusAlerts() {
     prev.current = now;
     if (!before) return;
     const push = (tone: AlertItem["tone"], text: string) =>
-      setAlerts((a) => [{ id: `${Date.now()}-${text}`, at: Date.now(), tone, text }, ...a].slice(0, 30));
+      setAlerts((a) =>
+        [{ id: `${Date.now()}-${text}`, at: Date.now(), tone, text }, ...a].slice(0, 30),
+      );
 
     if (before.running !== now.running)
-      push(now.running ? "ok" : "warn", now.running ? "Ağ başlatıldı · şifreli oturum açıldı" : "Ağ durduruldu");
+      push(
+        now.running ? "ok" : "warn",
+        now.running ? "Ağ başlatıldı · şifreli oturum açıldı" : "Ağ durduruldu",
+      );
     if (before.online !== now.online)
-      push(now.online ? "ok" : "bad", now.online ? "Bağlantı geri geldi · kuyruk boşaltılıyor" : "Çevrimdışı · mesajlar kuyruğa alınıyor");
+      push(
+        now.online ? "ok" : "bad",
+        now.online
+          ? "Bağlantı geri geldi · kuyruk boşaltılıyor"
+          : "Çevrimdışı · mesajlar kuyruğa alınıyor",
+      );
     if (before.peers !== now.peers)
       push(now.peers > before.peers ? "ok" : "warn", `Bağlı eş sayısı: ${now.peers}`);
   }, [state.running, state.online, peers]);
@@ -94,7 +110,11 @@ export function NetworkModal({
 
   useEffect(() => {
     if (!open) return;
-    QRCode.toDataURL(joinLink, { width: 420, margin: 1, color: { dark: "#e8ecff", light: "#00000000" } })
+    QRCode.toDataURL(joinLink, {
+      width: 420,
+      margin: 1,
+      color: { dark: "#e8ecff", light: "#00000000" },
+    })
       .then(setQr)
       .catch(() => setQr(""));
   }, [joinLink, open]);
@@ -104,7 +124,8 @@ export function NetworkModal({
   }, [open]);
 
   const lastSeen = useMemo(
-    () => (state.lastHeartbeatAt ? new Date(state.lastHeartbeatAt).toLocaleTimeString("tr-TR") : "—"),
+    () =>
+      state.lastHeartbeatAt ? new Date(state.lastHeartbeatAt).toLocaleTimeString("tr-TR") : "—",
     [state.lastHeartbeatAt],
   );
 
@@ -149,7 +170,9 @@ export function NetworkModal({
           <TabsContent value="peers" className="mt-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-card/50 px-4 py-3">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">Bu cihaz</p>
+                <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+                  Bu cihaz
+                </p>
                 <p className="break-all text-sm text-foreground">{state.nodeId || "—"}</p>
               </div>
               <div className="flex gap-2">
@@ -173,8 +196,8 @@ export function NetworkModal({
 
             {state.peers.length === 0 ? (
               <p className="rounded-sm border border-dashed border-border p-4 text-sm text-muted-foreground">
-                Henüz bağlı eş yok. “Düğüm ekle” sekmesinden bağlantıyı paylaşın; karşı cihaz açtığında
-                burada anında listelenir.
+                Henüz bağlı eş yok. “Düğüm ekle” sekmesinden bağlantıyı paylaşın; karşı cihaz
+                açtığında burada anında listelenir.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -221,7 +244,9 @@ export function NetworkModal({
                     type="button"
                     onClick={() => save({ ...profile, mode: m })}
                     className={`rounded-sm border px-3 py-2 text-sm capitalize ${
-                      profile.mode === m ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground"
+                      profile.mode === m
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border text-muted-foreground"
                     }`}
                   >
                     {m === "isyeri" ? "İş yeri" : m === "ev" ? "Ev" : "Saha"}
@@ -254,7 +279,8 @@ export function NetworkModal({
             </div>
             <div className="space-y-3">
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Karşı cihazda bu bağlantıyı açmak yeterli. Kayıt, ödeme veya kod yok; zincir otomatik büyür.
+                Karşı cihazda bu bağlantıyı açmak yeterli. Kayıt, ödeme veya kod yok; zincir
+                otomatik büyür.
               </p>
               <p className="break-all font-mono text-xs text-foreground">{joinLink}</p>
               <div className="flex flex-wrap gap-2">
@@ -280,8 +306,8 @@ export function NetworkModal({
           <TabsContent value="alerts" className="mt-4 space-y-2">
             {alerts.length === 0 ? (
               <p className="rounded-sm border border-dashed border-border p-4 text-sm text-muted-foreground">
-                Henüz bildirim yok. Ağ durumu değiştiğinde (bağlantı kopması, yeni eş, kuyruk boşalması)
-                burada anında görünür.
+                Henüz bildirim yok. Ağ durumu değiştiğinde (bağlantı kopması, yeni eş, kuyruk
+                boşalması) burada anında görünür.
               </p>
             ) : (
               alerts.map((a) => (
@@ -291,7 +317,11 @@ export function NetworkModal({
                 >
                   <span
                     className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                      a.tone === "ok" ? "bg-primary" : a.tone === "warn" ? "bg-amber-400" : "bg-destructive"
+                      a.tone === "ok"
+                        ? "bg-primary"
+                        : a.tone === "warn"
+                          ? "bg-amber-400"
+                          : "bg-destructive"
                     }`}
                     aria-hidden
                   />

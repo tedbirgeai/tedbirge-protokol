@@ -140,8 +140,8 @@ function SahaRaporu() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Ölçüm ve kanıt özeti</h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Sahadaki düğümler <span className="font-mono text-foreground">/api/public/telemetry</span>{" "}
-          uç noktasına ölçüm gönderdikçe bu rapor otomatik dolar. Rapor yalnızca metrik taşır;
-          tünel içeriği hiçbir zaman iletilmez.
+          uç noktasına ölçüm gönderdikçe bu rapor otomatik dolar. Rapor yalnızca metrik taşır; tünel
+          içeriği hiçbir zaman iletilmez.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3 print:hidden">

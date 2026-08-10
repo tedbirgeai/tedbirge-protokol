@@ -16,8 +16,7 @@ export const BUSINESS_PLAN: BusinessPlanSection[] = [
   {
     id: "positioning",
     title: "1. Stratejik konumlandırma",
-    summary:
-      "İş planının açılışında ürün, pazar ve farklılaşma tek cümleyle anlaşılır olmalı.",
+    summary: "İş planının açılışında ürün, pazar ve farklılaşma tek cümleyle anlaşılır olmalı.",
     items: [
       "Ürün: taşıyıcı-bağımsız, sıfır-bilgi iletişim overlay katmanı; fiziksel altyapı yatırımı gerektirmez.",
       "Pazar: afet & kamu, kritik altyapı, enerji/maden, kırsal bağlantı, kurumsal saha operasyonu.",
@@ -28,8 +27,7 @@ export const BUSINESS_PLAN: BusinessPlanSection[] = [
   {
     id: "capability",
     title: "2. Yetenek envanteri (kod tabanı → ticari değer)",
-    summary:
-      "Her teknik yetenek, satılabilir bir faydaya çevrilerek listelenmelidir.",
+    summary: "Her teknik yetenek, satılabilir bir faydaya çevrilerek listelenmelidir.",
     items: [
       "Trust: uçtan uca şifreli, sıfır-bilgi röle → 'içerik röle düğümünde okunamaz' beyanı.",
       "Edge / Loop: çoklu taşıyıcı yönlendirme ve otomatik devretme → ölçülebilir süreklilik SLA'sı.",
@@ -41,8 +39,7 @@ export const BUSINESS_PLAN: BusinessPlanSection[] = [
   {
     id: "raas",
     title: "3. RaaS gelir modeli",
-    summary:
-      "Resilience-as-a-Service; düğüm ve süreklilik taahhüdü üzerinden abonelik.",
+    summary: "Resilience-as-a-Service; düğüm ve süreklilik taahhüdü üzerinden abonelik.",
     items: [
       "Freemium: 5 düğüm, topluluk desteği — pazar girişi ve ürün deneme kanalı.",
       "Community: küçük ekip / STK; düğüm başı aylık ücret, temel telemetri.",
@@ -66,8 +63,7 @@ export const BUSINESS_PLAN: BusinessPlanSection[] = [
   {
     id: "compliance",
     title: "5. Uyum ve yasal çerçeve",
-    summary:
-      "Kurumsal alıcı, uyum dosyası olmayan çözümü satın alma sürecine bile almaz.",
+    summary: "Kurumsal alıcı, uyum dosyası olmayan çözümü satın alma sürecine bile almaz.",
     items: [
       "Spektrum: BTK (TR), ETSI (EU), FCC (US) sınırları tek kaynaktan yönetilir; 868 MHz 25 mW %1 duty-cycle kilidi yazılımda uygulanır.",
       "Veri: KVKK/GDPR; röle düğümünde kişisel veri işlenmediği teknik olarak kanıtlanabilir olmalı.",

@@ -68,8 +68,8 @@ export function SecurityPanel() {
         <Row k="DÜĞÜM KİMLİĞİ:" v={node.nodeId || "—"} />
         <Row k="PARMAK İZİ:" v={node.fingerprint || "üretiliyor"} tone="text-cyan-400" />
         <p className="pt-1 text-[10px] leading-relaxed text-slate-500">
-          Parmak izini karşı tarafla yüz yüze karşılaştırdığınızda kanalın araya
-          girme (MITM) girişimine kapalı olduğunu doğrulamış olursunuz.
+          Parmak izini karşı tarafla yüz yüze karşılaştırdığınızda kanalın araya girme (MITM)
+          girişimine kapalı olduğunu doğrulamış olursunuz.
         </p>
       </Section>
 
@@ -108,7 +108,6 @@ export function SecurityPanel() {
                 {new Date(e.ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>
-
           ))
         )}
         <p className="pt-1 text-[10px] leading-relaxed text-slate-500">

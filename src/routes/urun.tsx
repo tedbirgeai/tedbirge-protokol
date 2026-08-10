@@ -26,14 +26,38 @@ export const Route = createFileRoute("/urun")({
 });
 
 const layers = [
-  ["Tünel Proxy Motoru", "Canlı TCP/UDP proxy, AES-256-GCM chunk şifreleme, zero-knowledge ölçüm (SHA-256 + bayt)."],
-  ["Mesh Router", "Dijkstra çok-sıçramalı yönlendirme, TTL, loop-prevention, RTT × taşıyıcı ağırlığı maliyet modeli."],
-  ["Güvenlik Kalkanı", "Ed25519 kimlik, Proof-of-Work ile Sybil direnci, nonce kayan penceresi ile replay koruması."],
-  ["Gossip Katmanı", "UDP broadcast beacon ile merkezsiz komşu keşfi ve anti-entropy senkronizasyonu."],
-  ["Off-Grid Ledger", "İmzalı fiş/voucher üretimi, tek-kullanımlık nonce, çift harcama koruması, relay credit."],
-  ["WAL & Depolama", "Atomik-swap yazma, Windows dahil çapraz platform dayanıklılık, Postgres/Redis üretim modu."],
-  ["Faturalama Köprüsü", "Thread-safe kullanım sayacı, kalıcı defter, Stripe ve e-Fatura harness entegrasyonu."],
-  ["/admin Paneli", "go:embed ile tamamen offline; canlı topoloji, WAL derinliği, WebSocket telemetri, Prometheus."],
+  [
+    "Tünel Proxy Motoru",
+    "Canlı TCP/UDP proxy, AES-256-GCM chunk şifreleme, zero-knowledge ölçüm (SHA-256 + bayt).",
+  ],
+  [
+    "Mesh Router",
+    "Dijkstra çok-sıçramalı yönlendirme, TTL, loop-prevention, RTT × taşıyıcı ağırlığı maliyet modeli.",
+  ],
+  [
+    "Güvenlik Kalkanı",
+    "Ed25519 kimlik, Proof-of-Work ile Sybil direnci, nonce kayan penceresi ile replay koruması.",
+  ],
+  [
+    "Gossip Katmanı",
+    "UDP broadcast beacon ile merkezsiz komşu keşfi ve anti-entropy senkronizasyonu.",
+  ],
+  [
+    "Off-Grid Ledger",
+    "İmzalı fiş/voucher üretimi, tek-kullanımlık nonce, çift harcama koruması, relay credit.",
+  ],
+  [
+    "WAL & Depolama",
+    "Atomik-swap yazma, Windows dahil çapraz platform dayanıklılık, Postgres/Redis üretim modu.",
+  ],
+  [
+    "Faturalama Köprüsü",
+    "Thread-safe kullanım sayacı, kalıcı defter, Stripe ve e-Fatura harness entegrasyonu.",
+  ],
+  [
+    "/admin Paneli",
+    "go:embed ile tamamen offline; canlı topoloji, WAL derinliği, WebSocket telemetri, Prometheus.",
+  ],
 ];
 
 const threats = [
@@ -60,8 +84,8 @@ function Product() {
             Sekiz katman, tek çalıştırılabilir dosya
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-            Tedbirge düğümü kurulum sihirbazı, konteyner orkestrasyonu veya dış servis
-            gerektirmez. Binary'yi kopyalayın, çevre değişkenlerini verin, düğüm ağa katılır.
+            Tedbirge düğümü kurulum sihirbazı, konteyner orkestrasyonu veya dış servis gerektirmez.
+            Binary'yi kopyalayın, çevre değişkenlerini verin, düğüm ağa katılır.
           </p>
         </div>
       </section>
@@ -124,7 +148,11 @@ function Product() {
           </div>
         </div>
       </section>
-      <NextStep to="/demo" title="Ürünü canlı görün" description="Mesh yolunun bir röle düştüğünde nasıl yeniden kurulduğunu tarayıcıda test edin." />
+      <NextStep
+        to="/demo"
+        title="Ürünü canlı görün"
+        description="Mesh yolunun bir röle düştüğünde nasıl yeniden kurulduğunu tarayıcıda test edin."
+      />
     </SitePage>
   );
 }

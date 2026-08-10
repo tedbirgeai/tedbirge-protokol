@@ -162,7 +162,9 @@ function HybridModel() {
           <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {PILLARS.map((p) => (
               <div key={p.t} className="rounded-sm border border-border bg-card/50 p-5">
-                <h2 className="font-mono text-[12px] uppercase tracking-[0.14em] text-primary">{p.t}</h2>
+                <h2 className="font-mono text-[12px] uppercase tracking-[0.14em] text-primary">
+                  {p.t}
+                </h2>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{p.d}</p>
               </div>
             ))}
@@ -210,7 +212,9 @@ function HybridModel() {
                   <tr key={p.n} className="border-b border-border/50 align-top">
                     <td className="py-3 pr-4 font-mono text-[12px] text-foreground">{p.n}</td>
                     <td className="py-3 pr-4 text-muted-foreground">{p.m}</td>
-                    <td className="py-3 pr-4 font-mono text-[11px] text-muted-foreground">{p.hw}</td>
+                    <td className="py-3 pr-4 font-mono text-[11px] text-muted-foreground">
+                      {p.hw}
+                    </td>
                     <td className="py-3 pr-4 text-muted-foreground">{p.c}</td>
                     <td className="py-3 text-muted-foreground">{p.w}</td>
                   </tr>
@@ -228,7 +232,9 @@ function HybridModel() {
 
       <section className="mx-auto max-w-4xl px-6 py-16">
         <SectionLabel>Dürüstlük çerçevesi</SectionLabel>
-        <h2 className="mt-3 text-2xl font-semibold tracking-tight">Oranları biz uydurmayız, ölçeriz</h2>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+          Oranları biz uydurmayız, ölçeriz
+        </h2>
         <ul className="mt-6 space-y-3">
           {HONEST.map((h) => (
             <li key={h} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">

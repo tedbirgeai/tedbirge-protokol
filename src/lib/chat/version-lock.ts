@@ -117,4 +117,3 @@ export async function repairNow(): Promise<{ cleaned: number }> {
   await takeOverServiceWorker();
   return { cleaned };
 }
-

@@ -71,7 +71,9 @@ function buildMarkdown(lead: Lead): string {
     );
     lines.push(``, `## Belge kontrol listesi`);
     p.belgeler.forEach((d) =>
-      lines.push(`- [ ] **${d.belge}** — ${d.kurum} ${d.zorunlu ? "(zorunlu)" : "(opsiyonel)"} — ${d.not}`),
+      lines.push(
+        `- [ ] **${d.belge}** — ${d.kurum} ${d.zorunlu ? "(zorunlu)" : "(opsiyonel)"} — ${d.not}`,
+      ),
     );
     lines.push(``, `## Riskler`);
     p.riskler.forEach((r) => lines.push(`- ${r}`));
@@ -126,7 +128,9 @@ function Proposal() {
   if (roleLoading || loading) {
     return (
       <SitePage>
-        <div className="mx-auto max-w-4xl px-6 py-20 text-sm text-muted-foreground">Yükleniyor…</div>
+        <div className="mx-auto max-w-4xl px-6 py-20 text-sm text-muted-foreground">
+          Yükleniyor…
+        </div>
       </SitePage>
     );
   }
@@ -232,7 +236,6 @@ function Proposal() {
           />
         </div>
 
-
         {lead.summary && (
           <Block title="Talep özeti">
             <p className="whitespace-pre-wrap">{lead.summary}</p>
@@ -306,7 +309,6 @@ function Proposal() {
                 </Link>{" "}
                 üzerinden kanıt zinciri ile kayıt altına alın; dosyalar sunucuya yüklenmez.
               </p>
-
             </Block>
 
             {plan.riskler.length > 0 && (
@@ -325,8 +327,8 @@ function Proposal() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
               <strong className="text-foreground">BTK:</strong> 868 MHz bandında %1 yayın süresi
-              (duty-cycle) sınırı yazılımsal olarak uygulanır; çıkış gücü ve kanal kullanımı
-              mevzuat sınırları içinde tutulur.
+              (duty-cycle) sınırı yazılımsal olarak uygulanır; çıkış gücü ve kanal kullanımı mevzuat
+              sınırları içinde tutulur.
             </li>
             <li>
               <strong className="text-foreground">KVKK:</strong> Trafik içeriği hiçbir noktada
@@ -341,11 +343,10 @@ function Proposal() {
         </Block>
 
         <p className="mt-10 border-t border-border/60 pt-4 text-xs text-muted-foreground">
-          Bu paket AI Danışman görüşmesinden otomatik üretilmiştir; bağlayıcı teklif değildir.
-          Nihai kapsam ve fiyat pilot değerlendirmesi sonrası netleşir. Mehmet DİNÇ (Tedbirge
-          Protokol), Türkiye.
+          Bu paket AI Danışman görüşmesinden otomatik üretilmiştir; bağlayıcı teklif değildir. Nihai
+          kapsam ve fiyat pilot değerlendirmesi sonrası netleşir. Mehmet DİNÇ (Tedbirge Protokol),
+          Türkiye.
         </p>
-
       </section>
     </SitePage>
   );
@@ -365,7 +366,9 @@ function Field({ label, value }: { label: string; value: string | null }) {
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="print-block mt-10 print:mt-5">
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary print:text-[9pt]">{title}</h2>
+      <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary print:text-[9pt]">
+        {title}
+      </h2>
       <div className="mt-3 text-sm leading-relaxed">{children}</div>
     </div>
   );

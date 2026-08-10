@@ -357,7 +357,11 @@ async function pull(phone: string, full: boolean): Promise<number> {
   const since = full ? "" : readStr(CURSOR_PULL);
   const res = await pullHistoryChunks({ data: since ? { since, limit: 120 } : { limit: 120 } });
   if (res.error) throw new Error(res.error);
-  logSync("bilgi", "Paket okuma", `${res.chunks.length} paket bulundu${full ? " (tam geçmiş)" : ""}`);
+  logSync(
+    "bilgi",
+    "Paket okuma",
+    `${res.chunks.length} paket bulundu${full ? " (tam geçmiş)" : ""}`,
+  );
 
   const self = getBrowserNodeId();
   const seen = readSeen();

@@ -58,7 +58,6 @@ export function localCandidates(): string[] {
   return LOCAL_HOSTS.map((h) => `${scheme}://${h}`);
 }
 
-
 let state: AccessState = {
   tier: "cloud",
   endpoint: null,
@@ -86,7 +85,11 @@ function publish(patch: Partial<AccessState>) {
 }
 
 /** Kullanıcıya gösterilecek sade metin (teknik jargon içermez). */
-export function describeTier(s: AccessState): { label: string; message: string; tone: "ok" | "warn" | "alert" } {
+export function describeTier(s: AccessState): {
+  label: string;
+  message: string;
+  tone: "ok" | "warn" | "alert";
+} {
   if (s.tier === "cloud")
     return {
       label: "Bulut bağlantısı",
@@ -111,7 +114,11 @@ export function describeTier(s: AccessState): { label: string; message: string; 
 async function probe(origin: string): Promise<boolean> {
   // HTTPS sayfasından düz http:// yoklaması karma içerik sayılır ve tarayıcı
   // adres çubuğunda "güvenli değil" uyarısı doğar; bu istekler hiç atılmaz.
-  if (typeof window !== "undefined" && window.location.protocol === "https:" && origin.startsWith("http://")) {
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    origin.startsWith("http://")
+  ) {
     return false;
   }
   const controller = new AbortController();
@@ -157,7 +164,6 @@ export async function scanLocalNetwork(): Promise<string | null> {
   const targets = remembered ? [remembered, ...list.filter((c) => c !== remembered)] : list;
   const found: string[] = [];
   for (const target of targets) {
-    // eslint-disable-next-line no-await-in-loop -- sıralı deneme yerel ağı boğmamak için bilinçli
     if (await probe(target)) {
       found.push(target);
       break;
@@ -222,6 +228,11 @@ export function useAccessTier(): AccessState {
 
 /** Saha QR'ı için en uygun katılım adresi. */
 export function joinUrl(s: AccessState): string {
-  const base = s.tier === "local" && s.endpoint ? s.endpoint : typeof window !== "undefined" ? window.location.origin : "";
+  const base =
+    s.tier === "local" && s.endpoint
+      ? s.endpoint
+      : typeof window !== "undefined"
+        ? window.location.origin
+        : "";
   return `${base}/katil`;
 }

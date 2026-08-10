@@ -102,7 +102,10 @@ export function DeviceStatusBoard({
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat k="Toplam" v={String(devices.length)} />
         <Stat k="Online" v={String(online)} accent />
-        <Stat k="Offline" v={String(devices.filter((d) => d.status === "active").length - online)} />
+        <Stat
+          k="Offline"
+          v={String(devices.filter((d) => d.status === "active").length - online)}
+        />
         <Stat k="Hata kodlu" v={String(errored)} />
       </div>
 
@@ -308,7 +311,9 @@ export function OrganizationManager({
                     key={m.user_id}
                     className="flex items-center justify-between gap-3 rounded-sm border border-border bg-background/50 px-3 py-2"
                   >
-                    <span className="font-mono text-[12px]">{m.email ?? m.user_id.slice(0, 8)}</span>
+                    <span className="font-mono text-[12px]">
+                      {m.email ?? m.user_id.slice(0, 8)}
+                    </span>
                     <span className="flex items-center gap-2">
                       <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary">
                         {ORG_ROLES.find((r) => r.id === m.role)?.label ?? m.role}
@@ -485,8 +490,8 @@ export function WebhookSettings({ userId }: { userId: string | undefined }) {
       <p className={label}>Bildirimler</p>
       <h2 className="mt-2 text-xl font-semibold tracking-tight">Webhook adresleri</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        Lisans olayları ve saha uyarıları seçtiğiniz HTTPS adresine imzalı olarak gönderilir.
-        İmza başlığı: <code className="font-mono text-[12px]">x-tedbirge-signature: sha256=…</code>
+        Lisans olayları ve saha uyarıları seçtiğiniz HTTPS adresine imzalı olarak gönderilir. İmza
+        başlığı: <code className="font-mono text-[12px]">x-tedbirge-signature: sha256=…</code>
       </p>
 
       <form
@@ -517,9 +522,7 @@ export function WebhookSettings({ userId }: { userId: string | undefined }) {
                 type="button"
                 key={o.id}
                 onClick={() =>
-                  setEvents((cur) =>
-                    on ? cur.filter((x) => x !== o.id) : [...cur, o.id],
-                  )
+                  setEvents((cur) => (on ? cur.filter((x) => x !== o.id) : [...cur, o.id]))
                 }
                 className={`${btn} ${on ? "border-primary text-primary" : ""}`}
               >
@@ -632,9 +635,9 @@ export function ApiUsagePanel({
   licenses: { id: string; plan: string }[];
   refreshKey: number;
 }) {
-  const [rows, setRows] = useState<{ license_id: string | null; status_code: number; created_at: string }[]>(
-    [],
-  );
+  const [rows, setRows] = useState<
+    { license_id: string | null; status_code: number; created_at: string }[]
+  >([]);
   const [licenseId, setLicenseId] = useState("all");
 
   useEffect(() => {
@@ -809,9 +812,7 @@ sudo journalctl -u tedbirge-gateway -f`,
       </div>
 
       <p className="mt-5 text-sm font-medium">{current.title}</p>
-      {current.body && (
-        <p className="mt-1 text-sm text-muted-foreground">{current.body}</p>
-      )}
+      {current.body && <p className="mt-1 text-sm text-muted-foreground">{current.body}</p>}
 
       {step === 0 && (
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -825,11 +826,7 @@ sudo journalctl -u tedbirge-gateway -f`,
             <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
               Bölge
             </span>
-            <select
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
-              className={input}
-            >
+            <select value={region} onChange={(e) => setRegion(e.target.value)} className={input}>
               {["TR", "EU", "US", "UK", "GCC", "APAC", "JP", "OTHER"].map((r) => (
                 <option key={r} value={r}>
                   {r}
@@ -841,18 +838,23 @@ sudo journalctl -u tedbirge-gateway -f`,
             <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
               Taşıyıcı
             </span>
-            <select
-              value={carrier}
-              onChange={(e) => setCarrier(e.target.value)}
-              className={input}
-            >
-              {["auto", "lora", "wifi", "eth", "cellular", "satellite", "halow", "tvws", "wigig", "fso"].map(
-                (c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ),
-              )}
+            <select value={carrier} onChange={(e) => setCarrier(e.target.value)} className={input}>
+              {[
+                "auto",
+                "lora",
+                "wifi",
+                "eth",
+                "cellular",
+                "satellite",
+                "halow",
+                "tvws",
+                "wigig",
+                "fso",
+              ].map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </label>
         </div>
