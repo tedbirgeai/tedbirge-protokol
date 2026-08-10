@@ -757,7 +757,11 @@ export default function Messenger() {
               </div>
             )}
 
-            <div className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+            <div
+              className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2"
+              hidden={center === "security" || center === "settings"}
+            >
+
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
                 {!inCall
                   ? "GÖRÜŞME SONLANDIRILDI"
