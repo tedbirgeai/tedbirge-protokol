@@ -554,7 +554,7 @@ export default function Messenger() {
           </div>
 
           {/* ORTA BLOK — VİDEO IZGARASI */}
-          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 xl:col-span-6 xl:min-h-0">
+          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-80px)] xl:min-h-0">
             <PanelTitle
               icon={<Video className="h-4 w-4 text-emerald-400" />}
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
