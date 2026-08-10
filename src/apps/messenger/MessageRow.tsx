@@ -523,6 +523,33 @@ export function MessageRow({
                 }}
               />
             )}
+            {media && !msg.deleted && (
+              <>
+                <MenuItem
+                  icon={<Download className="h-4 w-4" />}
+                  label={media.mime.startsWith("image/") ? "Fotoğraflara kaydet" : "Dosyayı kaydet"}
+                  onClick={() => void saveMedia()}
+                />
+                {media.mime.startsWith("image/") && (
+                  <>
+                    <MenuItem
+                      icon={<Copy className="h-4 w-4" />}
+                      label="Resmi kopyala"
+                      onClick={() => void copyMedia()}
+                    />
+                    <MenuItem
+                      icon={<ImageIcon className="h-4 w-4" />}
+                      label="Resmi aç"
+                      onClick={() => {
+                        onImage(media.dataUrl);
+                        setMenu(false);
+                      }}
+                    />
+                  </>
+                )}
+              </>
+            )}
+
             <MenuItem
               icon={<Star className="h-4 w-4" />}
               label={msg.starred ? "Yıldızı kaldır" : "Yıldızla"}
