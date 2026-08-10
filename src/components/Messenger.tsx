@@ -41,6 +41,7 @@ import {
   ensureLiveNode,
   measureRoute,
   nodeLabel,
+  subscribeLivePeers,
   toLivePeers,
   onLiveMessage,
   type LiveMessage,
@@ -76,43 +77,43 @@ export function peerAlias(id: string): string {
 
 
 /**
- * Yerel medya: izin verilmezse arayüz çökmez, cihaz "Sadece Veri Düğümü"
- * olarak ağda kalmaya devam eder.
+ * Yerel medya — TALEP ÜZERİNE.
+ * Sayfa açılışında ASLA izin istenmez; cihaz "sadece veri düğümü" olarak
+ * ağa katılır. Kamera/mikrofon yalnız kullanıcı butona bastığında açılır.
  */
 function useLocalMedia() {
-  const [mode, setMode] = useState<"pending" | "av" | "audio" | "data">("pending");
+  const [mode, setMode] = useState<"av" | "audio" | "data">("data");
+  const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    let cancelled = false;
-    const stop = () => stream?.getTracks().forEach((t) => t.stop());
+  const stop = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setMode("data");
+  };
 
-    const run = async () => {
-      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        if (!cancelled) setMode("data");
-        return;
-      }
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        if (!cancelled) setMode("av");
-      } catch {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          if (!cancelled) setMode("audio");
-        } catch {
-          if (!cancelled) setMode("data");
-        }
-      }
-      stop();
-    };
-    void run();
-    return () => {
-      cancelled = true;
-      stop();
-    };
-  }, []);
+  /** Yalnızca kullanıcı etkileşimiyle çağrılır. */
+  const request = async (kind: "av" | "audio") => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setMode("data");
+      return false;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        kind === "av" ? { audio: true, video: true } : { audio: true },
+      );
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = stream;
+      setMode(kind);
+      return true;
+    } catch {
+      setMode("data");
+      return false;
+    }
+  };
 
-  return mode;
+  useEffect(() => () => stop(), []);
+
+  return { mode, request, stop };
 }
 
 /** Mini mesh topolojisi — yeniden boyutlandırmaya duyarlı canvas döngüsü. */
@@ -304,10 +305,21 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
   );
 }
 
+/** Boş slot: 8'li matrisi her koşulda korur. */
+function EmptyTile() {
+  return (
+    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[#090e18] p-3 text-center font-osmono text-[10px] text-slate-600">
+      <Network className="mb-1 h-4 w-4 text-slate-700" />
+      Eş Bekleniyor
+      <span className="text-[9px] text-slate-700">Pasif Düğüm</span>
+    </div>
+  );
+}
+
 function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
   return (
     <div
-      className={`relative flex h-full min-h-[120px] w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] object-cover p-3 ${
+      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
         p.active
           ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
           : "border-emerald-500/20"
@@ -351,20 +363,27 @@ function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
 /** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
 export default function Messenger() {
   const node = useNodeRuntime();
-  const media = useLocalMedia();
+  const { mode: media, request: requestMedia, stop: stopMedia } = useLocalMedia();
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
-  // Yerel WebRTC kontrol durumları (kamera / mikrofon / ekran paylaşımı).
-  const [camOn, setCamOn] = useState(true);
-  const [micOn, setMicOn] = useState(true);
+  // Yerel WebRTC kontrol durumları — hepsi KAPALI başlar (izin istenmez).
+  const [camOn, setCamOn] = useState(false);
+  const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
-  const [inCall, setInCall] = useState(true);
+  const [inCall, setInCall] = useState(false);
   // Canlı test: ağda eş yokken sanal bir P2P düğümü bağlar.
   const [sim, setSim] = useState(false);
+  // Orta panel görünümü: video ızgarası veya gömülü ağ/kapsama paneli.
+  const [center, setCenter] = useState<"video" | "network">("video");
+  // Sinyal kanalından gelen canlı eş kimlikleri (BroadcastChannel + bulut).
+  const [signalPeers, setSignalPeers] = useState<string[]>([]);
   // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
+
+  // Yerel + bulut sinyal kanalı: yan yanaki iki cihaz birbirini anında görür.
+  useEffect(() => subscribeLivePeers(setSignalPeers), []);
 
   // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
@@ -404,6 +423,16 @@ export default function Messenger() {
         handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
         active: p.direct,
       })),
+      // Sinyal kanalından keşfedilen cihazlar (aynı adresi açan telefonlar).
+      ...signalPeers
+        .filter((id) => !livePeers.some((p) => p.id === id))
+        .map((id) => ({
+          id,
+          name: id,
+          alias: peerAlias(id),
+          handle: "sinyal kanalı · çevrimiçi",
+          active: true,
+        })),
     ];
     if (sim && livePeers.length === 0) {
       list.push({
@@ -415,7 +444,13 @@ export default function Messenger() {
       });
     }
     return list;
-  }, [livePeers, media, node.nodeId, selfLabel, sim]);
+  }, [livePeers, media, node.nodeId, selfLabel, sim, signalPeers]);
+
+  /** 8'li sabit matris: boş kalan slotlar pasif düğüm kartıyla korunur. */
+  const slots = useMemo(
+    () => Array.from({ length: 8 }, (_, i) => participants[i] ?? null),
+    [participants],
+  );
 
   const stamp = () =>
     new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
@@ -513,7 +548,7 @@ export default function Messenger() {
       {/* ANA DÜZEN */}
       <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100dvh-104px)]">
+        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
           <div>
             <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
@@ -536,18 +571,24 @@ export default function Messenger() {
               Sistem
             </div>
             <nav className="space-y-1">
-              <Link
-                to="/dashboard"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              <button
+                type="button"
+                onClick={() => setCenter("video")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "video" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
                 <LayoutDashboard className="h-3.5 w-3.5 text-cyan-400" /> Kontrol Paneli
-              </Link>
-              <Link
-                to="/kapsama"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              </button>
+              <button
+                type="button"
+                onClick={() => setCenter("network")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "network" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
-                <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ
-              </Link>
+                <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ / Kapsama
+              </button>
               <Link
                 to="/system"
                 className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
@@ -597,7 +638,7 @@ export default function Messenger() {
         {/* İÇERİK: 3 BLOK */}
         <main className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
           {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
-          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100dvh-104px)] xl:overflow-y-auto">
+          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:overflow-y-auto">
             <Panel className="space-y-2">
               <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 AĞ ÖZETİ
@@ -630,30 +671,65 @@ export default function Messenger() {
             </Panel>
           </div>
 
-          {/* ORTA BLOK — VİDEO IZGARASI */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100dvh-104px)] xl:min-h-0">
+          {/* ORTA BLOK — VİDEO IZGARASI / GÖMÜLÜ AĞ PANELİ */}
+          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
-              icon={<Video className="h-4 w-4 text-emerald-400" />}
+              icon={
+                center === "video" ? (
+                  <Video className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <Share2 className="h-4 w-4 text-emerald-400" />
+                )
+              }
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
             >
               <span className="flex items-center gap-2">
-                P2P VİDEO VE SES
+                {center === "video" ? "P2P VİDEO VE SES" : "AĞ VE KAPSAMA"}
                 <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
                   <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
                 </span>
               </span>
             </PanelTitle>
 
-            <div className="my-2 grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
-              {participants.map((p) => (
-                <VideoTile key={p.id} p={p} camOn={camOn} />
-              ))}
-              {peers === 0 ? (
-                <div className="col-span-full grid h-full min-h-[120px] place-items-center rounded-lg border border-dashed border-emerald-500/20 bg-slate-950/60 p-4 text-center font-osmono text-[11px] text-slate-500">
-                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
+            {center === "network" ? (
+              <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
+                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                  <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
+                  <Row k="ÇEVRİMİÇİ EŞ:" v={String(peers)} tone="text-emerald-400" />
+                  <Row k="DOĞRUDAN P2P:" v={String(directPeers)} tone="text-cyan-400" />
+                  <Row
+                    k="ROTA:"
+                    v={route ? `${route.hops} sıçrama · maliyet ${route.cost}` : "ölçülüyor"}
+                  />
+                  <Row k="GECİKME:" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
+                  <Row k="KUYRUK:" v={String(node.queued)} />
                 </div>
-              ) : null}
-            </div>
+                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                  <div className="mb-2 text-slate-300">KEŞFEDİLEN DÜĞÜMLER</div>
+                  {participants.filter((p) => !p.self).length === 0 ? (
+                    <p className="text-slate-600">Sinyal bekleniyor…</p>
+                  ) : (
+                    participants
+                      .filter((p) => !p.self)
+                      .map((p) => (
+                        <div key={p.id} className="flex justify-between gap-2 py-0.5">
+                          <span className="truncate text-slate-300">{p.alias ?? p.name}</span>
+                          <span className="shrink-0 text-emerald-400">{p.handle}</span>
+                        </div>
+                      ))
+                  )}
+                </div>
+                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[#070b13]">
+                  <MiniMeshCanvas />
+                </div>
+              </div>
+            ) : (
+              <div className="my-2 grid h-full min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 sm:grid-cols-2 lg:grid-cols-3">
+                {slots.map((p, i) =>
+                  p ? <VideoTile key={p.id} p={p} camOn={camOn} /> : <EmptyTile key={`empty-${i}`} />,
+                )}
+              </div>
+            )}
 
             <div className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
@@ -673,13 +749,28 @@ export default function Messenger() {
                     icon: Video,
                     label: camOn ? "Kamerayı kapat" : "Kamerayı aç",
                     on: camOn,
-                    toggle: () => setCamOn((v) => !v),
+                    // İzin YALNIZCA burada, kullanıcı tıkladığında istenir.
+                    toggle: () => {
+                      if (camOn) {
+                        setCamOn(false);
+                        if (!micOn) stopMedia();
+                        return;
+                      }
+                      void requestMedia("av").then((ok) => setCamOn(ok));
+                    },
                   },
                   {
                     icon: Mic,
                     label: micOn ? "Mikrofonu sessize al" : "Mikrofonu aç",
                     on: micOn,
-                    toggle: () => setMicOn((v) => !v),
+                    toggle: () => {
+                      if (micOn) {
+                        setMicOn(false);
+                        if (!camOn) stopMedia();
+                        return;
+                      }
+                      void requestMedia(camOn ? "av" : "audio").then((ok) => setMicOn(ok));
+                    },
                   },
                   {
                     icon: MonitorUp,
@@ -726,15 +817,20 @@ export default function Messenger() {
                   aria-label={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
                   title={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
                   onClick={() => {
-                    setInCall((v) => !v);
                     if (inCall) {
+                      setInCall(false);
                       setCamOn(false);
                       setMicOn(false);
                       setScreenOn(false);
-                    } else {
-                      setCamOn(true);
-                      setMicOn(true);
+                      stopMedia();
+                      return;
                     }
+                    // "Arama Başlat" — izin isteminin tek tetikleyicisi.
+                    void requestMedia("av").then((ok) => {
+                      setInCall(true);
+                      setCamOn(ok);
+                      setMicOn(ok);
+                    });
                   }}
                   className={`grid h-10 w-10 place-items-center rounded-lg text-white ${
                     inCall ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"
@@ -748,7 +844,7 @@ export default function Messenger() {
 
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100dvh-104px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
               icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
               right={

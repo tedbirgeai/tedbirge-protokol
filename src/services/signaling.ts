@@ -102,3 +102,97 @@ export async function measureRoute(
   if (!route.reachable) return null;
   return { hops: Math.max(0, route.path.length - 1), cost: Math.round(route.cost) };
 }
+
+/* ==================================================================
+ * YEREL / CANLI EŞ KEŞFİ (BroadcastChannel + Realtime yedeği)
+ * ------------------------------------------------------------------
+ * Aynı adresi açan iki cihaz birbirini anında görür. Aynı tarayıcıdaki
+ * sekmeler BroadcastChannel ile, farklı cihazlar bulut sinyal kanalı
+ * (Supabase Realtime presence) ile eşleşir. Hiçbir aşamada kamera veya
+ * mikrofon izni istenmez — keşif tamamen veri kanalıdır.
+ * ================================================================== */
+
+import { supabase } from "@/integrations/supabase/client";
+
+const PEER_KEY = "tedbirge.local-peer-id";
+const CHANNEL = "tedbirge-signal";
+const TTL_MS = 12_000;
+
+/** Cihaza kalıcı, benzersiz düğüm kimliği (localStorage UUID). */
+export function getLocalPeerId(): string {
+  if (typeof window === "undefined") return "NODE_SSR";
+  try {
+    const existing = window.localStorage.getItem(PEER_KEY);
+    if (existing) return existing;
+    const uuid = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}${Math.random()}`)
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase();
+    const id = `NODE_${uuid.slice(0, 6)}`;
+    window.localStorage.setItem(PEER_KEY, id);
+    return id;
+  } catch {
+    return `NODE_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  }
+}
+
+type Presence = { id: string; at: number; via: "local" | "cloud" };
+
+/**
+ * Yerel + bulut sinyal kanalını açar; çevrimiçi eş kimliklerini yayınlar.
+ * Dönen fonksiyon tüm kanalları kapatır.
+ */
+export function subscribeLivePeers(onPeers: (ids: string[]) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const self = getLocalPeerId();
+  const seen = new Map<string, Presence>();
+
+  const flush = () => {
+    const now = Date.now();
+    for (const [id, p] of seen) if (now - p.at > TTL_MS) seen.delete(id);
+    onPeers([...seen.keys()]);
+  };
+
+  const note = (id: string, via: Presence["via"]) => {
+    if (!id || id === self) return;
+    seen.set(id, { id, at: Date.now(), via });
+    flush();
+  };
+
+  // 1) Aynı tarayıcıdaki sekmeler / pencereler
+  let bc: BroadcastChannel | null = null;
+  try {
+    bc = new BroadcastChannel(CHANNEL);
+    bc.onmessage = (e: MessageEvent<{ type: string; id: string }>) => {
+      if (e.data?.type === "hello" || e.data?.type === "ack") note(e.data.id, "local");
+      if (e.data?.type === "hello") bc?.postMessage({ type: "ack", id: self });
+    };
+    bc.postMessage({ type: "hello", id: self });
+  } catch {
+    bc = null;
+  }
+
+  // 2) Farklı cihazlar — bulut sinyal kanalı (presence)
+  const rt = supabase.channel(`presence:${CHANNEL}`, { config: { presence: { key: self } } });
+  rt.on("presence", { event: "sync" }, () => {
+    const state = rt.presenceState() as Record<string, unknown[]>;
+    Object.keys(state).forEach((id) => note(id, "cloud"));
+  });
+  rt.on("presence", { event: "leave" }, ({ key }: { key: string }) => {
+    seen.delete(key);
+    flush();
+  });
+  void rt.subscribe((status) => {
+    if (status === "SUBSCRIBED") void rt.track({ id: self, at: Date.now() });
+  });
+
+  const beat = setInterval(() => {
+    bc?.postMessage({ type: "hello", id: self });
+    flush();
+  }, 4_000);
+
+  return () => {
+    clearInterval(beat);
+    bc?.close();
+    void supabase.removeChannel(rt);
+  };
+}
