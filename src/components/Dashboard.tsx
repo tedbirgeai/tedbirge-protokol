@@ -236,8 +236,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen w-full select-none flex-col overflow-hidden bg-[#06090e] text-slate-400">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-[#0b101d] px-4 py-2.5 text-xs">
+    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-[#06090e] text-slate-400">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[#0b101d] px-3 py-2 text-[11px] sm:gap-3 sm:px-4 sm:py-2.5 sm:text-xs">
+
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
             <Box className="h-4 w-4 text-cyan-400" />
