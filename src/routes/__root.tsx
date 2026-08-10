@@ -15,10 +15,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { setupOfflineSupport } from "../lib/pwa";
 import { OfflineBanner } from "../components/site/OfflineBanner";
-import { NodeDock } from "../components/site/NodeDock";
 import { CallHost } from "../components/chat/CallHost";
 
-import { bootNodeRuntime } from "../lib/node-runtime";
+import { bootNodeRuntime, startNode } from "../lib/node-runtime";
 import { bootAccessEngine } from "../lib/access-tiers";
 import { ensureOfflineGrant } from "../lib/offline-license";
 import { runOneTimePurge } from "../lib/hard-reset";
