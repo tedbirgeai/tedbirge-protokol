@@ -328,6 +328,9 @@ export default function Messenger() {
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
+  // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
@@ -346,7 +349,8 @@ export default function Messenger() {
     };
   }, [node.nodeId, node.peers, node.rttMs]);
 
-  const selfLabel = nodeLabel(node.nodeId);
+  const selfLabel = hydrated ? nodeLabel(node.nodeId) : nodeLabel("");
+
   const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
 
   const participants: Participant[] = useMemo(
