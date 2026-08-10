@@ -281,12 +281,13 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
 function VideoTile({ p }: { p: Participant }) {
   return (
     <div
-      className={`relative flex min-h-[140px] flex-col justify-between overflow-hidden rounded-lg border p-2 sm:min-h-[160px] ${
+      className={`relative flex aspect-video h-auto max-h-52 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
         p.active
-          ? "border-emerald-500 bg-slate-900/90 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
-          : "border-slate-800 bg-slate-900/90"
+          ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
+          : "border-emerald-500/20"
       }`}
     >
+
       {p.active ? (
         <span className="absolute left-2 top-2 rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-osmono text-[9px] text-emerald-400">
           AKTİF KONUŞMACI
