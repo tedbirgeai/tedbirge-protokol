@@ -236,8 +236,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen w-full select-none flex-col overflow-hidden bg-[#06090e] text-slate-400">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-[#0b101d] px-4 py-2.5 text-xs">
+    <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden bg-[#06090e] text-slate-400">
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-[#0b101d] px-3 py-2 text-[11px] sm:gap-3 sm:px-4 sm:py-2.5 sm:text-xs">
+
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
             <Box className="h-4 w-4 text-cyan-400" />
@@ -356,9 +357,10 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        <main className="flex flex-1 flex-col gap-2 overflow-hidden">
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 xl:grid-cols-12">
-            <div className="flex flex-col gap-2 overflow-y-auto xl:col-span-3">
+        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
+            <div className="flex min-w-0 flex-col gap-2 xl:overflow-y-auto xl:col-span-3">
+
               <Card title="AĞ ÖZETİ" icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 <div className="flex items-baseline justify-between">
                   <span className="font-mono text-3xl font-extrabold text-emerald-400">823</span>
@@ -446,7 +448,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 overflow-y-auto xl:col-span-3">
+            <div className="flex min-w-0 flex-col gap-2 xl:overflow-y-auto xl:col-span-3">
               <Card title="AĞ METRİKLERİ" icon={<ChartLine className="h-3.5 w-3.5 text-cyan-400" />}>
                 <div className="space-y-2 font-mono text-xs text-slate-400">
                   <Row k="İLETİLEN PAKETLER:" v="1.24M" />
