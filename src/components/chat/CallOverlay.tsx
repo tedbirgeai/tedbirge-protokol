@@ -166,8 +166,7 @@ export function CallOverlay() {
     else if (call.phase === "outgoing") {
       if (call.remoteRinging) startRingback();
       else startSearching();
-    }
-    else {
+    } else {
       stopRing();
       if (call.phase === "ended") callEndSound();
     }
