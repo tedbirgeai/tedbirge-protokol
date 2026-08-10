@@ -520,7 +520,7 @@ export default function Messenger() {
         {/* İÇERİK: 3 BLOK */}
         <main className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
           {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
-          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:overflow-y-auto">
+          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100vh-80px)] xl:overflow-y-auto">
             <Panel className="space-y-2">
               <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 AĞ ÖZETİ
