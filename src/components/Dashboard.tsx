@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+
 import {
   Activity,
   ArrowDown,
@@ -297,25 +299,42 @@ export default function Dashboard() {
               Sistem
             </div>
             <nav className="space-y-1">
-              <span className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50">
+              <Link
+                to="/panel"
+                className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <LayoutDashboard className="h-3.5 w-3.5 text-cyan-400" /> Kontrol Paneli
-              </span>
+              </Link>
               <span className="flex items-center gap-2 rounded border border-emerald-500/20 bg-emerald-950/30 px-2.5 py-1.5 font-medium text-emerald-400">
                 <Share2 className="h-3.5 w-3.5" /> Ağ Topolojisi
               </span>
-              <span className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50">
+              <button
+                type="button"
+                onClick={() => logRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <TerminalSquare className="h-3.5 w-3.5 text-cyan-400" /> Terminal Logları
-              </span>
-              <span className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50">
+              </button>
+              <Link
+                to="/system"
+                className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <FolderTree className="h-3.5 w-3.5 text-cyan-400" /> Dosya Yöneticisi
-              </span>
-              <span className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50">
+              </Link>
+              <Link
+                to="/guvenlik"
+                className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" /> Güvenlik &amp; ZK
-              </span>
-              <span className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50">
-                <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
-              </span>
+              </Link>
+              <Link
+                to="/app"
+                className="flex items-center gap-2 rounded px-2.5 py-1.5 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
+                <Settings className="h-3.5 w-3.5 text-cyan-400" /> Uygulama &amp; Ayarlar
+              </Link>
             </nav>
+
           </div>
 
           <div className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-900/90 p-2.5 font-mono text-[11px]">
