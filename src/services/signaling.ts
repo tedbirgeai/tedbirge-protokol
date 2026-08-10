@@ -98,11 +98,7 @@ export async function measureRoute(
       quality,
     })),
   };
-  // Sunucu tarafında (SSR) işçi yoktur; tarayıcıda hesap arka plana taşınır.
-  const route =
-    typeof window === "undefined"
-      ? shortestPath(graph, selfId, target.nodeId)
-      : await (await import("@/lib/mesh-routing.client")).routeAsync(graph, selfId, target.nodeId);
+  const route = shortestPath(graph, selfId, target.nodeId);
   if (!route.reachable) return null;
   return { hops: Math.max(0, route.path.length - 1), cost: Math.round(route.cost) };
 }
