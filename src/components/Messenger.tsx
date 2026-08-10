@@ -355,16 +355,23 @@ export default function Messenger() {
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
-  // Yerel WebRTC kontrol durumları (kamera / mikrofon / ekran paylaşımı).
-  const [camOn, setCamOn] = useState(true);
-  const [micOn, setMicOn] = useState(true);
+  // Yerel WebRTC kontrol durumları — hepsi KAPALI başlar (izin istenmez).
+  const [camOn, setCamOn] = useState(false);
+  const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
-  const [inCall, setInCall] = useState(true);
+  const [inCall, setInCall] = useState(false);
   // Canlı test: ağda eş yokken sanal bir P2P düğümü bağlar.
   const [sim, setSim] = useState(false);
+  // Orta panel görünümü: video ızgarası veya gömülü ağ/kapsama paneli.
+  const [center, setCenter] = useState<"video" | "network">("video");
+  // Sinyal kanalından gelen canlı eş kimlikleri (BroadcastChannel + bulut).
+  const [signalPeers, setSignalPeers] = useState<string[]>([]);
   // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
+
+  // Yerel + bulut sinyal kanalı: yan yanaki iki cihaz birbirini anında görür.
+  useEffect(() => subscribeLivePeers(setSignalPeers), []);
 
   // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
