@@ -534,3 +534,98 @@ body {
 .tb-splash-bar {
   animation: tb-splash 1.1s ease-in-out infinite;
 }
+
+/* ------------------------------------------------------------------
+ * TEDBİRGE OS — KİLİTLİ KOYU SİBER (Dark Cyber / P2P) TASARIM KAPSAMI
+ * Tüm rotalarda tek renk dili: #06090e zemin, #0b101d panel,
+ * emerald/cyan vurgu, muted slate metin. `.tbos` kapsamı shadcn
+ * tokenlarını ve iç içe geçmiş `.wa-scope` panellerini de bağlar.
+ * ---------------------------------------------------------------- */
+.tbos,
+.tbos .wa,
+.tbos .wa-scope {
+  --background: #06090e;
+  --foreground: #e2e8f0;
+  --card: #0b101d;
+  --card-foreground: #e2e8f0;
+  --popover: #0b101d;
+  --popover-foreground: #e2e8f0;
+  --primary: #10b981;
+  --primary-foreground: #04120c;
+  --secondary: #111a2b;
+  --secondary-foreground: #cbd5e1;
+  --muted: #111a2b;
+  --muted-foreground: #94a3b8;
+  --accent: #06b6d4;
+  --accent-foreground: #04120c;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --border: rgba(16, 185, 129, 0.15);
+  --input: rgba(16, 185, 129, 0.22);
+  --ring: #10b981;
+  --sidebar: #0b101d;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-border: rgba(16, 185, 129, 0.15);
+  /* WhatsApp kabuk belirteçleri koyu siber karşılıklarına bağlanır */
+  --wa-panel: #0b101d;
+  --wa-panel-soft: #111a2b;
+  --wa-border: rgba(16, 185, 129, 0.15);
+  --wa-text: #e2e8f0;
+  --wa-muted: #94a3b8;
+  --wa-accent: #10b981;
+  --wa-accent-soft: rgba(16, 185, 129, 0.12);
+  --wa-bubble-in: #0b101d;
+  --wa-bubble-out: rgba(16, 185, 129, 0.16);
+  --wa-chat-bg: #06090e;
+  --wa-bg: #06090e;
+  --wa-tick: #64748b;
+  --wa-tick-read: #10b981;
+  background-color: #06090e;
+  color: #e2e8f0;
+  font-family: var(--font-osui);
+}
+
+.tbos .font-mono,
+.tbos code,
+.tbos pre {
+  font-family: var(--font-osmono);
+}
+
+.tbos .bg-white {
+  background-color: #0b101d;
+}
+
+/* Siber ızgara zemin efekti */
+@utility cyber-grid {
+  background-color: #06090e;
+  background-image:
+    linear-gradient(to right, rgba(16, 185, 129, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.07) 1px, transparent 1px),
+    radial-gradient(1000px 500px at 20% -10%, rgba(6, 182, 212, 0.1), transparent 65%);
+  background-size: 44px 44px, 44px 44px, auto;
+}
+
+/* Web-OS pencere açılış animasyonu */
+@keyframes tbos-window-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tbos-window {
+  animation: tbos-window-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: rgba(11, 16, 29, 0.92);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tbos-window {
+    animation: none;
+  }
+}

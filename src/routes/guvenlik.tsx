@@ -87,7 +87,7 @@ const claims = [
 
 function Security() {
   return (
-    <SitePage>
+    <SitePage className="tbos cyber-grid">
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="grid-bg absolute inset-0 opacity-60" aria-hidden />
         <div className="relative mx-auto max-w-6xl px-6 py-20">

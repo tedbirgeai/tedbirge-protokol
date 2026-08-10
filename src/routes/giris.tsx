@@ -96,7 +96,7 @@ function AuthPage() {
   }
 
   return (
-    <SitePage>
+    <SitePage className="tbos cyber-grid">
       <section className="mx-auto grid max-w-5xl gap-12 px-6 py-20 lg:grid-cols-2">
         <div>
           <SectionLabel>Müşteri paneli</SectionLabel>
@@ -109,7 +109,7 @@ function AuthPage() {
           </p>
         </div>
 
-        <div className="rounded-sm border border-border bg-card/50 p-8">
+        <div className="tbos-window rounded-2xl p-8">
           <div className="flex gap-2 font-mono text-xs uppercase tracking-[0.15em]">
             <button
               onClick={() => setMode("signin")}

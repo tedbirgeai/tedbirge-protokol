@@ -43,7 +43,7 @@ export function CapabilityDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onCancel() : undefined)}>
-      <DialogContent className="wa wa-scope flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-y-auto sm:w-full">
+      <DialogContent className="wa tbos flex max-h-[88dvh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-y-auto sm:w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5" aria-hidden />
