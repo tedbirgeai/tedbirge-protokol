@@ -563,7 +563,7 @@ export default function Messenger() {
               </span>
             </PanelTitle>
 
-            <div className="my-2 grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+            <div className="my-2 grid min-h-0 flex-1 auto-rows-max grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
               {participants.map((p) => (
                 <VideoTile key={p.id} p={p} />
               ))}
