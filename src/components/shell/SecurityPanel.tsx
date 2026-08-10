@@ -100,14 +100,15 @@ export function SecurityPanel() {
           <p className="text-slate-600">Kayıt yok.</p>
         ) : (
           events.map((e, i) => (
-            <div key={`${e.at}-${i}`} className="flex items-start justify-between gap-3 py-0.5">
+            <div key={`${e.ts}-${i}`} className="flex items-start justify-between gap-3 py-0.5">
               <span className="min-w-0 truncate text-slate-300">
                 <span className="text-cyan-400">{e.kind}</span> · {e.detail}
               </span>
               <span className="shrink-0 text-slate-600">
-                {new Date(e.at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                {new Date(e.ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>
+
           ))
         )}
         <p className="pt-1 text-[10px] leading-relaxed text-slate-500">
