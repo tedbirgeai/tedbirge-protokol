@@ -709,7 +709,12 @@ export default function Messenger() {
             </PanelTitle>
 
 
-            {center === "network" ? (
+            {center === "settings" ? (
+              <NodeSettingsPanel />
+            ) : center === "security" ? (
+              <SecurityPanel />
+            ) : center === "network" ? (
+
               <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
                 <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
                   <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
