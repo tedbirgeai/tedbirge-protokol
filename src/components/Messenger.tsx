@@ -47,7 +47,33 @@ import {
   type LivePeer,
 } from "@/services/signaling";
 
-type Participant = { id: string; name: string; handle: string; active?: boolean; self?: boolean };
+type Participant = {
+  id: string;
+  name: string;
+  handle: string;
+  alias?: string;
+  active?: boolean;
+  self?: boolean;
+};
+
+/** Kriptografik kimlikten okunabilir yerel takma ad üretir (İsim/Cisim). */
+const ALIAS_POOL = [
+  "Node Alpha",
+  "Node Beta",
+  "Node Gamma",
+  "Node Delta",
+  "Node Epsilon",
+  "Node Zeta",
+  "Node Eta",
+  "Node Theta",
+];
+
+export function peerAlias(id: string): string {
+  let sum = 0;
+  for (const ch of id) sum = (sum + ch.charCodeAt(0)) % 4096;
+  return ALIAS_POOL[sum % ALIAS_POOL.length]!;
+}
+
 
 /**
  * Yerel medya: izin verilmezse arayüz çökmez, cihaz "Sadece Veri Düğümü"
