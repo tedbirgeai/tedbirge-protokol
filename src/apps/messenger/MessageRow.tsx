@@ -5,7 +5,7 @@
  * uygulamasına ait sunum parçalarını taşır; kabuk kodu bunları bilmez.
  * Mantık aynen taşınmıştır, davranış değişmemiştir.
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Check,
   CheckCheck,
