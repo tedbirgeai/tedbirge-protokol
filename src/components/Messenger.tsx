@@ -601,18 +601,25 @@ export default function Messenger() {
               >
                 <FolderTree className="h-3.5 w-3.5 text-cyan-400" /> Dosyalar
               </Link>
-              <Link
-                to="/guvenlik"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              <button
+                type="button"
+                onClick={() => setCenter("security")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "security" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
                 <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" /> Güvenlik
-              </Link>
-              <Link
-                to="/izinler"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              </button>
+              <button
+                type="button"
+                onClick={() => setCenter("settings")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "settings" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
                 <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
-              </Link>
+              </button>
+
             </nav>
           </div>
 
