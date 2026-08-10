@@ -11,11 +11,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Box,
-  CircleCheck,
   CircleUser,
   Clock,
-  FileCode2,
-  FileImage,
   Folder,
   FolderOpen,
   FolderTree,
@@ -28,7 +25,6 @@ import {
   Network,
   Paperclip,
   PhoneOff,
-  Play,
   Search,
   Settings,
   Share2,
