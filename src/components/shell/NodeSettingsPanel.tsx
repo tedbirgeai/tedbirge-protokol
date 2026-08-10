@@ -143,8 +143,19 @@ export function NodeSettingsPanel() {
   const [notice, setNotice] = useState<string | null>(null);
   const [perm, setPerm] = useState<string>("default");
 
-  useEffect(() => onKernelTelemetry(() => force((n) => n + 1)), []);
-  useEffect(() => onKernelHealth(() => force((n) => n + 1)), []);
+  useEffect(() => {
+    const off = onKernelTelemetry(() => force((n) => n + 1));
+    return () => {
+      off();
+    };
+  }, []);
+  useEffect(() => {
+    const off = onKernelHealth(() => force((n) => n + 1));
+    return () => {
+      off();
+    };
+  }, []);
+
 
   const refresh = useCallback(() => {
     void storageInfo().then(setStorage);
