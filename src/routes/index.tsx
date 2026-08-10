@@ -25,5 +25,5 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  return <Dashboard />;
+  return <Messenger />;
 }
