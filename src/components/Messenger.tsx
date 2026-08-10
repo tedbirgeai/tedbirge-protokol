@@ -94,6 +94,7 @@ function MiniMeshCanvas() {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const canvas = ref.current;
     const parent = canvas?.parentElement;
     if (!canvas || !parent) return;
@@ -101,13 +102,14 @@ function MiniMeshCanvas() {
     if (!ctx) return;
 
     const nodes = [
-      { x: 0.5, y: 0.5, r: 11 },
-      { x: 0.2, y: 0.3, r: 4 },
-      { x: 0.8, y: 0.2, r: 4 },
-      { x: 0.85, y: 0.7, r: 4 },
-      { x: 0.3, y: 0.8, r: 4 },
-      { x: 0.15, y: 0.6, r: 4 },
+      { x: 0.2, y: 0.28, r: 4.5, label: "NODE_83A1" },
+      { x: 0.8, y: 0.2, r: 4.5, label: "NODE_6C8E" },
+      { x: 0.86, y: 0.7, r: 4.5, label: "NODE_789E" },
+      { x: 0.3, y: 0.82, r: 4.5, label: "NODE_1F2B" },
+      { x: 0.14, y: 0.62, r: 4.5, label: "NODE_44C0" },
     ];
+    // Her kenarda dolaşan veri paketi (0–1 arası ilerleme).
+    const packets = nodes.map((_, i) => ({ t: i * 0.17, speed: 0.004 + (i % 3) * 0.0018 }));
 
     let raf = 0;
     let pulse = 0;
@@ -133,39 +135,75 @@ function MiniMeshCanvas() {
       const cy = h * 0.5;
       pulse = (pulse + 0.35) % Math.max(24, Math.min(w, h) / 2);
 
+      // Merkez nabız halkası
       ctx.beginPath();
       ctx.arc(cx, cy, pulse, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(16, 185, 129, ${Math.max(0, 0.35 - pulse / 200)})`;
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      for (let i = 1; i < nodes.length; i += 1) {
-        const n = nodes[i]!;
+      nodes.forEach((n, i) => {
         const nx = w * n.x;
         const ny = h * n.y;
 
+        // Bağlantı çizgisi
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(nx, ny);
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.25)";
-        ctx.setLineDash([2, 2]);
+        ctx.strokeStyle = "rgba(6, 182, 212, 0.28)";
+        ctx.setLineDash([3, 3]);
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.setLineDash([]);
 
+        // Hareketli veri paketi
+        const p = packets[i]!;
+        p.t = (p.t + p.speed) % 1;
+        const px = cx + (nx - cx) * p.t;
+        const py = cy + (ny - cy) * p.t;
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#22d3ee";
+        ctx.shadowColor = "#06b6d4";
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Çevre düğüm (cyan glow)
         ctx.beginPath();
         ctx.arc(nx, ny, n.r, 0, Math.PI * 2);
         ctx.fillStyle = "#06b6d4";
+        ctx.shadowColor = "rgba(6,182,212,0.9)";
+        ctx.shadowBlur = 12;
         ctx.fill();
-      }
+        ctx.shadowBlur = 0;
 
+        if (w > 200) {
+          ctx.font = "8px ui-monospace, monospace";
+          ctx.fillStyle = "rgba(148,163,184,0.75)";
+          ctx.textAlign = nx > cx ? "right" : "left";
+          ctx.fillText(n.label, nx + (nx > cx ? -8 : 8), ny - 8);
+        }
+      });
+
+      // Merkez THIS_NODE (emerald glow)
       ctx.beginPath();
-      ctx.arc(cx, cy, nodes[0]!.r, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
       ctx.fillStyle = "#091512";
       ctx.strokeStyle = "#10b981";
       ctx.lineWidth = 2;
+      ctx.shadowColor = "rgba(16,185,129,0.9)";
+      ctx.shadowBlur = 16;
       ctx.fill();
       ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      if (w > 200) {
+        ctx.font = "8px ui-monospace, monospace";
+        ctx.fillStyle = "rgba(16,185,129,0.9)";
+        ctx.textAlign = "center";
+        ctx.fillText("THIS_NODE", cx, cy + 24);
+      }
 
       raf = requestAnimationFrame(draw);
     };
@@ -178,8 +216,9 @@ function MiniMeshCanvas() {
     };
   }, []);
 
-  return <canvas ref={ref} className="block h-full w-full" />;
+  return <canvas id="meshTopologyCanvas" ref={ref} className="block h-full w-full bg-transparent" />;
 }
+
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
