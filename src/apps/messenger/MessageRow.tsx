@@ -12,6 +12,9 @@ import {
   ChevronDown,
   Clock,
   Copy,
+  Download,
+  Image as ImageIcon,
+
   Forward,
   Languages,
   MapPin,
