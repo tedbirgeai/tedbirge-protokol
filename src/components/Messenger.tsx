@@ -631,7 +631,7 @@ export default function Messenger() {
           </div>
 
           {/* ORTA BLOK — VİDEO IZGARASI */}
-          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-80px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100dvh-104px)] xl:min-h-0">
             <PanelTitle
               icon={<Video className="h-4 w-4 text-emerald-400" />}
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
@@ -644,54 +644,108 @@ export default function Messenger() {
               </span>
             </PanelTitle>
 
-            <div className="my-2 grid min-h-0 flex-1 auto-rows-max grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
+            <div className="my-2 grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
               {participants.map((p) => (
-                <VideoTile key={p.id} p={p} />
+                <VideoTile key={p.id} p={p} camOn={camOn} />
               ))}
               {peers === 0 ? (
-                <div className="col-span-full grid min-h-[140px] place-items-center rounded-lg border border-dashed border-emerald-500/20 bg-slate-950/60 p-4 text-center font-osmono text-[11px] text-slate-500">
+                <div className="col-span-full grid h-full min-h-[120px] place-items-center rounded-lg border border-dashed border-emerald-500/20 bg-slate-950/60 p-4 text-center font-osmono text-[11px] text-slate-500">
                   Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
                 </div>
               ) : null}
             </div>
 
-            <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+            <div className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
-                {media === "data"
-                  ? "SADECE VERİ DÜĞÜMÜ — KAMERA/MİKROFON KAPALI"
-                  : media === "audio"
-                    ? "SES DÜĞÜMÜ — KAMERA KAPALI"
-                    : "DOĞRUDAN P2P WEBRTC AKIŞI"}{" "}
+                {!inCall
+                  ? "GÖRÜŞME SONLANDIRILDI"
+                  : media === "data"
+                    ? "SADECE VERİ DÜĞÜMÜ — KAMERA/MİKROFON KAPALI"
+                    : media === "audio"
+                      ? "SES DÜĞÜMÜ — KAMERA KAPALI"
+                      : "DOĞRUDAN P2P WEBRTC AKIŞI"}{" "}
                 | AES-256-GCM |{" "}
                 {node.rttMs != null ? `${node.rttMs}ms GECİKME` : "GECİKME ÖLÇÜLÜYOR"}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {[
-                  { icon: Video, label: "Kamera" },
-                  { icon: Mic, label: "Mikrofon" },
-                  { icon: MonitorUp, label: "Ekran paylaşımı" },
-                  { icon: Users, label: "Katılımcılar" },
-                  { icon: MoreHorizontal, label: "Diğer" },
-                ].map(({ icon: Icon, label }) => (
+                  {
+                    icon: Video,
+                    label: camOn ? "Kamerayı kapat" : "Kamerayı aç",
+                    on: camOn,
+                    toggle: () => setCamOn((v) => !v),
+                  },
+                  {
+                    icon: Mic,
+                    label: micOn ? "Mikrofonu sessize al" : "Mikrofonu aç",
+                    on: micOn,
+                    toggle: () => setMicOn((v) => !v),
+                  },
+                  {
+                    icon: MonitorUp,
+                    label: screenOn ? "Ekran paylaşımını durdur" : "Ekran paylaş",
+                    on: screenOn,
+                    toggle: () => setScreenOn((v) => !v),
+                  },
+                ].map(({ icon: Icon, label, on, toggle }) => (
                   <button
                     key={label}
                     type="button"
                     aria-label={label}
-                    className="grid h-10 w-10 place-items-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-400"
+                    aria-pressed={on}
+                    title={label}
+                    onClick={toggle}
+                    className={`grid h-10 w-10 place-items-center rounded-lg border transition-colors ${
+                      on
+                        ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400"
+                        : "border-rose-500/50 bg-rose-500/15 text-rose-400"
+                    }`}
                   >
                     <Icon className="h-4 w-4" />
                   </button>
                 ))}
                 <button
                   type="button"
-                  aria-label="Görüşmeyi bitir"
-                  className="grid h-10 w-10 place-items-center rounded-lg bg-rose-600 text-white hover:bg-rose-500"
+                  aria-label="Katılımcılar"
+                  title="Katılımcılar"
+                  onClick={() => setSim((v) => v || livePeers.length === 0)}
+                  className="grid h-10 w-10 place-items-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-400"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Diğer"
+                  title="Diğer"
+                  className="grid h-10 w-10 place-items-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-400"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
+                  title={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
+                  onClick={() => {
+                    setInCall((v) => !v);
+                    if (inCall) {
+                      setCamOn(false);
+                      setMicOn(false);
+                      setScreenOn(false);
+                    } else {
+                      setCamOn(true);
+                      setMicOn(true);
+                    }
+                  }}
+                  className={`grid h-10 w-10 place-items-center rounded-lg text-white ${
+                    inCall ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"
+                  }`}
                 >
                   <PhoneOff className="h-4 w-4" />
                 </button>
               </div>
             </div>
           </div>
+
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
           <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-80px)] xl:min-h-0">
