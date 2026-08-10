@@ -9,7 +9,7 @@
 
 import { bootMeshBus, onMesh } from "@/lib/mesh-bus";
 import { sendMesh, startNode } from "@/lib/node-runtime";
-import { routeAsync } from "@/lib/mesh-routing.client";
+import { shortestPath } from "@/lib/mesh-routing";
 import type { Graph } from "@/lib/mesh-routing";
 import type { PeerInfo } from "@/lib/browser-node";
 
