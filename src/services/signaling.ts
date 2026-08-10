@@ -63,7 +63,7 @@ export function onLiveMessage(cb: (msg: LiveMessage) => void): () => void {
       typeof body === "string"
         ? body
         : typeof (body as { text?: unknown })?.text === "string"
-          ? ((body as { text: string }).text)
+          ? (body as { text: string }).text
           : "";
     if (!text) return;
     cb({ id: `${from}-${Date.now()}-${Math.random()}`, from: nodeLabel(from), at: stamp(), text });

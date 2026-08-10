@@ -195,7 +195,15 @@ function Panel({ children, className }: { children: React.ReactNode; className?:
   );
 }
 
-function PanelTitle({ icon, children, right }: { icon: React.ReactNode; children: React.ReactNode; right?: React.ReactNode }) {
+function PanelTitle({
+  icon,
+  children,
+  right,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  right?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2 text-xs font-bold text-slate-300">
       <span className="flex min-w-0 items-center gap-2 truncate">
@@ -267,7 +275,11 @@ function VideoTile({ p }: { p: Participant }) {
           <div className="truncate font-bold text-slate-200">{p.name}</div>
           <div className="truncate text-[9px] text-slate-500">{p.handle}</div>
         </div>
-        {p.active || p.self ? <WaveBars delayed={p.self} /> : <Mic className="h-3.5 w-3.5 shrink-0 text-cyan-400" />}
+        {p.active || p.self ? (
+          <WaveBars delayed={p.self} />
+        ) : (
+          <Mic className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+        )}
       </div>
     </div>
   );
@@ -306,7 +318,8 @@ export default function Messenger() {
       {
         id: node.nodeId || "self",
         name: selfLabel,
-        handle: media === "data" ? "sadece veri düğümü" : media === "audio" ? "yalnız ses" : "bu cihaz",
+        handle:
+          media === "data" ? "sadece veri düğümü" : media === "audio" ? "yalnız ses" : "bu cihaz",
         self: true,
       },
       ...livePeers.map((p) => ({
@@ -324,7 +337,10 @@ export default function Messenger() {
     if (!text) return;
     setDraft("");
     const at = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-    setFeed((prev) => [...prev, { id: `self-${Date.now()}`, from: selfLabel, at, text, self: true }]);
+    setFeed((prev) => [
+      ...prev,
+      { id: `self-${Date.now()}`, from: selfLabel, at, text, self: true },
+    ]);
     await broadcastText(text);
   };
 
@@ -340,17 +356,21 @@ export default function Messenger() {
         <div className="flex min-w-0 items-center gap-2 text-sm font-bold tracking-wide text-emerald-400">
           <Box className="h-4 w-4 shrink-0 text-cyan-400" />
           <span>Web-OS</span>
-          <span className="hidden truncate font-normal text-slate-500 sm:inline">tedbirge-protokol/src</span>
+          <span className="hidden truncate font-normal text-slate-500 sm:inline">
+            tedbirge-protokol/src
+          </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/80 px-2.5 py-1">
             <span className="hidden text-slate-400 sm:inline">SİSTEM DURUMU:</span>
             <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts ÇEVRİMİÇİ
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> start.ts
+              ÇEVRİMİÇİ
             </span>
             <span className="ml-1 hidden items-center gap-1.5 font-medium text-emerald-400 md:inline-flex">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts ÇEVRİMİÇİ
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> server.ts
+              ÇEVRİMİÇİ
             </span>
           </div>
           <div className="flex items-center gap-1.5 rounded border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 font-osmono text-emerald-400">
@@ -378,7 +398,9 @@ export default function Messenger() {
         {/* SOL MENÜ */}
         <aside className="hidden w-52 shrink-0 flex-col justify-between rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 text-xs lg:flex">
           <div>
-            <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">Gezinme</div>
+            <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Gezinme
+            </div>
             <nav className="space-y-1 font-osmono">
               <span className="flex items-center gap-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-2 font-medium text-emerald-400">
                 <FolderOpen className="h-3.5 w-3.5" /> routes/
@@ -393,24 +415,44 @@ export default function Messenger() {
               ))}
             </nav>
 
-            <div className="mb-2 mt-5 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">Sistem</div>
+            <div className="mb-2 mt-5 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Sistem
+            </div>
             <nav className="space-y-1">
-              <Link to="/dashboard" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <LayoutDashboard className="h-3.5 w-3.5 text-cyan-400" /> Kontrol Paneli
               </Link>
-              <Link to="/kapsama" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/kapsama"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <Share2 className="h-3.5 w-3.5 text-cyan-400" /> Ağ
               </Link>
-              <Link to="/system" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/system"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <TerminalSquare className="h-3.5 w-3.5 text-cyan-400" /> Terminal
               </Link>
-              <Link to="/app" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/app"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <FolderTree className="h-3.5 w-3.5 text-cyan-400" /> Dosyalar
               </Link>
-              <Link to="/guvenlik" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/guvenlik"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" /> Güvenlik
               </Link>
-              <Link to="/izinler" className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100">
+              <Link
+                to="/izinler"
+                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              >
                 <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
               </Link>
             </nav>
@@ -440,7 +482,9 @@ export default function Messenger() {
           {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
           <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:overflow-y-auto">
             <Panel className="space-y-2">
-              <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>AĞ ÖZETİ</PanelTitle>
+              <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
+                AĞ ÖZETİ
+              </PanelTitle>
               <div className="flex items-baseline justify-between pt-1">
                 <span className="font-osmono text-3xl font-extrabold text-emerald-400">823</span>
                 <span className="text-xs font-medium text-slate-400">AKTİF DÜĞÜM</span>
@@ -454,7 +498,9 @@ export default function Messenger() {
             </Panel>
 
             <Panel className="flex min-h-[280px] flex-1 flex-col">
-              <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>P2P TOPOLOJİSİ</PanelTitle>
+              <PanelTitle icon={<Network className="h-3.5 w-3.5 text-cyan-400" />}>
+                P2P TOPOLOJİSİ
+              </PanelTitle>
               <div className="relative mt-2 min-h-[160px] w-full flex-1 overflow-hidden rounded border border-slate-900 bg-[#070b13]">
                 <MiniMeshCanvas />
               </div>
@@ -499,7 +545,8 @@ export default function Messenger() {
                   : media === "audio"
                     ? "SES DÜĞÜMÜ — KAMERA KAPALI"
                     : "DOĞRUDAN P2P WEBRTC AKIŞI"}{" "}
-                | AES-256-GCM | {node.rttMs != null ? `${node.rttMs}ms GECİKME` : "GECİKME ÖLÇÜLÜYOR"}
+                | AES-256-GCM |{" "}
+                {node.rttMs != null ? `${node.rttMs}ms GECİKME` : "GECİKME ÖLÇÜLÜYOR"}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {[
@@ -564,7 +611,9 @@ export default function Messenger() {
               {feed.map((m) => (
                 <div key={m.id} className="space-y-1">
                   <div className="flex justify-between gap-2 text-[10px] text-slate-400">
-                    <span className="truncate font-bold text-slate-300">{m.self ? "Siz" : m.from}</span>
+                    <span className="truncate font-bold text-slate-300">
+                      {m.self ? "Siz" : m.from}
+                    </span>
                     <span className="flex shrink-0 items-center gap-1">
                       {m.at} <Lock className="h-2.5 w-2.5 text-emerald-400" />
                     </span>
@@ -573,7 +622,6 @@ export default function Messenger() {
                 </div>
               ))}
             </div>
-
 
             <form
               onSubmit={(e) => {
@@ -588,10 +636,18 @@ export default function Messenger() {
                 placeholder="Şifreli mesajınızı yazın..."
                 className="min-w-0 flex-1 bg-transparent font-osmono text-xs text-slate-200 outline-none placeholder:text-slate-500"
               />
-              <button type="button" aria-label="Dosya ekle" className="grid h-8 w-8 place-items-center text-slate-400 hover:text-slate-200">
+              <button
+                type="button"
+                aria-label="Dosya ekle"
+                className="grid h-8 w-8 place-items-center text-slate-400 hover:text-slate-200"
+              >
                 <Paperclip className="h-4 w-4" />
               </button>
-              <button type="submit" aria-label="Sesli mesaj / gönder" className="grid h-8 w-8 place-items-center text-emerald-400 hover:text-emerald-300">
+              <button
+                type="submit"
+                aria-label="Sesli mesaj / gönder"
+                className="grid h-8 w-8 place-items-center text-emerald-400 hover:text-emerald-300"
+              >
                 <Mic className="h-4 w-4" />
               </button>
             </form>
@@ -613,13 +669,15 @@ export default function Messenger() {
           </span>
           <span className="hidden text-slate-400 md:inline">
             SİSTEM YÜKÜ: <strong className="text-emerald-400">NORMAL</strong> · CPU:{" "}
-            <strong className="text-slate-200">23%</strong> · RAM: <strong className="text-slate-200">41%</strong> · GPU:{" "}
+            <strong className="text-slate-200">23%</strong> · RAM:{" "}
+            <strong className="text-slate-200">41%</strong> · GPU:{" "}
             <strong className="text-slate-200">18%</strong>
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="hidden text-slate-400 lg:inline">
-            DİSK G/Ç: <strong className="text-slate-200">48%</strong> · OKUMA: 248 MB/s · YAZMA: 182 MB/s
+            DİSK G/Ç: <strong className="text-slate-200">48%</strong> · OKUMA: 248 MB/s · YAZMA: 182
+            MB/s
           </span>
           <span className="text-slate-400">
             EŞ AKTİVİTESİ: <span className="text-emerald-400">+{peers} CANLI</span> ·{" "}
