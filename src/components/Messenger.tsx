@@ -305,10 +305,21 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
   );
 }
 
+/** Boş slot: 8'li matrisi her koşulda korur. */
+function EmptyTile() {
+  return (
+    <div className="flex aspect-video max-h-44 w-full flex-col items-center justify-center rounded-lg border border-dashed border-emerald-500/15 bg-[#090e18] p-3 text-center font-osmono text-[10px] text-slate-600">
+      <Network className="mb-1 h-4 w-4 text-slate-700" />
+      Eş Bekleniyor
+      <span className="text-[9px] text-slate-700">Pasif Düğüm</span>
+    </div>
+  );
+}
+
 function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
   return (
     <div
-      className={`relative flex h-full min-h-[120px] w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] object-cover p-3 ${
+      className={`relative flex aspect-video max-h-44 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
         p.active
           ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
           : "border-emerald-500/20"
