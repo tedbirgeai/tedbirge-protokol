@@ -94,6 +94,7 @@ function MiniMeshCanvas() {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const canvas = ref.current;
     const parent = canvas?.parentElement;
     if (!canvas || !parent) return;
@@ -101,13 +102,14 @@ function MiniMeshCanvas() {
     if (!ctx) return;
 
     const nodes = [
-      { x: 0.5, y: 0.5, r: 11 },
-      { x: 0.2, y: 0.3, r: 4 },
-      { x: 0.8, y: 0.2, r: 4 },
-      { x: 0.85, y: 0.7, r: 4 },
-      { x: 0.3, y: 0.8, r: 4 },
-      { x: 0.15, y: 0.6, r: 4 },
+      { x: 0.2, y: 0.28, r: 4.5, label: "NODE_83A1" },
+      { x: 0.8, y: 0.2, r: 4.5, label: "NODE_6C8E" },
+      { x: 0.86, y: 0.7, r: 4.5, label: "NODE_789E" },
+      { x: 0.3, y: 0.82, r: 4.5, label: "NODE_1F2B" },
+      { x: 0.14, y: 0.62, r: 4.5, label: "NODE_44C0" },
     ];
+    // Her kenarda dolaşan veri paketi (0–1 arası ilerleme).
+    const packets = nodes.map((_, i) => ({ t: i * 0.17, speed: 0.004 + (i % 3) * 0.0018 }));
 
     let raf = 0;
     let pulse = 0;
@@ -133,39 +135,75 @@ function MiniMeshCanvas() {
       const cy = h * 0.5;
       pulse = (pulse + 0.35) % Math.max(24, Math.min(w, h) / 2);
 
+      // Merkez nabız halkası
       ctx.beginPath();
       ctx.arc(cx, cy, pulse, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(16, 185, 129, ${Math.max(0, 0.35 - pulse / 200)})`;
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      for (let i = 1; i < nodes.length; i += 1) {
-        const n = nodes[i]!;
+      nodes.forEach((n, i) => {
         const nx = w * n.x;
         const ny = h * n.y;
 
+        // Bağlantı çizgisi
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(nx, ny);
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.25)";
-        ctx.setLineDash([2, 2]);
+        ctx.strokeStyle = "rgba(6, 182, 212, 0.28)";
+        ctx.setLineDash([3, 3]);
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.setLineDash([]);
 
+        // Hareketli veri paketi
+        const p = packets[i]!;
+        p.t = (p.t + p.speed) % 1;
+        const px = cx + (nx - cx) * p.t;
+        const py = cy + (ny - cy) * p.t;
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#22d3ee";
+        ctx.shadowColor = "#06b6d4";
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Çevre düğüm (cyan glow)
         ctx.beginPath();
         ctx.arc(nx, ny, n.r, 0, Math.PI * 2);
         ctx.fillStyle = "#06b6d4";
+        ctx.shadowColor = "rgba(6,182,212,0.9)";
+        ctx.shadowBlur = 12;
         ctx.fill();
-      }
+        ctx.shadowBlur = 0;
 
+        if (w > 200) {
+          ctx.font = "8px ui-monospace, monospace";
+          ctx.fillStyle = "rgba(148,163,184,0.75)";
+          ctx.textAlign = nx > cx ? "right" : "left";
+          ctx.fillText(n.label, nx + (nx > cx ? -8 : 8), ny - 8);
+        }
+      });
+
+      // Merkez THIS_NODE (emerald glow)
       ctx.beginPath();
-      ctx.arc(cx, cy, nodes[0]!.r, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 11, 0, Math.PI * 2);
       ctx.fillStyle = "#091512";
       ctx.strokeStyle = "#10b981";
       ctx.lineWidth = 2;
+      ctx.shadowColor = "rgba(16,185,129,0.9)";
+      ctx.shadowBlur = 16;
       ctx.fill();
       ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      if (w > 200) {
+        ctx.font = "8px ui-monospace, monospace";
+        ctx.fillStyle = "rgba(16,185,129,0.9)";
+        ctx.textAlign = "center";
+        ctx.fillText("THIS_NODE", cx, cy + 24);
+      }
 
       raf = requestAnimationFrame(draw);
     };
@@ -178,8 +216,9 @@ function MiniMeshCanvas() {
     };
   }, []);
 
-  return <canvas ref={ref} className="block h-full w-full" />;
+  return <canvas id="meshTopologyCanvas" ref={ref} className="block h-full w-full bg-transparent" />;
 }
+
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -242,12 +281,13 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
 function VideoTile({ p }: { p: Participant }) {
   return (
     <div
-      className={`relative flex min-h-[140px] flex-col justify-between overflow-hidden rounded-lg border p-2 sm:min-h-[160px] ${
+      className={`relative flex aspect-video h-auto max-h-52 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
         p.active
-          ? "border-emerald-500 bg-slate-900/90 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
-          : "border-slate-800 bg-slate-900/90"
+          ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
+          : "border-emerald-500/20"
       }`}
     >
+
       {p.active ? (
         <span className="absolute left-2 top-2 rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-osmono text-[9px] text-emerald-400">
           AKTİF KONUŞMACI
@@ -288,6 +328,9 @@ export default function Messenger() {
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
+  // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
@@ -306,7 +349,8 @@ export default function Messenger() {
     };
   }, [node.nodeId, node.peers, node.rttMs]);
 
-  const selfLabel = nodeLabel(node.nodeId);
+  const selfLabel = hydrated ? nodeLabel(node.nodeId) : nodeLabel("");
+
   const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
 
   const participants: Participant[] = useMemo(
@@ -392,7 +436,7 @@ export default function Messenger() {
       {/* ANA DÜZEN */}
       <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 text-xs lg:flex">
+        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100vh-80px)]">
           <div>
             <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
@@ -476,7 +520,7 @@ export default function Messenger() {
         {/* İÇERİK: 3 BLOK */}
         <main className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
           {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
-          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:overflow-y-auto">
+          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100vh-80px)] xl:overflow-y-auto">
             <Panel className="space-y-2">
               <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 AĞ ÖZETİ
@@ -510,7 +554,7 @@ export default function Messenger() {
           </div>
 
           {/* ORTA BLOK — VİDEO IZGARASI */}
-          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 xl:col-span-6 xl:min-h-0">
+          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-80px)] xl:min-h-0">
             <PanelTitle
               icon={<Video className="h-4 w-4 text-emerald-400" />}
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
@@ -523,7 +567,7 @@ export default function Messenger() {
               </span>
             </PanelTitle>
 
-            <div className="my-2 grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+            <div className="my-2 grid min-h-0 flex-1 auto-rows-max grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
               {participants.map((p) => (
                 <VideoTile key={p.id} p={p} />
               ))}
@@ -573,7 +617,7 @@ export default function Messenger() {
           </div>
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 xl:col-span-3 xl:min-h-0">
+          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-80px)] xl:min-h-0">
             <PanelTitle
               icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
               right={
