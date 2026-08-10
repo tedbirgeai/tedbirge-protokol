@@ -684,6 +684,10 @@ export default function Messenger() {
               icon={
                 center === "video" ? (
                   <Video className="h-4 w-4 text-emerald-400" />
+                ) : center === "security" ? (
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                ) : center === "settings" ? (
+                  <Settings className="h-4 w-4 text-emerald-400" />
                 ) : (
                   <Share2 className="h-4 w-4 text-emerald-400" />
                 )
@@ -691,12 +695,19 @@ export default function Messenger() {
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
             >
               <span className="flex items-center gap-2">
-                {center === "video" ? "P2P VİDEO VE SES" : "AĞ VE KAPSAMA"}
+                {center === "video"
+                  ? "P2P VİDEO VE SES"
+                  : center === "security"
+                    ? "GÜVENLİK VE DOĞRULAMA"
+                    : center === "settings"
+                      ? "DÜĞÜM AYARLARI"
+                      : "AĞ VE KAPSAMA"}
                 <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
                   <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
                 </span>
               </span>
             </PanelTitle>
+
 
             {center === "network" ? (
               <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
