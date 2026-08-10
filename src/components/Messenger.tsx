@@ -748,7 +748,7 @@ export default function Messenger() {
 
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex min-h-[420px] min-w-0 flex-col rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-80px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100dvh-104px)] xl:min-h-0">
             <PanelTitle
               icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
               right={
@@ -759,6 +759,16 @@ export default function Messenger() {
             >
               ŞİFRELEME MESAJLAŞMA
             </PanelTitle>
+
+            {livePeers.length === 0 && !sim ? (
+              <button
+                type="button"
+                onClick={startSimulator}
+                className="mt-2 w-full rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 font-osmono text-[11px] font-bold text-cyan-300 hover:bg-cyan-500/20"
+              >
+                CANLI TEST / SİNYAL SİMÜLATÖRÜ
+              </button>
+            ) : null}
 
             <div className="flex items-center justify-between gap-2 py-2 text-xs">
               <span className="flex min-w-0 items-center gap-2 truncate">
@@ -783,7 +793,7 @@ export default function Messenger() {
                 <div key={m.id} className="space-y-1">
                   <div className="flex justify-between gap-2 text-[10px] text-slate-400">
                     <span className="truncate font-bold text-slate-300">
-                      {m.self ? "Siz" : m.from}
+                      {m.self ? `Siz · ${selfLabel}` : m.from}
                     </span>
                     <span className="flex shrink-0 items-center gap-1">
                       {m.at} <Lock className="h-2.5 w-2.5 text-emerald-400" />
@@ -797,13 +807,19 @@ export default function Messenger() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                send();
+                void send();
               }}
-              className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 p-2"
+              className="flex shrink-0 items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/90 p-2"
             >
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
                 placeholder="Şifreli mesajınızı yazın..."
                 className="min-w-0 flex-1 bg-transparent font-osmono text-xs text-slate-200 outline-none placeholder:text-slate-500"
               />
@@ -815,14 +831,16 @@ export default function Messenger() {
                 <Paperclip className="h-4 w-4" />
               </button>
               <button
-                type="submit"
-                aria-label="Sesli mesaj / gönder"
-                className="grid h-8 w-8 place-items-center text-emerald-400 hover:text-emerald-300"
+                type="button"
+                onClick={() => void send()}
+                disabled={!draft.trim()}
+                className="shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 font-osmono text-[11px] font-bold text-white hover:bg-emerald-500 disabled:opacity-40"
               >
-                <Mic className="h-4 w-4" />
+                Gönder
               </button>
             </form>
           </div>
+
         </main>
       </div>
 
