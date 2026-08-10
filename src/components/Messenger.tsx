@@ -355,6 +355,13 @@ export default function Messenger() {
   const [draft, setDraft] = useState("");
   const [feed, setFeed] = useState<LiveMessage[]>([]);
   const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
+  // Yerel WebRTC kontrol durumları (kamera / mikrofon / ekran paylaşımı).
+  const [camOn, setCamOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [screenOn, setScreenOn] = useState(false);
+  const [inCall, setInCall] = useState(true);
+  // Canlı test: ağda eş yokken sanal bir P2P düğümü bağlar.
+  const [sim, setSim] = useState(false);
   // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
@@ -380,11 +387,12 @@ export default function Messenger() {
 
   const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
 
-  const participants: Participant[] = useMemo(
-    () => [
+  const participants: Participant[] = useMemo(() => {
+    const list: Participant[] = [
       {
         id: node.nodeId || "self",
         name: selfLabel,
+        alias: "Bu Cihaz",
         handle:
           media === "data" ? "sadece veri düğümü" : media === "audio" ? "yalnız ses" : "bu cihaz",
         self: true,
@@ -392,27 +400,69 @@ export default function Messenger() {
       ...livePeers.map((p) => ({
         id: p.id,
         name: p.label,
+        alias: peerAlias(p.id),
         handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
         active: p.direct,
       })),
-    ],
-    [livePeers, media, node.nodeId, selfLabel],
-  );
+    ];
+    if (sim && livePeers.length === 0) {
+      list.push({
+        id: "sim-peer",
+        name: "NODE_789E",
+        alias: "Node Alpha (Simülasyon)",
+        handle: "sanal eş · canlı test",
+        active: true,
+      });
+    }
+    return list;
+  }, [livePeers, media, node.nodeId, selfLabel, sim]);
+
+  const stamp = () =>
+    new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 
   const send = async () => {
     const text = draft.trim();
     if (!text) return;
     setDraft("");
-    const at = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
     setFeed((prev) => [
       ...prev,
-      { id: `self-${Date.now()}`, from: selfLabel, at, text, self: true },
+      { id: `self-${Date.now()}`, from: selfLabel, at: stamp(), text, self: true },
     ]);
+    if (sim && livePeers.length === 0) {
+      const echo = text;
+      setTimeout(() => {
+        setFeed((prev) => [
+          ...prev,
+          {
+            id: `sim-${Date.now()}`,
+            from: "NODE_789E · Node Alpha",
+            at: stamp(),
+            text: `Paket alındı: “${echo}” (şifreli, 1 sıçrama)`,
+          },
+        ]);
+      }, 650);
+      return;
+    }
     await broadcastText(text);
   };
 
-  const peers = node.peers.length;
-  const directPeers = node.peers.filter((p) => p.direct).length;
+  /** Canlı test / sinyal simülatörü: sanal eşi anında ağa alır. */
+  const startSimulator = () => {
+    setSim(true);
+    setFeed((prev) => [
+      ...prev,
+      {
+        id: `sim-join-${Date.now()}`,
+        from: "NODE_789E · Node Alpha",
+        at: stamp(),
+        text: "Sanal eş bağlandı. Uçtan uca şifreli kanal açık — mesaj yazabilirsiniz.",
+      },
+    ]);
+  };
+
+  const peers = node.peers.length + (sim && livePeers.length === 0 ? 1 : 0);
+  const directPeers = node.peers.filter((p) => p.direct).length + (sim && livePeers.length === 0 ? 1 : 0);
+
 
   return (
     <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[#06090e] font-osui text-slate-400">
