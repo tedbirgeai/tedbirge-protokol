@@ -221,13 +221,54 @@ export function MessageRow({
     setMenu(false);
   }
 
+  // WhatsApp davranışı: uzun basma veya sağ tık eylem menüsünü açar.
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openMenu = () => {
+    pressFeedback();
+    setMenu(true);
+  };
+  const holdStart = () => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(openMenu, 420);
+  };
+  const holdEnd = () => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = null;
+  };
+  useEffect(() => holdEnd, []);
+
+  const media = msg.media;
+
+  async function saveMedia() {
+    if (!media) return;
+    const a = document.createElement("a");
+    a.href = media.dataUrl;
+    a.download = media.name || "tedbirge-dosya";
+    a.click();
+    setMenu(false);
+  }
+
+  async function copyMedia() {
+    if (!media) return;
+    try {
+      const blob = await (await fetch(media.dataUrl)).blob();
+      const Item = (window as unknown as { ClipboardItem?: typeof ClipboardItem }).ClipboardItem;
+      if (Item && navigator.clipboard?.write) {
+        await navigator.clipboard.write([new Item({ [blob.type]: blob })]);
+      }
+    } catch {
+      /* pano erişimi yok */
+    }
+    setMenu(false);
+  }
+
   const isSos = msg.kind === "sos";
 
   return (
     <div className={`group flex ${msg.outgoing ? "justify-end" : "justify-start"}`}>
       <div className="relative max-w-[80%]">
         <div
-          className="wa-bubble rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
+          className="wa-bubble select-none rounded-lg px-2.5 py-1.5 text-[14.5px] shadow-sm"
           style={{
             background: isSos
               ? "#fff0f0"
@@ -238,7 +279,16 @@ export function MessageRow({
             border: isSos ? "1px solid #e03131" : undefined,
           }}
           onDoubleClick={() => quickReact("👍")}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            openMenu();
+          }}
+          onPointerDown={holdStart}
+          onPointerUp={holdEnd}
+          onPointerLeave={holdEnd}
+          onPointerCancel={holdEnd}
         >
+
           {showAuthor && !msg.outgoing && (
             <p className="mb-0.5 text-[12px] font-semibold" style={{ color: "var(--wa-accent)" }}>
               {authorName}
