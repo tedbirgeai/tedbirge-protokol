@@ -600,24 +600,32 @@ export async function sendMedia(
     dataUrl,
   });
   let ok = false;
-  for (const peer of await targetsOf(conv)) {
-    for (let i = 0; i < chunks.length; i += 1) {
-      const sent = await sendMesh("media", peer, {
-        ...chunks[i]!,
-        alias: getAlias(), personId: getStoredPersonId(),
-        group: conv.group,
-        transcript,
-      });
-      ok = ok || sent;
-      publish({
-        transfers: { ...state.transfers, [mid]: Math.round(((i + 1) / chunks.length) * 100) },
-      });
+  try {
+    const peers = await targetsOf(conv);
+    for (const peer of peers) {
+      for (let i = 0; i < chunks.length; i += 1) {
+        const sent = await sendMesh("media", peer, {
+          ...chunks[i]!,
+          alias: getAlias(), personId: getStoredPersonId(),
+          group: conv.group,
+          transcript,
+        });
+        ok = ok || sent;
+        publish({
+          transfers: { ...state.transfers, [mid]: Math.round(((i + 1) / chunks.length) * 100) },
+        });
+        // İlk parça bile gitmiyorsa bu eş için ısrar etme; kuyruk devralır.
+        if (!sent && i === 0) break;
+      }
     }
+  } finally {
+    // Ne olursa olsun ilerleme çubuğu kapanır; "aktarılıyor" asla takılı kalmaz.
+    const { [mid]: _done, ...rest } = state.transfers;
+    publish({ transfers: rest });
   }
-  const { [mid]: _done, ...rest } = state.transfers;
-  publish({ transfers: rest });
   await setStatus(mid, ok ? "sent" : "pending");
 }
+
 
 /* -------------------- konum ve acil durum yayını -------------------- */
 
