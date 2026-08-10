@@ -163,7 +163,10 @@ export function CallOverlay() {
   /** Zil / çalıyor tonu — geleneksel telefon deneyimi. */
   useEffect(() => {
     if (call.phase === "ringing") startRingtone();
-    else if (call.phase === "outgoing") call.remoteRinging ? startRingback() : startSearching();
+    else if (call.phase === "outgoing") {
+      if (call.remoteRinging) startRingback();
+      else startSearching();
+    }
     else {
       stopRing();
       if (call.phase === "ended") callEndSound();
