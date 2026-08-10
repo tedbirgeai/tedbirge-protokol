@@ -938,39 +938,90 @@ export async function sweepStalePending(): Promise<number> {
   return n;
 }
 
+/** Aynı mesaj için ikinci bir yeniden gönderim başlamasın. */
+const retryInFlight = new Set<string>();
+
 /** Tek dokunuşla yeniden gönderme — iletilemeyen mesajı tekrar dener. */
 export async function retryMessage(messageId: string): Promise<boolean> {
+  if (retryInFlight.has(messageId)) return false;
   const msg = await getMessage(messageId);
   if (!msg || !msg.outgoing) return false;
   const conv = await getConversation(msg.convId);
   if (!conv) return false;
 
-  await putMessage({ ...msg, status: "pending", ts: msg.ts });
-  await refreshMessages(msg.convId);
+  retryInFlight.add(messageId);
+  try {
+    await putMessage({ ...msg, status: "pending", ts: msg.ts });
+    await refreshMessages(msg.convId);
 
-  let delivered = isSelfConversation(conv.id);
-  for (const peer of await targetsOf(conv)) {
-    try {
-      const ok = await sendMesh("chat", peer, {
-        t: msg.kind === "text" ? "text" : "text",
-        id: msg.id,
+    let delivered = isSelfConversation(conv.id);
+    const peers = await targetsOf(conv);
+
+    if (msg.kind === "media" && msg.media?.dataUrl) {
+      // Medya mesajı boş metin olarak değil, kendi parçalarıyla gönderilir.
+      const chunks = splitMedia({
+        mid: msg.id,
         convId: conv.id,
-        group: conv.group,
-        groupTitle: conv.group ? conv.title : undefined,
-        members: conv.group ? conv.members : undefined,
-        text: msg.text ?? "",
-        ts: msg.ts,
-        alias: getAlias(), personId: getStoredPersonId(),
+        name: msg.media.name,
+        mime: msg.media.mime,
+        size: msg.media.size,
+        dataUrl: msg.media.dataUrl,
       });
-      delivered = delivered || ok;
-    } catch {
-      /* bağlantı yok */
+      for (const peer of peers) {
+        for (let i = 0; i < chunks.length; i += 1) {
+          const sent = await sendMesh("media", peer, {
+            ...chunks[i]!,
+            alias: getAlias(), personId: getStoredPersonId(),
+            group: conv.group,
+          }).catch(() => false);
+          delivered = delivered || sent;
+          if (!sent && i === 0) break;
+        }
+      }
+    } else if (msg.kind === "location" && msg.geo) {
+      for (const peer of peers) {
+        const ok = await sendMesh(
+          "chat",
+          peer,
+          {
+            t: "geo",
+            id: msg.id,
+            convId: conv.id,
+            group: conv.group,
+            text: msg.text,
+            ts: msg.ts,
+            alias: getAlias(), personId: getStoredPersonId(),
+            geo: { ...msg.geo, frame: undefined },
+          },
+          1,
+        ).catch(() => false);
+        delivered = delivered || ok;
+      }
+    } else {
+      for (const peer of peers) {
+        const ok = await sendMesh("chat", peer, {
+          t: "text",
+          id: msg.id,
+          convId: conv.id,
+          group: conv.group,
+          groupTitle: conv.group ? conv.title : undefined,
+          members: conv.group ? conv.members : undefined,
+          text: msg.text ?? "",
+          ts: msg.ts,
+          alias: getAlias(), personId: getStoredPersonId(),
+        }).catch(() => false);
+        delivered = delivered || ok;
+      }
     }
+
+    await putMessage({ ...msg, status: delivered ? "sent" : "pending" });
+    await refreshMessages(msg.convId);
+    return delivered;
+  } finally {
+    retryInFlight.delete(messageId);
   }
-  await putMessage({ ...msg, status: delivered ? "sent" : "pending" });
-  await refreshMessages(msg.convId);
-  return delivered;
 }
+
 
 /* ------------------ üstel geri çekilmeli otomatik yeniden gönderim ------------------ */
 
