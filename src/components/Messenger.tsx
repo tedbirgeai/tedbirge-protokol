@@ -39,50 +39,59 @@ import {
   Video,
 } from "lucide-react";
 
-import { startNode, useNodeRuntime } from "@/lib/node-runtime";
+import { useNodeRuntime } from "@/lib/node-runtime";
+import {
+  broadcastText,
+  ensureLiveNode,
+  measureRoute,
+  nodeLabel,
+  toLivePeers,
+  onLiveMessage,
+  type LiveMessage,
+  type LivePeer,
+} from "@/services/signaling";
 
-const AVATAR = (id: string) =>
-  `https://images.unsplash.com/${id}?w=160&auto=format&fit=crop&q=80`;
+type Participant = { id: string; name: string; handle: string; active?: boolean; self?: boolean };
 
-type Participant = { name: string; handle: string; photo: string; active?: boolean; self?: boolean };
+/**
+ * Yerel medya: izin verilmezse arayüz çökmez, cihaz "Sadece Veri Düğümü"
+ * olarak ağda kalmaya devam eder.
+ */
+function useLocalMedia() {
+  const [mode, setMode] = useState<"pending" | "av" | "audio" | "data">("pending");
 
-const PARTICIPANTS: Participant[] = [
-  { name: "Sarah Chen", handle: "@sarahc", photo: AVATAR("photo-1534528741775-53994a69daeb"), active: true },
-  { name: "Alex Rivera", handle: "@alexr", photo: AVATAR("photo-1500648767791-00dcc994a43e") },
-  { name: "Maya Patel", handle: "@mayap", photo: AVATAR("photo-1544005313-94ddf0286df2") },
-  { name: "Jordan Okafor", handle: "@jordan0", photo: AVATAR("photo-1506794778202-cad84cf45f1d") },
-  { name: "Elena Petrova", handle: "@elenap", photo: AVATAR("photo-1517841905240-472988babdf9") },
-  { name: "Arjun Mehta", handle: "@arjunm", photo: AVATAR("photo-1519085360753-af0119f7cbe7") },
-  { name: "Leo Zimmer", handle: "@leoz", photo: AVATAR("photo-1502685104226-ee32379fefbe") },
-  { name: "Siz", handle: "node_admin", photo: "", self: true },
-];
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+    const stop = () => stream?.getTracks().forEach((t) => t.stop());
 
-type ChatMessage = {
-  from: string;
-  at: string;
-  text?: string;
-  file?: { name: string; size: string; kind: "wasm" | "svg" };
-  voice?: { duration: string; bars: number[] };
-};
+    const run = async () => {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        if (!cancelled) setMode("data");
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        if (!cancelled) setMode("av");
+      } catch {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (!cancelled) setMode("audio");
+        } catch {
+          if (!cancelled) setMode("data");
+        }
+      }
+      stop();
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, []);
 
-const MESSAGES: ChatMessage[] = [
-  {
-    from: "Maya Patel",
-    at: "14:28",
-    text: "Yeni zk-proof doğrulayıcısını depoya gönderdim.",
-    file: { name: "zk-doğrulayıcı-v2.wasm", size: "1.42 MB", kind: "wasm" },
-  },
-  { from: "Alex Rivera", at: "14:31", text: "Harika! Doğrulama çalışıyor..." },
-  { from: "Jordan Okafor", at: "14:32", voice: { duration: "00:18", bars: [12, 8, 12, 4, 8, 12] } },
-  {
-    from: "Sarah Chen",
-    at: "14:33",
-    text: "İşte mimari diyagram.",
-    file: { name: "mimari-v2.svg", size: "2.18 MB", kind: "svg" },
-  },
-  { from: "Elena Petrova", at: "14:34", voice: { duration: "00:24", bars: [8, 12, 4] } },
-  { from: "Arjun Mehta", at: "14:35", text: "LG! Gönderim tamamlandı! 🚀" },
-];
+  return mode;
+}
 
 /** Mini mesh topolojisi — yeniden boyutlandırmaya duyarlı canvas döngüsü. */
 function MiniMeshCanvas() {
