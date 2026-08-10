@@ -548,7 +548,7 @@ export default function Messenger() {
       {/* ANA DÜZEN */}
       <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100dvh-104px)]">
+        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100vh-110px)]">
           <div>
             <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
@@ -638,7 +638,7 @@ export default function Messenger() {
         {/* İÇERİK: 3 BLOK */}
         <main className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
           {/* SOL BLOK — AĞ ÖZETİ + TOPOLOJİ */}
-          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100dvh-104px)] xl:overflow-y-auto">
+          <div className="flex min-w-0 flex-col gap-2 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:overflow-y-auto">
             <Panel className="space-y-2">
               <PanelTitle icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 AĞ ÖZETİ
@@ -824,7 +824,7 @@ export default function Messenger() {
 
 
           {/* SAĞ BLOK — ŞİFRELİ MESAJLAŞMA */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100dvh-104px)] xl:min-h-0">
+          <div className="flex h-full min-h-[360px] min-w-0 flex-col overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-3 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
               icon={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
               right={
