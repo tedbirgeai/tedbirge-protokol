@@ -476,20 +476,30 @@ export default function Messenger() {
               <span className="flex items-center gap-2">
                 P2P VİDEO VE SES
                 <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
-                  <Users className="h-3 w-3 text-cyan-400" /> 8 KATILIMCI
+                  <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
                 </span>
               </span>
             </PanelTitle>
 
             <div className="my-2 grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
-              {PARTICIPANTS.map((p) => (
-                <VideoTile key={p.name} p={p} />
+              {participants.map((p) => (
+                <VideoTile key={p.id} p={p} />
               ))}
+              {peers === 0 ? (
+                <div className="col-span-full grid min-h-[140px] place-items-center rounded-lg border border-dashed border-emerald-500/20 bg-slate-950/60 p-4 text-center font-osmono text-[11px] text-slate-500">
+                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
-                DOĞRUDAN P2P WEBRTC AKIŞI | AES-256-GCM | 12ms GECİKME
+                {media === "data"
+                  ? "SADECE VERİ DÜĞÜMÜ — KAMERA/MİKROFON KAPALI"
+                  : media === "audio"
+                    ? "SES DÜĞÜMÜ — KAMERA KAPALI"
+                    : "DOĞRUDAN P2P WEBRTC AKIŞI"}{" "}
+                | AES-256-GCM | {node.rttMs != null ? `${node.rttMs}ms GECİKME` : "GECİKME ÖLÇÜLÜYOR"}
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {[
