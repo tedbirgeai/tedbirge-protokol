@@ -36,6 +36,9 @@ import {
 } from "lucide-react";
 
 import { useNodeRuntime } from "@/lib/node-runtime";
+import { NodeSettingsPanel } from "@/components/shell/NodeSettingsPanel";
+import { SecurityPanel } from "@/components/shell/SecurityPanel";
+
 import {
   broadcastText,
   ensureLiveNode,
@@ -375,7 +378,7 @@ export default function Messenger() {
   // Canlı test: ağda eş yokken sanal bir P2P düğümü bağlar.
   const [sim, setSim] = useState(false);
   // Orta panel görünümü: video ızgarası veya gömülü ağ/kapsama paneli.
-  const [center, setCenter] = useState<"video" | "network">("video");
+  const [center, setCenter] = useState<"video" | "network" | "security" | "settings">("video");
   // Sinyal kanalından gelen canlı eş kimlikleri (BroadcastChannel + bulut).
   const [signalPeers, setSignalPeers] = useState<string[]>([]);
   // Sunucu ve ilk istemci render'ı aynı etiketi basar (hidrasyon uyuşmazlığı olmaz).
@@ -601,18 +604,25 @@ export default function Messenger() {
               >
                 <FolderTree className="h-3.5 w-3.5 text-cyan-400" /> Dosyalar
               </Link>
-              <Link
-                to="/guvenlik"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              <button
+                type="button"
+                onClick={() => setCenter("security")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "security" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
                 <ShieldCheck className="h-3.5 w-3.5 text-cyan-400" /> Güvenlik
-              </Link>
-              <Link
-                to="/izinler"
-                className="flex items-center gap-2 rounded px-2.5 py-2 text-slate-300 hover:bg-slate-800/50 hover:text-slate-100"
+              </button>
+              <button
+                type="button"
+                onClick={() => setCenter("settings")}
+                className={`flex w-full items-center gap-2 rounded px-2.5 py-2 text-left hover:bg-slate-800/50 ${
+                  center === "settings" ? "bg-emerald-500/10 text-emerald-400" : "text-slate-300"
+                }`}
               >
                 <Settings className="h-3.5 w-3.5 text-cyan-400" /> Ayarlar
-              </Link>
+              </button>
+
             </nav>
           </div>
 
@@ -677,6 +687,10 @@ export default function Messenger() {
               icon={
                 center === "video" ? (
                   <Video className="h-4 w-4 text-emerald-400" />
+                ) : center === "security" ? (
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                ) : center === "settings" ? (
+                  <Settings className="h-4 w-4 text-emerald-400" />
                 ) : (
                   <Share2 className="h-4 w-4 text-emerald-400" />
                 )
@@ -684,14 +698,26 @@ export default function Messenger() {
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
             >
               <span className="flex items-center gap-2">
-                {center === "video" ? "P2P VİDEO VE SES" : "AĞ VE KAPSAMA"}
+                {center === "video"
+                  ? "P2P VİDEO VE SES"
+                  : center === "security"
+                    ? "GÜVENLİK VE DOĞRULAMA"
+                    : center === "settings"
+                      ? "DÜĞÜM AYARLARI"
+                      : "AĞ VE KAPSAMA"}
                 <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
                   <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
                 </span>
               </span>
             </PanelTitle>
 
-            {center === "network" ? (
+
+            {center === "settings" ? (
+              <NodeSettingsPanel />
+            ) : center === "security" ? (
+              <SecurityPanel />
+            ) : center === "network" ? (
+
               <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
                 <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
                   <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
@@ -731,7 +757,11 @@ export default function Messenger() {
               </div>
             )}
 
-            <div className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+            <div
+              className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2"
+              hidden={center === "security" || center === "settings"}
+            >
+
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
                 {!inCall
                   ? "GÖRÜŞME SONLANDIRILDI"
