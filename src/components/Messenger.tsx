@@ -665,30 +665,65 @@ export default function Messenger() {
             </Panel>
           </div>
 
-          {/* ORTA BLOK — VİDEO IZGARASI */}
-          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100dvh-104px)] xl:min-h-0">
+          {/* ORTA BLOK — VİDEO IZGARASI / GÖMÜLÜ AĞ PANELİ */}
+          <div className="flex h-full min-h-[360px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 xl:col-span-6 xl:h-[calc(100vh-110px)] xl:min-h-0">
             <PanelTitle
-              icon={<Video className="h-4 w-4 text-emerald-400" />}
+              icon={
+                center === "video" ? (
+                  <Video className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <Share2 className="h-4 w-4 text-emerald-400" />
+                )
+              }
               right={<Lock className="h-3.5 w-3.5 text-emerald-400" />}
             >
               <span className="flex items-center gap-2">
-                P2P VİDEO VE SES
+                {center === "video" ? "P2P VİDEO VE SES" : "AĞ VE KAPSAMA"}
                 <span className="hidden rounded border border-slate-800 bg-slate-900 px-2 py-0.5 font-osmono text-[10px] font-normal text-slate-400 sm:inline-flex sm:items-center sm:gap-1">
                   <Users className="h-3 w-3 text-cyan-400" /> {participants.length} KATILIMCI
                 </span>
               </span>
             </PanelTitle>
 
-            <div className="my-2 grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
-              {participants.map((p) => (
-                <VideoTile key={p.id} p={p} camOn={camOn} />
-              ))}
-              {peers === 0 ? (
-                <div className="col-span-full grid h-full min-h-[120px] place-items-center rounded-lg border border-dashed border-emerald-500/20 bg-slate-950/60 p-4 text-center font-osmono text-[11px] text-slate-500">
-                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
+            {center === "network" ? (
+              <div className="my-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 font-osmono text-[11px]">
+                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                  <div className="mb-2 text-slate-300">KAPSAMA ÖZETİ</div>
+                  <Row k="ÇEVRİMİÇİ EŞ:" v={String(peers)} tone="text-emerald-400" />
+                  <Row k="DOĞRUDAN P2P:" v={String(directPeers)} tone="text-cyan-400" />
+                  <Row
+                    k="ROTA:"
+                    v={route ? `${route.hops} sıçrama · maliyet ${route.cost}` : "ölçülüyor"}
+                  />
+                  <Row k="GECİKME:" v={node.rttMs != null ? `${node.rttMs} ms` : "—"} />
+                  <Row k="KUYRUK:" v={String(node.queued)} />
                 </div>
-              ) : null}
-            </div>
+                <div className="rounded-lg border border-slate-800 bg-[#090e18] p-3">
+                  <div className="mb-2 text-slate-300">KEŞFEDİLEN DÜĞÜMLER</div>
+                  {participants.filter((p) => !p.self).length === 0 ? (
+                    <p className="text-slate-600">Sinyal bekleniyor…</p>
+                  ) : (
+                    participants
+                      .filter((p) => !p.self)
+                      .map((p) => (
+                        <div key={p.id} className="flex justify-between gap-2 py-0.5">
+                          <span className="truncate text-slate-300">{p.alias ?? p.name}</span>
+                          <span className="shrink-0 text-emerald-400">{p.handle}</span>
+                        </div>
+                      ))
+                  )}
+                </div>
+                <div className="relative h-56 overflow-hidden rounded-lg border border-slate-800 bg-[#070b13]">
+                  <MiniMeshCanvas />
+                </div>
+              </div>
+            ) : (
+              <div className="my-2 grid h-full min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-2 sm:grid-cols-2 lg:grid-cols-3">
+                {slots.map((p, i) =>
+                  p ? <VideoTile key={p.id} p={p} camOn={camOn} /> : <EmptyTile key={`empty-${i}`} />,
+                )}
+              </div>
+            )}
 
             <div className="shrink-0 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
               <div className="mb-2 text-center font-osmono text-[10px] text-slate-500">
