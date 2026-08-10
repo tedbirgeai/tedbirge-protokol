@@ -94,7 +94,7 @@ export async function measureRoute(
     edges: peers.map((p) => ({
       from: selfId,
       to: p.nodeId,
-      transport: p.direct ? ("webrtc" as const) : ("push-relay" as const),
+      transport: p.direct ? ("cloud-webrtc" as const) : ("push-relay" as const),
       quality,
     })),
   };
