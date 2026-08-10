@@ -304,29 +304,28 @@ function WaveBars({ delayed }: { delayed?: boolean }) {
   );
 }
 
-function VideoTile({ p }: { p: Participant }) {
+function VideoTile({ p, camOn }: { p: Participant; camOn: boolean }) {
   return (
     <div
-      className={`relative flex aspect-video h-auto max-h-52 w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] p-3 ${
+      className={`relative flex h-full min-h-[120px] w-full flex-col justify-between overflow-hidden rounded-lg border bg-[#0e1626] object-cover p-3 ${
         p.active
           ? "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)]"
           : "border-emerald-500/20"
       }`}
     >
-
       {p.active ? (
         <span className="absolute left-2 top-2 rounded border border-emerald-500/30 bg-emerald-950/80 px-1.5 py-0.5 font-osmono text-[9px] text-emerald-400">
           AKTİF KONUŞMACI
         </span>
       ) : null}
 
-      <div className="my-2 flex flex-1 items-center justify-center">
+      <div className="my-2 flex min-h-0 flex-1 items-center justify-center">
         <span
-          className={`grid h-16 w-16 place-items-center rounded-full border-2 font-osmono text-sm font-bold ${
+          className={`grid h-14 w-14 place-items-center rounded-full border-2 font-osmono text-sm font-bold ${
             p.self
               ? "border-emerald-400/60 bg-emerald-950/50 text-emerald-400"
               : "border-cyan-500/40 bg-slate-950 text-cyan-300"
-          }`}
+          } ${p.self && !camOn ? "opacity-40" : ""}`}
         >
           {p.self ? <Box className="h-6 w-6 text-emerald-400" /> : <Network className="h-6 w-6" />}
         </span>
@@ -334,7 +333,8 @@ function VideoTile({ p }: { p: Participant }) {
 
       <div className="flex items-center justify-between gap-2 font-osmono text-[11px]">
         <div className="min-w-0">
-          <div className="truncate font-bold text-slate-200">{p.name}</div>
+          <div className="truncate font-bold text-slate-200">{p.alias ?? p.name}</div>
+          <div className="truncate text-[9px] text-cyan-400/80">{p.name}</div>
           <div className="truncate text-[9px] text-slate-500">{p.handle}</div>
         </div>
         {p.active || p.self ? (
@@ -346,6 +346,7 @@ function VideoTile({ p }: { p: Participant }) {
     </div>
   );
 }
+
 
 /** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
 export default function Messenger() {
