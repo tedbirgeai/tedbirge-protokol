@@ -586,9 +586,16 @@ function BackBar() {
   );
 }
 
-export function SitePage({ children }: { children: ReactNode }) {
+export function SitePage({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  /** Ek tema kapsamı (örn. koyu siber `tbos cyber-grid`). */
+  className?: string;
+}) {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className={`flex min-h-screen flex-col bg-background ${className}`}>
       <PaymentTestModeBanner />
       <SiteHeader />
       <BackBar />

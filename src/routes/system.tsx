@@ -33,7 +33,7 @@ export const Route = createFileRoute("/system")({
 
 function SystemRoute() {
   return (
-    <main className="fixed inset-0 z-40 flex flex-col bg-background">
+    <main className="fixed inset-0 z-40 flex flex-col bg-[#06090e]">
       <ShellProvider initialApp="chats">
         <SystemConsole />
       </ShellProvider>
@@ -49,7 +49,7 @@ function SystemConsole() {
   const [mesh, setMesh] = useState(false);
 
   return (
-    <div className="wa wa-scope flex min-h-0 flex-1 flex-col" style={{ background: "var(--wa-bg)" }}>
+    <div className="wa tbos cyber-grid flex min-h-0 flex-1 flex-col">
       <header
         className="flex items-center justify-between px-4 py-3"
         style={{ borderBottom: "1px solid var(--wa-border)", background: "var(--wa-panel)" }}

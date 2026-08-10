@@ -29,7 +29,7 @@ export const Route = createFileRoute("/app")({
 
 function AppWorkspaceRoute() {
   return (
-    <main className="fixed inset-0 z-40 flex flex-col bg-background">
+    <main className="fixed inset-0 z-40 flex flex-col bg-[#06090e]">
       <ShellProvider initialApp="chats">
         <WorkspacePanel />
       </ShellProvider>
