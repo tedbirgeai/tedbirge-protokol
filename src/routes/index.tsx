@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MarketingHome } from "@/components/site/MarketingHome";
+import Dashboard from "@/components/Dashboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,5 +25,5 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  return <MarketingHome />;
+  return <Dashboard />;
 }
