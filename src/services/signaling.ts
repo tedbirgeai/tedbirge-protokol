@@ -88,12 +88,17 @@ export async function measureRoute(
 ): Promise<{ hops: number; cost: number } | null> {
   const target = peers.find((p) => p.direct) ?? peers[0];
   if (!selfId || !target) return null;
-  const weight = Math.max(1, rttMs ?? 25);
+  const quality = rttMs == null ? 0.8 : Math.min(1, Math.max(0.1, 120 / Math.max(20, rttMs)));
   const graph: Graph = {
-    [selfId]: peers.map((p) => ({ to: p.nodeId, cost: p.direct ? weight : weight * 3 })),
-    ...Object.fromEntries(peers.map((p) => [p.nodeId, [{ to: selfId, cost: weight }]])),
-  } as Graph;
+    nodes: [selfId, ...peers.map((p) => p.nodeId)],
+    edges: peers.map((p) => ({
+      from: selfId,
+      to: p.nodeId,
+      transport: p.direct ? ("webrtc" as const) : ("push-relay" as const),
+      quality,
+    })),
+  };
   const route = await routeAsync(graph, selfId, target.nodeId);
-  if (!route?.path?.length) return null;
-  return { hops: Math.max(0, route.path.length - 1), cost: Math.round(route.cost ?? weight) };
+  if (!route.reachable) return null;
+  return { hops: Math.max(0, route.path.length - 1), cost: Math.round(route.cost) };
 }
