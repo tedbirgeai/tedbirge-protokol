@@ -817,15 +817,20 @@ export default function Messenger() {
                   aria-label={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
                   title={inCall ? "Görüşmeyi bitir" : "Görüşmeyi başlat"}
                   onClick={() => {
-                    setInCall((v) => !v);
                     if (inCall) {
+                      setInCall(false);
                       setCamOn(false);
                       setMicOn(false);
                       setScreenOn(false);
-                    } else {
-                      setCamOn(true);
-                      setMicOn(true);
+                      stopMedia();
+                      return;
                     }
+                    // "Arama Başlat" — izin isteminin tek tetikleyicisi.
+                    void requestMedia("av").then((ok) => {
+                      setInCall(true);
+                      setCamOn(ok);
+                      setMicOn(ok);
+                    });
                   }}
                   className={`grid h-10 w-10 place-items-center rounded-lg text-white ${
                     inCall ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"
