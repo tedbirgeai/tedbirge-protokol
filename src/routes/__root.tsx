@@ -135,7 +135,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="bg-[#06090e]">
         {children}
         <Scripts />
       </body>
@@ -146,14 +146,17 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // Gömülü uygulama kabuğu (sohbet): kurumsal şerit ve dok gizlenir.
-  const embedded = pathname.startsWith("/chat") || pathname.startsWith("/sohbet");
+  // Gömülü uygulama kabuğu (sohbet) ve Web-OS ana ekranı: kurumsal şerit gizlenir.
+  const embedded =
+    pathname === "/" || pathname.startsWith("/chat") || pathname.startsWith("/sohbet");
 
   useEffect(() => {
     // Eski mükerrer kayıtları temizleyen tek seferlik sıfırlama; sayfa yenilenir.
     if (runOneTimePurge()) return;
     setupOfflineSupport();
     bootNodeRuntime();
+    // Düğüm arka planda otomatik başlar; kullanıcı hiçbir butona basmaz.
+    void startNode();
     bootAccessEngine();
     void ensureOfflineGrant();
   }, []);
@@ -162,7 +165,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {!embedded && <OfflineBanner />}
-      {!embedded && <NodeDock />}
       {/* Gelen arama her sayfada karşılanır (telefon mantığı). */}
       <CallHost />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
