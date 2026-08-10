@@ -436,7 +436,7 @@ export default function Messenger() {
       {/* ANA DÜZEN */}
       <div className="flex min-h-0 flex-1 gap-2 overflow-hidden p-2">
         {/* SOL MENÜ */}
-        <aside className="hidden w-52 shrink-0 flex-col justify-between rounded-lg border border-slate-800/80 bg-[#0b101d] p-3 text-xs lg:flex">
+        <aside className="hidden w-52 shrink-0 flex-col justify-between overflow-y-auto rounded-lg border border-[rgba(16,185,129,0.15)] bg-[#0b101d] p-3 text-xs lg:flex xl:h-[calc(100vh-80px)]">
           <div>
             <div className="mb-2 font-osmono text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Gezinme
