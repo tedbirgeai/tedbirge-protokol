@@ -251,20 +251,15 @@ function VideoTile({ p }: { p: Participant }) {
       ) : null}
 
       <div className="my-2 flex flex-1 items-center justify-center">
-        {p.self ? (
-          <span className="grid h-16 w-16 place-items-center rounded-full border-2 border-emerald-400/60 bg-emerald-950/50">
-            <Box className="h-6 w-6 text-emerald-400" />
-          </span>
-        ) : (
-          <img
-            src={p.photo}
-            alt={p.name}
-            loading="lazy"
-            className={`h-16 w-16 rounded-full border-2 object-cover ${
-              p.active ? "border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]" : "border-slate-700"
-            }`}
-          />
-        )}
+        <span
+          className={`grid h-16 w-16 place-items-center rounded-full border-2 font-osmono text-sm font-bold ${
+            p.self
+              ? "border-emerald-400/60 bg-emerald-950/50 text-emerald-400"
+              : "border-cyan-500/40 bg-slate-950 text-cyan-300"
+          }`}
+        >
+          {p.self ? <Box className="h-6 w-6 text-emerald-400" /> : <Network className="h-6 w-6" />}
+        </span>
       </div>
 
       <div className="flex items-center justify-between gap-2 font-osmono text-[11px]">
@@ -281,27 +276,60 @@ function VideoTile({ p }: { p: Participant }) {
 /** Tedbirge Web-OS P2P Messenger & Video kabuğu. */
 export default function Messenger() {
   const node = useNodeRuntime();
+  const media = useLocalMedia();
   const [draft, setDraft] = useState("");
-  const [sent, setSent] = useState<ChatMessage[]>([]);
+  const [feed, setFeed] = useState<LiveMessage[]>([]);
+  const [route, setRoute] = useState<{ hops: number; cost: number } | null>(null);
 
   // Cihaz açıldığı anda kendini canlı düğüm olarak tanıtır (manuel buton yok).
   useEffect(() => {
-    void startNode();
+    void ensureLiveNode();
+    return onLiveMessage((msg) => setFeed((prev) => [...prev.slice(-80), msg]));
   }, []);
 
-  const feed = useMemo(() => [...MESSAGES, ...sent], [sent]);
+  // Dijkstra rotası gerçek eş listesi ve ölçülen gecikmeye göre tazelenir.
+  useEffect(() => {
+    let alive = true;
+    void measureRoute(node.nodeId, node.peers, node.rttMs).then((r) => {
+      if (alive) setRoute(r);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [node.nodeId, node.peers, node.rttMs]);
 
-  const send = () => {
+  const selfLabel = nodeLabel(node.nodeId);
+  const livePeers: LivePeer[] = useMemo(() => toLivePeers(node.peers), [node.peers]);
+
+  const participants: Participant[] = useMemo(
+    () => [
+      {
+        id: node.nodeId || "self",
+        name: selfLabel,
+        handle: media === "data" ? "sadece veri düğümü" : media === "audio" ? "yalnız ses" : "bu cihaz",
+        self: true,
+      },
+      ...livePeers.map((p) => ({
+        id: p.id,
+        name: p.label,
+        handle: p.direct ? "doğrudan P2P" : "röle üzerinden",
+        active: p.direct,
+      })),
+    ],
+    [livePeers, media, node.nodeId, selfLabel],
+  );
+
+  const send = async () => {
     const text = draft.trim();
     if (!text) return;
-    setSent((prev) => [
-      ...prev,
-      { from: "Siz", at: new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }), text },
-    ]);
     setDraft("");
+    const at = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+    setFeed((prev) => [...prev, { id: `self-${Date.now()}`, from: selfLabel, at, text, self: true }]);
+    await broadcastText(text);
   };
 
   const peers = node.peers.length;
+  const directPeers = node.peers.filter((p) => p.direct).length;
 
   return (
     <div className="flex h-[100dvh] w-full select-none flex-col overflow-hidden overflow-x-hidden bg-[#06090e] font-osui text-slate-400">
