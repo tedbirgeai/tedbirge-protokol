@@ -544,62 +544,36 @@ export default function Messenger() {
 
             <div className="flex items-center justify-between gap-2 py-2 text-xs">
               <span className="flex min-w-0 items-center gap-2 truncate">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-400" />
-                <strong className="truncate text-slate-200">Project Odyssey</strong>
-                <span className="shrink-0 text-[10px] text-slate-500">8 üye</span>
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${directPeers > 0 ? "bg-emerald-400" : "bg-slate-600"}`}
+                />
+                <strong className="truncate text-slate-200">Mesh Yayını</strong>
+                <span className="shrink-0 text-[10px] text-slate-500">
+                  {peers} eş{route ? ` · ${route.hops} sıçrama` : ""}
+                </span>
               </span>
               <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" />
             </div>
 
             <div className="my-1 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 font-osmono text-xs">
-              {feed.map((m, i) => (
-                <div key={`${m.from}-${m.at}-${i}`} className="space-y-1">
+              {feed.length === 0 ? (
+                <p className="pt-6 text-center text-[11px] text-slate-500">
+                  Bağlı Eş Bulunmuyor / Sinyal Bekleniyor…
+                </p>
+              ) : null}
+              {feed.map((m) => (
+                <div key={m.id} className="space-y-1">
                   <div className="flex justify-between gap-2 text-[10px] text-slate-400">
-                    <span className="truncate font-bold text-slate-300">{m.from}</span>
+                    <span className="truncate font-bold text-slate-300">{m.self ? "Siz" : m.from}</span>
                     <span className="flex shrink-0 items-center gap-1">
                       {m.at} <Lock className="h-2.5 w-2.5 text-emerald-400" />
                     </span>
                   </div>
-
-                  {m.text ? <p className="text-[11px] text-slate-300">{m.text}</p> : null}
-
-                  {m.file ? (
-                    <div className="flex items-center justify-between gap-2 rounded border border-slate-800 bg-slate-900/90 p-2 text-[10px]">
-                      <span className="flex min-w-0 items-center gap-2">
-                        {m.file.kind === "wasm" ? (
-                          <FileCode2 className="h-4 w-4 shrink-0 text-cyan-400" />
-                        ) : (
-                          <FileImage className="h-4 w-4 shrink-0 text-emerald-400" />
-                        )}
-                        <span className="min-w-0">
-                          <span className="block truncate font-bold text-slate-200">{m.file.name}</span>
-                          <span className="block text-slate-500">{m.file.size}</span>
-                        </span>
-                      </span>
-                      <CircleCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                    </div>
-                  ) : null}
-
-                  {m.voice ? (
-                    <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900/90 p-2">
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-cyan-500/20 text-cyan-400">
-                        <Play className="h-3 w-3" />
-                      </span>
-                      <span className="flex h-3 flex-1 items-center gap-0.5">
-                        {m.voice.bars.map((h, bi) => (
-                          <span
-                            key={bi}
-                            className="w-1 rounded bg-cyan-400/60"
-                            style={{ height: `${h}px` }}
-                          />
-                        ))}
-                      </span>
-                      <span className="shrink-0 text-[10px] text-slate-400">{m.voice.duration}</span>
-                    </div>
-                  ) : null}
+                  <p className="text-[11px] text-slate-300">{m.text}</p>
                 </div>
               ))}
             </div>
+
 
             <form
               onSubmit={(e) => {
