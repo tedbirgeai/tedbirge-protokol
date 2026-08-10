@@ -749,13 +749,28 @@ export default function Messenger() {
                     icon: Video,
                     label: camOn ? "Kamerayı kapat" : "Kamerayı aç",
                     on: camOn,
-                    toggle: () => setCamOn((v) => !v),
+                    // İzin YALNIZCA burada, kullanıcı tıkladığında istenir.
+                    toggle: () => {
+                      if (camOn) {
+                        setCamOn(false);
+                        if (!micOn) stopMedia();
+                        return;
+                      }
+                      void requestMedia("av").then((ok) => setCamOn(ok));
+                    },
                   },
                   {
                     icon: Mic,
                     label: micOn ? "Mikrofonu sessize al" : "Mikrofonu aç",
                     on: micOn,
-                    toggle: () => setMicOn((v) => !v),
+                    toggle: () => {
+                      if (micOn) {
+                        setMicOn(false);
+                        if (!camOn) stopMedia();
+                        return;
+                      }
+                      void requestMedia(camOn ? "av" : "audio").then((ok) => setMicOn(ok));
+                    },
                   },
                   {
                     icon: MonitorUp,
