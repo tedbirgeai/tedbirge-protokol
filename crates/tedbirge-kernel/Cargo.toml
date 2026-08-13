@@ -1,0 +1,15 @@
+[package]
+name = "tedbirge-kernel"
+version = "0.1.0"
+edition = "2021"
+description = "Tedbirge OS çekirdeği — yönlendirme ağırlığı ve ikili çerçeve yardımcıları (wasm32)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+strip = true
