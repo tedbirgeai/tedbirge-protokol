@@ -18,6 +18,7 @@ import { isRelayEnabled } from "@/shell/relay";
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { transitConfig, onTransitConfigChange } from "@/lib/transit-config";
 import { getAlias, setAlias } from "@/lib/chat/profile";
 import { assertNoEgress } from "@/lib/egress-guard";
 import { ensureIdentity, type Identity } from "@/lib/crypto/identity";
@@ -289,9 +290,31 @@ export async function syncPersonIdentity(): Promise<string> {
   }
 }
 
-const ICE: RTCConfiguration = {
-  iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }],
-};
+function buildMeshIce(): RTCConfiguration {
+  const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+  const iceServers: RTCIceServer[] = [
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+  ];
+  const turnUrls = (env.VITE_TURN_URL ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const turnUser = env.VITE_TURN_USERNAME;
+  const turnCred = env.VITE_TURN_CREDENTIAL;
+  if (turnUrls.length && turnUser && turnCred) {
+    iceServers.push({ urls: turnUrls, username: turnUser, credential: turnCred });
+  } else if (env.VITE_TURN_DISABLE_FALLBACK !== "1") {
+    iceServers.push({
+      urls: [
+        "turn:openrelay.metered.ca:80",
+        "turn:openrelay.metered.ca:443",
+        "turns:openrelay.metered.ca:443?transport=tcp",
+      ],
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    });
+  }
+  return { iceServers, iceCandidatePoolSize: 4, bundlePolicy: "max-bundle", rtcpMuxPolicy: "require" };
+}
+
+const ICE: RTCConfiguration = buildMeshIce();
 
 /**
  * Cihazın gerçekte kullandığı taşıyıcıyı raporlar (uydurma değer yok).
@@ -321,6 +344,9 @@ export class BrowserNode {
   private resolveCloudReady: (() => void) | null = null;
   private localBus: BroadcastChannel | null = null;
   private localSeen = new Map<string, number>();
+  private peerLastSeen = new Map<string, number>();
+  private gcTimer: ReturnType<typeof setInterval> | null = null;
+  private transitOff: (() => void) | null = null;
   private localTimer: ReturnType<typeof setInterval> | null = null;
   private lanSocket: WebSocket | null = null;
   private lanTimer: ReturnType<typeof setInterval> | null = null;
@@ -480,11 +506,9 @@ export class BrowserNode {
       });
 
     await this.heartbeat();
-    this.timer = setInterval(() => {
-      void this.heartbeat();
-      // Bekleyen mesajlar yalnız olay anında değil, düzenli olarak da denenir.
-      void this.flushQueue();
-    }, 60_000);
+    this.scheduleHeartbeat();
+    this.transitOff = onTransitConfigChange(() => this.scheduleHeartbeat());
+    this.gcTimer = setInterval(() => this.sweepStalePeers(), Math.min(transitConfig().peerTimeoutMs, 30_000));
     this.scheduleQueueFlush();
 
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
@@ -850,9 +874,37 @@ export class BrowserNode {
     return this.lanSocket?.readyState === WebSocket.OPEN;
   }
 
+  private scheduleHeartbeat() {
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => { void this.heartbeat(); void this.flushQueue(); }, Math.max(2_000, transitConfig().heartbeatMs));
+  }
+
+  private sweepStalePeers() {
+    const timeout = transitConfig().peerTimeoutMs;
+    const now = Date.now();
+    const ids = new Set<string>([...this.peerLastSeen.keys(), ...this.peers.keys(), ...this.localSeen.keys()]);
+    let changed = false;
+    for (const id of ids) {
+      const entry = this.peers.get(id);
+      if (entry?.dc?.readyState === "open") { this.peerLastSeen.set(id, now); continue; }
+      const last = Math.max(this.peerLastSeen.get(id) ?? 0, this.localSeen.get(id) ?? 0);
+      if (now - last <= timeout) continue;
+      if (entry) { try { entry.pc.close(); } catch { /* kapali */ } this.peers.delete(id); }
+      this.localSeen.delete(id);
+      this.peerLastSeen.delete(id);
+      changed = true;
+    }
+    if (changed) this.emit({});
+  }
+
   stop() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
+    if (this.gcTimer) clearInterval(this.gcTimer);
+    this.gcTimer = null;
+    this.transitOff?.();
+    this.transitOff = null;
+    this.peerLastSeen.clear();
     if (this.retryTimer) clearInterval(this.retryTimer);
     this.retryTimer = null;
     if (this.relayTimer) clearInterval(this.relayTimer);
