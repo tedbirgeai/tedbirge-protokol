@@ -8,6 +8,11 @@
  * ara düğümler yalnızca yönlendirme başlığını görür.
  */
 
+import { linkMetrics, weightFromMetrics } from "@/lib/mesh/link-metrics";
+import { transitConfig } from "@/lib/transit-config";
+
+
+
 export type TransportId =
   | "openwrt-gateway"
   | "cloud-webrtc"
@@ -136,6 +141,54 @@ export function edgeCost(edge: Edge): number {
   return (t.latencyMs + 8000 / t.kbps) * (1 + t.penalty) * (1 / quality);
 }
 
+/**
+ * CANLI METRİK AĞIRLIĞI — statik taşıyıcı tablosu yerine gerçek ölçüm.
+ * Komşu için ölçüm yoksa taşıyıcı varsayılanlarına düşülür.
+ */
+export function metricEdgeCost(edge: Edge): number {
+  const t = transportById(edge.transport);
+  const sample = linkMetrics(edge.to);
+  if (!sample.at) return edgeCost(edge);
+  return (
+    weightFromMetrics({ ...sample, quality: Math.min(sample.quality, edge.quality) }, t.penalty) *
+    1000
+  );
+}
+
+/**
+ * k-HOP YEREL ALT GRAFİK
+ * ------------------------------------------------------------------
+ * Tüm ağ üzerinde Dijkstra çalıştırmak gereksizdir: yönlendirme
+ * yalnızca `radius` sıçrama yarıçapındaki yerel mesh üzerinde yapılır,
+ * ötesi DHT/AODV katmanına devredilir.
+ */
+export function localSubgraph(graph: Graph, origin: string, radius?: number): Graph {
+  const hops = Math.max(1, radius ?? transitConfig().hopRadius);
+  const reach = new Map<string, number>([[origin, 0]]);
+  const adjacency = new Map<string, string[]>();
+  for (const e of graph.edges) {
+    if (!adjacency.has(e.from)) adjacency.set(e.from, []);
+    if (!adjacency.has(e.to)) adjacency.set(e.to, []);
+    adjacency.get(e.from)!.push(e.to);
+    adjacency.get(e.to)!.push(e.from);
+  }
+  const queue = [origin];
+  while (queue.length) {
+    const node = queue.shift()!;
+    const depth = reach.get(node) ?? 0;
+    if (depth >= hops) continue;
+    for (const next of adjacency.get(node) ?? []) {
+      if (reach.has(next)) continue;
+      reach.set(next, depth + 1);
+      queue.push(next);
+    }
+  }
+  return {
+    nodes: graph.nodes.filter((n) => reach.has(n)),
+    edges: graph.edges.filter((e) => reach.has(e.from) && reach.has(e.to)),
+  };
+}
+
 export type RouteResult = {
   path: string[];
   hops: Edge[];
@@ -143,8 +196,20 @@ export type RouteResult = {
   reachable: boolean;
 };
 
+export type RouteOptions = {
+  /** Canlı RTT/bant genişliği ölçümlerini kullan (varsayılan: evet). */
+  metrics?: boolean;
+};
+
 /** Klasik Dijkstra — küçük saha grafikleri için dizi tabanlı öncelik kuyruğu yeterlidir. */
-export function shortestPath(graph: Graph, from: string, to: string): RouteResult {
+export function shortestPath(
+  graph: Graph,
+  from: string,
+  to: string,
+  opts: RouteOptions = {},
+): RouteResult {
+  const cost0 = opts.metrics === false ? edgeCost : metricEdgeCost;
+
   const dist = new Map<string, number>();
   const prev = new Map<string, Edge>();
   const visited = new Set<string>();
@@ -176,7 +241,7 @@ export function shortestPath(graph: Graph, from: string, to: string): RouteResul
     visited.add(current);
     for (const edge of adjacency.get(current) ?? []) {
       if (visited.has(edge.to)) continue;
-      const next = best + edgeCost(edge);
+      const next = best + cost0(edge);
       if (next < (dist.get(edge.to) ?? Number.POSITIVE_INFINITY)) {
         dist.set(edge.to, next);
         prev.set(edge.to, edge);
