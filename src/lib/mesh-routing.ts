@@ -241,7 +241,7 @@ export function shortestPath(
     visited.add(current);
     for (const edge of adjacency.get(current) ?? []) {
       if (visited.has(edge.to)) continue;
-      const next = best + edgeCost(edge);
+      const next = best + cost0(edge);
       if (next < (dist.get(edge.to) ?? Number.POSITIVE_INFINITY)) {
         dist.set(edge.to, next);
         prev.set(edge.to, edge);
