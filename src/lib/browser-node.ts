@@ -1,4 +1,8 @@
 import { isRelayEnabled } from "@/shell/relay";
+import { chunkPayload, ingestChunk, isChunkFrame, laneSchedule } from "@/kernel/multipath";
+import { forgetNode, observeNode } from "@/lib/mesh/dht";
+import { liveNextHop } from "@/kernel/routing-live";
+import { transitConfig } from "@/lib/transit-config";
 /**
  * Tarayıcı Düğümü (Browser Node) — v2 mimarisi
  * ------------------------------------------------------------------
@@ -289,9 +293,26 @@ export async function syncPersonIdentity(): Promise<string> {
   }
 }
 
-const ICE: RTCConfiguration = {
-  iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }],
-};
+/**
+ * ICE yapılandırması. Mobil operatörlerde CGNAT arkasındaki iki cihaz
+ * yalnız STUN ile buluşamaz; TURN tanımlıysa aktarmalı hat kurulur.
+ * TURN bilgileri ortam değişkeninden gelir, koda gömülmez.
+ */
+export function buildMeshIce(): RTCConfiguration {
+  const servers: RTCIceServer[] = [
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+  ];
+  const env = import.meta.env as Record<string, string | undefined>;
+  const turnUrl = env["VITE_TURN_URL"];
+  if (turnUrl) {
+    servers.push({
+      urls: turnUrl.split(",").map((u) => u.trim()).filter(Boolean),
+      username: env["VITE_TURN_USERNAME"],
+      credential: env["VITE_TURN_CREDENTIAL"],
+    });
+  }
+  return { iceServers: servers, iceCandidatePoolSize: 4, iceTransportPolicy: "all" };
+}
 
 /**
  * Cihazın gerçekte kullandığı taşıyıcıyı raporlar (uydurma değer yok).
@@ -327,6 +348,9 @@ export class BrowserNode {
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
   /** Teklif gelmeden ulaşan ICE adayları kaybolmaz; uzak açıklamadan sonra uygulanır. */
   private pendingPeerIce = new Map<string, RTCIceCandidateInit[]>();
+  /** Eş başına son canlılık damgası — hayalet düğüm temizliği için. */
+  private peerSeen = new Map<string, number>();
+  private gcTimer: ReturnType<typeof setInterval> | null = null;
   private peerKeys = new Map<
     string,
     { spk: string; bpk: string; fingerprint: string; verified: boolean; trust: TrustStatus }
@@ -486,6 +510,9 @@ export class BrowserNode {
       void this.flushQueue();
     }, 60_000);
     this.scheduleQueueFlush();
+    // Hayalet düğüm temizliği: sessizleşen eş bağlantısı kapatılır ve
+    // DHT dizininden düşürülür (yanlış rota üretmesin).
+    this.gcTimer = setInterval(() => this.sweepStalePeers(), transitConfig().heartbeatMs);
 
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
     void this.publishDirectory();
@@ -857,6 +884,8 @@ export class BrowserNode {
     this.retryTimer = null;
     if (this.relayTimer) clearInterval(this.relayTimer);
     this.relayTimer = null;
+    if (this.gcTimer) clearInterval(this.gcTimer);
+    this.gcTimer = null;
 
     if (this.localTimer) clearInterval(this.localTimer);
     this.localTimer = null;
@@ -872,6 +901,7 @@ export class BrowserNode {
     window.removeEventListener("offline", this.handleOffline);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
+    this.peerSeen.clear();
     this.pendingPeerIce.clear();
     try {
       this.localBus?.close();
@@ -918,7 +948,7 @@ export class BrowserNode {
   }
 
   private newPeer(remote: string) {
-    const pc = new RTCPeerConnection(ICE);
+    const pc = new RTCPeerConnection(buildMeshIce());
     const entry: { pc: RTCPeerConnection; dc: RTCDataChannel | null } = { pc, dc: null };
     this.peers.set(remote, entry);
 
