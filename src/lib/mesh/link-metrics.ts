@@ -35,7 +35,10 @@ export function recordLink(peerId: string, sample: Partial<Omit<LinkSample, "at"
   links.set(peerId, {
     rttMs: Math.max(1, smooth(prev.rttMs, Number(sample.rttMs ?? prev.rttMs))),
     freeKbps: Math.max(1, smooth(prev.freeKbps, Number(sample.freeKbps ?? prev.freeKbps))),
-    quality: Math.min(1, Math.max(0.05, smooth(prev.quality, Number(sample.quality ?? prev.quality)))),
+    quality: Math.min(
+      1,
+      Math.max(0.05, smooth(prev.quality, Number(sample.quality ?? prev.quality))),
+    ),
     at: Date.now(),
   });
 }

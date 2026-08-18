@@ -21,7 +21,12 @@ export function encodeRouteRequest(req: RouteRequest): ArrayBuffer {
   for (const e of edges) {
     w.u16(index.get(e.from)!);
     w.u16(index.get(e.to)!);
-    w.u8(Math.max(0, TRANSPORTS.findIndex((t) => t.id === e.transport)));
+    w.u8(
+      Math.max(
+        0,
+        TRANSPORTS.findIndex((t) => t.id === e.transport),
+      ),
+    );
     w.u8(Math.round(Math.min(1, Math.max(0, e.quality)) * 255));
   }
   w.u16(index.get(req.from)!);
@@ -60,7 +65,12 @@ export function encodeRouteResult(route: RouteResult): ArrayBuffer {
   for (const h of route.hops) {
     w.str(h.from);
     w.str(h.to);
-    w.u8(Math.max(0, TRANSPORTS.findIndex((t) => t.id === h.transport)));
+    w.u8(
+      Math.max(
+        0,
+        TRANSPORTS.findIndex((t) => t.id === h.transport),
+      ),
+    );
     w.u8(Math.round(Math.min(1, Math.max(0, h.quality)) * 255));
   }
   return w.buffer();

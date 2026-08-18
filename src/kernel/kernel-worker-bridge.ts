@@ -7,11 +7,7 @@
  */
 
 import { decodeFrame, encodeFrame, OP } from "@/kernel/ipc";
-import {
-  decodeRouteResult,
-  encodeRouteRequest,
-  type RouteRequest,
-} from "@/kernel/route-codec";
+import { decodeRouteResult, encodeRouteRequest, type RouteRequest } from "@/kernel/route-codec";
 import { localSubgraph, shortestPath, type RouteResult } from "@/lib/mesh-routing";
 import { transitConfig } from "@/lib/transit-config";
 

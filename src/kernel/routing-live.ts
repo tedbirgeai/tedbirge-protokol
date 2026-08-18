@@ -27,7 +27,12 @@ export function liveGraph(self: string, target?: string): Graph {
 
   for (const n of directNeighbors()) {
     nodes.add(n.nodeId);
-    edges.push({ from: self, to: n.nodeId, transport: "cloud-webrtc", quality: qualityOf(n.nodeId) });
+    edges.push({
+      from: self,
+      to: n.nodeId,
+      transport: "cloud-webrtc",
+      quality: qualityOf(n.nodeId),
+    });
   }
   for (const n of knownNodes()) {
     if (n.hops <= 1 || n.via === n.nodeId) continue;
