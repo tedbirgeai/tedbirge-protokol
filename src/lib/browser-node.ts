@@ -1,4 +1,8 @@
 import { isRelayEnabled } from "@/shell/relay";
+import { chunkPayload, ingestChunk, isChunkFrame, laneSchedule } from "@/kernel/multipath";
+import { forgetNode, observeNode } from "@/lib/mesh/dht";
+import { liveNextHop } from "@/kernel/routing-live";
+import { transitConfig } from "@/lib/transit-config";
 /**
  * Tarayıcı Düğümü (Browser Node) — v2 mimarisi
  * ------------------------------------------------------------------
@@ -289,9 +293,29 @@ export async function syncPersonIdentity(): Promise<string> {
   }
 }
 
-const ICE: RTCConfiguration = {
-  iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }],
-};
+/**
+ * ICE yapılandırması. Mobil operatörlerde CGNAT arkasındaki iki cihaz
+ * yalnız STUN ile buluşamaz; TURN tanımlıysa aktarmalı hat kurulur.
+ * TURN bilgileri ortam değişkeninden gelir, koda gömülmez.
+ */
+export function buildMeshIce(): RTCConfiguration {
+  const servers: RTCIceServer[] = [
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+  ];
+  const env = import.meta.env as Record<string, string | undefined>;
+  const turnUrl = env["VITE_TURN_URL"];
+  if (turnUrl) {
+    servers.push({
+      urls: turnUrl
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean),
+      username: env["VITE_TURN_USERNAME"],
+      credential: env["VITE_TURN_CREDENTIAL"],
+    });
+  }
+  return { iceServers: servers, iceCandidatePoolSize: 4, iceTransportPolicy: "all" };
+}
 
 /**
  * Cihazın gerçekte kullandığı taşıyıcıyı raporlar (uydurma değer yok).
@@ -327,6 +351,9 @@ export class BrowserNode {
   private peers = new Map<string, { pc: RTCPeerConnection; dc: RTCDataChannel | null }>();
   /** Teklif gelmeden ulaşan ICE adayları kaybolmaz; uzak açıklamadan sonra uygulanır. */
   private pendingPeerIce = new Map<string, RTCIceCandidateInit[]>();
+  /** Eş başına son canlılık damgası — hayalet düğüm temizliği için. */
+  private peerSeen = new Map<string, number>();
+  private gcTimer: ReturnType<typeof setInterval> | null = null;
   private peerKeys = new Map<
     string,
     { spk: string; bpk: string; fingerprint: string; verified: boolean; trust: TrustStatus }
@@ -486,6 +513,9 @@ export class BrowserNode {
       void this.flushQueue();
     }, 60_000);
     this.scheduleQueueFlush();
+    // Hayalet düğüm temizliği: sessizleşen eş bağlantısı kapatılır ve
+    // DHT dizininden düşürülür (yanlış rota üretmesin).
+    this.gcTimer = setInterval(() => this.sweepStalePeers(), transitConfig().heartbeatMs);
 
     // Bulut yedek röle: alıcı kapalıyken mesaj kaybolmaz.
     void this.publishDirectory();
@@ -857,6 +887,8 @@ export class BrowserNode {
     this.retryTimer = null;
     if (this.relayTimer) clearInterval(this.relayTimer);
     this.relayTimer = null;
+    if (this.gcTimer) clearInterval(this.gcTimer);
+    this.gcTimer = null;
 
     if (this.localTimer) clearInterval(this.localTimer);
     this.localTimer = null;
@@ -872,6 +904,7 @@ export class BrowserNode {
     window.removeEventListener("offline", this.handleOffline);
     this.peers.forEach((p) => p.pc.close());
     this.peers.clear();
+    this.peerSeen.clear();
     this.pendingPeerIce.clear();
     try {
       this.localBus?.close();
@@ -918,7 +951,7 @@ export class BrowserNode {
   }
 
   private newPeer(remote: string) {
-    const pc = new RTCPeerConnection(ICE);
+    const pc = new RTCPeerConnection(buildMeshIce());
     const entry: { pc: RTCPeerConnection; dc: RTCDataChannel | null } = { pc, dc: null };
     this.peers.set(remote, entry);
 
@@ -1094,6 +1127,8 @@ export class BrowserNode {
           verified: trust === "manual",
           trust,
         });
+        this.peerSeen.set(maybe.nodeId, Date.now());
+        observeNode(this.nodeId, { nodeId: maybe.nodeId, via: maybe.nodeId, hops: 1 });
         this.emit({});
         void this.flushQueue();
         return;
@@ -1116,6 +1151,14 @@ export class BrowserNode {
     witnessClock(env.h.lamport);
 
     recordRx(env.h.hops ?? 0);
+    // Canlılık ve dizin gözlemi: paketi taşıyan komşu üzerinden kaynak düğüm
+    // kaç sıçrama uzakta olduğuyla birlikte DHT dizinine yazılır.
+    if (this.peers.has(from)) this.peerSeen.set(from, Date.now());
+    observeNode(this.nodeId, {
+      nodeId: env.h.from,
+      via: this.peers.has(from) ? from : env.h.from,
+      hops: Math.max(1, (env.h.hops ?? 0) + 1),
+    });
     if (env.h.to === this.nodeId || env.h.to === "*") await this.handleForMe(env);
 
     // 3) Röle: gövde OPAKTIR, yalnız başlık güncellenir.
@@ -1123,7 +1166,19 @@ export class BrowserNode {
     if (env.h.to !== this.nodeId && isRelayEnabled()) {
       const fwd = forwardEnvelope(env);
       if (fwd) {
-        this.broadcastRaw(encodeEnvelope(fwd), from);
+        const raw = encodeEnvelope(fwd);
+        // Yönlendirilmiş iletim: hedef biliniyorsa paket YALNIZ bir sonraki
+        // sıçramaya verilir. Yayın (*) yalnız keşif/acil paketleri içindir;
+        // adresli paketin tüm ağa saçılması veri sızıntısıdır.
+        const hop = env.h.to === "*" ? null : liveNextHop(this.nodeId, env.h.to);
+        const direct = hop ? this.peers.get(hop) : null;
+        if (direct?.dc?.readyState === "open") {
+          try {
+            direct.dc.send(raw);
+          } catch {
+            this.broadcastRaw(raw, from);
+          }
+        } else this.broadcastRaw(raw, from);
         recordRelay();
         this.emit({ lastRelayAt: new Date().toISOString(), notice: null });
       } else {
@@ -1159,6 +1214,13 @@ export class BrowserNode {
         data: body as Record<string, unknown>,
       });
     } else if (APP_KINDS.includes(env.h.kind)) {
+      // Çoklu hat parçası: yük tamamlanmadan uygulamaya verilmez.
+      if (isChunkFrame(body)) {
+        const done = ingestChunk(body);
+        if (!done) return;
+        appHandler?.(env.h.kind, env.h.from, done.payload);
+        return;
+      }
       appHandler?.(env.h.kind, env.h.from, body);
       if (env.h.kind === "telemetry") return;
     } else if (env.h.kind === "telemetry" && this.state.online) {
@@ -1285,6 +1347,15 @@ export class BrowserNode {
       return false;
     }
 
+    // Büyük yük (fotoğraf/ses/dosya/geçmiş) tek hattı tıkamaz: parçalara
+    // bölünür ve açık hatlara paralel dağıtılır.
+    const chunks = chunkPayload(payload);
+    if (chunks.length) {
+      const ok = await this.sendChunks(kind, to, chunks, prio, targets);
+      this.emit({});
+      return ok;
+    }
+
     for (const target of targets) {
       const keys = this.peerKeys.get(target)!;
       const env = await createEnvelope({
@@ -1309,6 +1380,83 @@ export class BrowserNode {
     }
     this.emit({});
     return true;
+  }
+
+  /**
+   * Parçaları hatlara dağıtıp paralel gönderir. Her hedef için ayrı zarf
+   * üretilir (uçtan uca şifreleme korunur); hatlar eşzamanlı akar.
+   */
+  private async sendChunks(
+    kind: EnvelopeKind,
+    to: string | "*",
+    chunks: ReturnType<typeof chunkPayload>,
+    prio: Priority,
+    targets: string[],
+  ): Promise<boolean> {
+    if (!this.identity) return false;
+    const lanes = laneSchedule(chunks, transitConfig().lanes);
+    let ok = true;
+    await Promise.all(
+      lanes.map(async (lane) => {
+        for (const chunk of lane) {
+          for (const target of targets) {
+            const keys = this.peerKeys.get(target);
+            if (!keys || !this.identity) continue;
+            const env = await createEnvelope({
+              from: this.nodeId,
+              to,
+              kind,
+              payload: chunk,
+              peerBoxPublic: keys.bpk,
+              senderSignPublic: this.identity.signPublic,
+              priority: prio,
+              ttl: MAX_TTL,
+            });
+            const raw = encodeEnvelope(env);
+            try {
+              this.peers.get(target)?.dc?.send(raw);
+              recordTx(true);
+            } catch {
+              recordTx(false);
+              ok = false;
+              await this.enqueue({ t: "fwd", env });
+            }
+          }
+        }
+      }),
+    );
+    return ok;
+  }
+
+  /**
+   * Hayalet düğüm temizliği: yapılandırılan süre boyunca hiç paket
+   * göndermeyen eşin bağlantısı kapatılır, anahtarları ve DHT kaydı silinir.
+   * Böylece rota motoru ölü hatlara yönlendirme yapmaz.
+   */
+  private sweepStalePeers() {
+    const timeout = transitConfig().peerTimeoutMs;
+    const now = Date.now();
+    let changed = false;
+    for (const [id, entry] of this.peers) {
+      const seen = this.peerSeen.get(id) ?? 0;
+      const dead =
+        ["failed", "closed", "disconnected"].includes(entry.pc.connectionState) ||
+        (seen > 0 && now - seen > timeout);
+      if (!dead) continue;
+      try {
+        entry.pc.close();
+      } catch {
+        /* zaten kapalı */
+      }
+      this.peers.delete(id);
+      this.peerSeen.delete(id);
+      this.peerKeys.delete(id);
+      forgetNode(this.nodeId, id);
+      changed = true;
+    }
+    // Açık hatlara hafif canlılık yoklaması (RTT ölçümü ve GC damgası).
+    if (this.openPeers().length) void this.send("ping", "*", { at: Date.now() }, 1);
+    if (changed) this.emit({});
   }
 
   private async enqueue(item: QueuedItem) {

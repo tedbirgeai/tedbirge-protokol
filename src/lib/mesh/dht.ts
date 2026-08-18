@@ -73,7 +73,11 @@ export function observeNode(self: string, node: { nodeId: string; via?: string; 
 export function forgetNode(self: string, nodeId: string) {
   const idx = bucketIndex(self, nodeId);
   const list = buckets.get(idx);
-  if (list) buckets.set(idx, list.filter((n) => n.nodeId !== nodeId));
+  if (list)
+    buckets.set(
+      idx,
+      list.filter((n) => n.nodeId !== nodeId),
+    );
   routes.delete(nodeId);
   for (const [target, route] of routes) {
     if (route.path.includes(nodeId)) routes.delete(target);
