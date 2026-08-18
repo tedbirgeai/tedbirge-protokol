@@ -1124,6 +1124,8 @@ export class BrowserNode {
           verified: trust === "manual",
           trust,
         });
+        this.peerSeen.set(maybe.nodeId, Date.now());
+        observeNode(this.nodeId, { nodeId: maybe.nodeId, via: maybe.nodeId, hops: 1 });
         this.emit({});
         void this.flushQueue();
         return;
@@ -1146,6 +1148,14 @@ export class BrowserNode {
     witnessClock(env.h.lamport);
 
     recordRx(env.h.hops ?? 0);
+    // Canlılık ve dizin gözlemi: paketi taşıyan komşu üzerinden kaynak düğüm
+    // kaç sıçrama uzakta olduğuyla birlikte DHT dizinine yazılır.
+    if (this.peers.has(from)) this.peerSeen.set(from, Date.now());
+    observeNode(this.nodeId, {
+      nodeId: env.h.from,
+      via: this.peers.has(from) ? from : env.h.from,
+      hops: Math.max(1, (env.h.hops ?? 0) + 1),
+    });
     if (env.h.to === this.nodeId || env.h.to === "*") await this.handleForMe(env);
 
     // 3) Röle: gövde OPAKTIR, yalnız başlık güncellenir.
@@ -1153,7 +1163,19 @@ export class BrowserNode {
     if (env.h.to !== this.nodeId && isRelayEnabled()) {
       const fwd = forwardEnvelope(env);
       if (fwd) {
-        this.broadcastRaw(encodeEnvelope(fwd), from);
+        const raw = encodeEnvelope(fwd);
+        // Yönlendirilmiş iletim: hedef biliniyorsa paket YALNIZ bir sonraki
+        // sıçramaya verilir. Yayın (*) yalnız keşif/acil paketleri içindir;
+        // adresli paketin tüm ağa saçılması veri sızıntısıdır.
+        const hop = env.h.to === "*" ? null : liveNextHop(this.nodeId, env.h.to);
+        const direct = hop ? this.peers.get(hop) : null;
+        if (direct?.dc?.readyState === "open") {
+          try {
+            direct.dc.send(raw);
+          } catch {
+            this.broadcastRaw(raw, from);
+          }
+        } else this.broadcastRaw(raw, from);
         recordRelay();
         this.emit({ lastRelayAt: new Date().toISOString(), notice: null });
       } else {
@@ -1189,6 +1211,13 @@ export class BrowserNode {
         data: body as Record<string, unknown>,
       });
     } else if (APP_KINDS.includes(env.h.kind)) {
+      // Çoklu hat parçası: yük tamamlanmadan uygulamaya verilmez.
+      if (isChunkFrame(body)) {
+        const done = ingestChunk(body);
+        if (!done) return;
+        appHandler?.(env.h.kind, env.h.from, done.payload);
+        return;
+      }
       appHandler?.(env.h.kind, env.h.from, body);
       if (env.h.kind === "telemetry") return;
     } else if (env.h.kind === "telemetry" && this.state.online) {
