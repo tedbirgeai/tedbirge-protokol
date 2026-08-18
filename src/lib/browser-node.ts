@@ -306,7 +306,10 @@ export function buildMeshIce(): RTCConfiguration {
   const turnUrl = env["VITE_TURN_URL"];
   if (turnUrl) {
     servers.push({
-      urls: turnUrl.split(",").map((u) => u.trim()).filter(Boolean),
+      urls: turnUrl
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean),
       username: env["VITE_TURN_USERNAME"],
       credential: env["VITE_TURN_CREDENTIAL"],
     });
