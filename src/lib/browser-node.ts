@@ -1344,6 +1344,15 @@ export class BrowserNode {
       return false;
     }
 
+    // Büyük yük (fotoğraf/ses/dosya/geçmiş) tek hattı tıkamaz: parçalara
+    // bölünür ve açık hatlara paralel dağıtılır.
+    const chunks = chunkPayload(payload);
+    if (chunks.length) {
+      const ok = await this.sendChunks(kind, to, chunks, prio, targets);
+      this.emit({});
+      return ok;
+    }
+
     for (const target of targets) {
       const keys = this.peerKeys.get(target)!;
       const env = await createEnvelope({
@@ -1368,6 +1377,83 @@ export class BrowserNode {
     }
     this.emit({});
     return true;
+  }
+
+  /**
+   * Parçaları hatlara dağıtıp paralel gönderir. Her hedef için ayrı zarf
+   * üretilir (uçtan uca şifreleme korunur); hatlar eşzamanlı akar.
+   */
+  private async sendChunks(
+    kind: EnvelopeKind,
+    to: string | "*",
+    chunks: ReturnType<typeof chunkPayload>,
+    prio: Priority,
+    targets: string[],
+  ): Promise<boolean> {
+    if (!this.identity) return false;
+    const lanes = laneSchedule(chunks, transitConfig().lanes);
+    let ok = true;
+    await Promise.all(
+      lanes.map(async (lane) => {
+        for (const chunk of lane) {
+          for (const target of targets) {
+            const keys = this.peerKeys.get(target);
+            if (!keys || !this.identity) continue;
+            const env = await createEnvelope({
+              from: this.nodeId,
+              to,
+              kind,
+              payload: chunk,
+              peerBoxPublic: keys.bpk,
+              senderSignPublic: this.identity.signPublic,
+              priority: prio,
+              ttl: MAX_TTL,
+            });
+            const raw = encodeEnvelope(env);
+            try {
+              this.peers.get(target)?.dc?.send(raw);
+              recordTx(true);
+            } catch {
+              recordTx(false);
+              ok = false;
+              await this.enqueue({ t: "fwd", env });
+            }
+          }
+        }
+      }),
+    );
+    return ok;
+  }
+
+  /**
+   * Hayalet düğüm temizliği: yapılandırılan süre boyunca hiç paket
+   * göndermeyen eşin bağlantısı kapatılır, anahtarları ve DHT kaydı silinir.
+   * Böylece rota motoru ölü hatlara yönlendirme yapmaz.
+   */
+  private sweepStalePeers() {
+    const timeout = transitConfig().peerTimeoutMs;
+    const now = Date.now();
+    let changed = false;
+    for (const [id, entry] of this.peers) {
+      const seen = this.peerSeen.get(id) ?? 0;
+      const dead =
+        ["failed", "closed", "disconnected"].includes(entry.pc.connectionState) ||
+        (seen > 0 && now - seen > timeout);
+      if (!dead) continue;
+      try {
+        entry.pc.close();
+      } catch {
+        /* zaten kapalı */
+      }
+      this.peers.delete(id);
+      this.peerSeen.delete(id);
+      this.peerKeys.delete(id);
+      forgetNode(this.nodeId, id);
+      changed = true;
+    }
+    // Açık hatlara hafif canlılık yoklaması (RTT ölçümü ve GC damgası).
+    if (this.openPeers().length) void this.send("ping", "*", { at: Date.now() }, 1);
+    if (changed) this.emit({});
   }
 
   private async enqueue(item: QueuedItem) {
