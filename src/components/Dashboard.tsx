@@ -390,8 +390,10 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden">
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
+        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
+          <CommandCenter />
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 xl:grid-cols-12">
+
             <div className="flex min-w-0 flex-col gap-2 xl:overflow-y-auto xl:col-span-3">
               <Card title="AĞ ÖZETİ" icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 <div className="flex items-baseline justify-between">
