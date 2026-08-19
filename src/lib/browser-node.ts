@@ -1071,7 +1071,9 @@ export class BrowserNode {
 
     try {
       if (data.type === "offer") {
+        if (!this.peerSlotAllowed(remote)) return;
         const entry = this.peers.get(remote) ?? this.newPeer(remote);
+
         await entry.pc.setRemoteDescription({ type: "offer", sdp: data.sdp });
         const queued = this.pendingPeerIce.get(remote) ?? [];
         this.pendingPeerIce.delete(remote);
