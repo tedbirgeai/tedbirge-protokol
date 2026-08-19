@@ -1,4 +1,6 @@
 import { isRelayEnabled } from "@/shell/relay";
+import { canAcceptPeer, setLicenseTier } from "@/lib/peer-limit";
+
 import { chunkPayload, ingestChunk, isChunkFrame, laneSchedule } from "@/kernel/multipath";
 import { forgetNode, observeNode } from "@/lib/mesh/dht";
 import { liveNextHop } from "@/kernel/routing-live";
@@ -381,7 +383,9 @@ export class BrowserNode {
 
   constructor(licenseKey: string | undefined, onState: (s: BrowserNodeState) => void) {
     this.licenseKey = licenseKey ?? "";
+    setLicenseTier(this.licenseKey ? "ENTERPRISE" : "FREE");
     this.onState = onState;
+
     this.state = {
       running: false,
       nodeId: this.nodeId,
@@ -998,7 +1002,17 @@ export class BrowserNode {
     }
   }
 
+  /**
+   * Ücretsiz katman kotası: eşzamanlı 5 aktif eşten sonrası reddedilir.
+   * Mevcut bir eşle yeniden pazarlık her zaman serbesttir.
+   */
+  private peerSlotAllowed(remote: string) {
+    if (this.peers.has(remote)) return true;
+    return canAcceptPeer(this.peers.size);
+  }
+
   private async createOffer(remote: string) {
+    if (!this.peerSlotAllowed(remote)) return;
     const entry = this.newPeer(remote);
     const dc = entry.pc.createDataChannel("mesh", { ordered: true });
     this.bindChannel(remote, dc);
@@ -1006,6 +1020,7 @@ export class BrowserNode {
     await entry.pc.setLocalDescription(offer);
     await this.signal(remote, { type: "offer", sdp: offer.sdp });
   }
+
 
   /**
    * Sinyal gönderimi üç katmanlı yedeklidir: bulut → yerel yayın → eş rölesi.
@@ -1058,7 +1073,9 @@ export class BrowserNode {
 
     try {
       if (data.type === "offer") {
+        if (!this.peerSlotAllowed(remote)) return;
         const entry = this.peers.get(remote) ?? this.newPeer(remote);
+
         await entry.pc.setRemoteDescription({ type: "offer", sdp: data.sdp });
         const queued = this.pendingPeerIce.get(remote) ?? [];
         this.pendingPeerIce.delete(remote);

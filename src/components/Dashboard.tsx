@@ -18,6 +18,7 @@ import {
   Globe,
   LayoutDashboard,
   Network,
+  QrCode,
   Settings,
   Share2,
   Shield,
@@ -26,7 +27,13 @@ import {
   TerminalSquare,
 } from "lucide-react";
 
-type LogLine = { time: string; text: string };
+import { CommandCenter } from "@/components/shell/CommandCenter";
+import { PaywallModal } from "@/components/shell/PaywallModal";
+import { NodeTestModal } from "@/components/shell/NodeTestModal";
+import { KERNEL_LOG_EVENT, type KernelLogDetail } from "@/lib/peer-limit";
+
+type LogLine = { time: string; text: string; tone?: "warn" };
+
 
 const NODES = [
   { label: "NODE_BF3A", latency: "45 ms", dist: 120, angle: 0 },
@@ -209,6 +216,7 @@ export default function Dashboard() {
     { time: "14:32:22", text: "[DURUM] Bant genişliği ölçümü tamam" },
   ]);
   const [command, setCommand] = useState("");
+  const [nodeTestOpen, setNodeTestOpen] = useState(false);
   const logRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -221,9 +229,28 @@ export default function Dashboard() {
     return () => window.clearInterval(id);
   }, []);
 
+  // Çekirdek katmanı uyarıları (ör. ücretsiz eş limiti) canlı akışa düşer.
+  useEffect(() => {
+    const onKernelLog = (event: Event) => {
+      const detail = (event as CustomEvent<KernelLogDetail>).detail;
+      if (!detail?.text) return;
+      setLogs((prev) => [
+        ...prev.slice(-60),
+        {
+          time: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
+          text: detail.text,
+          ...(detail.tone === "warn" ? { tone: "warn" as const } : {}),
+        },
+      ]);
+    };
+    window.addEventListener(KERNEL_LOG_EVENT, onKernelLog);
+    return () => window.removeEventListener(KERNEL_LOG_EVENT, onKernelLog);
+  }, []);
+
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [logs]);
+
 
   const runCommand = () => {
     const cmd = command.trim();
@@ -363,8 +390,10 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden">
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto xl:grid-cols-12 xl:overflow-hidden">
+        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-y-auto">
+          <CommandCenter />
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 xl:grid-cols-12">
+
             <div className="flex min-w-0 flex-col gap-2 xl:overflow-y-auto xl:col-span-3">
               <Card title="AĞ ÖZETİ" icon={<Globe className="h-3.5 w-3.5 text-emerald-400" />}>
                 <div className="flex items-baseline justify-between">
