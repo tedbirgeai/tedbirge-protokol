@@ -383,7 +383,9 @@ export class BrowserNode {
 
   constructor(licenseKey: string | undefined, onState: (s: BrowserNodeState) => void) {
     this.licenseKey = licenseKey ?? "";
+    setLicenseTier(this.licenseKey ? "ENTERPRISE" : "FREE");
     this.onState = onState;
+
     this.state = {
       running: false,
       nodeId: this.nodeId,
