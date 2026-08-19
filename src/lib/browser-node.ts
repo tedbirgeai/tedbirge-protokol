@@ -998,7 +998,17 @@ export class BrowserNode {
     }
   }
 
+  /**
+   * Ücretsiz katman kotası: eşzamanlı 5 aktif eşten sonrası reddedilir.
+   * Mevcut bir eşle yeniden pazarlık her zaman serbesttir.
+   */
+  private peerSlotAllowed(remote: string) {
+    if (this.peers.has(remote)) return true;
+    return canAcceptPeer(this.peers.size);
+  }
+
   private async createOffer(remote: string) {
+    if (!this.peerSlotAllowed(remote)) return;
     const entry = this.newPeer(remote);
     const dc = entry.pc.createDataChannel("mesh", { ordered: true });
     this.bindChannel(remote, dc);
@@ -1006,6 +1016,7 @@ export class BrowserNode {
     await entry.pc.setLocalDescription(offer);
     await this.signal(remote, { type: "offer", sdp: offer.sdp });
   }
+
 
   /**
    * Sinyal gönderimi üç katmanlı yedeklidir: bulut → yerel yayın → eş rölesi.
