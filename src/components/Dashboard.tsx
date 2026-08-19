@@ -216,6 +216,7 @@ export default function Dashboard() {
     { time: "14:32:22", text: "[DURUM] Bant genişliği ölçümü tamam" },
   ]);
   const [command, setCommand] = useState("");
+  const [nodeTestOpen, setNodeTestOpen] = useState(false);
   const logRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -228,9 +229,28 @@ export default function Dashboard() {
     return () => window.clearInterval(id);
   }, []);
 
+  // Çekirdek katmanı uyarıları (ör. ücretsiz eş limiti) canlı akışa düşer.
+  useEffect(() => {
+    const onKernelLog = (event: Event) => {
+      const detail = (event as CustomEvent<KernelLogDetail>).detail;
+      if (!detail?.text) return;
+      setLogs((prev) => [
+        ...prev.slice(-60),
+        {
+          time: new Date().toLocaleTimeString("tr-TR", { hour12: false }),
+          text: detail.text,
+          ...(detail.tone === "warn" ? { tone: "warn" as const } : {}),
+        },
+      ]);
+    };
+    window.addEventListener(KERNEL_LOG_EVENT, onKernelLog);
+    return () => window.removeEventListener(KERNEL_LOG_EVENT, onKernelLog);
+  }, []);
+
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [logs]);
+
 
   const runCommand = () => {
     const cmd = command.trim();
