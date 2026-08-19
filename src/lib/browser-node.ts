@@ -1,4 +1,6 @@
 import { isRelayEnabled } from "@/shell/relay";
+import { canAcceptPeer, setLicenseTier } from "@/lib/peer-limit";
+
 import { chunkPayload, ingestChunk, isChunkFrame, laneSchedule } from "@/kernel/multipath";
 import { forgetNode, observeNode } from "@/lib/mesh/dht";
 import { liveNextHop } from "@/kernel/routing-live";
