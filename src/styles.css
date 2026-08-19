@@ -629,3 +629,13 @@ body {
     animation: none;
   }
 }
+
+/* Canlı veri taşıma tüneli: .tpack paketinin akış animasyonu. */
+@keyframes tbos-tunnel {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 3rem);
+  }
+}
