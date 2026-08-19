@@ -18,6 +18,7 @@ import {
   Globe,
   LayoutDashboard,
   Network,
+  QrCode,
   Settings,
   Share2,
   Shield,
@@ -26,7 +27,13 @@ import {
   TerminalSquare,
 } from "lucide-react";
 
-type LogLine = { time: string; text: string };
+import { CommandCenter } from "@/components/shell/CommandCenter";
+import { PaywallModal } from "@/components/shell/PaywallModal";
+import { NodeTestModal } from "@/components/shell/NodeTestModal";
+import { KERNEL_LOG_EVENT, type KernelLogDetail } from "@/lib/peer-limit";
+
+type LogLine = { time: string; text: string; tone?: "warn" };
+
 
 const NODES = [
   { label: "NODE_BF3A", latency: "45 ms", dist: 120, angle: 0 },
