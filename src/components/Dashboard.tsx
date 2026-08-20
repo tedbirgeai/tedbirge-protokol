@@ -301,10 +301,18 @@ export default function Dashboard() {
               ÇALIŞMA SÜRESİ: <strong className="font-mono text-slate-200">12g 6sa 24dk</strong>
             </span>
           </div>
+          <button
+            type="button"
+            onClick={() => setNodeTestOpen(true)}
+            className="flex items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 font-medium text-cyan-300 transition-colors hover:bg-cyan-500/20"
+          >
+            <QrCode className="h-3.5 w-3.5" /> Interactive Node Test
+          </button>
           <div className="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2.5 py-1 text-slate-200">
             <CircleUser className="h-3.5 w-3.5 text-cyan-400" />
             <span className="font-mono">node_admin</span>
           </div>
+
         </div>
       </header>
 
