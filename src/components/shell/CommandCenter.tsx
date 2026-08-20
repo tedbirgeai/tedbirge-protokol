@@ -7,16 +7,7 @@
  */
 
 import { useMemo } from "react";
-import {
-  Activity,
-  Cloud,
-  Cpu,
-  Layers,
-  Radar,
-  Rocket,
-  Smartphone,
-  TrendingUp,
-} from "lucide-react";
+import { Activity, Cloud, Cpu, Layers, Radar, Rocket, Smartphone, TrendingUp } from "lucide-react";
 
 import { FREE_PEER_LIMIT } from "@/lib/peer-limit";
 import { useNodeRuntime } from "@/lib/node-runtime";
@@ -102,7 +93,10 @@ function Telemetry() {
 /** BÖLGE 2 — Canlı veri taşıma tüneli. */
 function TransitCanvas() {
   return (
-    <Panel title="Canlı Veri Taşıma Tuvali" icon={<Activity className="h-3.5 w-3.5 text-emerald-400" />}>
+    <Panel
+      title="Canlı Veri Taşıma Tuvali"
+      icon={<Activity className="h-3.5 w-3.5 text-emerald-400" />}
+    >
       <div className="flex items-center gap-3">
         <div className="shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center">
           <Smartphone className="mx-auto h-4 w-4 text-emerald-400" />
@@ -208,7 +202,10 @@ function LiveRadar() {
   const full = active >= FREE_PEER_LIMIT;
 
   return (
-    <Panel title="Canlı Radar / Düğüm Taraması" icon={<Radar className="h-3.5 w-3.5 text-cyan-400" />}>
+    <Panel
+      title="Canlı Radar / Düğüm Taraması"
+      icon={<Radar className="h-3.5 w-3.5 text-cyan-400" />}
+    >
       <div className="flex items-center gap-4">
         <div className="relative h-16 w-16 shrink-0">
           <span className="absolute inset-0 animate-ping rounded-full border border-cyan-400/50" />
