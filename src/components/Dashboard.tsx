@@ -609,6 +609,10 @@ export default function Dashboard() {
           </footer>
         </main>
       </div>
+
+      <NodeTestModal open={nodeTestOpen} onClose={() => setNodeTestOpen(false)} />
+      <PaywallModal />
     </div>
+
   );
 }
