@@ -1021,7 +1021,6 @@ export class BrowserNode {
     await this.signal(remote, { type: "offer", sdp: offer.sdp });
   }
 
-
   /**
    * Sinyal gönderimi üç katmanlı yedeklidir: bulut → yerel yayın → eş rölesi.
    * TURN kullanılmaz; simetrik NAT'ta kamuya açık IP'li Tedbirge düğümleri

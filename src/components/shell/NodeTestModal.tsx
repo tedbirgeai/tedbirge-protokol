@@ -17,7 +17,9 @@ export function NodeTestModal({ open, onClose }: { open: boolean; onClose: () =>
     if (!open || typeof window === "undefined") return;
     const target = `${window.location.origin}/saha`;
     setUrl(target);
-    void QRCode.toDataURL(target, { width: 320, margin: 1 }).then(setSrc).catch(() => setSrc(""));
+    void QRCode.toDataURL(target, { width: 320, margin: 1 })
+      .then(setSrc)
+      .catch(() => setSrc(""));
   }, [open]);
 
   if (!open) return null;
