@@ -105,8 +105,19 @@ export const Route = createFileRoute("/api/public/relay")({
           });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // Bulut deposu geçici olarak ulaşılamaz olabilir (duraklatılmış/bakımda).
+        // Bu durumda 500 yerine "hizmet geçici olarak kapalı" cevabı döneriz;
+        // istemci yerel kuyrukta bekletip yeniden dener, arayüz boş ekrana düşmez.
+        let supabaseAdmin: Awaited<
+          typeof import("@/integrations/supabase/client.server")
+        >["supabaseAdmin"];
+        try {
+          ({ supabaseAdmin } = await import("@/integrations/supabase/client.server"));
+        } catch {
+          return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
+        }
 
+        try {
         if (parsed.action === "publish") {
           const { error } = await supabaseAdmin.from("relay_directory").upsert(
             {
@@ -230,6 +241,10 @@ export const Route = createFileRoute("/api/public/relay")({
           ok: true,
           items: (data ?? []).map((r) => ({ pktId: r.pkt_id, envelope: r.envelope })),
         });
+        } catch (error) {
+          console.error("[relay] depo erişilemedi", error);
+          return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
+        }
       },
     },
   },

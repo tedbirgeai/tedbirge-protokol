@@ -53,7 +53,8 @@ async function call<T>(body: unknown): Promise<T | null> {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (res.status === 429) {
+    // 503: bulut deposu geçici olarak kapalı — soğuma penceresine gir.
+    if (res.status === 429 || res.status === 503) {
       const retry = Number(res.headers.get("retry-after") ?? "0");
       void noteBusy(Number.isFinite(retry) && retry > 0 ? retry : 10);
       return null;
