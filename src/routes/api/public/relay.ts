@@ -241,6 +241,10 @@ export const Route = createFileRoute("/api/public/relay")({
           ok: true,
           items: (data ?? []).map((r) => ({ pktId: r.pkt_id, envelope: r.envelope })),
         });
+        } catch (error) {
+          console.error("[relay] depo erişilemedi", error);
+          return json({ ok: false, error: "depo_kapali", degraded: true }, 503);
+        }
       },
     },
   },
