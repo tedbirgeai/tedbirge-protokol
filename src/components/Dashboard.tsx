@@ -525,7 +525,12 @@ export default function Dashboard() {
                       <span className="text-slate-500">{l.time}</span>{" "}
                       <span
                         className={
-                          l.text.startsWith("[GÜVENLİK]") ? "text-emerald-400" : "text-cyan-400"
+                          l.tone === "warn"
+                            ? "text-amber-400"
+                            : l.text.startsWith("[GÜVENLİK]")
+                              ? "text-emerald-400"
+                              : "text-cyan-400"
+
                         }
                       >
                         {l.text}
